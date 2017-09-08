@@ -110,9 +110,9 @@ Synchronous API
 
 You need to take care of ``client_token`` because it determines whether to
 reuse kernel sessions or not.
-Sorna cloud has a timeout so that it terminates long-idle kernel sessions,
+Backend.AI cloud has a timeout so that it terminates long-idle kernel sessions,
 but within the timeout, any kernel creation requests with the same ``client_token``
-let Sorna cloud to reuse the kernel.
+let Backend.AI cloud to reuse the kernel.
 
 Asynchronous API
 ----------------
