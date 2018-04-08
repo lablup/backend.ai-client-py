@@ -172,22 +172,12 @@ class BaseRequest:
             assert isinstance(session, aiohttp.ClientSession)
             session = sess
         try:
-            if self.content_type == 'multipart/form-data':
-                data = aiohttp.FormData()
-                for f in self._content:
-                    data.add_field(f.name,
-                                   f.file,
-                                   filename=f.filename,
-                                   content_type=f.content_type)
-                assert data.is_multipart
-            else:
-                data = self._content
             self._sign()
             async with _timeout(timeout):
                 rqst_ctx = session.request(
                     self.method,
                     self.build_url(),
-                    data=data,
+                    data=self.pack_content(),
                     headers=self.headers)
                 async with rqst_ctx as resp:
                     body = await resp.read()
@@ -205,6 +195,19 @@ class BaseRequest:
         finally:
             if owns_session:
                 await session.close()
+
+    def pack_content(self):
+        if self.content_type == 'multipart/form-data':
+            data = aiohttp.FormData()
+            for f in self._content:
+                data.add_field(f.name,
+                               f.file,
+                               filename=f.filename,
+                               content_type=f.content_type)
+            assert data.is_multipart
+            return data
+        else:
+            return self._content
 
     async def connect_websocket(self, *, sess=None):
         '''
