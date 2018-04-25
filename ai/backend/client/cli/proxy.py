@@ -31,7 +31,7 @@ class RawRequest(Request):
 
     @property
     def content(self) -> Union[aiohttp.StreamReader, bytes, bytearray, None]:
-        if(isinstance(self.content, aiohttpStreamReader)):
+        if(isinstance(self.content, aiohttp.StreamReader)):
             return self._content
         return Request.content.fget(self)
 
@@ -52,7 +52,7 @@ class RawRequest(Request):
             Request.content.fset(self, value)
 
     def pack_content(self):
-        if(isinstance(self.content, aiohttpStreamReader)):
+        if(isinstance(self.content, aiohttp.StreamReader)):
             return self._content
         super(RawRequest, self).pack_content(self)
 
