@@ -77,7 +77,8 @@ class WebSocketProxy(Request):
                 if msg.type == aiohttp.WSMsgType.TEXT:
                     await self.send_str(msg.data)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
-                    print_info('ws connection closed with exception %s' % self.conn.exception())
+                    print_info('ws connection closed"\
+                            " with exception %s' % self.conn.exception())
                     break
                 elif msg.type == aiohttp.WSMsgType.CLOSE:
                     break
@@ -93,7 +94,8 @@ class WebSocketProxy(Request):
             async with aiohttp.ClientSession() as session:
                 async with session.ws_connect(path, headers=self.headers) as ws:
                     self.conn = ws
-                    self.upstream_buffer_task = asyncio.ensure_future(self.consume_upstream_buffer())
+                    self.upstream_buffer_task = \
+                            asyncio.ensure_future(self.consume_upstream_buffer())
                     print_info("PROXY STARTED")
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
@@ -147,7 +149,9 @@ async def web_handler(request):
             req = Request(request.method, path, body)
         resp = await req.asend()
     except BackendClientError:
-        rtn = web.Response(body="Service Unavailable", status=503, reason="Service Unavailable")
+        rtn = web.Response(body="Service Unavailable",
+                status=503,
+                reason="Service Unavailable")
         return rtn
     rtn = web.StreamResponse()
     rtn.set_status(resp.status, resp.reason)
