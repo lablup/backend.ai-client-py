@@ -28,10 +28,11 @@ class BaseVFolder(BaseFunction):
     _session = None
 
     @classmethod
-    def _create(cls, name: str):
+    def _create(cls, name: str, host: str=None):
         assert _rx_slug.search(name) is not None
         resp = yield Request(cls._session, 'POST', '/folders/', {
             'name': name,
+            'host': host,
         })
         return resp.json()
 

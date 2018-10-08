@@ -18,10 +18,25 @@ def test_create_vfolder():
             payload = {
                 'id': 'fake-vfolder-id',
                 'name': 'fake-vfolder-name',
+                'host': 'local',
             }
             m.post(build_url(session.config, '/folders/'), status=201,
                    payload=payload)
             resp = session.VFolder.create('fake-vfolder-name')
+            assert resp == payload
+
+
+def test_create_vfolder_in_other_host():
+    with Session() as session:
+        with aioresponses() as m:
+            payload = {
+                'id': 'fake-vfolder-id',
+                'name': 'fake-vfolder-name',
+                'host': 'fake-vfolder-host',
+            }
+            m.post(build_url(session.config, '/folders/'), status=201,
+                   payload=payload)
+            resp = session.VFolder.create('fake-vfolder-name', 'fake-vfolder-host')
             assert resp == payload
 
 
@@ -31,11 +46,17 @@ def test_list_vfolders():
             payload = [
                 {
                     'name': 'fake-vfolder1',
-                    'id': 'fake-vfolder1-id'
+                    'id': 'fake-vfolder1-id',
+                    'host': 'fake-vfolder1-host',
+                    'is_owner': True,
+                    'permissions': 'wd',
                 },
                 {
                     'name': 'fake-vfolder2',
-                    'id': 'fake-vfolder2-id'
+                    'id': 'fake-vfolder2-id',
+                    'host': 'fake-vfolder2-host',
+                    'is_owner': True,
+                    'permissions': 'wd',
                 }
             ]
             m.get(build_url(session.config, '/folders/'), status=200,
@@ -61,8 +82,11 @@ def test_vfolder_get_info():
             payload = {
                 'name': vfolder_name,
                 'id': 'fake-vfolder-id',
+                'host': 'fake-vfolder-host',
                 'numFiles': 5,
                 'created': '2018-06-02 09:04:15.585917+00:00',
+                'is_owner': True,
+                'permission': 'wd',
             }
             m.get(build_url(session.config, '/folders/{}'.format(vfolder_name)),
                   status=200, payload=payload)
@@ -139,7 +163,7 @@ def test_vfolder_list_files():
                         "filename": "200000",
                     }
                 ],
-                "folder_path": "/mnt/azure-shard01/1f6bd27fde1248cabfb50306ea83fc0a",
+                "folder_path": "/mnt/local/1f6bd27fde1248cabfb50306ea83fc0a",
             }
             m.get(build_url(session.config,
                             '/folders/{}/files'.format(vfolder_name)),

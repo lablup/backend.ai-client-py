@@ -46,7 +46,7 @@ def create(args):
     '''Create a new virtual folder.'''
     with Session() as session:
         try:
-            result = session.VFolder.create(args.name)
+            result = session.VFolder.create(args.name, args.host)
             print('Virtual folder "{0}" is created.'.format(result['name']))
         except BackendError as e:
             print_fail(str(e))
@@ -54,6 +54,9 @@ def create(args):
 
 
 create.add_argument('name', type=str, help='The name of a virtual folder.')
+create.add_argument('host', type=str, nargs='?', default=None,
+                    help='The name of a virtual folder host '
+                         'in which the virtual folder will be created.')
 
 
 @vfolder.register_command
