@@ -184,11 +184,11 @@ class BaseKernel(BaseFunction):
         resp = yield Request(self._session,
             'GET', '/kernel/{}/download'.format(self.kernel_id), {
                 'files': files,
-            })
+            }, streaming=True)
         chunk_size = 1 * 1024
         tqdm_obj = tqdm(desc='Downloading files',
                         unit='bytes', unit_scale=True,
-                        total=resp.stream_reader.total_bytes,
+                        total=resp.stream.total_bytes,
                         disable=not show_progress)
         with tqdm_obj as pbar:
             fp = None

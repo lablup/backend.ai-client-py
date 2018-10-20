@@ -339,7 +339,7 @@ class StreamingResponse(BaseResponse):
         return self._session.worker_thread.execute(self.aread(n))
 
     async def aread(self, n=-1) -> bytes:
-        if self._stream.at_eof:
+        if self._stream.at_eof():
             return b''
         return await self._stream.read(n)
 
