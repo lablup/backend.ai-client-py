@@ -180,7 +180,7 @@ class BaseKernel(BaseFunction):
         return resp
 
     def _download(self, files: Sequence[Union[str, Path]],
-                  show_progress: bool=False):
+                  dest: Union[str, Path]='.', show_progress: bool=False):
         resp = yield Request(self._session,
             'GET', '/kernel/{}/download'.format(self.kernel_id), {
                 'files': files,
@@ -203,7 +203,7 @@ class BaseKernel(BaseFunction):
                         if fp:
                             fp.close()
                             with tarfile.open(fp.name) as tarf:
-                                tarf.extractall()
+                                tarf.extractall(path=dest)
                             os.unlink(fp.name)
                         fp = tempfile.NamedTemporaryFile(suffix='.tar', delete=False)
                     elif part.startswith(b'Content-') or part == b'':
