@@ -122,6 +122,7 @@ class BaseKernel(BaseFunction):
                     'code': code,
                     'runId': run_id,
                     'options': {
+                        'clean': opts.get('clean', None),
                         'build': opts.get('build', None),
                         'buildLog': bool(opts.get('buildLog', False)),
                         'exec': opts.get('exec', None),

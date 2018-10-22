@@ -38,6 +38,11 @@ def exec_loop(kernel, code, mode, opts=None,
             print('--- generated files ---')
             for item in files:
                 print('{0}: {1}'.format(item['name'], item['url']))
+        if result['status'] == 'clean-finished':
+            exitCode = result.get('exitCode')
+            vprint_done('Cleanup finished. (exit code = {0}'.format(exitCode))
+            mode = 'continue'
+            code = ''
         if result['status'] == 'build-finished':
             exitCode = result.get('exitCode')
             vprint_done('Build finished. (exit code = {0})'.format(exitCode))
@@ -137,9 +142,11 @@ def run(args):
                         ret.status, ret.reason, ret.text()))
                     return
                 vprint_done('Uploading done.')
+                clean_cmd = args.clean if args.clean else '*'
                 build_cmd = args.build if args.build else '*'
                 exec_cmd = args.exec if args.exec else '*'
                 exec_loop(kernel, '', 'batch', opts={
+                    'clean': clean_cmd,
                     'build': build_cmd,
                     'exec': exec_cmd,
                 }, vprint_wait=vprint_wait, vprint_done=vprint_done)
@@ -175,6 +182,8 @@ run.add_argument('-t', '--client-token', metavar='SESSID',
                       'If not set, a random hex string is used.')
 run.add_argument('-c', '--code', metavar='CODE',
                  help='The code snippet as a single string')
+run.add_argument('--clean', metavar='CMD',
+                 help='Custom shell command for cleaning up the base directory')
 run.add_argument('--build', metavar='CMD',
                  help='Custom shell command for building the given files')
 run.add_argument('--exec', metavar='CMD',
