@@ -42,7 +42,7 @@ def download(args):
                        .format(args.sess_id_or_alias))
             kernel = session.Kernel(args.sess_id_or_alias)
             kernel.download(args.files, args.dest, show_progress=True)
-            print_done(f'Downloaded to {args.dest.resolve()}.')
+            print_done('Downloaded to {}.'.format(args.dest.resolve()))
         except BackendError as e:
             print_fail(str(e))
 
