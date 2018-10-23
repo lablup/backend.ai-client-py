@@ -186,6 +186,7 @@ class BaseKernel(BaseFunction):
                 'files': files,
             }, streaming=True)
         chunk_size = 1 * 1024
+        file_names = None
         tqdm_obj = tqdm(desc='Downloading files',
                         unit='bytes', unit_scale=True,
                         total=resp.stream.total_bytes,
@@ -204,6 +205,7 @@ class BaseKernel(BaseFunction):
                             fp.close()
                             with tarfile.open(fp.name) as tarf:
                                 tarf.extractall(path=dest)
+                                file_names = tarf.getnames()
                             os.unlink(fp.name)
                         fp = tempfile.NamedTemporaryFile(suffix='.tar', delete=False)
                     elif part.startswith(b'Content-') or part == b'':
@@ -213,7 +215,8 @@ class BaseKernel(BaseFunction):
             if fp:
                 fp.close()
                 os.unlink(fp.name)
-        return resp
+        result = {'file_names': file_names}
+        return result
 
     async def _adownload(self, files:Sequence[Union[str, Path]],
                          dest: Union[str, Path]='.', show_progress: bool=False):
@@ -222,6 +225,7 @@ class BaseKernel(BaseFunction):
                 'files': files,
             }, streaming=True).afetch()
         chunk_size = 1 * 1024
+        file_names = None
         tqdm_obj = tqdm(desc='Downloading files',
                         unit='bytes', unit_scale=True,
                         total=resp.stream.total_bytes,
@@ -240,6 +244,7 @@ class BaseKernel(BaseFunction):
                             fp.close()
                             with tarfile.open(fp.name) as tarf:
                                 tarf.extractall(path=dest)
+                                file_names = tarf.getnames()
                             os.unlink(fp.name)
                         fp = tempfile.NamedTemporaryFile(suffix='.tar', delete=False)
                     elif part.startswith(b'Content-') or part == b'':
@@ -249,7 +254,8 @@ class BaseKernel(BaseFunction):
             if fp:
                 fp.close()
                 os.unlink(fp.name)
-        return resp
+        result = {'file_names': file_names}
+        return result
 
     def _list_files(self, path: Union[str, Path]='.'):
         resp = yield Request(self._session,
