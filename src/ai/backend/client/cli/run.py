@@ -119,7 +119,8 @@ def run(args):
     with Session() as session:
         try:
             kernel = session.Kernel.get_or_create(
-                args.lang, args.client_token,
+                args.lang,
+                client_token=args.client_token,
                 mounts=args.mount,
                 envs=envs,
                 resources=resources)

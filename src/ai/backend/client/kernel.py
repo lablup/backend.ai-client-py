@@ -32,6 +32,7 @@ class BaseKernel(BaseFunction):
 
     @classmethod
     def _get_or_create(cls, lang: str,
+                       tag: str=None,
                        client_token: str=None,
                        mounts: Iterable[str]=None,
                        envs: Mapping[str, str]=None,
@@ -49,6 +50,7 @@ class BaseKernel(BaseFunction):
         mounts.extend(cls._session.config.vfolder_mounts)
         resp = yield Request(cls._session, 'POST', '/kernel/create', {
             'lang': lang,
+            'tag': tag,
             'clientSessionToken': client_token,
             'config': {
                 'mounts': mounts,
