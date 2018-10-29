@@ -57,7 +57,7 @@ class _SyncWorkerThread(threading.Thread):
 class BaseSession(metaclass=abc.ABCMeta):
     __slots__ = (
         '_config', '_closed', 'aiohttp_session',
-        'Admin', 'Agent', 'Kernel', 'KeyPair', 'VFolder',
+        'Admin', 'Agent', 'Kernel', 'KeyPair', 'Manager', 'VFolder',
     )
 
     def __init__(self, *, config: APIConfig=None):
@@ -107,6 +107,7 @@ class Session(BaseSession):
         from .agent import BaseAgent
         from .kernel import BaseKernel
         from .keypair import BaseKeyPair
+        from .manager import BaseManager
         from .vfolder import BaseVFolder
         self.Admin = type('Admin', (SyncFunctionMixin, BaseAdmin), {
             '_session': self,
@@ -118,6 +119,9 @@ class Session(BaseSession):
             '_session': self,
         })
         self.KeyPair = type('KeyPair', (SyncFunctionMixin, BaseKeyPair), {
+            '_session': self,
+        })
+        self.Manager = type('Manager', (SyncFunctionMixin, BaseManager), {
             '_session': self,
         })
         self.VFolder = type('VFolder', (SyncFunctionMixin, BaseVFolder), {
@@ -167,6 +171,7 @@ class AsyncSession(BaseSession):
         from .agent import BaseAgent
         from .kernel import BaseKernel
         from .keypair import BaseKeyPair
+        from .manager import BaseManager
         from .vfolder import BaseVFolder
         self.Admin = type('Admin', (AsyncFunctionMixin, BaseAdmin), {
             '_session': self,
@@ -178,6 +183,9 @@ class AsyncSession(BaseSession):
             '_session': self,
         })
         self.KeyPair = type('KeyPair', (AsyncFunctionMixin, BaseKeyPair), {
+            '_session': self,
+        })
+        self.Manager = type('Manager', (AsyncFunctionMixin, BaseManager), {
             '_session': self,
         })
         self.VFolder = type('VFolder', (AsyncFunctionMixin, BaseVFolder), {
