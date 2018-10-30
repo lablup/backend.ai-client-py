@@ -33,8 +33,8 @@ def freeze(args):
                 active_sessions_num = resp['active_sessions']
                 if active_sessions_num == 0:
                     break
-                print_wait(f'Waiting for all sessions terminated... '
-                           f'({active_sessions_num} left)')
+                print_wait('Waiting for all sessions terminated... ({0} left)'
+                           .format(active_sessions_num))
                 time.sleep(3)
             print_done('All sessions are terminated.')
         session.Manager.freeze()
