@@ -1,6 +1,9 @@
+import time
+
 from tabulate import tabulate
 
 from . import register_command
+from .pretty import print_wait, print_done
 from ..session import Session
 
 
@@ -24,8 +27,23 @@ def status(args):
 def freeze(args):
     '''Freeze manager.'''
     with Session() as session:
+        if args.wait:
+            while True:
+                resp = session.Manager.status()
+                active_sessions_num = resp['active_sessions']
+                if active_sessions_num == 0:
+                    break
+                print_wait(f'Waiting for all sessions terminated... '
+                           f'({active_sessions_num} left)')
+                time.sleep(3)
+            print_done('All sessions are terminated.')
         session.Manager.freeze()
         print('Manager is successfully frozen.')
+
+
+freeze.add_argument('--wait', action='store_true', default=False,
+                    help='Hold up freezing the manager until '
+                         'there are no running sessions in the manager.')
 
 
 @manager.register_command
