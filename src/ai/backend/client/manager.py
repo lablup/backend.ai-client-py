@@ -15,9 +15,10 @@ class BaseManager(BaseFunction):
         return resp.json()
 
     @classmethod
-    def _freeze(cls):
+    def _freeze(cls, force_kill=False):
         resp = yield Request(cls._session, 'PUT', '/manager/status', {
             'status': 'frozen',
+            'force_kill': force_kill,
         })
         assert resp.status == 204
 

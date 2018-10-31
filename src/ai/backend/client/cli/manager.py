@@ -1,3 +1,4 @@
+import sys
 import time
 
 from tabulate import tabulate
@@ -26,6 +27,11 @@ def status(args):
 @manager.register_command
 def freeze(args):
     '''Freeze manager.'''
+    if args.wait and args.force_kill:
+        print('You cannot use both --wait and --force-kill options '
+              'at the same time.', file=sys.stderr)
+        return
+
     with Session() as session:
         if args.wait:
             while True:
@@ -37,13 +43,25 @@ def freeze(args):
                            .format(active_sessions_num))
                 time.sleep(3)
             print_done('All sessions are terminated.')
-        session.Manager.freeze()
+
+        if args.force_kill:
+            print_wait('Killing all sessions...')
+
+        session.Manager.freeze(force_kill=args.force_kill)
+
+        if args.force_kill:
+            print_done('All sessions are killed.')
+
         print('Manager is successfully frozen.')
 
 
 freeze.add_argument('--wait', action='store_true', default=False,
                     help='Hold up freezing the manager until '
                          'there are no running sessions in the manager.')
+
+freeze.add_argument('--force-kill', action='store_true', default=False,
+                    help='Kill all running sessions immediately '
+                         'and freeze the manager.')
 
 
 @manager.register_command
