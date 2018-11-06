@@ -41,8 +41,8 @@ def download(args):
             print_wait('Downloading file(s) from {}...'
                        .format(args.sess_id_or_alias))
             kernel = session.Kernel(args.sess_id_or_alias)
-            kernel.download(args.files, show_progress=True)
-            print_done('Downloaded.')
+            kernel.download(args.files, args.dest, show_progress=True)
+            print_done('Downloaded to {}.'.format(args.dest.resolve()))
         except BackendError as e:
             print_fail(str(e))
 
@@ -52,6 +52,8 @@ download.add_argument('sess_id_or_alias', metavar='NAME',
                             'session.'))
 download.add_argument('files', nargs='+',
                       help='File paths inside container')
+download.add_argument('--dest', type=Path, default='.',
+                      help='Destination path to store downloaded file(s)')
 
 
 @register_command

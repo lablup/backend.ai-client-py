@@ -15,7 +15,7 @@ class BaseAdmin(BaseFunction):
 
     @classmethod
     def _query(cls, query: str,
-               variables: Optional[Mapping[str, Any]]=None):
+               variables: Optional[Mapping[str, Any]] = None):
         gql_query = {
             'query': query,
             'variables': variables if variables else {},

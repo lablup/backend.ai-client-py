@@ -112,10 +112,10 @@ def run(args):
         print('You should provide the command-line code snippet using '
               '"-c" option if run without files.', file=sys.stderr)
         return
-    if args.resources is not None:
+    if args.resources:
         resources = {k: v for k, v in map(lambda s: s.split('=', 1), args.resources)}
     else:
-        resources = {}
+        resources = None  # will use the defaults configured in the server
     with Session() as session:
         try:
             kernel = session.Kernel.get_or_create(

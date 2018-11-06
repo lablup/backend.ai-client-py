@@ -7,7 +7,7 @@ setup_requires = [
 ]
 install_requires = [
     'multidict>=4.0',
-    'aiohttp~=3.3.0',
+    'aiohttp~=3.4.0',
     'async_timeout~=3.0',  # to avoid pip10 resolver issue
     'attrs>=18.0',       # to avoid pip10 resolver issue
     'namedlist>=1.6',
@@ -23,14 +23,14 @@ build_requires = [
     'twine>=1.11.0',
 ]
 test_requires = [
-    'pytest>=3.6.0',
+    'pytest~=3.9.0',
     'pytest-cov',
     'pytest-mock',
-    'pytest-asyncio>=0.8.0',
+    'pytest-asyncio>=0.9.0',
     'aioresponses>=0.4.2',
-    'asynctest',
+    'asynctest>=0.12.2',
     'codecov',
-    'flake8',
+    'flake8>=3.6',
 ]
 ci_requires = [
 ] + build_requires + test_requires

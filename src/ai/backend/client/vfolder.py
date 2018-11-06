@@ -57,8 +57,8 @@ class BaseVFolder(BaseFunction):
             return resp.json()
 
     def _upload(self, files: Sequence[Union[str, Path]],
-               basedir: Union[str, Path]=None,
-               show_progress: bool=False):
+               basedir: Union[str, Path] = None,
+               show_progress: bool = False):
         fields = []
         base_path = (Path.cwd() if basedir is None
                      else Path(basedir).resolve())
@@ -104,7 +104,7 @@ class BaseVFolder(BaseFunction):
 
     def _delete_files(self,
                       files: Sequence[Union[str, Path]],
-                      recursive: bool=False):
+                      recursive: bool = False):
         resp = yield Request(
             self._session,
             'DELETE', '/folders/{}/delete_files'.format(self.name),
@@ -115,7 +115,7 @@ class BaseVFolder(BaseFunction):
         return resp
 
     def _download(self, files: Sequence[Union[str, Path]],
-                  show_progress: bool=False):
+                  show_progress: bool = False):
 
         async def _stream_download():
             rqst = Request(self._session,
@@ -178,7 +178,7 @@ class BaseVFolder(BaseFunction):
 
         self._session.worker_thread.execute(_stream_download())
 
-    def _list_files(self, path: Union[str, Path]='.'):
+    def _list_files(self, path: Union[str, Path] = '.'):
         resp = yield Request(self._session,
             'GET', '/folders/{}/files'.format(self.name), {
                 'path': path,

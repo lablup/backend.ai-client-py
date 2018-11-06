@@ -15,8 +15,8 @@ class BaseAgent(BaseFunction):
 
     @classmethod
     def _list(cls,
-              status: str='ALIVE',
-              fields: Optional[Iterable[str]]=None):
+              status: str = 'ALIVE',
+              fields: Optional[Iterable[str]] = None):
         if fields is None:
             fields = (
                 'id',

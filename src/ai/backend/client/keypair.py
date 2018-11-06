@@ -15,12 +15,12 @@ class BaseKeyPair(BaseFunction):
 
     @classmethod
     def _create(cls, user_id: Union[int, str],
-                is_active: bool=True,
-                is_admin: bool=False,
-                resource_policy: str=None,
-                rate_limit: int=None,
-                concurrency_limit: int=None,
-                fields: Iterable[str]=None):
+                is_active: bool = True,
+                is_admin: bool = False,
+                resource_policy: str = None,
+                rate_limit: int = None,
+                concurrency_limit: int = None,
+                fields: Iterable[str] = None):
         if fields is None:
             fields = ('access_key', 'secret_key')
         uid_type = 'Int!' if isinstance(user_id, int) else 'String!'
@@ -49,8 +49,8 @@ class BaseKeyPair(BaseFunction):
 
     @classmethod
     def _list(cls, user_id: Union[int, str],
-              is_active: bool=None,
-              fields: Iterable[str]=None):
+              is_active: bool = None,
+              fields: Iterable[str] = None):
         if fields is None:
             fields = (
                 'access_key', 'secret_key',

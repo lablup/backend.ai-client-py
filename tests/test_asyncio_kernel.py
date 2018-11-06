@@ -162,7 +162,7 @@ async def test_execute_code_raises_err_with_abnormal_status():
 async def test_stream_pty(mocker):
     mock_req_obj = asynctest.MagicMock(spec=Request)
     ws = object()
-    mock_req_obj.connect_websocket.return_value = ws
+    mock_req_obj.connect_websocket.return_value = None, ws
     kernel_id = token_hex(12)
     async with AsyncSession() as session:
         with asynctest.patch('ai.backend.client.kernel.Request',

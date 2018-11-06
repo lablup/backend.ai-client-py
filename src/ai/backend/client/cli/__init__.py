@@ -22,8 +22,8 @@ def register_command(*args, **kwargs):
 
     def _register_command(
         handler: Callable[[argparse.Namespace], None], *,
-        main_parser: ArgParserType=None,
-        aliases: Sequence[str]=None
+        main_parser: ArgParserType = None,
+        aliases: Sequence[str] = None
     ) -> Callable[[argparse.Namespace], None]:
 
         if main_parser is None:

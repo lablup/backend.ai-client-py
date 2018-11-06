@@ -32,12 +32,12 @@ class BaseKernel(BaseFunction):
 
     @classmethod
     def _get_or_create(cls, lang: str,
-                       tag: str=None,
-                       client_token: str=None,
-                       mounts: Iterable[str]=None,
-                       envs: Mapping[str, str]=None,
-                       resources: Mapping[str, int]=None,
-                       max_mem: int=0, exec_timeout: int=0) -> str:
+                       tag: str = None,
+                       client_token: str = None,
+                       mounts: Iterable[str] = None,
+                       envs: Mapping[str, str] = None,
+                       resources: Mapping[str, int] = None,
+                       exec_timeout: int = 0) -> str:
         if client_token:
             assert 4 <= len(client_token) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
@@ -55,9 +55,9 @@ class BaseKernel(BaseFunction):
             'config': {
                 'mounts': mounts,
                 'environ': envs,
-                'instanceMemory': resources.get('ram'),
-                'instanceCores': resources.get('cpu'),
-                'instanceGPUs': resources.get('gpu'),
+                'instanceMemory': resources.get('ram', None),
+                'instanceCores': resources.get('cpu', None),
+                'instanceGPUs': resources.get('gpu', None),
             },
         })
         data = resp.json()
@@ -79,7 +79,7 @@ class BaseKernel(BaseFunction):
         yield Request(self._session,
                       'POST', '/kernel/{}/interrupt'.format(self.kernel_id))
 
-    def _complete(self, code: str, opts: dict=None):
+    def _complete(self, code: str, opts: dict = None):
         opts = {} if opts is None else opts
         rqst = Request(self._session,
             'POST', '/kernel/{}/complete'.format(self.kernel_id), {
@@ -104,10 +104,10 @@ class BaseKernel(BaseFunction):
                              'GET', '/kernel/{}/logs'.format(self.kernel_id))
         return resp.json()
 
-    def _execute(self, run_id: str=None,
-                 code: str=None,
-                 mode: str='query',
-                 opts: dict=None):
+    def _execute(self, run_id: str = None,
+                 code: str = None,
+                 mode: str = 'query',
+                 opts: dict = None):
         opts = {} if opts is None else opts
         if mode in {'query', 'continue', 'input'}:
             assert code is not None  # but maybe empty due to continuation
@@ -147,8 +147,8 @@ class BaseKernel(BaseFunction):
         return resp.json()['result']
 
     def _upload(self, files: Sequence[Union[str, Path]],
-               basedir: Union[str, Path]=None,
-               show_progress: bool=False):
+               basedir: Union[str, Path] = None,
+               show_progress: bool = False):
         fields = []
         base_path = (Path.cwd() if basedir is None
                      else Path(basedir).resolve())
@@ -183,15 +183,17 @@ class BaseKernel(BaseFunction):
         return resp
 
     def _download(self, files: Sequence[Union[str, Path]],
-                  show_progress: bool=False):
+                  dest: Union[str, Path] = '.',
+                  show_progress: bool = False):
         resp = yield Request(self._session,
             'GET', '/kernel/{}/download'.format(self.kernel_id), {
                 'files': files,
-            })
+            }, streaming=True)
         chunk_size = 1 * 1024
+        file_names = None
         tqdm_obj = tqdm(desc='Downloading files',
                         unit='bytes', unit_scale=True,
-                        total=resp.stream_reader.total_bytes,
+                        total=resp.stream.total_bytes,
                         disable=not show_progress)
         with tqdm_obj as pbar:
             fp = None
@@ -206,7 +208,8 @@ class BaseKernel(BaseFunction):
                         if fp:
                             fp.close()
                             with tarfile.open(fp.name) as tarf:
-                                tarf.extractall()
+                                tarf.extractall(path=dest)
+                                file_names = tarf.getnames()
                             os.unlink(fp.name)
                         fp = tempfile.NamedTemporaryFile(suffix='.tar', delete=False)
                     elif part.startswith(b'Content-') or part == b'':
@@ -216,9 +219,50 @@ class BaseKernel(BaseFunction):
             if fp:
                 fp.close()
                 os.unlink(fp.name)
-        return resp
+        result = {'file_names': file_names}
+        return result
 
-    def _list_files(self, path: Union[str, Path]='.'):
+    async def _adownload(self, files: Sequence[Union[str, Path]],
+                         dest: Union[str, Path] = '.',
+                         show_progress: bool = False):
+        resp = await Request(self._session,
+            'GET', '/kernel/{}/download'.format(self.kernel_id), {
+                'files': files,
+            }, streaming=True).afetch()
+        chunk_size = 1 * 1024
+        file_names = None
+        tqdm_obj = tqdm(desc='Downloading files',
+                        unit='bytes', unit_scale=True,
+                        total=resp.stream.total_bytes,
+                        disable=not show_progress)
+        with tqdm_obj as pbar:
+            fp = None
+            while True:
+                chunk = await resp.aread(chunk_size)
+                if not chunk:
+                    break
+                pbar.update(len(chunk))
+                # TODO: more elegant parsing of multipart response?
+                for part in chunk.split(b'\r\n'):
+                    if part.startswith(b'--'):
+                        if fp:
+                            fp.close()
+                            with tarfile.open(fp.name) as tarf:
+                                tarf.extractall(path=dest)
+                                file_names = tarf.getnames()
+                            os.unlink(fp.name)
+                        fp = tempfile.NamedTemporaryFile(suffix='.tar', delete=False)
+                    elif part.startswith(b'Content-') or part == b'':
+                        continue
+                    else:
+                        fp.write(part)
+            if fp:
+                fp.close()
+                os.unlink(fp.name)
+        result = {'file_names': file_names}
+        return result
+
+    def _list_files(self, path: Union[str, Path] = '.'):
         resp = yield Request(self._session,
             'GET', '/kernel/{}/files'.format(self.kernel_id), {
                 'path': path,
@@ -230,7 +274,7 @@ class BaseKernel(BaseFunction):
         request = Request(self._session,
                           'GET', '/stream/kernel/{}/pty'.format(self.kernel_id))
         try:
-            ws = await request.connect_websocket()
+            _, ws = await request.connect_websocket()
         except aiohttp.ClientResponseError as e:
             raise BackendClientError(e.code, e.message)
         return StreamPty(self.kernel_id, ws)
@@ -245,7 +289,10 @@ class BaseKernel(BaseFunction):
         self.get_logs  = self._call_base_method(self._get_logs)
         self.execute   = self._call_base_method(self._execute)
         self.upload    = self._call_base_method(self._upload)
-        self.download  = self._call_base_method(self._download)
+        if self._async:
+            self.download = self._adownload
+        else:
+            self.download = self._call_base_method(self._download)
         self.list_files = self._call_base_method(self._list_files)
 
     def __init_subclass__(cls):

@@ -45,13 +45,13 @@ class APIConfig:
     }
 
     def __init__(self, *,
-                 endpoint: Union[URL, str]=None,
-                 version: str=None,
-                 user_agent: str=None,
-                 access_key: str=None,
-                 secret_key: str=None,
-                 hash_type: str=None,
-                 vfolder_mounts: Iterable[str]=None) -> None:
+                 endpoint: Union[URL, str] = None,
+                 version: str = None,
+                 user_agent: str = None,
+                 access_key: str = None,
+                 secret_key: str = None,
+                 hash_type: str = None,
+                 vfolder_mounts: Iterable[str] = None) -> None:
         from . import get_user_agent  # noqa; to avoid circular imports
         self._endpoint = (
             _clean_url(endpoint) if endpoint else

@@ -1,11 +1,24 @@
 Changes
 =======
 
-1.5.0 (to be released)
-----------------------
+18.12.0 (to be released)
+------------------------
 
-1.4.0 (to be released)
-----------------------
+1.4.2 (2018-11-06)
+------------------
+
+ - Improve handling of unspecified resource shares.
+
+ - Internal updates for test cases and test dependencies.
+
+1.4.1 (2018-10-30)
+------------------
+
+ - Hotfix for regression in `Kernel.stream_pty()` method.
+
+1.4.0 (2018-09-23)
+------------------
+>>>>>>> 1.4
 
  - Support download and deletion of virtual folder files.
    Check `backend.ai vfolder --help` for new commands!

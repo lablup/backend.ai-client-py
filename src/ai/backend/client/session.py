@@ -60,7 +60,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         'Admin', 'Agent', 'Kernel', 'KeyPair', 'VFolder',
     )
 
-    def __init__(self, *, config: APIConfig=None):
+    def __init__(self, *, config: APIConfig = None):
         self._closed = False
         self._config = config if config else get_config()
 
@@ -86,7 +86,7 @@ class Session(BaseSession):
         '_worker_thread',
     )
 
-    def __init__(self, *, config: APIConfig=None):
+    def __init__(self, *, config: APIConfig = None):
         '''
         Initialize a API client session.
 
@@ -151,7 +151,7 @@ class AsyncSession(BaseSession):
 
     __slots__ = BaseSession.__slots__ + ()
 
-    def __init__(self, *, config: APIConfig=None):
+    def __init__(self, *, config: APIConfig = None):
         '''
         Initialize a API client session.
 

@@ -45,6 +45,7 @@ class SyncFunctionMixin:
     '''
     Synchronous request sender using requests.
     '''
+    _async = False
 
     @staticmethod
     def _make_request(gen):
@@ -85,6 +86,7 @@ class AsyncFunctionMixin:
     '''
     Asynchronous request sender using aiohttp.
     '''
+    _async = True
 
     @staticmethod
     async def _make_request(gen):
