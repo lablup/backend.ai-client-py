@@ -156,7 +156,7 @@ async def web_handler(request):
             req = RawRequest(session, request.method, path, body, content_type=content_type)
         else:
             req = Request(session, request.method, path, body)
-        resp = await req.afetch()
+        resp = req.fetch()
     except BackendClientError:
         rtn = web.Response(body="Service Unavailable",
                 status=503,
