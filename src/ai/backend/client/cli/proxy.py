@@ -13,6 +13,7 @@ from ..config import APIConfig
 from .pretty import print_info
 from ..exceptions import BackendClientError
 from ..request import Request
+from ..session import Session
 
 
 class RawRequest(Request):
@@ -20,14 +21,15 @@ class RawRequest(Request):
                  'date', 'headers',
                  'content_type', '_content', 'reporthook']
 
-    def __init__(self, method: str = 'GET',
+    def __init__(self, session:Session,
+                 method: str = 'GET',
                  path: str = None,
                  content: Mapping = None,
                  config: APIConfig = None,
                  reporthook: Callable = None,
                  content_type: str = None) -> None:
         self.content_type = content_type
-        super(RawRequest, self).__init__(method, path, content, config, reporthook)
+        super(RawRequest, self).__init__(session, method, path, content, config, reporthook)
 
     @property
     def content(self) -> Union[aiohttp.StreamReader, bytes, bytearray, None]:
@@ -61,7 +63,8 @@ class WebSocketProxy(Request):
     __slots__ = ['conn', 'down_conn', 'upstream_buffer', 'upstream_buffer_task']
 
     def __init__(self, path, ws: web.WebSocketResponse):
-        super(WebSocketProxy, self).__init__("GET", path, None)
+        self._session = Session()
+        super(WebSocketProxy, self).__init__(self._session, "GET", path)
         self.upstream_buffer = asyncio.PriorityQueue()
         self.down_conn = ws
         self.conn = None
@@ -74,8 +77,8 @@ class WebSocketProxy(Request):
     async def upstream(self):
         try:
             async for msg in self.down_conn:
-                if msg.type == aiohttp.WSMsgType.TEXT:
-                    await self.send_str(msg.data)
+                if msg.type in (aiohttp.WSMsgType.TEXT, aiohttp.WSMsgType.BINARY):
+                    await self.send(msg.data, msg.type)
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     print_info('ws connection closed"\
                             " with exception %s' % self.conn.exception())
@@ -100,6 +103,8 @@ class WebSocketProxy(Request):
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.TEXT:
                             await self.down_conn.send_str(msg.data)
+                        elif msg.type == aiohttp.WSMsgType.BINARY:
+                            await self.down_conn.send_bytes(msg.data)
                         elif msg.type == aiohttp.WSMsgType.CLOSED:
                             break
                         elif msg.type == aiohttp.WSMsgType.ERROR:
@@ -116,14 +121,17 @@ class WebSocketProxy(Request):
 
     async def consume_upstream_buffer(self):
         while True:
-            msg = await self.upstream_buffer.get()
+            data, tp = await self.upstream_buffer.get()
             if self.conn:
-                await self.conn.send_str(msg)
+                if tp == aiohttp.WSMsgType.BINARY:
+                    await self.conn.send_bytes(data)
+                elif tp == aiohttp.WSMsgType.TEXT:
+                    await self.conn.send_str(data)
             else:
                 await self.close()
 
-    async def send_str(self, msg: str):
-        await self.upstream_buffer.put(msg)
+    async def send(self, msg: str, tp: aiohttp.WSMsgType):
+        await self.upstream_buffer.put((msg, tp))
 
     async def close(self):
         if self.upstream_buffer_task:
@@ -136,6 +144,7 @@ class WebSocketProxy(Request):
 
 
 async def web_handler(request):
+    session = Session()
     content_type = request.headers.get('Content-Type', "")
     if re.match('multipart/form-data', content_type):
         body = request.content
@@ -144,9 +153,9 @@ async def web_handler(request):
     path = re.sub(r'^/?v(\d+)/', '/', request.path)
     try:
         if re.match('multipart/form-data', content_type):
-            req = RawRequest(request.method, path, body, content_type=content_type)
+            req = RawRequest(session, request.method, path, body, content_type=content_type)
         else:
-            req = Request(request.method, path, body)
+            req = Request(session, request.method, path, body)
         resp = await req.afetch()
     except BackendClientError:
         rtn = web.Response(body="Service Unavailable",
@@ -181,6 +190,7 @@ def proxy(args):
     app = web.Application()
 
     app.router.add_route("GET", r'/stream/{path:.*$}', websocket_handler)
+    app.router.add_route("GET", r'/wsproxy/{path:.*$}', websocket_handler)
     app.router.add_route('*', r'/{path:.*$}', web_handler)
 
     web.run_app(app, host=args.bind, port=args.port)
