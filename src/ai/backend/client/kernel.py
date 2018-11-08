@@ -32,12 +32,12 @@ class BaseKernel(BaseFunction):
 
     @classmethod
     def _get_or_create(cls, lang: str,
-                       tag: str = None,
                        client_token: str = None,
                        mounts: Iterable[str] = None,
                        envs: Mapping[str, str] = None,
                        resources: Mapping[str, int] = None,
-                       exec_timeout: int = 0) -> str:
+                       exec_timeout: int = 0,
+                       tag: str = None) -> str:
         if client_token:
             assert 4 <= len(client_token) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
