@@ -376,20 +376,20 @@ class WebSocketResponse:
             raise aiohttp.ServerDisconnectedError('server disconnected')
         await self.ws.send_bytes(data)
 
-    async def recv_str(self) -> str:
+    async def receive_str(self) -> str:
         if self.ws.closed:
             raise aiohttp.ServerDisconnectedError('server disconnected')
-        return await self.ws.recv_str()
+        return await self.ws.receive_str()
 
-    async def recv_json(self) -> Any:
+    async def receive_json(self) -> Any:
         if self.ws.closed:
             raise aiohttp.ServerDisconnectedError('server disconnected')
-        return await self.ws.recv_json()
+        return await self.ws.receive_json()
 
-    async def recv_bytes(self) -> bytes:
+    async def receive_bytes(self) -> bytes:
         if self.ws.closed:
             raise aiohttp.ServerDisconnectedError('server disconnected')
-        return await self.ws.recv_bytes()
+        return await self.ws.receive_bytes()
 
 
 class StreamPty(WebSocketResponse):

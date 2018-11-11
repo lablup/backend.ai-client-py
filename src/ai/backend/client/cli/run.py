@@ -1,10 +1,12 @@
 from argparse import Namespace
 import asyncio
 import getpass
+import json
 from pathlib import Path
 import sys
 import traceback
 
+import aiohttp
 from humanize import naturalsize
 from tabulate import tabulate
 
@@ -18,11 +20,13 @@ from .pretty import print_info, print_wait, print_done, print_fail
 
 async def exec_loop(kernel, mode, code, *, opts=None,
                     vprint_wait=print_wait, vprint_done=print_done):
-    print('stream-execute starting')
     stream = await kernel.stream_execute(code, mode=mode, opts=opts)
-    print('stream-execute connected')
     async for result in stream:
-        print(result)
+        if result.type == aiohttp.WSMsgType.TEXT:
+            result = json.loads(result.data)
+        else:
+            # future extension
+            continue
         for rec in result['console']:
             if rec[0] == 'stdout':
                 print(rec[1], end='', file=sys.stdout)
