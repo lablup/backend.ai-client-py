@@ -62,6 +62,12 @@ async def exec_loop(kernel, mode, code, *, opts=None,
             pass
 
 
+async def exec_terminal(kernel, *,
+                        vprint_wait=print_wait, vprint_done=print_done):
+    # stream = await kernel.stream_pty()
+    raise NotImplementedError
+
+
 def _noop(*args, **kwargs):
     pass
 
@@ -152,10 +158,14 @@ def run(args):
                         'build': build_cmd,
                         'exec': exec_cmd,
                     }
-                    await exec_loop(kernel, 'batch', '',
-                                    opts=opts,
-                                    vprint_wait=vprint_wait,
-                                    vprint_done=vprint_done)
+                    if not args.terminal:
+                        await exec_loop(kernel, 'batch', '',
+                                        opts=opts,
+                                        vprint_wait=vprint_wait,
+                                        vprint_done=vprint_done)
+                if args.terminal:
+                    await exec_terminal(kernel)
+                    return
                 if args.code:
                     await exec_loop(kernel, 'query', args.code,
                                     vprint_wait=vprint_wait,
@@ -199,6 +209,8 @@ run.add_argument('--build', metavar='CMD',
                  help='Custom shell command for building the given files')
 run.add_argument('--exec', metavar='CMD',
                  help='Custom shell command for executing the given files')
+run.add_argument('--terminal', action='store_true', default=False,
+                 help='Connect to the terminal-type kernel.')
 run.add_argument('--basedir', metavar='PATH', type=Path, default=None,
                  help='Base directory path of uploaded files.  '
                       'All uploaded files must reside inside this directory.')
