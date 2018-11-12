@@ -27,7 +27,7 @@ async def exec_loop(kernel, mode, code, *, opts=None,
         else:
             # future extension
             continue
-        for rec in result['console']:
+        for rec in result.get('console', []):
             if rec[0] == 'stdout':
                 print(rec[1], end='', file=sys.stdout)
             elif rec[0] == 'stderr':
