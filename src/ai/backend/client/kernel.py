@@ -54,9 +54,11 @@ class BaseKernel(BaseFunction):
             'config': {
                 'mounts': mounts,
                 'environ': envs,
-                'instanceMemory': resources.get('ram', None),
+                'instanceMemory': resources.get('mem', None) or \
+                                  resources.get('ram', None),  # legacy
                 'instanceCores': resources.get('cpu', None),
                 'instanceGPUs': resources.get('gpu', None),
+                'instanceTPUs': resources.get('tpu', None),
             },
         })
         data = resp.json()

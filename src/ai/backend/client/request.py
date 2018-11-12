@@ -143,9 +143,8 @@ class BaseRequest:
 
     def build_url(self):
         base_url = self.config.endpoint.path.rstrip('/')
-        major_ver = self.config.version.split('.', 1)[0]
         query_path = self.path.lstrip('/') if len(self.path) > 0 else ''
-        path = '{0}/{1}/{2}'.format(base_url, major_ver, query_path)
+        path = '{0}/{1}'.format(base_url, query_path)
         canonical_url = self.config.endpoint.with_path(path)
         return str(canonical_url)
 

@@ -13,11 +13,10 @@ def generate_signature(method, version, endpoint,
     if content_type.startswith('multipart/'):
         content = b''
     body_hash = hashlib.new(hash_type, content).hexdigest()
-    major_ver = version.split('.', 1)[0]
 
-    sign_str = '{}\n/{}/{}\n{}\nhost:{}\ncontent-type:{}\nx-backendai-version:{}\n{}'.format(  # noqa
+    sign_str = '{}\n/{}\n{}\nhost:{}\ncontent-type:{}\nx-backendai-version:{}\n{}'.format(  # noqa
         method.upper(),
-        major_ver, request_path,
+        request_path,
         date.isoformat(),
         hostname,
         content_type.lower(),

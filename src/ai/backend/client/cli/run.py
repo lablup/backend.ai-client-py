@@ -226,9 +226,9 @@ run.add_argument('-s', '--stats', action='store_true', default=False,
                  help='Show resource usage statistics after termination '
                       '(only works if "--rm" is given)')
 run.add_argument('-r', '--resources', metavar='KEY=VAL', type=str, action='append',
-                 help='Set computation resources (e.g: -r cpu=2 -r ram=256 -r gpu=1)'
-                      '. 1 slot of cpu/gpu represents.'
-                      ' 1 core. The unit of ram is MiB.')
+                 help='Set computation resources (e.g: -r cpu=2 -r mem=0.2 -r gpu=1)'
+                 '. 1 slot of cpu/gpu represents 1 core. The unit of mem(ory) '
+                 'is GiB.')
 run.add_argument('-q', '--quiet', action='store_true', default=False,
                  help='Hide execution details but show only the kernel outputs.')
 
