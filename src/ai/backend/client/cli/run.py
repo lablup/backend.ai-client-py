@@ -44,7 +44,7 @@ async def exec_loop(kernel, mode, code, *, opts=None,
                 print('{0}: {1}'.format(item['name'], item['url']))
         if result['status'] == 'clean-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Cleanup finished. (exit code = {0}'.format(exitCode))
+            vprint_done('Cleanup finished. (exit code = {0})'.format(exitCode))
         if result['status'] == 'build-finished':
             exitCode = result.get('exitCode')
             vprint_done('Build finished. (exit code = {0})'.format(exitCode))
@@ -142,8 +142,8 @@ def run(args):
             try:
                 if args.files:
                     vprint_wait('Uploading source files...')
-                    ret = await kernel.aupload(args.files, basedir=args.basedir,
-                                               show_progress=True)
+                    ret = await kernel.upload(args.files, basedir=args.basedir,
+                                              show_progress=True)
                     if ret.status // 100 != 2:
                         print_fail('Uploading source files failed!')
                         print('{0}: {1}\n{2}'.format(
