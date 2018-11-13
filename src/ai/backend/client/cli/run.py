@@ -20,6 +20,9 @@ from .pretty import print_info, print_wait, print_done, print_fail
 
 async def exec_loop(kernel, mode, code, *, opts=None,
                     vprint_wait=print_wait, vprint_done=print_done):
+    '''
+    Fully streamed asynchronous version of the execute loop.
+    '''
     stream = await kernel.stream_execute(code, mode=mode, opts=opts)
     async for result in stream:
         if result.type == aiohttp.WSMsgType.TEXT:
@@ -60,6 +63,57 @@ async def exec_loop(kernel, mode, code, *, opts=None,
             await stream.send_text(code)
         elif result['status'] == 'continued':
             pass
+
+
+def exec_loop_sync(kernel, mode, code, *, opts=None,
+                   vprint_wait=print_wait, vprint_done=print_done):
+    '''
+    Old synchronous polling version of the execute loop.
+    '''
+    opts = opts if opts else {}
+    run_id = None  # use server-assigned run ID
+    while True:
+        result = kernel.execute(run_id, code, mode=mode, opts=opts)
+        run_id = result['runId']
+        opts.clear()  # used only once
+        for rec in result['console']:
+            if rec[0] == 'stdout':
+                print(rec[1], end='', file=sys.stdout)
+            elif rec[0] == 'stderr':
+                print(rec[1], end='', file=sys.stderr)
+            else:
+                print('----- output record (type: {0}) -----'.format(rec[0]))
+                print(rec[1])
+                print('----- end of record -----')
+        sys.stdout.flush()
+        files = result.get('files', [])
+        if files:
+            print('--- generated files ---')
+            for item in files:
+                print('{0}: {1}'.format(item['name'], item['url']))
+        if result['status'] == 'clean-finished':
+            exitCode = result.get('exitCode')
+            vprint_done('Cleanup finished. (exit code = {0}'.format(exitCode))
+            mode = 'continue'
+            code = ''
+        if result['status'] == 'build-finished':
+            exitCode = result.get('exitCode')
+            vprint_done('Build finished. (exit code = {0})'.format(exitCode))
+            mode = 'continue'
+            code = ''
+        elif result['status'] == 'finished':
+            exitCode = result.get('exitCode')
+            vprint_done('Finished. (exit code = {0})'.format(exitCode))
+            break
+        elif result['status'] == 'waiting-input':
+            mode = 'input'
+            if result['options'].get('is_password', False):
+                code = getpass.getpass()
+            else:
+                code = input()
+        elif result['status'] == 'continued':
+            mode = 'continue'
+            code = ''
 
 
 async def exec_terminal(kernel, *,
@@ -121,7 +175,72 @@ def run(args):
         resources = {k: v for k, v in map(lambda s: s.split('=', 1), args.resources)}
     else:
         resources = None  # will use the defaults configured in the server
-    loop = asyncio.get_event_loop()
+
+    def _run_legacy():
+        with Session() as session:
+            try:
+                kernel = session.Kernel.get_or_create(
+                    args.lang, args.client_token,
+                    mounts=args.mount,
+                    envs=envs,
+                    resources=resources)
+            except BackendError as e:
+                print_fail(str(e))
+                return
+            if kernel.created:
+                vprint_done('Session {0} is ready.'.format(kernel.kernel_id))
+            else:
+                vprint_done('Reusing session {0}...'.format(kernel.kernel_id))
+
+            try:
+                if args.files:
+                    vprint_wait('Uploading source files...')
+                    ret = kernel.upload(args.files, basedir=args.basedir,
+                                        show_progress=True)
+                    if ret.status // 100 != 2:
+                        print_fail('Uploading source files failed!')
+                        print('{0}: {1}\n{2}'.format(
+                            ret.status, ret.reason, ret.text()))
+                        return
+                    vprint_done('Uploading done.')
+                    clean_cmd = args.clean if args.clean else '*'
+                    build_cmd = args.build if args.build else '*'
+                    exec_cmd = args.exec if args.exec else '*'
+                    opts = {
+                        'clean': clean_cmd,
+                        'build': build_cmd,
+                        'exec': exec_cmd,
+                    }
+                    if not args.terminal:
+                        exec_loop_sync(kernel, 'batch', '',
+                                       opts=opts,
+                                       vprint_wait=vprint_wait,
+                                       vprint_done=vprint_done)
+                if args.terminal:
+                    raise NotImplementedError('Terminal access is not supported in '
+                                              'the legacy synchronous mode.')
+                if args.code:
+                    exec_loop_sync(kernel, 'query', args.code,
+                                   vprint_wait=vprint_wait,
+                                   vprint_done=vprint_done)
+            except BackendError as e:
+                print_fail(str(e))
+                sys.exit(1)
+            except Exception:
+                print_fail('Execution failed!')
+                traceback.print_exc()
+                sys.exit(1)
+            finally:
+                if args.rm:
+                    vprint_wait('Cleaning up the session...')
+                    ret = kernel.destroy()
+                    vprint_done('Cleaned up the session.')
+                    if args.stats:
+                        stats = ret.get('stats', None) if ret else None
+                        if stats:
+                            print(_format_stats(stats))
+                        else:
+                            print('Statistics is not available.')
 
     async def _run():
         async with AsyncSession() as session:
@@ -188,10 +307,15 @@ def run(args):
                             print(_format_stats(stats))
                         else:
                             print('Statistics is not available.')
-    try:
-        loop.run_until_complete(_run())
-    finally:
-        loop.close()
+
+    loop = asyncio.get_event_loop()
+    if args.legacy:
+        _run_legacy()
+    else:
+        try:
+            loop.run_until_complete(_run())
+        finally:
+            loop.close()
 
 
 run.add_argument('lang',
@@ -231,6 +355,9 @@ run.add_argument('-r', '--resources', metavar='KEY=VAL', type=str, action='appen
                  'is GiB.')
 run.add_argument('-q', '--quiet', action='store_true', default=False,
                  help='Hide execution details but show only the kernel outputs.')
+run.add_argument('--legacy', action='store_true', default=False,
+                 help='Use the legacy synchronous polling mode to '
+                      'fetch console outputs.')
 
 
 @register_command(aliases=['rm', 'kill'])
