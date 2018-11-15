@@ -5,9 +5,8 @@ from ai.backend.client.session import Session
 
 def build_url(config, path):
     base_url = config.endpoint.path.rstrip('/')
-    major_ver = config.version.split('.', 1)[0]
     query_path = path.lstrip('/') if len(path) > 0 else ''
-    path = '{0}/{1}/{2}'.format(base_url, major_ver, query_path)
+    path = '{0}/{1}'.format(base_url, query_path)
     canonical_url = config.endpoint.with_path(path)
     return canonical_url
 
