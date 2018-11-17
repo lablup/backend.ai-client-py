@@ -1,8 +1,13 @@
-from argparse import Namespace
+from argparse import ArgumentTypeError, Namespace
 import asyncio
+import collections
+from decimal import Decimal
 import getpass
+import itertools
 import json
 from pathlib import Path
+import re
+import string
 import sys
 import traceback
 
@@ -16,6 +21,42 @@ from ..compat import token_hex
 from ..exceptions import BackendError
 from ..session import Session, AsyncSession
 from .pretty import print_info, print_wait, print_done, print_fail
+
+_rx_range_key = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+
+def drange(start: Decimal, stop: Decimal, num: int):
+    '''
+    A simplified version of numpy.linspace with default options
+    '''
+    delta = stop - start
+    step = delta / (num - 1)
+    yield from (start + step * Decimal(tick) for tick in range(0, num))
+
+
+def range_expr(arg):
+    '''
+    Accepts a range expression which generates a range of values for a variable.
+
+    Linear space range: "linspace:1,2,10" (start, stop, num) as in numpy.linspace
+    Pythonic range: "range:1,10,2" (start, stop[, step]) as in Python's range
+    Case range: "case:a,b,c" (comma-separated strings)
+    '''
+    key, value = arg.split('=', maxsplit=1)
+    assert _rx_range_key.match(key), 'The key must be a valid slug string.'
+    try:
+        if value.startswith('case:'):
+            return key, value[5:].split(',')
+        elif value.startswith('linspace:'):
+            start, stop, num = value[9:].split(',')
+            return key, tuple(drange(Decimal(start), Decimal(stop), int(num)))
+        elif value.startswith('range:'):
+            range_args = map(int, value[6:].split(','))
+            return key, tuple(range(*range_args))
+        else:
+            raise ArgumentTypeError('Unrecognized range expression type')
+    except ValueError as e:
+        raise ArgumentTypeError(str(e))
 
 
 async def exec_loop(kernel, mode, code, *, opts=None,
@@ -175,6 +216,57 @@ def run(args):
         resources = {k: v for k, v in map(lambda s: s.split('=', 1), args.resources)}
     else:
         resources = None  # will use the defaults configured in the server
+
+    if args.env_range is None: args.env_range = []      # noqa
+    if args.build_range is None: args.build_range = []  # noqa
+    if args.exec_range is None: args.exec_range = []    # noqa
+
+    env_ranges = {v: r for v, r in args.env_range}
+    build_ranges = {v: r for v, r in args.build_range}
+    exec_ranges = {v: r for v, r in args.exec_range}
+
+    env_var_maps = [dict(zip(env_ranges.keys(), values))
+                    for values in itertools.product(*env_ranges.values())]
+    build_var_maps = [dict(zip(build_ranges.keys(), values))
+                      for values in itertools.product(*build_ranges.values())]
+    exec_var_maps = [dict(zip(exec_ranges.keys(), values))
+                     for values in itertools.product(*exec_ranges.values())]
+    case_set = collections.OrderedDict()
+    vmaps_product = itertools.product(env_var_maps, build_var_maps, exec_var_maps)
+    build_template = string.Template(args.build)
+    exec_template = string.Template(args.exec)
+    env_templates = {k: string.Template(v) for k, v in envs.items()}
+    for env_vmap, build_vmap, exec_vmap in vmaps_product:
+        interpolated_envs = tuple((k, vt.substitute(env_vmap))
+                                  for k, vt in env_templates.items())
+        if args.build:
+            interpolated_build = build_template.substitute(build_vmap)
+        else:
+            interpolated_build = '*'
+        if args.exec:
+            interpolated_exec = exec_template.substitute(exec_vmap)
+        else:
+            interpolated_exec = '*'
+        case_set[(interpolated_envs, interpolated_build, interpolated_exec)] = 1
+
+    if not args.quiet:
+        vprint_info('Parallel sessions for the following combinations:')
+        for case in case_set.keys():
+            pretty_env = ' '.join('{}={}'.format(item[0], item[1])
+                                                 for item in case[0])
+            print('env = {!r}, build = {!r}, exec = {!r}'
+                  .format(pretty_env, case[1], case[2]))
+
+    if len(case_set) > 1:
+        if args.legacy:
+            raise RuntimeError('Multi-case parallel execution is not supported '
+                               'in the legacy mode')
+        if args.max_parallel <= 0:
+            raise RuntimeError('The number maximum parallel sessions must be '
+                               'a positive integer.')
+
+    # TODO: Work in progress!
+    return
 
     def _run_legacy():
         with Session() as session:
@@ -344,6 +436,17 @@ run.add_argument('--rm', action='store_true', default=False,
 run.add_argument('-e', '--env', metavar='KEY=VAL', type=str, action='append',
                  help='Environment variable '
                       '(may appear multiple times)')
+run.add_argument('--env-range', metavar='RANGE_EXPR', action='append',
+                 type=range_expr,
+                 help='Range expression for environment variable.')
+run.add_argument('--build-range', metavar='RANGE_EXPR', action='append',
+                 type=range_expr,
+                 help='Range expression for execution arguments.')
+run.add_argument('--exec-range', metavar='RANGE_EXPR', action='append',
+                 type=range_expr,
+                 help='Range expression for execution arguments.')
+run.add_argument('--max-parallel', metavar='NUM', type=int, default=2,
+                 help='The maximum number of parallel sessions.')
 run.add_argument('-m', '--mount', type=str, action='append',
                  help='User-owned virtual folder names to mount')
 run.add_argument('-s', '--stats', action='store_true', default=False,
