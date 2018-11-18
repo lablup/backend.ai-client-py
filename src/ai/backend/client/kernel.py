@@ -308,7 +308,7 @@ class BaseKernel(BaseFunction):
         await ws.send_json({
             'code': code,
             'mode': mode,
-            'opts': opts,
+            'options': opts,
         })
         return StreamExecute(self.kernel_id, ws)
 
