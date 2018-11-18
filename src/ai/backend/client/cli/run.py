@@ -59,7 +59,7 @@ def range_expr(arg):
         raise ArgumentTypeError(str(e))
 
 
-async def exec_loop(idx, kernel, mode, code, *, opts=None,
+async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
                     vprint_wait=print_wait, vprint_done=print_done):
     '''
     Fully streamed asynchronous version of the execute loop.
@@ -73,28 +73,33 @@ async def exec_loop(idx, kernel, mode, code, *, opts=None,
             continue
         for rec in result.get('console', []):
             if rec[0] == 'stdout':
-                print(rec[1], end='', file=sys.stdout)
+                print(rec[1], end='', file=stdout)
             elif rec[0] == 'stderr':
-                print(rec[1], end='', file=sys.stderr)
+                print(rec[1], end='', file=stderr)
             else:
-                print('----- output record (type: {0}) -----'.format(rec[0]))
-                print(rec[1])
-                print('----- end of record -----')
-        sys.stdout.flush()
+                print('----- output record (type: {0}) -----'.format(rec[0]),
+                      file=stdout)
+                print(rec[1], file=stdout)
+                print('----- end of record -----', file=stdout)
+        stdout.flush()
         files = result.get('files', [])
         if files:
-            print('--- generated files ---')
+            print('--- generated files ---', file=stdout)
             for item in files:
-                print('{0}: {1}'.format(item['name'], item['url']))
+                print('{0}: {1}'.format(item['name'], item['url']), file=stdout)
+            print('--- end of generated files ---', file=stdout)
         if result['status'] == 'clean-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Cleanup finished. (exit code = {0})'.format(exitCode))
+            vprint_done('Cleanup finished. (exit code = {0})'.format(exitCode),
+                        file=stdout)
         if result['status'] == 'build-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Build finished. (exit code = {0})'.format(exitCode))
+            vprint_done('Build finished. (exit code = {0})'.format(exitCode),
+                        file=stdout)
         elif result['status'] == 'finished':
             exitCode = result.get('exitCode')
-            vprint_done('Finished. (exit code = {0})'.format(exitCode))
+            vprint_done('Finished. (exit code = {0})'.format(exitCode),
+                        file=stdout)
             break
         elif result['status'] == 'waiting-input':
             if result['options'].get('is_password', False):
@@ -106,7 +111,7 @@ async def exec_loop(idx, kernel, mode, code, *, opts=None,
             pass
 
 
-def exec_loop_sync(idx, kernel, mode, code, *, opts=None,
+def exec_loop_sync(stdout, stderr, kernel, mode, code, *, opts=None,
                    vprint_wait=print_wait, vprint_done=print_done):
     '''
     Old synchronous polling version of the execute loop.
@@ -119,32 +124,37 @@ def exec_loop_sync(idx, kernel, mode, code, *, opts=None,
         opts.clear()  # used only once
         for rec in result['console']:
             if rec[0] == 'stdout':
-                print(rec[1], end='', file=sys.stdout)
+                print(rec[1], end='', file=stdout)
             elif rec[0] == 'stderr':
-                print(rec[1], end='', file=sys.stderr)
+                print(rec[1], end='', file=stderr)
             else:
-                print('----- output record (type: {0}) -----'.format(rec[0]))
-                print(rec[1])
-                print('----- end of record -----')
-        sys.stdout.flush()
+                print('----- output record (type: {0}) -----'.format(rec[0]),
+                      file=stdout)
+                print(rec[1], file=stdout)
+                print('----- end of record -----', file=stdout)
+        stdout.flush()
         files = result.get('files', [])
         if files:
-            print('--- generated files ---')
+            print('--- generated files ---', file=stdout)
             for item in files:
-                print('{0}: {1}'.format(item['name'], item['url']))
+                print('{0}: {1}'.format(item['name'], item['url']), file=stdout)
+            print('--- end of generated files ---', file=stdout)
         if result['status'] == 'clean-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Cleanup finished. (exit code = {0}'.format(exitCode))
+            vprint_done('Cleanup finished. (exit code = {0}'.format(exitCode),
+                        file=stdout)
             mode = 'continue'
             code = ''
         if result['status'] == 'build-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Build finished. (exit code = {0})'.format(exitCode))
+            vprint_done('Build finished. (exit code = {0})'.format(exitCode),
+                        file=stdout)
             mode = 'continue'
             code = ''
         elif result['status'] == 'finished':
             exitCode = result.get('exitCode')
-            vprint_done('Finished. (exit code = {0})'.format(exitCode))
+            vprint_done('Finished. (exit code = {0})'.format(exitCode),
+                        file=stdout)
             break
         elif result['status'] == 'waiting-input':
             mode = 'input'
@@ -297,7 +307,7 @@ def run(args):
                     'exec': exec_cmd,
                 }
                 if not args.terminal:
-                    exec_loop_sync(idx, kernel, 'batch', '',
+                    exec_loop_sync(sys.stdout, sys.stderr, kernel, 'batch', '',
                                    opts=opts,
                                    vprint_wait=vprint_wait,
                                    vprint_done=vprint_done)
@@ -305,9 +315,10 @@ def run(args):
                 raise NotImplementedError('Terminal access is not supported in '
                                           'the legacy synchronous mode.')
             if args.code:
-                exec_loop_sync(idx, kernel, 'query', args.code,
+                exec_loop_sync(sys.stdout, sys.stderr, kernel, 'query', args.code,
                                vprint_wait=vprint_wait,
                                vprint_done=vprint_done)
+            vprint_done('[{0}] Execution finished.'.format(idx))
         except BackendError as e:
             print_fail('[{0}] {1}'.format(idx, e))
             sys.exit(1)
@@ -329,7 +340,8 @@ def run(args):
                         print('[{0}] Statistics is not available.'.format(idx))
 
     async def _run(session, args, idx, client_token, envs,
-                   clean_cmd, build_cmd, exec_cmd):
+                   clean_cmd, build_cmd, exec_cmd,
+                   is_multi=False):
         try:
             kernel = await session.Kernel.get_or_create(
                 args.lang, client_token,
@@ -344,24 +356,37 @@ def run(args):
         else:
             vprint_done('[{0}] Reusing session {1}...'.format(idx, kernel.kernel_id))
 
+        if not is_multi:
+            stdout = sys.stdout
+            stderr = sys.stderr
+        else:
+            log_dir = Path.home() / '.cache' / 'backend.ai' / 'client-logs'
+            log_dir.mkdir(parents=True, exist_ok=True)
+            stdout = open(log_dir / '{0}.stdout.log'.format(client_token),
+                          'w', encoding='utf-8')
+            stderr = open(log_dir / '{0}.stderr.log'.format(client_token),
+                          'w', encoding='utf-8')
+
         try:
             if args.files:
-                vprint_wait('[{0}] Uploading source files...'.format(idx))
+                if not is_multi:
+                    vprint_wait('[{0}] Uploading source files...'.format(idx))
                 ret = await kernel.upload(args.files, basedir=args.basedir,
-                                          show_progress=True)
+                                          show_progress=not is_multi)
                 if ret.status // 100 != 2:
                     print_fail('[{0}] Uploading source files failed!'.format(idx))
                     print('{0}: {1}\n{2}'.format(
-                        ret.status, ret.reason, ret.text()))
-                    return
-                vprint_done('[{0}] Uploading done.'.format(idx))
+                        ret.status, ret.reason, ret.text()), file=stderr)
+                    raise RuntimeError('Uploading source files has failed!')
+                if not is_multi:
+                    vprint_done('[{0}] Uploading done.'.format(idx))
                 opts = {
                     'clean': clean_cmd,
                     'build': build_cmd,
                     'exec': exec_cmd,
                 }
                 if not args.terminal:
-                    await exec_loop(idx, kernel, 'batch', '',
+                    await exec_loop(stdout, stderr, kernel, 'batch', '',
                                     opts=opts,
                                     vprint_wait=vprint_wait,
                                     vprint_done=vprint_done)
@@ -369,9 +394,11 @@ def run(args):
                 await exec_terminal(kernel)
                 return
             if args.code:
-                await exec_loop(idx, kernel, 'query', args.code,
+                await exec_loop(stdout, stderr, kernel, 'query', args.code,
                                 vprint_wait=vprint_wait,
                                 vprint_done=vprint_done)
+            if is_multi:
+                vprint_done('[{0}] Execution finished.'.format(idx))
         except BackendError as e:
             print_fail('[{0}] {1}'.format(idx, e))
             raise RuntimeError(e)
@@ -380,8 +407,12 @@ def run(args):
             traceback.print_exc()
             raise RuntimeError(e)
         finally:
+            if is_multi:
+                stdout.close()
+                stderr.close()
             if args.rm:
-                vprint_wait('[{0}] Cleaning up the session...'.format(idx))
+                if not is_multi:
+                    vprint_wait('[{0}] Cleaning up the session...'.format(idx))
                 ret = await kernel.destroy()
                 vprint_done('[{0}] Cleaned up the session.'.format(idx))
                 if args.stats:
@@ -396,8 +427,6 @@ def run(args):
         client_token_prefix = token_hex(4)
         vprint_info('In the legacy mode, all cases will run serially!')
         with Session() as session:
-            # TODO: store execution logs into ~/.cache and show them
-            #       session by session using a new helper command
             for idx, case in enumerate(case_set.keys()):
                 client_token = '{0}-{1}'.format(client_token_prefix, idx)
                 envs = dict(case[0])
@@ -410,10 +439,12 @@ def run(args):
     async def _run_cases():
         loop = current_loop()
         client_token_prefix = token_hex(4)
+        is_multi = (len(case_set) > 1)
+        if is_multi:
+            print_info('Check out the stdout/stderr logs stored in '
+                       '~/.cache/backend.ai/client-logs directory.')
         async with AsyncSession() as session:
             tasks = []
-            # TODO: store execution logs into ~/.cache and show them
-            #       session by session using a new helper command
             # TODO: limit max-parallelism using aiojobs
             for idx, case in enumerate(case_set.keys()):
                 client_token = '{0}-{1}'.format(client_token_prefix, idx)
@@ -423,11 +454,13 @@ def run(args):
                 exec_cmd = case[2]
                 t = loop.create_task(
                     _run(session, args, idx, client_token, envs,
-                         clean_cmd, build_cmd, exec_cmd))
+                         clean_cmd, build_cmd, exec_cmd,
+                         is_multi=is_multi))
                 tasks.append(t)
             results = await asyncio.gather(*tasks, return_exceptions=True)
             if any(map(lambda r: isinstance(r, Exception), results)):
-                print_fail('There were failed cases!')
+                if is_multi:
+                    print_fail('There were failed cases!')
                 sys.exit(1)
 
     if args.legacy:
