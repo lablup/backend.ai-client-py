@@ -105,7 +105,7 @@ async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
             vprint_done(msg)
         elif result['status'] == 'finished':
             exitCode = result.get('exitCode')
-            msg = 'Finished. (exit code = {0})'.format(exitCode)
+            msg = 'Execution finished. (exit code = {0})'.format(exitCode)
             if is_multi:
                 print(msg, file=stderr)
             vprint_done(msg)
@@ -162,7 +162,7 @@ def exec_loop_sync(stdout, stderr, kernel, mode, code, *, opts=None,
             code = ''
         elif result['status'] == 'finished':
             exitCode = result.get('exitCode')
-            vprint_done('Finished. (exit code = {0})'.format(exitCode),
+            vprint_done('Execution finished. (exit code = {0})'.format(exitCode),
                         file=stdout)
             break
         elif result['status'] == 'waiting-input':
@@ -407,8 +407,6 @@ def run(args):
                 await exec_loop(stdout, stderr, kernel, 'query', args.code,
                                 vprint_done=indexed_vprint_done,
                                 is_multi=is_multi)
-            if is_multi:
-                vprint_done('[{0}] Execution finished.'.format(idx))
         except BackendError as e:
             print_fail('[{0}] {1}'.format(idx, e))
             raise RuntimeError(e)
