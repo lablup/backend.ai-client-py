@@ -60,7 +60,7 @@ def range_expr(arg):
 
 
 async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
-                    vprint_wait=print_wait, vprint_done=print_done):
+                    vprint_done=print_done, is_multi=False):
     '''
     Fully streamed asynchronous version of the execute loop.
     '''
@@ -90,16 +90,22 @@ async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
             print('--- end of generated files ---', file=stdout)
         if result['status'] == 'clean-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Cleanup finished. (exit code = {0})'.format(exitCode),
-                        file=stdout)
+            msg = 'Cleanup finished. (exit code = {0})'.format(exitCode)
+            if is_multi:
+                print(msg, file=stderr)
+            vprint_done(msg)
         if result['status'] == 'build-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Build finished. (exit code = {0})'.format(exitCode),
-                        file=stdout)
+            msg = 'Build finished. (exit code = {0})'.format(exitCode)
+            if is_multi:
+                print(msg, file=stderr)
+            vprint_done(msg)
         elif result['status'] == 'finished':
             exitCode = result.get('exitCode')
-            vprint_done('Finished. (exit code = {0})'.format(exitCode),
-                        file=stdout)
+            msg = 'Finished. (exit code = {0})'.format(exitCode)
+            if is_multi:
+                print(msg, file=stderr)
+            vprint_done(msg)
             break
         elif result['status'] == 'waiting-input':
             if result['options'].get('is_password', False):
@@ -112,7 +118,7 @@ async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
 
 
 def exec_loop_sync(stdout, stderr, kernel, mode, code, *, opts=None,
-                   vprint_wait=print_wait, vprint_done=print_done):
+                   vprint_done=print_done):
     '''
     Old synchronous polling version of the execute loop.
     '''
@@ -259,20 +265,19 @@ def run(args):
             interpolated_exec = '*'
         case_set[(interpolated_envs, interpolated_build, interpolated_exec)] = 1
 
-    if not args.quiet:
-        vprint_info('Parallel sessions for the following combinations:')
-        for case in case_set.keys():
-            pretty_env = ' '.join('{}={}'.format(item[0], item[1])
-                                                 for item in case[0])
-            print('env = {!r}, build = {!r}, exec = {!r}'
-                  .format(pretty_env, case[1], case[2]))
-
     if len(case_set) > 1:
         if args.max_parallel <= 0:
             raise RuntimeError('The number maximum parallel sessions must be '
                                'a positive integer.')
         if args.terminal:
             raise RuntimeError('You cannot run multiple cases with terminal.')
+        if not args.quiet:
+            vprint_info('Running multiple sessions for the following combinations:')
+            for case in case_set.keys():
+                pretty_env = ' '.join('{}={}'.format(item[0], item[1])
+                                      for item in case[0])
+                print('env = {!r}, build = {!r}, exec = {!r}'
+                      .format(pretty_env, case[1], case[2]))
 
     def _run_legacy(session, args, idx, client_token, envs,
                     clean_cmd, build_cmd, exec_cmd):
@@ -368,6 +373,8 @@ def run(args):
                           'w', encoding='utf-8')
 
         try:
+            def indexed_vprint_done(msg):
+                vprint_done('[{0}] '.format(idx) + msg)
             if args.files:
                 if not is_multi:
                     vprint_wait('[{0}] Uploading source files...'.format(idx))
@@ -388,15 +395,15 @@ def run(args):
                 if not args.terminal:
                     await exec_loop(stdout, stderr, kernel, 'batch', '',
                                     opts=opts,
-                                    vprint_wait=vprint_wait,
-                                    vprint_done=vprint_done)
+                                    vprint_done=indexed_vprint_done,
+                                    is_multi=is_multi)
             if args.terminal:
                 await exec_terminal(kernel)
                 return
             if args.code:
                 await exec_loop(stdout, stderr, kernel, 'query', args.code,
-                                vprint_wait=vprint_wait,
-                                vprint_done=vprint_done)
+                                vprint_done=indexed_vprint_done,
+                                is_multi=is_multi)
             if is_multi:
                 vprint_done('[{0}] Execution finished.'.format(idx))
         except BackendError as e:
