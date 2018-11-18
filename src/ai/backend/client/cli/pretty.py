@@ -35,7 +35,7 @@ def format_pretty(msg, status=PrintStatus.NONE, colored=True):
     else:
         raise ValueError
     clear = '\x1b[0m' if colored else ''
-    return indicator + msg + clear
+    return indicator + textwrap.indent(msg, '  ')[1:] + clear
 
 
 format_info = functools.partial(format_pretty, status=PrintStatus.NONE)
