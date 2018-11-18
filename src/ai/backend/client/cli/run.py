@@ -90,11 +90,11 @@ async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
             print('--- end of generated files ---', file=stdout)
         if result['status'] == 'clean-finished':
             exitCode = result.get('exitCode')
-            msg = 'Cleanup finished. (exit code = {0})'.format(exitCode)
+            msg = 'Clean finished. (exit code = {0})'.format(exitCode)
             if is_multi:
                 print(msg, file=stderr)
             vprint_done(msg)
-        if result['status'] == 'build-finished':
+        elif result['status'] == 'build-finished':
             exitCode = result.get('exitCode')
             msg = 'Build finished. (exit code = {0})'.format(exitCode)
             if is_multi:
@@ -147,11 +147,11 @@ def exec_loop_sync(stdout, stderr, kernel, mode, code, *, opts=None,
             print('--- end of generated files ---', file=stdout)
         if result['status'] == 'clean-finished':
             exitCode = result.get('exitCode')
-            vprint_done('Cleanup finished. (exit code = {0}'.format(exitCode),
+            vprint_done('Clean finished. (exit code = {0}'.format(exitCode),
                         file=stdout)
             mode = 'continue'
             code = ''
-        if result['status'] == 'build-finished':
+        elif result['status'] == 'build-finished':
             exitCode = result.get('exitCode')
             vprint_done('Build finished. (exit code = {0})'.format(exitCode),
                         file=stdout)
