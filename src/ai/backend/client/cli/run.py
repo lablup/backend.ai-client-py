@@ -20,7 +20,10 @@ from .admin.sessions import session
 from ..compat import current_loop, token_hex
 from ..exceptions import BackendError
 from ..session import Session, AsyncSession
-from .pretty import print_info, print_wait, print_done, print_fail
+from .pretty import (
+    print_info, print_wait, print_done, print_fail, print_warn,
+    format_info,
+)
 
 _rx_range_key = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
 
@@ -414,21 +417,29 @@ def run(args):
             traceback.print_exc()
             raise RuntimeError(e)
         finally:
-            if is_multi:
-                stdout.close()
-                stderr.close()
-            if args.rm:
-                if not is_multi:
-                    vprint_wait('[{0}] Cleaning up the session...'.format(idx))
-                ret = await kernel.destroy()
-                vprint_done('[{0}] Cleaned up the session.'.format(idx))
-                if args.stats:
-                    stats = ret.get('stats', None) if ret else None
-                    if stats:
-                        print('[{0}] Statistics:\n{1}'
-                              .format(idx, _format_stats(stats)))
-                    else:
-                        print('[{0}] Statistics is not available.'.format(idx))
+            try:
+                if args.rm:
+                    if not is_multi:
+                        vprint_wait('[{0}] Cleaning up the session...'.format(idx))
+                    ret = await kernel.destroy()
+                    vprint_done('[{0}] Cleaned up the session.'.format(idx))
+                    if args.stats:
+                        stats = ret.get('stats', None) if ret else None
+                        if stats:
+                            stats_str = _format_stats(stats)
+                            print(format_info('[{0}] Statistics:'.format(idx)) +
+                                  '\n{0}'.format(stats_str))
+                            if is_multi:
+                                print('Statistics:\n{0}'.format(stats_str),
+                                      file=stderr)
+                        else:
+                            print_warn('[{0}] Statistics: unavailable.'.format(idx))
+                            if is_multi:
+                                print('Statistics: unavailable.', file=stderr)
+            finally:
+                if is_multi:
+                    stdout.close()
+                    stderr.close()
 
     def _run_cases_legacy():
         client_token_prefix = token_hex(4)
