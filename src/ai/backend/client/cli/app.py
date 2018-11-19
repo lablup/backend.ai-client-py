@@ -115,7 +115,7 @@ def app(args):
     try:
         kernel_id = token_hex(16)
         kernel = session.Kernel.get_or_create(
-            f"app-{app}", kernel_id)
+            f"app-{app}", client_token=kernel_id)
         print_info(f"Started with session id - {kernel_id}")
     except BackendError as e:
         print_fail(str(e))
