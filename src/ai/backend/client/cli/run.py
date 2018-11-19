@@ -220,15 +220,19 @@ def run(args):
     if args.files and args.code:
         print('You can run only either source files or command-line '
               'code snippet.', file=sys.stderr)
-        return
+        sys.exit(1)
     if not args.files and not args.code:
         print('You should provide the command-line code snippet using '
               '"-c" option if run without files.', file=sys.stderr)
-        return
+        sys.exit(1)
     if args.resources:
         resources = {k: v for k, v in map(lambda s: s.split('=', 1), args.resources)}
     else:
         resources = None  # will use the defaults configured in the server
+
+    if not (1 <= args.cluster_size < 4):
+        print('Invalid cluster size.', file=sys.stderr)
+        sys.exit(1)
 
     if args.env_range is None: args.env_range = []      # noqa
     if args.build_range is None: args.build_range = []  # noqa
@@ -265,10 +269,12 @@ def run(args):
     is_multi = (len(case_set) > 1)
     if is_multi:
         if args.max_parallel <= 0:
-            raise RuntimeError('The number maximum parallel sessions must be '
-                               'a positive integer.')
+            print('The number maximum parallel sessions must be '
+                  'a positive integer.', file=sys.stderr)
+            sys.exit(1)
         if args.terminal:
-            raise RuntimeError('You cannot run multiple cases with terminal.')
+            print('You cannot run multiple cases with terminal.', file=sys.stderr)
+            sys.exit(1)
         if not args.quiet:
             vprint_info('Running multiple sessions for the following combinations:')
             for case in case_set.keys():
@@ -281,7 +287,9 @@ def run(args):
                     clean_cmd, build_cmd, exec_cmd):
         try:
             kernel = session.Kernel.get_or_create(
-                args.lang, session_id,
+                args.lang,
+                client_token=session_id,
+                cluster_size=args.cluster_size,
                 mounts=args.mount,
                 envs=envs,
                 resources=resources)
@@ -347,7 +355,9 @@ def run(args):
                    is_multi=False):
         try:
             kernel = await session.Kernel.get_or_create(
-                args.lang, session_id,
+                args.lang,
+                client_token=session_id,
+                cluster_size=args.cluster_size,
                 mounts=args.mount,
                 envs=envs,
                 resources=resources)
@@ -504,6 +514,8 @@ run.add_argument('files', nargs='*', type=Path,
 run.add_argument('-t', '--session-id', '--client-token', metavar='SESSID',
                  help='Specify a human-readable session ID or name. '
                       'If not set, a random hex string is used.')
+run.add_argument('--cluster-size', metavar='NUMBER', type=int, default=1,
+                 help='The size of cluster in number of containers.')
 run.add_argument('-c', '--code', metavar='CODE',
                  help='The code snippet as a single string')
 run.add_argument('--clean', metavar='CMD',

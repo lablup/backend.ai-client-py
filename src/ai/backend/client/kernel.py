@@ -32,11 +32,12 @@ class BaseKernel(BaseFunction):
     _session = None
 
     @classmethod
-    def _get_or_create(cls, lang: str,
+    def _get_or_create(cls, lang: str, *,
                        client_token: str = None,
                        mounts: Iterable[str] = None,
                        envs: Mapping[str, str] = None,
                        resources: Mapping[str, int] = None,
+                       cluster_size: int = 1,
                        exec_timeout: int = 0) -> str:
         if client_token:
             assert 4 <= len(client_token) <= 64, \
@@ -54,6 +55,7 @@ class BaseKernel(BaseFunction):
             'config': {
                 'mounts': mounts,
                 'environ': envs,
+                'clusterSize': cluster_size,
                 'instanceMemory': resources.get('mem', None) or \
                                   resources.get('ram', None),  # legacy
                 'instanceCores': resources.get('cpu', None),
@@ -306,7 +308,7 @@ class BaseKernel(BaseFunction):
         await ws.send_json({
             'code': code,
             'mode': mode,
-            'opts': opts,
+            'options': opts,
         })
         return StreamExecute(self.kernel_id, ws)
 
