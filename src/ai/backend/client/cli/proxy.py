@@ -17,9 +17,9 @@ from ..session import AsyncSession
 
 
 class RawRequest(Request):
-    __slots__ = ['config', 'method', 'path',
+    __slots__ = ('config', 'method', 'path',
                  'date', 'headers',
-                 'content_type', '_content', 'reporthook']
+                 'content_type', '_content', 'reporthook')
 
     def __init__(self, session: AsyncSession,
                  method: str = 'GET',
@@ -60,13 +60,12 @@ class RawRequest(Request):
 
 
 class WebSocketProxy(Request):
-    __slots__ = ['conn', 'down_conn', 'upstream_buffer', 'upstream_buffer_task']
+    __slots__ = ('conn', 'down_conn', 'upstream_buffer', 'upstream_buffer_task')
 
     def __init__(self, session: AsyncSession,
                  path: str,
                  ws: web.WebSocketResponse):
-        self._session = session
-        super().__init__(self._session, "GET", path)
+        super().__init__(session, "GET", path)
         self.upstream_buffer = asyncio.PriorityQueue()
         self.down_conn = ws
         self.conn = None
