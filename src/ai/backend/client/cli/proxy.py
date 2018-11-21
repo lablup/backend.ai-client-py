@@ -13,7 +13,7 @@ from ..config import APIConfig
 from .pretty import print_info
 from ..exceptions import BackendClientError
 from ..request import Request
-from ..session import Session
+from ..session import AsyncSession
 
 
 class RawRequest(Request):
@@ -21,7 +21,7 @@ class RawRequest(Request):
                  'date', 'headers',
                  'content_type', '_content', 'reporthook']
 
-    def __init__(self, session:Session,
+    def __init__(self, session: AsyncSession,
                  method: str = 'GET',
                  path: str = None,
                  content: Mapping = None,
@@ -29,7 +29,7 @@ class RawRequest(Request):
                  reporthook: Callable = None,
                  content_type: str = None) -> None:
         self.content_type = content_type
-        super(RawRequest, self).__init__(session, method, path, content, config, reporthook)
+        super().__init__(session, method, path, content, config, reporthook)
 
     @property
     def content(self) -> Union[aiohttp.StreamReader, bytes, bytearray, None]:
@@ -62,16 +62,19 @@ class RawRequest(Request):
 class WebSocketProxy(Request):
     __slots__ = ['conn', 'down_conn', 'upstream_buffer', 'upstream_buffer_task']
 
-    def __init__(self, path, ws: web.WebSocketResponse):
-        self._session = Session()
-        super(WebSocketProxy, self).__init__(self._session, "GET", path)
+    def __init__(self, session: AsyncSession,
+                 path: str,
+                 ws: web.WebSocketResponse):
+        self._session = session
+        super().__init__(self._session, "GET", path)
         self.upstream_buffer = asyncio.PriorityQueue()
         self.down_conn = ws
         self.conn = None
         self.upstream_buffer_task = None
+        self.downstream_task = None
 
     async def proxy(self):
-        asyncio.ensure_future(self.downstream())
+        self.downstream_task = asyncio.ensure_future(self.downstream())
         await self.upstream()
 
     async def upstream(self):
@@ -134,8 +137,12 @@ class WebSocketProxy(Request):
         await self.upstream_buffer.put((msg, tp))
 
     async def close(self):
-        if self.upstream_buffer_task:
+        if self.upstream_buffer_task and not self.upstream_buffer_task.done():
             self.upstream_buffer_task.cancel()
+            await self.upstream_buffer_task
+        if self.downstream_task and not self.downstream_task.done():
+            self.downstream_task.cancel()
+            await self.downstream_task
         if self.conn:
             await self.conn.close()
         if not self.down_conn.closed:
@@ -144,7 +151,7 @@ class WebSocketProxy(Request):
 
 
 async def web_handler(request):
-    session = Session()
+    session = request.app['client_session']
     content_type = request.headers.get('Content-Type', "")
     if re.match('multipart/form-data', content_type):
         body = request.content
@@ -153,32 +160,42 @@ async def web_handler(request):
     path = re.sub(r'^/?v(\d+)/', '/', request.path)
     try:
         if re.match('multipart/form-data', content_type):
-            req = RawRequest(session, request.method, path, body, content_type=content_type)
+            rqst = RawRequest(session, request.method, path,
+                              body, content_type=content_type)
         else:
-            req = Request(session, request.method, path, body)
-        resp = req.fetch()
+            rqst = Request(session, request.method, path, body)
+        resp = await rqst.afetch()
     except BackendClientError:
-        rtn = web.Response(body="Service Unavailable",
-                status=503,
-                reason="Service Unavailable")
-        return rtn
-    rtn = web.StreamResponse()
-    rtn.set_status(resp.status, resp.reason)
-    rtn.headers['Access-Control-Allow-Origin'] = '*'
+        resp = web.Response(
+            body="Service Unavailable",
+            status=503,
+            reason="Service Unavailable")
+        return resp
+    resp = web.StreamResponse()
+    resp.set_status(resp.status, resp.reason)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
 
-    await rtn.prepare(request)
-    await rtn.write(resp.content)
-    return rtn
+    await resp.prepare(request)
+    await resp.write(resp.content)
+    return resp
 
 
 async def websocket_handler(request):
     path = re.sub(r'^/?v(\d+)/', '/', request.path)
+    session = request.app['client_session']
     ws = web.WebSocketResponse(autoclose=False)
-    web_socket_proxy = WebSocketProxy(path, ws)
+    web_socket_proxy = WebSocketProxy(session, path, ws)
     await ws.prepare(request)
     await web_socket_proxy.proxy()
-
     return ws
+
+
+async def startup_proxy(app):
+    app['client_session'] = AsyncSession()
+
+
+async def cleanup_proxy(app):
+    await app['client_session'].close()
 
 
 @register_command
@@ -188,11 +205,12 @@ def proxy(args):
     Use this only for development and testing!
     """
     app = web.Application()
+    app.on_startup.append(startup_proxy)
+    app.on_cleanup.append(cleanup_proxy)
 
     app.router.add_route("GET", r'/stream/{path:.*$}', websocket_handler)
     app.router.add_route("GET", r'/wsproxy/{path:.*$}', websocket_handler)
     app.router.add_route('*', r'/{path:.*$}', web_handler)
-
     web.run_app(app, host=args.bind, port=args.port)
 
 
