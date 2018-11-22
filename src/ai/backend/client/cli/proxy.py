@@ -1,77 +1,29 @@
 import asyncio
 import re
-from datetime import datetime
-from typing import Any, Callable, Mapping, Sequence, Union
+import sys
 
 import aiohttp
 from aiohttp import web
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
-from dateutil.tz import tzutc
 
 from . import register_command
-from ..config import APIConfig
 from .pretty import print_info, print_fail
-from ..exceptions import BackendClientError
+from ..exceptions import BackendAPIError, BackendClientError
 from ..request import Request, StreamingResponse
 from ..session import AsyncSession
 
 
-class RawRequest(Request):
-    __slots__ = ('config', 'method', 'path',
-                 'date', 'headers',
-                 'content_type', '_content', 'reporthook')
-
-    def __init__(self, session: AsyncSession,
-                 method: str = 'GET',
-                 path: str = None,
-                 content: Mapping = None,
-                 config: APIConfig = None,
-                 reporthook: Callable = None,
-                 content_type: str = None) -> None:
-        self.content_type = content_type
-        super().__init__(session, method, path, content, config, reporthook)
-
-    @property
-    def content(self) -> Union[aiohttp.StreamReader, bytes, bytearray, None]:
-        if(isinstance(self.content, aiohttp.StreamReader)):
-            return self._content
-        return Request.content.fget(self)
-
-    @content.setter
-    def content(self, value: Union[aiohttp.StreamReader,
-                                   bytes, bytearray,
-                                   Mapping[str, Any],
-                                   Sequence[Any],
-                                   None]):
-
-        if isinstance(value, aiohttp.StreamReader):
-            self._content = value
-            if 'Content-Length' in self.headers:
-                del self.headers['Content-Length']
-            self.headers['Content-Type'] = self.content_type
-            self.content_type = "multipart/form-data"
-        else:
-            Request.content.fset(self, value)
-
-    def pack_content(self):
-        if(isinstance(self.content, aiohttp.StreamReader)):
-            return self._content
-        super(RawRequest, self).pack_content(self)
-
-
-class WebSocketProxy(Request):
+class WebSocketProxy:
     __slots__ = (
         'up_conn', 'down_conn',
         'upstream_buffer', 'upstream_buffer_task',
         'downstream_task',
     )
 
-    def __init__(self, session: AsyncSession,
-                 path: str,
-                 ws: web.WebSocketResponse):
-        super().__init__(session, "GET", path)
-        self.up_conn = None
-        self.down_conn = ws
+    def __init__(self, up_conn: web.WebSocketResponse,
+                 down_conn: web.WebSocketResponse):
+        self.up_conn = up_conn
+        self.down_conn = down_conn
         self.upstream_buffer = asyncio.PriorityQueue()
         self.upstream_buffer_task = None
         self.downstream_task = None
@@ -95,26 +47,19 @@ class WebSocketProxy(Request):
             await self.close()
 
     async def downstream(self):
-        self.date = datetime.now(tzutc())
-        self.headers['Date'] = self.date.isoformat()
-        self._sign()
-        path = self.build_url()
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.ws_connect(path, headers=self.headers) as ws:
-                    self.up_conn = ws
-                    self.upstream_buffer_task = \
-                            asyncio.ensure_future(self.consume_upstream_buffer())
-                    print_info("websocket proxy started")
-                    async for msg in ws:
-                        if msg.type == aiohttp.WSMsgType.TEXT:
-                            await self.down_conn.send_str(msg.data)
-                        elif msg.type == aiohttp.WSMsgType.BINARY:
-                            await self.down_conn.send_bytes(msg.data)
-                        elif msg.type == aiohttp.WSMsgType.CLOSED:
-                            break
-                        elif msg.type == aiohttp.WSMsgType.ERROR:
-                            break
+            self.upstream_buffer_task = \
+                    asyncio.ensure_future(self.consume_upstream_buffer())
+            print_info("websocket proxy started")
+            async for msg in self.up_conn:
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    await self.down_conn.send_str(msg.data)
+                elif msg.type == aiohttp.WSMsgType.BINARY:
+                    await self.down_conn.send_bytes(msg.data)
+                elif msg.type == aiohttp.WSMsgType.CLOSED:
+                    break
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    break
         except ClientConnectorError:
             print_fail("websocket connection failed")
             await self.down_conn.close(code=503, message="Connection failed")
@@ -155,47 +100,80 @@ class WebSocketProxy(Request):
 
 async def web_handler(request):
     session = request.app['client_session']
-    content_type = request.headers.get('Content-Type', "")
+    path = re.sub(r'^/?v(\d+)/', '/', request.path)
     try:
-        if re.match('multipart/form-data', content_type):
-            body = request.content
-            api_rqst = RawRequest(session, request.method, request.path,
-                                  body, content_type=content_type)
-        else:
-            body = await request.read()
-            api_rqst = Request(session, request.method, request.path, body)
-        resp = await api_rqst.afetch()
+        # We treat all requests and responses as streaming universally
+        # to be a transparent proxy.
+        api_rqst = Request(
+            session, request.method, path, request.content,
+            content_type=request.content_type)
+        # Uploading request body happens at the entering of the block,
+        # and downloading response body happens in the read loop inside.
+        async with api_rqst.afetch() as up_resp:
+            down_resp = web.StreamResponse()
+            down_resp.set_status(up_resp.status, up_resp.reason)
+            down_resp.headers.update(up_resp.headers)
+            down_resp.headers['Access-Control-Allow-Origin'] = '*'
+            await down_resp.prepare(request)
+            while True:
+                chunk = await up_resp.aread(8192)
+                if not chunk:
+                    break
+                await down_resp.write(chunk)
+            return down_resp
+    except BackendAPIError as e:
+        return web.Response(body=e.data, status=e.status, reason=e.reason)
     except BackendClientError:
-        resp = web.Response(
+        return web.Response(
             body="The proxy target server is inaccessible.",
             status=502,
             reason="Bad Gateway")
-        return resp
-
-    down_resp = web.StreamResponse()
-    down_resp.set_status(resp.status, resp.reason)
-    down_resp.headers.update(resp.headers)
-    down_resp.headers['Access-Control-Allow-Origin'] = '*'
-    await down_resp.prepare(request)
-    if isinstance(resp, StreamingResponse):
-        while True:
-            chunk = await resp.read(8192)
-            if not chunk:
-                break
-            await down_resp.write(chunk)
-    else:
-        await down_resp.write(resp.content)
-    return down_resp
+    except asyncio.CancelledError:
+        return web.Response(
+            body="The proxy is being shut down.",
+            status=503,
+            reason="Service Unavailable")
+    except Exception as e:
+        print_fail('websocket_handler: Internal server error')
+        print(e, file=sys.stderr)
+        return web.Response(
+            body="Something has gone wrong.",
+            status=500,
+            reason="Internal Server Error")
 
 
 async def websocket_handler(request):
-    path = re.sub(r'^/?v(\d+)/', '/', request.path)
     session = request.app['client_session']
-    ws = web.WebSocketResponse(autoclose=False)
-    web_socket_proxy = WebSocketProxy(session, path, ws)
-    await ws.prepare(request)
-    await web_socket_proxy.proxy()
-    return ws
+    path = re.sub(r'^/?v(\d+)/', '/', request.path)
+    try:
+        api_rqst = Request(
+            session, request.method, path, request.content,
+            content_type=request.content_type)
+        _, up_conn = await api_rqst.connect_websocket()
+        down_conn = web.WebSocketResponse()
+        web_socket_proxy = WebSocketProxy(up_conn, down_conn)
+        await down_conn.prepare(request)
+        await web_socket_proxy.proxy()
+        return down_conn
+    except BackendAPIError as e:
+        return web.Response(body=e.data, status=e.status, reason=e.reason)
+    except BackendClientError:
+        return web.Response(
+            body="The proxy target server is inaccessible.",
+            status=502,
+            reason="Bad Gateway")
+    except asyncio.CancelledError:
+        return web.Response(
+            body="The proxy is being shut down.",
+            status=503,
+            reason="Service Unavailable")
+    except Exception as e:
+        print_fail('websocket_handler: Internal server error')
+        print(e, file=sys.stderr)
+        return web.Response(
+            body="Something has gone wrong.",
+            status=500,
+            reason="Internal Server Error")
 
 
 async def startup_proxy(app):

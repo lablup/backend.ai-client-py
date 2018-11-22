@@ -1,16 +1,21 @@
 import asyncio
 from collections import OrderedDict
+import contextlib
 from datetime import datetime
+import io
+import sys
 from typing import Any, Callable, Mapping, Sequence, Union
 
 import aiohttp
 import aiohttp.web
+import aiotools
 from async_timeout import timeout as _timeout
 from dateutil.tz import tzutc
 from multidict import CIMultiDict
 import json
 
 from .auth import generate_signature
+from .config import APIConfig
 from .exceptions import BackendClientError
 from .session import BaseSession, Session as SyncSession, AsyncSession
 
@@ -23,7 +28,8 @@ __all__ = [
 class BaseRequest:
 
     __slots__ = ['config', 'session', 'method', 'path',
-                 'date', 'headers', 'streaming',
+                 'date', 'headers',
+                 'streaming',
                  'content_type', '_content']
 
     _allowed_methods = frozenset([
@@ -34,7 +40,8 @@ class BaseRequest:
     def __init__(self, session: BaseSession,
                  method: str = 'GET',
                  path: str = None,
-                 content: Mapping = None,
+                 content: Mapping = None, *,
+                 content_type: str = None,
                  streaming: bool = False,
                  reporthook: Callable = None) -> None:
         '''
@@ -61,6 +68,7 @@ class BaseRequest:
             ('User-Agent', self.config.user_agent),
             ('X-BackendAI-Version', self.config.version),
         ])
+        self.content_type = content_type
         self.content = content if content is not None else b''
         self.reporthook = reporthook
 
@@ -71,56 +79,20 @@ class BaseRequest:
         Private codes should NOT use this as it incurs duplicate
         encoding/decoding.
         '''
-        if self._content is None:
-            raise ValueError('content is not set.')
-        if self.content_type == 'application/octet-stream':
-            return self._content
-        elif self.content_type == 'application/json':
-            return json.loads(self._content.decode('utf-8'),
-                              object_pairs_hook=OrderedDict)
-        elif self.content_type == 'text/plain':
-            return self._content.decode('utf-8')
-        elif self.content_type == 'multipart/form-data':
-            return self._content
-        else:
-            raise RuntimeError('should not reach here')  # pragma: no cover
+        return self._content
 
     @content.setter
     def content(self, value: Union[bytes, bytearray,
                                    Mapping[str, Any],
                                    Sequence[Any],
-                                   None]):
+                                   aiohttp.StreamReader,
+                                   io.IOBase]):
         '''
         Sets the content of the request.
         Depending on the type of content, it automatically sets appropriate
         headers such as content-type and content-length.
         '''
-        if isinstance(value, (bytes, bytearray)):
-            self.content_type = 'application/octet-stream'
-            self._content = value
-            self.headers['Content-Type'] = self.content_type
-            self.headers['Content-Length'] = str(len(self._content))
-        elif isinstance(value, str):
-            self.content_type = 'text/plain'
-            self._content = value.encode('utf-8')
-            self.headers['Content-Type'] = self.content_type
-            self.headers['Content-Length'] = str(len(self._content))
-        elif isinstance(value, (dict, OrderedDict)):
-            self.content_type = 'application/json'
-            self._content = json.dumps(value).encode('utf-8')
-            self.headers['Content-Type'] = self.content_type
-            self.headers['Content-Length'] = str(len(self._content))
-        elif isinstance(value, (list, tuple)):
-            self.content_type = 'multipart/form-data'
-            self._content = value
-            # Let the http client library decide the header values.
-            # (e.g., message boundaries)
-            if 'Content-Length' in self.headers:
-                del self.headers['Content-Length']
-            if 'Content-Type' in self.headers:
-                del self.headers['Content-Type']
-        else:
-            raise TypeError('Unsupported content value type.')
+        self._content = value
 
     def _sign(self, access_key=None, secret_key=None, hash_type=None):
         '''
@@ -135,9 +107,15 @@ class BaseRequest:
             secret_key = self.config.secret_key
         if hash_type is None:
             hash_type = self.config.hash_type
+        if self.config.version >= 'v4.20181215':
+            # new APIs don't use payload to calculate signatures
+            payload = b''
+        else:
+            # assuming that the content object provides bytes serialization
+            payload = bytes(self._content)
         hdrs, _ = generate_signature(
             self.method, self.config.version, self.config.endpoint,
-            self.date, self.path, self.content_type, self._content,
+            self.date, self.path, self.content_type, payload,
             access_key, secret_key, hash_type)
         self.headers.update(hdrs)
 
@@ -151,13 +129,27 @@ class BaseRequest:
 
     # TODO: attach rate-limit information
 
-    def fetch(self, *args, loop=None, **kwargs):
+    def fetch(self, *args, **kwargs):
         '''
         Sends the request to the server.
         '''
         assert isinstance(self.session, SyncSession)
-        return self.session.worker_thread.execute(self.afetch(*args, **kwargs))
+        execute = self.session.worker_thread.execute
 
+        @contextlib.contextmanager
+        def afetch_wrapper():
+            afetch_ctx = execute(self.afetch(*args, **kwargs))
+            resp = execute(afetch_ctx.__aenter__())
+            try:
+                yield resp
+            except:
+                execute(afetch_ctx.__aexit__(*sys.exc_info))
+            else:
+                execute(afetch_ctx.__aexit__(None, None, None))
+
+        return self.afetch_wrapper(*args, **kwargs)
+
+    @aiotools.actxmgr
     async def afetch(self, *, timeout=None):
         '''
         Sends the request to the server.
@@ -167,6 +159,7 @@ class BaseRequest:
         assert self.method in self._allowed_methods
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
+        self.headers['Content-Type'] = self.content_type
         try:
             self._sign()
             async with _timeout(timeout):
@@ -177,20 +170,21 @@ class BaseRequest:
                     data=self.pack_content(),
                     headers=self.headers)
                 async with rqst_ctx as resp:
-                    if self.streaming:
-                        return StreamingResponse(
-                            self.session,
-                            resp,
-                            stream=resp.content,
-                            content_type=resp.content_type)
-                    else:
-                        body = await resp.read()
-                        return Response(
-                            self.session,
-                            resp,
-                            body=body,
-                            content_type=resp.content_type,
-                            charset=resp.charset)
+                    yield resp
+                    #if self.streaming:
+                    #    return StreamingResponse(
+                    #        self.session,
+                    #        resp,
+                    #        stream=resp.content,
+                    #        content_type=resp.content_type)
+                    #else:
+                    #    body = await resp.read()
+                    #    return Response(
+                    #        self.session,
+                    #        resp,
+                    #        body=body,
+                    #        content_type=resp.content_type,
+                    #        charset=resp.charset)
         except (asyncio.CancelledError, asyncio.TimeoutError):
             # These exceptions must be bubbled up.
             raise
@@ -238,6 +232,42 @@ class BaseRequest:
 
 class Request(BaseRequest):
     pass
+
+
+class StreamingRequest(Request):
+    __slots__ = ('config', 'method', 'path',
+                 'date', 'headers',
+                 'content_type', '_content', 'reporthook')
+
+    def __init__(self, session: AsyncSession,
+                 method: str = 'GET',
+                 path: str = None,
+                 content: Mapping = None,
+                 **kwargs) -> None:
+        super().__init__(session, method, path, content, **kwargs)
+
+    @property
+    def content(self) -> Union[aiohttp.StreamReader, bytes, bytearray, None]:
+        if isinstance(self.content, aiohttp.StreamReader):
+            return self._content
+        return Request.content.fget(self)
+
+    @content.setter
+    def content(self, value: Union[aiohttp.StreamReader,
+                                   bytes, bytearray,
+                                   Mapping[str, Any],
+                                   Sequence[Any],
+                                   None]):
+
+        if isinstance(value, aiohttp.StreamReader):
+            self._content = value
+        else:
+            Request.content.fset(self, value)
+
+    #def pack_content(self):
+    #    if isinstance(self.content, aiohttp.StreamReader):
+    #        return self._content
+    #    super().pack_content()
 
 
 class BaseResponse:

@@ -39,7 +39,7 @@ class APIConfig:
 
     DEFAULTS = {
         'endpoint': 'https://api.backend.ai',
-        'version': 'v2.20170315',
+        'version': 'v4.20181215',
         'hash_type': 'sha256',
         'vfolder_mounts': [],
     }
