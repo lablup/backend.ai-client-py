@@ -94,11 +94,11 @@ def test_build_correct_url(mock_request_params):
 
     mock_request_params['path'] = '/function'
     rqst = Request(**mock_request_params)
-    assert rqst.build_url() == canonical_url
+    assert rqst._build_url() == canonical_url
 
     mock_request_params['path'] = 'function'
     rqst = Request(**mock_request_params)
-    assert rqst.build_url() == canonical_url
+    assert rqst._build_url() == canonical_url
 
 
 def test_fetch_invalid_method(mock_request_params):

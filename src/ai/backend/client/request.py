@@ -21,6 +21,9 @@ __all__ = [
 ]
 
 
+'''
+The type alias for the set of allowed types for request content.
+'''
 RequestContent = Union[
     bytes, bytearray, str,
     aiohttp.StreamReader,
@@ -29,12 +32,24 @@ RequestContent = Union[
 ]
 
 
+'''
+A struct that represents an attached file to the API request.
+
+:param str filename: The name of file to store. It may include paths
+                     and the server will create parent directories
+                     if required.
+
+:param Any stream: A file-like object that allows stream-reading bytes.
+
+:param str content_type: The content type for the stream.  For arbitrary
+                         binary data, use "application/octet-stream".
+'''
 AttachedFile = namedtuple('AttachedFile', 'filename stream content_type')
 
 
 class FetchContextManager:
     '''
-    The wrapper for Request.fetch() for both sync/async sessions.
+    The wrapper for :func:`Request.fetch` for both sync/async sessions.
     '''
 
     def __init__(self, session, rqst_ctx):
@@ -87,14 +102,16 @@ class Request:
         '''
         Initialize an API request.
 
-        :param Session session: The session object where this request is executed on.
+        :param BaseSession session: The session where this request is executed on.
 
         :param str path: The query path. When performing requests, the version number
                          prefix will be automatically perpended if required.
 
-        :param Mapping content: The API query body which will be encoded as JSON.
+        :param RequestContent content: The API query body which will be encoded as
+                                       JSON.
 
-        :param bool streaming: Make the response to be StreamingResponse.
+        :param str content_type: Explicitly set the content type.  See also
+                                 :func:`Request.set_content`.
         '''
         self.session = session
         self.config = session.config
@@ -112,7 +129,7 @@ class Request:
         self.reporthook = reporthook
 
     @property
-    def content(self) -> Union[bytes, bytearray, None]:
+    def content(self) -> RequestContent:
         '''
         Retrieves the content in the original form.
         Private codes should NOT use this as it incurs duplicate
@@ -141,9 +158,15 @@ class Request:
                              else guessed_content_type)
 
     def set_json(self, value: object):
+        '''
+        A shortcut for set_content() with JSON objects.
+        '''
         self.set_content(json.dumps(value), content_type='application/json')
 
     def attach_files(self, files: Sequence[AttachedFile]):
+        '''
+        Attach a list of files represented as AttachedFile.
+        '''
         assert not self._content, 'content must be empty to attach files.'
         self.content_type = 'multipart/form-data'
         self._attached_files = files
@@ -186,7 +209,7 @@ class Request:
         else:
             return self._content
 
-    def build_url(self):
+    def _build_url(self):
         base_url = self.config.endpoint.path.rstrip('/')
         query_path = self.path.lstrip('/') if len(self.path) > 0 else ''
         path = '{0}/{1}'.format(base_url, query_path)
@@ -210,7 +233,7 @@ class Request:
         self._sign()
         rqst_ctx = self.session.aiohttp_session.request(
             self.method,
-            self.build_url(),
+            self._build_url(),
             data=self._pack_content(),
             headers=self.headers)
         return FetchContextManager(self.session, rqst_ctx)
@@ -228,7 +251,7 @@ class Request:
         try:
             self._sign()
             client = self.session.aiohttp_session
-            ws = await client.ws_connect(self.build_url(), headers=self.headers)
+            ws = await client.ws_connect(self._build_url(), headers=self.headers)
             return client, ws
         except (asyncio.CancelledError, asyncio.TimeoutError):
             # These exceptions must be bubbled up.
@@ -245,8 +268,8 @@ class Response:
 
     The response objects are meant to be created by the SDK, not the callers.
 
-    text(), json() methods return the resolved content directly with plain
-    synchronous Session while they return the coroutines with AsyncSession.
+    :func:`text`, :func:`json` methods return the resolved content directly with
+    plain synchronous Session while they return the coroutines with AsyncSession.
     '''
 
     __slots__ = (
