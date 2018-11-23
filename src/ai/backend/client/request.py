@@ -1,16 +1,12 @@
 import asyncio
 from collections import OrderedDict, namedtuple
-import contextlib
 from datetime import datetime
 import functools
 import io
-import sys
-from typing import Any, Callable, Mapping, Union
+from typing import Any, Callable, Mapping, Sequence, Union
 
 import aiohttp
 import aiohttp.web
-import aiotools
-from async_timeout import timeout as _timeout
 from dateutil.tz import tzutc
 from multidict import CIMultiDict
 import json
@@ -34,6 +30,35 @@ RequestContent = Union[
 
 
 AttachedFile = namedtuple('AttachedFile', 'filename stream content_type')
+
+
+class FetchContextManager:
+    '''
+    The wrapper for Request.fetch() for both sync/async sessions.
+    '''
+
+    def __init__(self, session, rqst_ctx):
+        self.session = session
+        self.rqst_ctx = rqst_ctx
+
+    def __enter__(self):
+        assert isinstance(self.session, SyncSession)
+        return self.session.worker_thread.execute(self.__aenter__())
+
+    async def __aenter__(self):
+        try:
+            raw_resp = await self.rqst_ctx.__aenter__()
+            return Response(self.session, raw_resp)
+        except aiohttp.ClientError as e:
+            msg = 'Request to the API endpoint has failed.\n' \
+                  'Check your network connection and/or the server status.'
+            raise BackendClientError(msg) from e
+
+    def __exit__(self, *args):
+        return self.session.worker_thread.execute(self.__aexit__(*args))
+
+    async def __aexit__(self, *args):
+        return await self.rqst_ctx.__aexit__(*args)
 
 
 class Request:
@@ -118,11 +143,9 @@ class Request:
     def set_json(self, value: object):
         self.set_content(json.dumps(value), content_type='application/json')
 
-    def attach_files(self, files):
+    def attach_files(self, files: Sequence[AttachedFile]):
         assert not self._content, 'content must be empty to attach files.'
         self.content_type = 'multipart/form-data'
-        for f in files:
-            assert isinstance(f, AttachedFile)
         self._attached_files = files
 
     def _sign(self, access_key=None, secret_key=None, hash_type=None):
@@ -175,53 +198,22 @@ class Request:
     def fetch(self, *args, **kwargs):
         '''
         Sends the request to the server.
-        '''
-        assert isinstance(self.session, SyncSession)
-        execute = self.session.worker_thread.execute
 
-        @contextlib.contextmanager
-        def afetch_wrapper():
-            afetch_ctx = self.afetch(*args, **kwargs)
-            resp = execute(afetch_ctx.__aenter__())
-            try:
-                yield resp
-            except:
-                execute(afetch_ctx.__aexit__(*sys.exc_info()))
-            else:
-                execute(afetch_ctx.__aexit__(None, None, None))
-
-        return afetch_wrapper(*args, **kwargs)
-
-    @aiotools.actxmgr
-    async def afetch(self, *, timeout=None):
-        '''
-        Sends the request to the server.
-
-        This method is a coroutine.
+        You may use this method either with plain synchronous Session or
+        AsyncSession.
         '''
         assert self.method in self._allowed_methods
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
         if self.content_type is not None:
             self.headers['Content-Type'] = self.content_type
-        try:
-            self._sign()
-            async with _timeout(timeout):
-                client = self.session.aiohttp_session
-                rqst_ctx = client.request(
-                    self.method,
-                    self.build_url(),
-                    data=self._pack_content(),
-                    headers=self.headers)
-                async with rqst_ctx as raw_resp:
-                    yield Response(self.session, raw_resp)
-        except (asyncio.CancelledError, asyncio.TimeoutError):
-            # These exceptions must be bubbled up.
-            raise
-        except aiohttp.ClientError as e:
-            msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.'
-            raise BackendClientError(msg) from e
+        self._sign()
+        rqst_ctx = self.session.aiohttp_session.request(
+            self.method,
+            self.build_url(),
+            data=self._pack_content(),
+            headers=self.headers)
+        return FetchContextManager(self.session, rqst_ctx)
 
     async def connect_websocket(self):
         '''
