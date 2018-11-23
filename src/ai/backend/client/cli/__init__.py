@@ -37,7 +37,7 @@ def register_command(*args, **kwargs):
 
         @functools.wraps(handler)
         def wrapped(args):
-            handler(args)
+            return handler(args)
 
         doc_summary = handler.__doc__.split('\n\n')[0]
         inner_parser = subparsers.add_parser(

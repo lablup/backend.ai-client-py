@@ -9,7 +9,7 @@ from aiohttp.client_exceptions import ClientResponseError, ClientConnectorError
 from . import register_command
 from .pretty import print_info, print_fail
 from ..exceptions import BackendAPIError, BackendClientError
-from ..request import Request, StreamingResponse
+from ..request import Request
 from ..session import AsyncSession
 
 
@@ -17,19 +17,17 @@ class WebSocketProxy:
     __slots__ = (
         'up_conn', 'down_conn',
         'upstream_buffer', 'upstream_buffer_task',
-        'downstream_task',
     )
 
     def __init__(self, up_conn: web.WebSocketResponse,
                  down_conn: web.WebSocketResponse):
         self.up_conn = up_conn
         self.down_conn = down_conn
-        self.upstream_buffer = asyncio.PriorityQueue()
+        self.upstream_buffer = asyncio.Queue()
         self.upstream_buffer_task = None
-        self.downstream_task = None
 
     async def proxy(self):
-        self.downstream_task = asyncio.ensure_future(self.downstream())
+        asyncio.ensure_future(self.downstream())
         await self.upstream()
 
     async def upstream(self):
@@ -43,8 +41,12 @@ class WebSocketProxy:
                     break
                 elif msg.type == aiohttp.WSMsgType.CLOSE:
                     break
+            # here, client gracefully disconnected
+        except asyncio.CancelledError:
+            # here, client forcibly disconnected
+            pass
         finally:
-            await self.close()
+            await self.close_downstream()
 
     async def downstream(self):
         try:
@@ -60,42 +62,44 @@ class WebSocketProxy:
                     break
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     break
+            # here, server gracefully disconnected
         except ClientConnectorError:
             print_fail("websocket connection failed")
             await self.down_conn.close(code=503, message="Connection failed")
         except ClientResponseError as e:
             print_fail("websocket response error - {}".format(e.status))
             await self.down_conn.close(code=e.status, message=e.message)
+        except asyncio.CancelledError:
+            pass
         finally:
-            await self.close()
+            await self.close_upstream()
             print_info("websocket proxy termianted")
 
     async def consume_upstream_buffer(self):
-        while True:
-            data, tp = await self.upstream_buffer.get()
-            if self.up_conn:
-                if tp == aiohttp.WSMsgType.BINARY:
-                    await self.up_conn.send_bytes(data)
-                elif tp == aiohttp.WSMsgType.TEXT:
-                    await self.up_conn.send_str(data)
-            else:
-                await self.close()
+        try:
+            while True:
+                data, tp = await self.upstream_buffer.get()
+                if not self.up_conn.closed:
+                    if tp == aiohttp.WSMsgType.BINARY:
+                        await self.up_conn.send_bytes(data)
+                    elif tp == aiohttp.WSMsgType.TEXT:
+                        await self.up_conn.send_str(data)
+        except asyncio.CancelledError:
+            pass
 
     async def send(self, msg: str, tp: aiohttp.WSMsgType):
         await self.upstream_buffer.put((msg, tp))
 
-    async def close(self):
-        if self.upstream_buffer_task and not self.upstream_buffer_task.done():
-            self.upstream_buffer_task.cancel()
-            await self.upstream_buffer_task
-        if self.downstream_task and not self.downstream_task.done():
-            self.downstream_task.cancel()
-            await self.downstream_task
-        if self.up_conn:
-            await self.up_conn.close()
+    async def close_downstream(self):
         if not self.down_conn.closed:
             await self.down_conn.close()
-        self.up_conn = None
+
+    async def close_upstream(self):
+        if not self.upstream_buffer_task.done():
+            self.upstream_buffer_task.cancel()
+            await self.upstream_buffer_task
+        if not self.up_conn.closed:
+            await self.up_conn.close()
 
 
 async def web_handler(request):
@@ -109,7 +113,7 @@ async def web_handler(request):
             content_type=request.content_type)
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
-        async with api_rqst.afetch() as up_resp:
+        async with api_rqst.fetch() as up_resp:
             down_resp = web.StreamResponse()
             down_resp.set_status(up_resp.status, up_resp.reason)
             down_resp.headers.update(up_resp.headers)
@@ -151,8 +155,8 @@ async def websocket_handler(request):
             content_type=request.content_type)
         _, up_conn = await api_rqst.connect_websocket()
         down_conn = web.WebSocketResponse()
-        web_socket_proxy = WebSocketProxy(up_conn, down_conn)
         await down_conn.prepare(request)
+        web_socket_proxy = WebSocketProxy(up_conn, down_conn)
         await web_socket_proxy.proxy()
         return down_conn
     except BackendAPIError as e:
@@ -197,6 +201,8 @@ def proxy(args):
     app.router.add_route("GET", r'/stream/{path:.*$}', websocket_handler)
     app.router.add_route("GET", r'/wsproxy/{path:.*$}', websocket_handler)
     app.router.add_route('*', r'/{path:.*$}', web_handler)
+    if getattr(args, 'testing', False):
+        return app
     web.run_app(app, host=args.bind, port=args.port)
 
 
