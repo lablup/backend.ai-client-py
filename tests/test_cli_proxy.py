@@ -75,9 +75,12 @@ def proxy_app(event_loop):
 
 
 @pytest.mark.asyncio
-async def test_proxy_web(monkeypatch, api_app, proxy_app, unused_tcp_port_factory):
+async def test_proxy_web(monkeypatch, example_keypair, api_app, proxy_app,
+                         unused_tcp_port_factory):
     api_port = unused_tcp_port_factory()
     api_url = 'http://127.0.0.1:{}'.format(api_port)
+    monkeypatch.setenv('BACKEND_ACCESS_KEY', example_keypair[0])
+    monkeypatch.setenv('BACKEND_SECRET_KEY', example_keypair[1])
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
     api_app, recv_queue = await api_app(api_port)
@@ -95,9 +98,12 @@ async def test_proxy_web(monkeypatch, api_app, proxy_app, unused_tcp_port_factor
 
 
 @pytest.mark.asyncio
-async def test_proxy_web_502(monkeypatch, proxy_app, unused_tcp_port_factory):
+async def test_proxy_web_502(monkeypatch, example_keypair, proxy_app,
+                             unused_tcp_port_factory):
     api_port = unused_tcp_port_factory()
     api_url = 'http://127.0.0.1:{}'.format(api_port)
+    monkeypatch.setenv('BACKEND_ACCESS_KEY', example_keypair[0])
+    monkeypatch.setenv('BACKEND_SECRET_KEY', example_keypair[1])
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
     # Skip creation of api_app; let the proxy use a non-existent server.
@@ -113,10 +119,12 @@ async def test_proxy_web_502(monkeypatch, proxy_app, unused_tcp_port_factory):
 
 
 @pytest.mark.asyncio
-async def test_proxy_websocket(monkeypatch, api_app, proxy_app,
+async def test_proxy_websocket(monkeypatch, example_keypair, api_app, proxy_app,
                                unused_tcp_port_factory):
     api_port = unused_tcp_port_factory()
     api_url = 'http://127.0.0.1:{}'.format(api_port)
+    monkeypatch.setenv('BACKEND_ACCESS_KEY', example_keypair[0])
+    monkeypatch.setenv('BACKEND_SECRET_KEY', example_keypair[1])
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
     api_app, recv_queue = await api_app(api_port)
