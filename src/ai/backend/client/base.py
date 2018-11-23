@@ -1,136 +1,55 @@
-from abc import abstractmethod
 import functools
-import inspect
-
-from .compat import Py36Object
-from .exceptions import BackendAPIError
 
 __all__ = (
+    'APIFunctionMeta',
     'BaseFunction',
-    'SyncFunctionMixin',
-    'AsyncFunctionMixin',
+    'api_function',
 )
 
 
-class BaseFunction(Py36Object):
+def _wrap_method(cls, orig_name, meth):
 
-    '''
-    Implements the request creation and response handling logic,
-    while delegating the process of request sending to the subclasses
-    via the generator protocol.
-    '''
-
-    @abstractmethod
-    def _call_base_method(self, meth):
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
-    def _call_base_clsmethod(cls, meth):
-        raise NotImplementedError
-
-    @staticmethod
-    def _handle_response(resp, meth_gen):
-        if resp.status // 100 != 2:
-            raise BackendAPIError(resp.status, resp.reason, resp.text())
-        try:
-            meth_gen.send(resp)
-        except StopIteration as e:
-            return e.value
+    @functools.wraps(meth)
+    def _method(*args, **kwargs):
+        assert cls.session is not None, \
+               'You must use API wrapper functions via a Session object.'
+        # We need to keep the original attributes so that they could be correctly
+        # bound to the class/instance at runtime.
+        func = getattr(cls, orig_name)
+        coro = func(*args, **kwargs)
+        if hasattr(cls.session, 'worker_thread'):
+            return cls.session.worker_thread.execute(coro)
         else:
-            raise RuntimeError('Invalid state')
+            return coro
 
-    @staticmethod
-    async def _handle_response_async(resp, meth_gen):
-        if resp.status // 100 != 2:
-            raise BackendAPIError(resp.status, resp.reason, await resp.text())
-        try:
-            meth_gen.send(resp)
-        except StopIteration as e:
-            return e.value
-        else:
-            raise RuntimeError('Invalid state')
+    return _method
 
 
-class SyncFunctionMixin:
+def api_function(meth):
     '''
-    Synchronous request sender using requests.
+    Mark the wrapped method as the API function method.
     '''
-
-    @staticmethod
-    def _make_request(gen):
-        rqst = next(gen)
-        fetch_ctx = rqst.fetch()
-        return fetch_ctx
-
-    @classmethod
-    def _call_base_clsmethod(cls, meth):
-        assert inspect.ismethod(meth)
-
-        @classmethod
-        @functools.wraps(meth)
-        def _caller(cls, *args, **kwargs):
-            assert cls._session is not None, \
-                   'You must use API wrapper functions via a Session object.'
-            gen = meth(*args, **kwargs)
-            fetch_ctx = cls._make_request(gen)
-            with fetch_ctx as resp:
-                return cls._handle_response(resp, gen)
-
-        return _caller
-
-    def _call_base_method(self, meth):
-        assert inspect.ismethod(meth)
-
-        @functools.wraps(meth)
-        def _caller(*args, **kwargs):
-            assert type(self)._session is not None, \
-                   'You must use API wrapper functions via a Session object.'
-            gen = meth(*args, **kwargs)
-            fetch_ctx = self._make_request(gen)
-            with fetch_ctx as resp:
-                return self._handle_response(resp, gen)
-
-        return _caller
+    setattr(meth, '_backend_api', True)
+    return meth
 
 
-class AsyncFunctionMixin:
+class APIFunctionMeta(type):
     '''
-    Asynchronous request sender using aiohttp.
+    Converts all methods marked with :func:`api_function` into
+    session-aware methods.
     '''
 
-    @staticmethod
-    async def _make_request(gen):
-        rqst = next(gen)
-        fetch_ctx = rqst.fetch()
-        return fetch_ctx
+    def __init__(cls, name, bases, attrs, **kwargs):
+        assert 'session' in attrs, \
+               'An API function class must define the session attribute.'
+        super().__init__(name, bases, attrs)
+        for attr_name, attr_value in attrs.items():
+            if hasattr(attr_value, '_backend_api'):
+                orig_name = '_orig_' + attr_name
+                setattr(cls, orig_name, attr_value)
+                wrapped = _wrap_method(cls, orig_name, attr_value)
+                setattr(cls, attr_name, wrapped)
 
-    @classmethod
-    def _call_base_clsmethod(cls, meth):
-        assert inspect.ismethod(meth)
 
-        @classmethod
-        @functools.wraps(meth)
-        async def _caller(cls, *args, **kwargs):
-            assert cls._session is not None, \
-                   'You must use API wrapper functions via a Session object.'
-            gen = meth(*args, **kwargs)
-            fetch_ctx = await cls._make_request(gen)
-            async with fetch_ctx as resp:
-                return await cls._handle_response_async(resp, gen)
-
-        return _caller
-
-    def _call_base_method(self, meth):
-        assert inspect.ismethod(meth)
-
-        @functools.wraps(meth)
-        async def _caller(*args, **kwargs):
-            assert type(self)._session is not None, \
-                   'You must use API wrapper functions via a Session object.'
-            gen = meth(*args, **kwargs)
-            fetch_ctx = await self._make_request(gen)
-            async with fetch_ctx as resp:
-                return await self._handle_response_async(resp, gen)
-
-        return _caller
+class BaseFunction(metaclass=APIFunctionMeta):
+    session = None

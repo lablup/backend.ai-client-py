@@ -9,18 +9,17 @@ import uuid
 import aiohttp.web
 from tqdm import tqdm
 
-from .base import BaseFunction, SyncFunctionMixin
+from .base import api_function
 from .exceptions import BackendClientError
-from .request import Request
+from .request import Request, AttachedFile
 from .cli.pretty import ProgressReportingReader
 
 __all__ = (
-    'BaseKernel',
     'Kernel',
 )
 
 
-class BaseKernel(BaseFunction):
+class Kernel:
 
     '''
     Implements the request creation and response handling logic,
@@ -28,15 +27,16 @@ class BaseKernel(BaseFunction):
     via the generator protocol.
     '''
 
-    _session = None
+    session = None
 
+    @api_function
     @classmethod
-    def _get_or_create(cls, lang: str,
-                       client_token: str = None,
-                       mounts: Iterable[str] = None,
-                       envs: Mapping[str, str] = None,
-                       resources: Mapping[str, int] = None,
-                       exec_timeout: int = 0) -> str:
+    async def get_or_create(cls, lang: str,
+                            client_token: str = None,
+                            mounts: Iterable[str] = None,
+                            envs: Mapping[str, str] = None,
+                            resources: Mapping[str, int] = None,
+                            exec_timeout: int = 0) -> str:
         if client_token:
             assert 4 <= len(client_token) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
@@ -46,8 +46,9 @@ class BaseKernel(BaseFunction):
             mounts = []
         if resources is None:
             resources = {}
-        mounts.extend(cls._session.config.vfolder_mounts)
-        resp = yield Request(cls._session, 'POST', '/kernel/create', {
+        mounts.extend(cls.session.config.vfolder_mounts)
+        rqst = Request(cls.session, 'POST', '/kernel/create')
+        rqst.set_json({
             'lang': lang,
             'clientSessionToken': client_token,
             'config': {
@@ -58,29 +59,100 @@ class BaseKernel(BaseFunction):
                 'instanceGPUs': resources.get('gpu', None),
             },
         })
-        data = resp.json()
-        o = cls(data['kernelId'])  # type: ignore
-        o.created = data.get('created', True)     # True is for legacy
-        return o
+        async with rqst.fetch() as resp:
+            data = await resp.ajson()
+            o = cls(data['kernelId'])  # type: ignore
+            o.created = data.get('created', True)     # True is for legacy
+            return o
 
-    def _destroy(self):
-        resp = yield Request(self._session,
-                             'DELETE', '/kernel/{}'.format(self.kernel_id))
-        if resp.status == 200:
-            return resp.json()
+    def __init__(self, kernel_id: str):
+        self.kernel_id = kernel_id
 
-    def _restart(self):
-        yield Request(self._session,
-                      'PATCH', '/kernel/{}'.format(self.kernel_id))
+    @api_function
+    async def destroy(self):
+        rqst = Request(self.session,
+                       'DELETE', '/kernel/{}'.format(self.kernel_id))
+        async with rqst.fetch() as resp:
+            if resp.status == 200:
+                return await resp.ajson()
 
-    def _interrupt(self):
-        yield Request(self._session,
-                      'POST', '/kernel/{}/interrupt'.format(self.kernel_id))
+    @api_function
+    async def restart(self):
+        rqst = Request(self.session,
+                       'PATCH', '/kernel/{}'.format(self.kernel_id))
+        async with rqst.fetch():
+            pass
 
-    def _complete(self, code: str, opts: dict = None):
+    @api_function
+    async def interrupt(self):
+        rqst = Request(self.session,
+                       'POST', '/kernel/{}/interrupt'.format(self.kernel_id))
+        async with rqst.fetch():
+            pass
+
+    @api_function
+    async def complete(self, code: str, opts: dict = None):
         opts = {} if opts is None else opts
-        rqst = Request(self._session,
-            'POST', '/kernel/{}/complete'.format(self.kernel_id), {
+        rqst = Request(self.session,
+            'POST', '/kernel/{}/complete'.format(self.kernel_id))
+        rqst.set_json({
+            'code': code,
+            'options': {
+                'row': int(opts.get('row', 0)),
+                'col': int(opts.get('col', 0)),
+                'line': opts.get('line', ''),
+                'post': opts.get('post', ''),
+            },
+        })
+        async with rqst.fetch() as resp:
+            return await resp.ajson()
+
+    @api_function
+    async def get_info(self):
+        rqst = Request(self.session,
+                       'GET', '/kernel/{}'.format(self.kernel_id))
+        async with rqst.fetch() as resp:
+            return await resp.ajson()
+
+    @api_function
+    async def get_logs(self):
+        rqst = Request(self.session,
+                       'GET', '/kernel/{}/logs'.format(self.kernel_id))
+        async with rqst.fetch() as resp:
+            return await resp.ajson()
+
+    @api_function
+    async def execute(self, run_id: str = None,
+                      code: str = None,
+                      mode: str = 'query',
+                      opts: dict = None):
+        opts = opts if opts is not None else {}
+        if mode in {'query', 'continue', 'input'}:
+            assert code is not None  # but maybe empty due to continuation
+            rqst = Request(self.session,
+                'POST', '/kernel/{}'.format(self.kernel_id))
+            rqst.set_json({
+                'mode': mode,
+                'code': code,
+                'runId': run_id,
+            })
+        elif mode == 'batch':
+            rqst = Request(self.session,
+                'POST', '/kernel/{}'.format(self.kernel_id))
+            rqst.set_json({
+                'mode': mode,
+                'code': code,
+                'runId': run_id,
+                'options': {
+                    'build': opts.get('build', None),
+                    'buildLog': bool(opts.get('buildLog', False)),
+                    'exec': opts.get('exec', None),
+                },
+            })
+        elif mode == 'complete':
+            rqst = Request(self.session,
+                'POST', '/kernel/{}/complete'.format(self.kernel_id))
+            rqst.set_json({
                 'code': code,
                 'options': {
                     'row': int(opts.get('row', 0)),
@@ -89,64 +161,16 @@ class BaseKernel(BaseFunction):
                     'post': opts.get('post', ''),
                 },
             })
-        resp = yield rqst
-        return resp.json()
-
-    def _get_info(self):
-        resp = yield Request(self._session,
-                             'GET', '/kernel/{}'.format(self.kernel_id))
-        return resp.json()
-
-    def _get_logs(self):
-        resp = yield Request(self._session,
-                             'GET', '/kernel/{}/logs'.format(self.kernel_id))
-        return resp.json()
-
-    def _execute(self, run_id: str = None,
-                 code: str = None,
-                 mode: str = 'query',
-                 opts: dict = None):
-        opts = {} if opts is None else opts
-        if mode in {'query', 'continue', 'input'}:
-            assert code is not None  # but maybe empty due to continuation
-            rqst = Request(self._session,
-                'POST', '/kernel/{}'.format(self.kernel_id), {
-                    'mode': mode,
-                    'code': code,
-                    'runId': run_id,
-                })
-        elif mode == 'batch':
-            rqst = Request(self._session,
-                'POST', '/kernel/{}'.format(self.kernel_id), {
-                    'mode': mode,
-                    'code': code,
-                    'runId': run_id,
-                    'options': {
-                        'build': opts.get('build', None),
-                        'buildLog': bool(opts.get('buildLog', False)),
-                        'exec': opts.get('exec', None),
-                    },
-                })
-        elif mode == 'complete':
-            rqst = Request(self._session,
-                'POST', '/kernel/{}/complete'.format(self.kernel_id), {
-                    'code': code,
-                    'options': {
-                        'row': int(opts.get('row', 0)),
-                        'col': int(opts.get('col', 0)),
-                        'line': opts.get('line', ''),
-                        'post': opts.get('post', ''),
-                    },
-                })
         else:
             raise BackendClientError('Invalid execution mode: {0}'.format(mode))
-        resp = yield rqst
-        return resp.json()['result']
+        async with rqst.fetch() as resp:
+            return (await resp.ajson())['result']
 
-    def _upload(self, files: Sequence[Union[str, Path]],
-               basedir: Union[str, Path] = None,
-               show_progress: bool = False):
-        fields = []
+    @api_function
+    async def upload(self, files: Sequence[Union[str, Path]],
+                     basedir: Union[str, Path] = None,
+                     show_progress: bool = False):
+        attachments = []
         base_path = (Path.cwd() if basedir is None
                      else Path(basedir).resolve())
         files = [Path(file).resolve() for file in files]
@@ -160,100 +184,81 @@ class BaseKernel(BaseFunction):
         with tqdm_obj:
             for file_path in files:
                 try:
-                    fields.append(aiohttp.web.FileField(
-                        'src',
+                    attachments.append(AttachedFile(
                         str(file_path.relative_to(base_path)),
                         ProgressReportingReader(str(file_path),
                                                 tqdm_instance=tqdm_obj),
                         'application/octet-stream',
-                        None
                     ))
                 except ValueError:
                     msg = 'File "{0}" is outside of the base directory "{1}".' \
                           .format(file_path, base_path)
                     raise ValueError(msg) from None
 
-            rqst = Request(self._session,
+            rqst = Request(self.session,
                            'POST', '/kernel/{}/upload'.format(self.kernel_id))
-            rqst.content = fields
-            resp = yield rqst
-        return resp
+            rqst.attach_files(attachments)
+            async with rqst.fetch() as resp:
+                return resp
 
-    def _download(self, files: Sequence[Union[str, Path]],
-                  show_progress: bool = False):
-        resp = yield Request(self._session,
-            'GET', '/kernel/{}/download'.format(self.kernel_id), {
-                'files': files,
-            })
-        chunk_size = 1 * 1024
-        tqdm_obj = tqdm(desc='Downloading files',
-                        unit='bytes', unit_scale=True,
-                        total=resp.stream_reader.total_bytes,
-                        disable=not show_progress)
-        with tqdm_obj as pbar:
-            fp = None
-            while True:
-                chunk = resp.read(chunk_size)
-                if not chunk:
-                    break
-                pbar.update(len(chunk))
-                # TODO: more elegant parsing of multipart response?
-                for part in chunk.split(b'\r\n'):
-                    if part.startswith(b'--'):
-                        if fp:
-                            fp.close()
-                            with tarfile.open(fp.name) as tarf:
-                                tarf.extractall()
-                            os.unlink(fp.name)
-                        fp = tempfile.NamedTemporaryFile(suffix='.tar', delete=False)
-                    elif part.startswith(b'Content-') or part == b'':
-                        continue
-                    else:
-                        fp.write(part)
-            if fp:
-                fp.close()
-                os.unlink(fp.name)
-        return resp
+    @api_function
+    async def download(self, files: Sequence[Union[str, Path]],
+                       show_progress: bool = False):
+        rqst = Request(self.session,
+                       'GET', '/kernel/{}/download'.format(self.kernel_id))
+        rqst.set_json({
+            'files': files,
+        })
+        async with rqst.fetch() as resp:
+            chunk_size = 1 * 1024
+            tqdm_obj = tqdm(desc='Downloading files',
+                            unit='bytes', unit_scale=True,
+                            total=resp.raw_response.stream_reader.total_bytes,
+                            disable=not show_progress)
+            with tqdm_obj as pbar:
+                fp = None
+                while True:
+                    chunk = await resp.aread(chunk_size)
+                    if not chunk:
+                        break
+                    pbar.update(len(chunk))
+                    # TODO: more elegant parsing of multipart response?
+                    for part in chunk.split(b'\r\n'):
+                        if part.startswith(b'--'):
+                            if fp:
+                                fp.close()
+                                with tarfile.open(fp.name) as tarf:
+                                    tarf.extractall()
+                                os.unlink(fp.name)
+                            fp = tempfile.NamedTemporaryFile(suffix='.tar',
+                                                             delete=False)
+                        elif part.startswith(b'Content-') or part == b'':
+                            continue
+                        else:
+                            fp.write(part)
+                if fp:
+                    fp.close()
+                    os.unlink(fp.name)
+            return resp
 
-    def _list_files(self, path: Union[str, Path] = '.'):
-        resp = yield Request(self._session,
+    @api_function
+    async def list_files(self, path: Union[str, Path] = '.'):
+        rqst = Request(self.session,
             'GET', '/kernel/{}/files'.format(self.kernel_id), {
                 'path': path,
             })
-        return resp.json()
+        async with rqst.fetch() as resp:
+            return await resp.ajson()
 
     # only supported in AsyncKernel
     async def stream_pty(self):
-        request = Request(self._session,
+        request = Request(self.session,
                           'GET', '/stream/kernel/{}/pty'.format(self.kernel_id))
         try:
             _, ws = await request.connect_websocket()
         except aiohttp.ClientResponseError as e:
             raise BackendClientError(e.code, e.message)
         return StreamPty(self.kernel_id, ws)
-
-    def __init__(self, kernel_id: str) -> None:
-        self.kernel_id = kernel_id
-        self.destroy   = self._call_base_method(self._destroy)
-        self.restart   = self._call_base_method(self._restart)
-        self.interrupt = self._call_base_method(self._interrupt)
-        self.complete  = self._call_base_method(self._complete)
-        self.get_info  = self._call_base_method(self._get_info)
-        self.get_logs  = self._call_base_method(self._get_logs)
-        self.execute   = self._call_base_method(self._execute)
-        self.upload    = self._call_base_method(self._upload)
-        self.download  = self._call_base_method(self._download)
-        self.list_files = self._call_base_method(self._list_files)
-
-    def __init_subclass__(cls):
-        cls.get_or_create = cls._call_base_clsmethod(cls._get_or_create)
-
-
-class Kernel(SyncFunctionMixin, BaseKernel):
-    '''
-    Deprecated! Use ai.backend.client.Session instead.
-    '''
-    pass
 
 
 class StreamPty:

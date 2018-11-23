@@ -9,10 +9,10 @@ import aiohttp
 import aiohttp.web
 from dateutil.tz import tzutc
 from multidict import CIMultiDict
-import json
+import json as modjson
 
 from .auth import generate_signature
-from .exceptions import BackendClientError
+from .exceptions import BackendClientError, BackendAPIError
 from .session import BaseSession, Session as SyncSession, AsyncSession
 
 __all__ = [
@@ -63,6 +63,9 @@ class FetchContextManager:
     async def __aenter__(self):
         try:
             raw_resp = await self.rqst_ctx.__aenter__()
+            if raw_resp.status // 100 != 2:
+                msg = await raw_resp.text()
+                raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
             return Response(self.session, raw_resp)
         except aiohttp.ClientError as e:
             msg = 'Request to the API endpoint has failed.\n' \
@@ -161,7 +164,7 @@ class Request:
         '''
         A shortcut for set_content() with JSON objects.
         '''
-        self.set_content(json.dumps(value), content_type='application/json')
+        self.set_content(modjson.dumps(value), content_type='application/json')
 
     def attach_files(self, files: Sequence[AttachedFile]):
         '''
@@ -296,11 +299,11 @@ class Response:
         return self._raw_response
 
     @property
-    def content_type(self):
+    def content_type(self) -> str:
         return self._raw_response.content_type
 
     @property
-    def content_length(self):
+    def content_length(self) -> int:
         return self._raw_response.content_length
 
     @property
@@ -313,12 +316,20 @@ class Response:
         else:
             return self._raw_response.text()
 
-    def json(self, loads=json.loads) -> Any:
+    async def atext(self) -> str:
+        return await self._raw_response.text()
+
+    def json(self, *, loads=modjson.loads) -> Any:
         loads = functools.partial(loads, object_pairs_hook=OrderedDict)
         if isinstance(self._session, SyncSession):
-            return loads(self.text())
+            return self._session.worker_thread.execute(
+                self._raw_response.json(loads=loads))
         else:
             return self._raw_response.json(loads=loads)
+
+    async def ajson(self, *, loads=modjson.loads) -> Any:
+        loads = functools.partial(loads, object_pairs_hook=OrderedDict)
+        return await self._raw_response.json(loads=loads)
 
     def read(self, n=-1) -> bytes:
         return self._session.worker_thread.execute(self.aread(n))

@@ -12,7 +12,7 @@ from ai.backend.client.session import Session
 def test_create_with_config(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = mocker.MagicMock(status=201,
-                                                      json=mock.MagicMock())
+                                                       json=mock.MagicMock())
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)
 
@@ -27,10 +27,10 @@ def test_create_with_config(mocker):
         k = session.Kernel.get_or_create('python')
         mock_req.assert_called_once_with(session,
                                          'POST', '/kernel/create', mocker.ANY)
-        assert str(k._session.config.endpoint) == 'https://localhost:9999'
-        assert k._session.config.user_agent == 'BAIClientTest'
-        assert k._session.config.access_key == '1234'
-        assert k._session.config.secret_key == 'asdf'
+        assert str(k.session.config.endpoint) == 'https://localhost:9999'
+        assert k.session.config.user_agent == 'BAIClientTest'
+        assert k.session.config.access_key == '1234'
+        assert k.session.config.secret_key == 'asdf'
 
 
 def test_deprecated_api():
@@ -41,7 +41,7 @@ def test_deprecated_api():
 def test_create_kernel_url(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = mocker.MagicMock(status=201,
-                                                      json=mock.MagicMock())
+                                                       json=mock.MagicMock())
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)
 
