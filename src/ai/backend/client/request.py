@@ -184,15 +184,9 @@ class Request:
             secret_key = self.config.secret_key
         if hash_type is None:
             hash_type = self.config.hash_type
-        if self.config.version >= 'v4.20181215':
-            # new APIs don't use payload to calculate signatures
-            payload = b''
-        else:
-            # assuming that the content object provides bytes serialization
-            payload = bytes(self._content)
         hdrs, _ = generate_signature(
             self.method, self.config.version, self.config.endpoint,
-            self.date, self.path, self.content_type, payload,
+            self.date, self.path, self.content_type, self._content,
             access_key, secret_key, hash_type)
         self.headers.update(hdrs)
 
