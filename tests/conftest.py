@@ -14,4 +14,9 @@ def defconfig():
 
 @pytest.fixture
 def dummy_endpoint(defconfig):
-    return str(defconfig.endpoint) + '/v2/'
+    return str(defconfig.endpoint) + '/'
+
+
+@pytest.fixture
+def dummy_endpoint_versioned(defconfig):
+    return str(defconfig.endpoint) + '/v4/'
