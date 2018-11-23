@@ -1,4 +1,3 @@
-from argparse import Namespace
 import asyncio
 import io
 import json

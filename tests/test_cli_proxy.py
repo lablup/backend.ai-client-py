@@ -1,5 +1,4 @@
 from argparse import Namespace
-import os
 
 import aiohttp
 from aiohttp import web
