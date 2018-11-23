@@ -30,9 +30,11 @@ class BaseVFolder(BaseFunction):
     @classmethod
     def _create(cls, name: str):
         assert _rx_slug.search(name) is not None
-        resp = yield Request(cls._session, 'POST', '/folders/', {
+        rqst = Request(cls._session, 'POST', '/folders/')
+        rqst.set_json({
             'name': name,
         })
+        resp = yield rqst
         return resp.json()
 
     @classmethod
@@ -178,17 +180,19 @@ class BaseVFolder(BaseFunction):
         self._session.worker_thread.execute(_stream_download())
 
     def _list_files(self, path: Union[str, Path] = '.'):
-        resp = yield Request(self._session,
-            'GET', '/folders/{}/files'.format(self.name), {
-                'path': path,
-            })
+        rqst = Request(self._session, 'GET', '/folders/{}/files'.format(self.name))
+        rqst.set_json({
+            'path': path,
+        })
+        resp = yield rqst
         return resp.json()
 
     def _invite(self, perm: str, emails: Sequence[str]):
-        resp = yield Request(self._session,
-            'POST', '/folders/{}/invite'.format(self.name), {
-                'perm': perm, 'user_ids': emails,
-            })
+        rqst = Request(self._session, 'POST', '/folders/{}/invite'.format(self.name))
+        rqst.set_json({
+            'perm': perm, 'user_ids': emails,
+        })
+        resp = yield rqst
         return resp.json()
 
     @classmethod
@@ -198,14 +202,16 @@ class BaseVFolder(BaseFunction):
 
     @classmethod
     def _accept_invitation(cls, inv_id: str, inv_ak: str):
-        resp = yield Request(cls._session, 'POST', '/folders/invitations/accept',
-                             {'inv_id': inv_id, 'inv_ak': inv_ak})
+        rqst = Request(cls._session, 'POST', '/folders/invitations/accept')
+        rqst.set_json({'inv_id': inv_id, 'inv_ak': inv_ak})
+        resp = yield rqst
         return resp.json()
 
     @classmethod
     def _delete_invitation(cls, inv_id: str):
-        resp = yield Request(cls._session, 'DELETE', '/folders/invitations/delete',
-                             {'inv_id': inv_id})
+        rqst = Request(cls._session, 'DELETE', '/folders/invitations/delete')
+        rqst.set_json({'inv_id': inv_id})
+        resp = yield rqst
         return resp.json()
 
     def __init__(self, name: str):

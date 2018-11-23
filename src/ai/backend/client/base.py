@@ -40,6 +40,17 @@ class BaseFunction(Py36Object):
         else:
             raise RuntimeError('Invalid state')
 
+    @staticmethod
+    async def _handle_response_async(resp, meth_gen):
+        if resp.status // 100 != 2:
+            raise BackendAPIError(resp.status, resp.reason, await resp.text())
+        try:
+            meth_gen.send(resp)
+        except StopIteration as e:
+            return e.value
+        else:
+            raise RuntimeError('Invalid state')
+
 
 class SyncFunctionMixin:
     '''
@@ -106,7 +117,7 @@ class AsyncFunctionMixin:
             gen = meth(*args, **kwargs)
             fetch_ctx = await cls._make_request(gen)
             async with fetch_ctx as resp:
-                return cls._handle_response(resp, gen)
+                return await cls._handle_response_async(resp, gen)
 
         return _caller
 
@@ -120,6 +131,6 @@ class AsyncFunctionMixin:
             gen = meth(*args, **kwargs)
             fetch_ctx = await self._make_request(gen)
             async with fetch_ctx as resp:
-                return self._handle_response(resp, gen)
+                return await self._handle_response_async(resp, gen)
 
         return _caller
