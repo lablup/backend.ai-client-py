@@ -33,14 +33,15 @@ class BaseAgent(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        vars = {
+        variables = {
             'status': status,
         }
-        resp = yield Request(cls._session,
-            'POST', '/admin/graphql', {
-                'query': q,
-                'variables': vars,
-            })
+        rqst = Request(cls._session, 'POST', '/admin/graphql')
+        rqst.set_json({
+            'query': q,
+            'variables': variables,
+        })
+        resp = yield rqst
         data = resp.json()
         return data['agents']
 

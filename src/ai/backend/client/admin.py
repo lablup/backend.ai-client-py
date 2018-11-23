@@ -20,9 +20,9 @@ class BaseAdmin(BaseFunction):
             'query': query,
             'variables': variables if variables else {},
         }
-        resp = yield Request(cls._session,
-                             'POST', '/admin/graphql',
-                             gql_query)
+        rqst = Request(cls._session, 'POST', '/admin/graphql')
+        rqst.set_json(gql_query)
+        resp = yield rqst
         return resp.json()
 
     def __init_subclass__(cls):

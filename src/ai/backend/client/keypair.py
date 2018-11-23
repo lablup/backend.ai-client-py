@@ -30,7 +30,7 @@ class BaseKeyPair(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        vars = {
+        variables = {
             'user_id': user_id,
             'input': {
                 'is_active': is_active,
@@ -40,10 +40,12 @@ class BaseKeyPair(BaseFunction):
                 'concurrency_limit': concurrency_limit,
             },
         }
-        resp = yield Request(cls._session, 'POST', '/admin/graphql', {
+        rqst = Request(cls._session, 'POST', '/admin/graphql')
+        rqst.set_json({
             'query': q,
-            'variables': vars,
+            'variables': variables,
         })
+        resp = yield rqst
         data = resp.json()
         return data['create_keypair']
 
@@ -63,14 +65,16 @@ class BaseKeyPair(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        vars = {
+        variables = {
             'user_id': user_id,
             'is_active': is_active,
         }
-        resp = yield Request(cls._session, 'POST', '/admin/graphql', {
+        rqst = Request(cls._session, 'POST', '/admin/graphql')
+        rqst.set_json({
             'query': q,
-            'variables': vars,
+            'variables': variables,
         })
+        resp = yield rqst
         data = resp.json()
         return data['keypairs']
 
