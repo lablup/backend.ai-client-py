@@ -49,8 +49,8 @@ class SyncFunctionMixin:
     @staticmethod
     def _make_request(gen):
         rqst = next(gen)
-        resp = rqst.fetch()
-        return resp
+        fetch_ctx = rqst.fetch()
+        return fetch_ctx
 
     @classmethod
     def _call_base_clsmethod(cls, meth):
@@ -62,8 +62,9 @@ class SyncFunctionMixin:
             assert cls._session is not None, \
                    'You must use API wrapper functions via a Session object.'
             gen = meth(*args, **kwargs)
-            resp = cls._make_request(gen)
-            return cls._handle_response(resp, gen)
+            fetch_ctx = cls._make_request(gen)
+            with fetch_ctx as resp:
+                return cls._handle_response(resp, gen)
 
         return _caller
 
@@ -75,8 +76,9 @@ class SyncFunctionMixin:
             assert type(self)._session is not None, \
                    'You must use API wrapper functions via a Session object.'
             gen = meth(*args, **kwargs)
-            resp = self._make_request(gen)
-            return self._handle_response(resp, gen)
+            fetch_ctx = self._make_request(gen)
+            with fetch_ctx as resp:
+                return self._handle_response(resp, gen)
 
         return _caller
 
@@ -89,8 +91,8 @@ class AsyncFunctionMixin:
     @staticmethod
     async def _make_request(gen):
         rqst = next(gen)
-        resp = await rqst.afetch()
-        return resp
+        fetch_ctx = rqst.fetch()
+        return fetch_ctx
 
     @classmethod
     def _call_base_clsmethod(cls, meth):
@@ -102,8 +104,9 @@ class AsyncFunctionMixin:
             assert cls._session is not None, \
                    'You must use API wrapper functions via a Session object.'
             gen = meth(*args, **kwargs)
-            resp = await cls._make_request(gen)
-            return cls._handle_response(resp, gen)
+            fetch_ctx = await cls._make_request(gen)
+            async with fetch_ctx as resp:
+                return cls._handle_response(resp, gen)
 
         return _caller
 
@@ -115,7 +118,8 @@ class AsyncFunctionMixin:
             assert type(self)._session is not None, \
                    'You must use API wrapper functions via a Session object.'
             gen = meth(*args, **kwargs)
-            resp = await self._make_request(gen)
-            return self._handle_response(resp, gen)
+            fetch_ctx = await self._make_request(gen)
+            async with fetch_ctx as resp:
+                return self._handle_response(resp, gen)
 
         return _caller
