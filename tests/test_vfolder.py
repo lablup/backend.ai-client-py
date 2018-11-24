@@ -18,7 +18,7 @@ def test_create_vfolder():
                 'id': 'fake-vfolder-id',
                 'name': 'fake-vfolder-name',
             }
-            m.post(build_url(session.config, '/folders/'), status=201,
+            m.post(build_url(session.config, '/folders'), status=201,
                    payload=payload)
             resp = session.VFolder.create('fake-vfolder-name')
             assert resp == payload
@@ -37,7 +37,7 @@ def test_list_vfolders():
                     'id': 'fake-vfolder2-id'
                 }
             ]
-            m.get(build_url(session.config, '/folders/'), status=200,
+            m.get(build_url(session.config, '/folders'), status=200,
                   payload=payload)
             resp = session.VFolder.list()
             assert resp == payload

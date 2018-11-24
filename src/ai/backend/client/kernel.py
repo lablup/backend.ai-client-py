@@ -170,7 +170,6 @@ class Kernel:
     async def upload(self, files: Sequence[Union[str, Path]],
                      basedir: Union[str, Path] = None,
                      show_progress: bool = False):
-        attachments = []
         base_path = (Path.cwd() if basedir is None
                      else Path(basedir).resolve())
         files = [Path(file).resolve() for file in files]
@@ -182,6 +181,7 @@ class Kernel:
                         total=total_size,
                         disable=not show_progress)
         with tqdm_obj:
+            attachments = []
             for file_path in files:
                 try:
                     attachments.append(AttachedFile(

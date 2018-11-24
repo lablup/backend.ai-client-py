@@ -62,7 +62,6 @@ class VFolder:
     async def upload(self, files: Sequence[Union[str, Path]],
                      basedir: Union[str, Path] = None,
                      show_progress: bool = False):
-        files = []
         base_path = (Path.cwd() if basedir is None
                      else Path(basedir).resolve())
         files = [Path(file).resolve() for file in files]
@@ -74,9 +73,10 @@ class VFolder:
                         total=total_size,
                         disable=not show_progress)
         with tqdm_obj:
+            attachments = []
             for file_path in files:
                 try:
-                    files.append(AttachedFile(
+                    attachments.append(AttachedFile(
                         str(file_path.relative_to(base_path)),
                         ProgressReportingReader(str(file_path),
                                                 tqdm_instance=tqdm_obj),
@@ -89,7 +89,7 @@ class VFolder:
 
             rqst = Request(self.session,
                            'POST', '/folders/{}/upload'.format(self.name))
-            rqst.attach_files(files)
+            rqst.attach_files(attachments)
             async with rqst.fetch() as resp:
                 return resp
 

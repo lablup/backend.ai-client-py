@@ -206,6 +206,9 @@ class Request:
                                filename=f.filename,
                                content_type=f.content_type)
             assert data.is_multipart
+            # Let aiohttp fill up the content-type header including
+            # multipart boundaries.
+            self.headers.pop('Content-Type')
             return data
         else:
             return self._content
