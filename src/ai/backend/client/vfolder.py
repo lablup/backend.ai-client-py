@@ -27,7 +27,7 @@ class VFolder:
     @classmethod
     async def create(cls, name: str):
         assert _rx_slug.search(name) is not None
-        rqst = Request(cls.session, 'POST', '/folders/')
+        rqst = Request(cls.session, 'POST', '/folders')
         rqst.set_json({
             'name': name,
         })
@@ -41,7 +41,7 @@ class VFolder:
     @api_function
     @classmethod
     async def list(cls):
-        rqst = Request(cls.session, 'GET', '/folders/')
+        rqst = Request(cls.session, 'GET', '/folders')
         async with rqst.fetch() as resp:
             return await resp.json()
 
