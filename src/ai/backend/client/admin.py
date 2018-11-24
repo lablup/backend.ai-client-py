@@ -23,4 +23,4 @@ class Admin:
         rqst = Request(cls.session, 'POST', '/admin/graphql')
         rqst.set_json(gql_query)
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()

@@ -52,12 +52,16 @@ class FetchContextManager:
     The wrapper for :func:`Request.fetch` for both sync/async sessions.
     '''
 
+    __slots__ = ('session', 'rqst_ctx', 'async_mode')
+
     def __init__(self, session, rqst_ctx):
         self.session = session
         self.rqst_ctx = rqst_ctx
+        self.async_mode = True
 
     def __enter__(self):
         assert isinstance(self.session, SyncSession)
+        self.async_mode = False
         return self.session.worker_thread.execute(self.__aenter__())
 
     async def __aenter__(self):
@@ -66,7 +70,7 @@ class FetchContextManager:
             if raw_resp.status // 100 != 2:
                 msg = await raw_resp.text()
                 raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
-            return Response(self.session, raw_resp)
+            return Response(self.session, raw_resp, async_mode=self.async_mode)
         except aiohttp.ClientError as e:
             msg = 'Request to the API endpoint has failed.\n' \
                   'Check your network connection and/or the server status.'
@@ -270,13 +274,15 @@ class Response:
     '''
 
     __slots__ = (
-        '_session', '_raw_response',
+        '_session', '_raw_response', '_async_mode',
     )
 
     def __init__(self, session: BaseSession,
-                 underlying_response: aiohttp.ClientResponse):
+                 underlying_response: aiohttp.ClientResponse, *,
+                 async_mode: bool = False):
         self._session = session
         self._raw_response = underlying_response
+        self._async_mode = async_mode
 
     @property
     def session(self) -> BaseSession:
@@ -311,25 +317,18 @@ class Response:
         return self._raw_response.content
 
     def text(self) -> str:
-        if isinstance(self._session, SyncSession):
-            return self._session.worker_thread.execute(self._raw_response.text())
-        else:
+        if self._async_mode:
             return self._raw_response.text()
-
-    async def atext(self) -> str:
-        return await self._raw_response.text()
+        else:
+            return self._session.worker_thread.execute(self._raw_response.text())
 
     def json(self, *, loads=modjson.loads) -> Any:
         loads = functools.partial(loads, object_pairs_hook=OrderedDict)
-        if isinstance(self._session, SyncSession):
+        if self._async_mode:
+            return self._raw_response.json(loads=loads)
+        else:
             return self._session.worker_thread.execute(
                 self._raw_response.json(loads=loads))
-        else:
-            return self._raw_response.json(loads=loads)
-
-    async def ajson(self, *, loads=modjson.loads) -> Any:
-        loads = functools.partial(loads, object_pairs_hook=OrderedDict)
-        return await self._raw_response.json(loads=loads)
 
     def read(self, n=-1) -> bytes:
         return self._session.worker_thread.execute(self.aread(n))

@@ -60,7 +60,7 @@ class Kernel:
             },
         })
         async with rqst.fetch() as resp:
-            data = await resp.ajson()
+            data = await resp.json()
             o = cls(data['kernelId'])  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
             return o
@@ -74,7 +74,7 @@ class Kernel:
                        'DELETE', '/kernel/{}'.format(self.kernel_id))
         async with rqst.fetch() as resp:
             if resp.status == 200:
-                return await resp.ajson()
+                return await resp.json()
 
     @api_function
     async def restart(self):
@@ -105,21 +105,21 @@ class Kernel:
             },
         })
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     async def get_info(self):
         rqst = Request(self.session,
                        'GET', '/kernel/{}'.format(self.kernel_id))
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     async def get_logs(self):
         rqst = Request(self.session,
                        'GET', '/kernel/{}/logs'.format(self.kernel_id))
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     async def execute(self, run_id: str = None,
@@ -164,7 +164,7 @@ class Kernel:
         else:
             raise BackendClientError('Invalid execution mode: {0}'.format(mode))
         async with rqst.fetch() as resp:
-            return (await resp.ajson())['result']
+            return (await resp.json())['result']
 
     @api_function
     async def upload(self, files: Sequence[Union[str, Path]],
@@ -248,7 +248,7 @@ class Kernel:
                 'path': path,
             })
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     # only supported in AsyncKernel
     async def stream_pty(self):

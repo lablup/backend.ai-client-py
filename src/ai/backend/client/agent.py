@@ -42,5 +42,5 @@ class Agent:
             'variables': variables,
         })
         async with rqst.fetch() as resp:
-            data = await resp.ajson()
+            data = await resp.json()
             return data['agents']

@@ -46,7 +46,7 @@ class KeyPair:
             'variables': variables,
         })
         async with rqst.fetch() as resp:
-            data = await resp.ajson()
+            data = await resp.json()
             return data['create_keypair']
 
     @api_function
@@ -76,7 +76,7 @@ class KeyPair:
             'variables': variables,
         })
         async with rqst.fetch() as resp:
-            data = await resp.ajson()
+            data = await resp.json()
             return data['keypairs']
 
     @api_function

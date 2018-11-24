@@ -6,7 +6,7 @@ import aiohttp
 from aioresponses import aioresponses
 import pytest
 
-from ai.backend.client.exceptions import BackendClientError
+from ai.backend.client.exceptions import BackendClientError, BackendAPIError
 from ai.backend.client.request import Request, Response, AttachedFile
 from ai.backend.client.session import Session, AsyncSession
 
@@ -174,14 +174,12 @@ def test_invalid_requests(dummy_endpoint):
                      'Content-Length': str(len(body))},
         )
         rqst = Request(session, 'POST', '/')
-        with rqst.fetch() as resp:
-            assert resp.status == 404
-            assert resp.content_type == 'application/problem+json'
-            assert resp.text() == body.decode()
-            assert resp.content_length == len(body)
-            data = resp.json()
-            assert data['type'] == 'https://api.backend.ai/probs/kernel-not-found'
-            assert data['title'] == 'Kernel Not Found'
+        with pytest.raises(BackendAPIError) as e:
+            with rqst.fetch():
+                pass
+            assert e.status == 404
+            assert e.data['type'] == 'https://api.backend.ai/probs/kernel-not-found'
+            assert e.data['title'] == 'Kernel Not Found'
 
 
 @pytest.mark.asyncio
@@ -234,7 +232,7 @@ def test_response_sync(defconfig, dummy_endpoint):
     with aioresponses() as m:
         m.post(
             dummy_endpoint + 'function', status=200, body=body,
-            headers={'Content-Type': 'applicaiton/json',
+            headers={'Content-Type': 'application/json',
                      'Content-Length': str(len(body))},
         )
         with Session(config=defconfig) as session:
