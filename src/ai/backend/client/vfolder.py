@@ -32,7 +32,7 @@ class VFolder:
             'name': name,
         })
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     def __init__(self, name: str):
         assert _rx_slug.search(name) is not None, 'Invalid vfolder name format'
@@ -43,20 +43,20 @@ class VFolder:
     async def list(cls):
         rqst = Request(cls.session, 'GET', '/folders/')
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     async def info(self):
         rqst = Request(self.session, 'GET', '/folders/{0}'.format(self.name))
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     async def delete(self):
         rqst = Request(self.session, 'DELETE', '/folders/{0}'.format(self.name))
         async with rqst.fetch() as resp:
             if resp.status == 200:
-                return await resp.ajson()
+                return await resp.json()
 
     @api_function
     async def upload(self, files: Sequence[Union[str, Path]],
@@ -177,7 +177,7 @@ class VFolder:
             'path': path,
         })
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     async def invite(self, perm: str, emails: Sequence[str]):
@@ -186,14 +186,14 @@ class VFolder:
             'perm': perm, 'user_ids': emails,
         })
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     @classmethod
     async def invitations(cls):
         rqst = Request(cls.session, 'GET', '/folders/invitations/list')
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     @classmethod
@@ -201,7 +201,7 @@ class VFolder:
         rqst = Request(cls.session, 'POST', '/folders/invitations/accept')
         rqst.set_json({'inv_id': inv_id, 'inv_ak': inv_ak})
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
 
     @api_function
     @classmethod
@@ -209,4 +209,4 @@ class VFolder:
         rqst = Request(cls.session, 'DELETE', '/folders/invitations/delete')
         rqst.set_json({'inv_id': inv_id})
         async with rqst.fetch() as resp:
-            return await resp.ajson()
+            return await resp.json()
