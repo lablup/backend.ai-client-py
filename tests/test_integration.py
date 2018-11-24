@@ -56,8 +56,8 @@ def aggregate_console(c):
 def intgr_config():
     return APIConfig(
         endpoint='http://localhost:8081',
-        access_key='',
-        secret_key='',
+        access_key='AKIAIOSFODNN7EXAMPLE',
+        secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
     )
 
 
