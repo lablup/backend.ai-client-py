@@ -244,7 +244,7 @@ def run(args):
     if args.resources:
         resources = {k: v for k, v in map(lambda s: s.split('=', 1), args.resources)}
     else:
-        resources = None  # will use the defaults configured in the server
+        resources = {}  # use the defaults configured in the server
 
     # Reverse humanized memory unit
     mem = resources.pop('mem', None)
@@ -319,7 +319,7 @@ def run(args):
                 mounts=args.mount,
                 envs=envs,
                 resources=resources,
-                tag=None)
+                tag=args.tag)
         except BackendError as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
@@ -386,7 +386,7 @@ def run(args):
                 mounts=args.mount,
                 envs=envs,
                 resources=resources,
-                tag=None)
+                tag=args.tag)
         except BackendError as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
@@ -577,6 +577,8 @@ run.add_argument('-m', '--mount', type=str, action='append',
 run.add_argument('-s', '--stats', action='store_true', default=False,
                  help='Show resource usage statistics after termination '
                       '(only works if "--rm" is given)')
+run.add_argument('--tag', type=str, default=None,
+                 help='User-defined tag string to annotate sessions.')
 run.add_argument('-r', '--resources', metavar='KEY=VAL', type=str, action='append',
                  help='Set computation resources (e.g: -r cpu=2 -r mem=0.2 -r gpu=1)'
                  '. 1 slot of cpu/gpu represents 1 core. The unit of mem(ory) '

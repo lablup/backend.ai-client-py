@@ -39,7 +39,7 @@ class Kernel:
                             resources: Mapping[str, int] = None,
                             cluster_size: int = 1,
                             exec_timeout: int = 0,
-                            tag: str = None) -> Kernel:
+                            tag: str = None) -> 'Kernel':
         if client_token:
             assert 4 <= len(client_token) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
@@ -286,7 +286,7 @@ class Kernel:
         else:
             msg = 'Invalid stream-execution mode: {0}'.format(mode)
             raise BackendClientError(msg)
-        request = Request(self._session,
+        request = Request(self.session,
                           'GET', '/stream/kernel/{}/execute'.format(self.kernel_id))
         try:
             _, ws = await request.connect_websocket()
