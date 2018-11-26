@@ -47,42 +47,6 @@ A struct that represents an attached file to the API request.
 AttachedFile = namedtuple('AttachedFile', 'filename stream content_type')
 
 
-class FetchContextManager:
-    '''
-    The wrapper for :func:`Request.fetch` for both sync/async sessions.
-    '''
-
-    __slots__ = ('session', 'rqst_ctx', 'async_mode')
-
-    def __init__(self, session, rqst_ctx):
-        self.session = session
-        self.rqst_ctx = rqst_ctx
-        self.async_mode = True
-
-    def __enter__(self):
-        assert isinstance(self.session, SyncSession)
-        self.async_mode = False
-        return self.session.worker_thread.execute(self.__aenter__())
-
-    async def __aenter__(self):
-        try:
-            raw_resp = await self.rqst_ctx.__aenter__()
-            if raw_resp.status // 100 != 2:
-                msg = await raw_resp.text()
-                raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
-            return Response(self.session, raw_resp, async_mode=self.async_mode)
-        except aiohttp.ClientError as e:
-            msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.'
-            raise BackendClientError(msg) from e
-
-    def __exit__(self, *args):
-        return self.session.worker_thread.execute(self.__aexit__(*args))
-
-    async def __aexit__(self, *args):
-        return await self.rqst_ctx.__aexit__(*args)
-
-
 class Request:
     '''
     The API request object.
@@ -222,9 +186,9 @@ class Request:
 
     # TODO: attach rate-limit information
 
-    def fetch(self, *args, **kwargs):
+    def fetch(self, **kwargs):
         '''
-        Sends the request to the server.
+        Sends the request to the server and reads the response.
 
         You may use this method either with plain synchronous Session or
         AsyncSession.
@@ -240,35 +204,29 @@ class Request:
             self._build_url(),
             data=self._pack_content(),
             headers=self.headers)
-        return FetchContextManager(self.session, rqst_ctx)
+        return FetchContextManager(self.session, rqst_ctx, **kwargs)
 
-    async def connect_websocket(self):
+    def connect_websocket(self, **kwargs):
         '''
         Creates a WebSocket connection.
-
-        This method is a coroutine.
         '''
         assert isinstance(self.session, AsyncSession)
         assert self.method == 'GET'
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
-        try:
-            self._sign()
-            client = self.session.aiohttp_session
-            ws = await client.ws_connect(self._build_url(), headers=self.headers)
-            return client, ws
-        except (asyncio.CancelledError, asyncio.TimeoutError):
-            # These exceptions must be bubbled up.
-            raise
-        except aiohttp.ClientError as e:
-            msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.'
-            raise BackendClientError(msg) from e
+        # websocket is always a "binary" stream.
+        self.content_type = 'application/octet-stream'
+        self._sign()
+        ws_ctx = self.session.aiohttp_session.ws_connect(
+            self._build_url(),
+            headers=self.headers)
+        return WebSocketContextManager(self.session, ws_ctx, **kwargs)
 
 
 class Response:
     '''
     Represents the Backend.AI API response.
+    Also serves as a high-level wrapper of :class:`aiohttp.ClientResponse`.
 
     The response objects are meant to be created by the SDK, not the callers.
 
@@ -344,3 +302,152 @@ class Response:
 
     async def areadall(self) -> bytes:
         return await self._raw_response.content.read(-1)
+
+
+class FetchContextManager:
+    '''
+    The context manager returned by :func:`Request.fetch`.
+
+    It provides both synchronouse and asynchronous contex manager interfaces.
+    '''
+
+    __slots__ = (
+        'session', 'rqst_ctx', 'response_cls',
+        'check_status',
+        '_async_mode',
+    )
+
+    def __init__(self, session, rqst_ctx, *,
+                 response_cls: Response = Response,
+                 check_status: bool = True):
+        self.session = session
+        self.rqst_ctx = rqst_ctx
+        self.response_cls = response_cls
+        self.check_status = check_status
+        self._async_mode = True
+
+    def __enter__(self):
+        assert isinstance(self.session, SyncSession)
+        self._async_mode = False
+        return self.session.worker_thread.execute(self.__aenter__())
+
+    async def __aenter__(self):
+        try:
+            raw_resp = await self.rqst_ctx.__aenter__()
+            if self.check_status and raw_resp.status // 100 != 2:
+                msg = await raw_resp.text()
+                raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
+            return self.response_cls(self.session, raw_resp,
+                                     async_mode=self._async_mode)
+        except aiohttp.ClientError as e:
+            msg = 'Request to the API endpoint has failed.\n' \
+                  'Check your network connection and/or the server status.'
+            raise BackendClientError(msg) from e
+
+    def __exit__(self, *args):
+        return self.session.worker_thread.execute(self.__aexit__(*args))
+
+    async def __aexit__(self, *args):
+        return await self.rqst_ctx.__aexit__(*args)
+
+
+class WebSocketResponse:
+    '''
+    A high-level wrapper of :class:`aiohttp.ClientWebSocketResponse`.
+    '''
+
+    __slots__ = ('_session', '_raw_ws', )
+
+    def __init__(self, session: BaseSession,
+                 underlying_ws: aiohttp.ClientWebSocketResponse):
+        self._session = session
+        self._raw_ws = underlying_ws
+
+    @property
+    def session(self) -> BaseSession:
+        return self._session
+
+    @property
+    def raw_weboscket(self) -> aiohttp.ClientWebSocketResponse:
+        return self._raw_ws
+
+    @property
+    def closed(self):
+        return self._raw_ws.closed
+
+    async def close(self):
+        await self._raw_ws.close()
+
+    def __aiter__(self):
+        return self._raw_ws.__aiter__()
+
+    async def __anext__(self):
+        return await self._raw_ws.__anext__()
+
+    def exception(self):
+        return self._raw_ws.exception()
+
+    async def send_str(self, raw_str: str):
+        if self._raw_ws.closed:
+            raise aiohttp.ServerDisconnectedError('server disconnected')
+        await self._raw_ws.send_str(raw_str)
+
+    async def send_json(self, obj: Any):
+        if self._raw_ws.closed:
+            raise aiohttp.ServerDisconnectedError('server disconnected')
+        await self._raw_ws.send_json(obj)
+
+    async def send_bytes(self, data: bytes):
+        if self._raw_ws.closed:
+            raise aiohttp.ServerDisconnectedError('server disconnected')
+        await self._raw_ws.send_bytes(data)
+
+    async def receive_str(self) -> str:
+        if self._raw_ws.closed:
+            raise aiohttp.ServerDisconnectedError('server disconnected')
+        return await self._raw_ws.receive_str()
+
+    async def receive_json(self) -> Any:
+        if self._raw_ws.closed:
+            raise aiohttp.ServerDisconnectedError('server disconnected')
+        return await self._raw_ws.receive_json()
+
+    async def receive_bytes(self) -> bytes:
+        if self._raw_ws.closed:
+            raise aiohttp.ServerDisconnectedError('server disconnected')
+        return await self._raw_ws.receive_bytes()
+
+
+class WebSocketContextManager:
+    '''
+    A high-level wrapper of :class:`aiohttp._WSRequestContextManager`.
+    '''
+
+    __slots__ = (
+        'session', 'ws_ctx', 'response_cls',
+        'on_enter',
+    )
+
+    def __init__(self, session, ws_ctx, *,
+                 on_enter: Callable = None,
+                 response_cls: WebSocketResponse = WebSocketResponse):
+        self.session = session
+        self.ws_ctx = ws_ctx
+        self.response_cls = WebSocketResponse
+        self.on_enter = on_enter
+
+    async def __aenter__(self):
+        try:
+            raw_ws = await self.ws_ctx.__aenter__()
+        except aiohttp.ClientError as e:
+            msg = 'Request to the API endpoint has failed.\n' \
+                  'Check your network connection and/or the server status.'
+            msg += '\n' + str(e)
+            raise BackendClientError(msg) from e
+        wrapped_ws = self.response_cls(self.session, raw_ws)
+        if self.on_enter is not None:
+            await self.on_enter(wrapped_ws)
+        return wrapped_ws
+
+    async def __aexit__(self, *args):
+        return await self.ws_ctx.__aexit__(*args)

@@ -153,12 +153,12 @@ async def websocket_handler(request):
         api_rqst = Request(
             session, request.method, path, request.content,
             content_type=request.content_type)
-        _, up_conn = await api_rqst.connect_websocket()
-        down_conn = web.WebSocketResponse()
-        await down_conn.prepare(request)
-        web_socket_proxy = WebSocketProxy(up_conn, down_conn)
-        await web_socket_proxy.proxy()
-        return down_conn
+        async with api_rqst.connect_websocket() as up_conn:
+            down_conn = web.WebSocketResponse()
+            await down_conn.prepare(request)
+            web_socket_proxy = WebSocketProxy(up_conn, down_conn)
+            await web_socket_proxy.proxy()
+            return down_conn
     except BackendAPIError as e:
         return web.Response(body=e.data, status=e.status, reason=e.reason)
     except BackendClientError:
