@@ -37,7 +37,7 @@ def register_command(*args, **kwargs):
 
         @functools.wraps(handler)
         def wrapped(args):
-            handler(args)
+            return handler(args)
 
         doc_summary = handler.__doc__.split('\n\n')[0]
         inner_parser = subparsers.add_parser(
@@ -79,6 +79,7 @@ def main():
     import ai.backend.client.cli.admin.sessions  # noqa
     import ai.backend.client.cli.admin.agents    # noqa
     import ai.backend.client.cli.admin.vfolders  # noqa
+    import ai.backend.client.cli.manager  # noqa
     import ai.backend.client.cli.vfolder # noqa
     import ai.backend.client.cli.ps     # noqa
     import ai.backend.client.cli.logs   # noqa

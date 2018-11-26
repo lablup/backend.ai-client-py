@@ -1,26 +1,26 @@
 from typing import Iterable, Union
 
-from .base import BaseFunction, SyncFunctionMixin
+from .base import api_function
 from .request import Request
 
 __all__ = (
-    'BaseKeyPair',
     'KeyPair',
 )
 
 
-class BaseKeyPair(BaseFunction):
+class KeyPair:
 
-    _session = None
+    session = None
 
+    @api_function
     @classmethod
-    def _create(cls, user_id: Union[int, str],
-                is_active: bool = True,
-                is_admin: bool = False,
-                resource_policy: str = None,
-                rate_limit: int = None,
-                concurrency_limit: int = None,
-                fields: Iterable[str] = None):
+    async def create(cls, user_id: Union[int, str],
+                     is_active: bool = True,
+                     is_admin: bool = False,
+                     resource_policy: str = None,
+                     rate_limit: int = None,
+                     concurrency_limit: int = None,
+                     fields: Iterable[str] = None):
         if fields is None:
             fields = ('access_key', 'secret_key')
         uid_type = 'Int!' if isinstance(user_id, int) else 'String!'
@@ -30,7 +30,7 @@ class BaseKeyPair(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        vars = {
+        variables = {
             'user_id': user_id,
             'input': {
                 'is_active': is_active,
@@ -40,17 +40,20 @@ class BaseKeyPair(BaseFunction):
                 'concurrency_limit': concurrency_limit,
             },
         }
-        resp = yield Request(cls._session, 'POST', '/admin/graphql', {
+        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst.set_json({
             'query': q,
-            'variables': vars,
+            'variables': variables,
         })
-        data = resp.json()
-        return data['create_keypair']
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            return data['create_keypair']
 
+    @api_function
     @classmethod
-    def _list(cls, user_id: Union[int, str],
-              is_active: bool = None,
-              fields: Iterable[str] = None):
+    async def list(cls, user_id: Union[int, str],
+                   is_active: bool = None,
+                   fields: Iterable[str] = None):
         if fields is None:
             fields = (
                 'access_key', 'secret_key',
@@ -63,32 +66,25 @@ class BaseKeyPair(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        vars = {
+        variables = {
             'user_id': user_id,
             'is_active': is_active,
         }
-        resp = yield Request(cls._session, 'POST', '/admin/graphql', {
+        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst.set_json({
             'query': q,
-            'variables': vars,
+            'variables': variables,
         })
-        data = resp.json()
-        return data['keypairs']
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            return data['keypairs']
 
+    @api_function
     @classmethod
-    def activate(cls, access_key: str):
+    async def activate(cls, access_key: str):
         raise NotImplementedError
 
+    @api_function
     @classmethod
-    def deactivate(cls, access_key: str):
+    async def deactivate(cls, access_key: str):
         raise NotImplementedError
-
-    def __init_subclass__(cls):
-        cls.create = cls._call_base_clsmethod(cls._create)
-        cls.list = cls._call_base_clsmethod(cls._list)
-
-
-class KeyPair(SyncFunctionMixin, BaseKeyPair):
-    '''
-    Deprecated! Use ai.backend.client.Session instead.
-    '''
-    pass

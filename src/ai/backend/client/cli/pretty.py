@@ -18,6 +18,31 @@ class PrintStatus(enum.Enum):
     WAITING = 1
     DONE = 2
     FAILED = 3
+    WARNING = 4
+
+
+def format_pretty(msg, status=PrintStatus.NONE, colored=True):
+    if status == PrintStatus.NONE:
+        indicator = '\x1b[96m\u2219' if colored else '\u2219'
+    elif status == PrintStatus.WAITING:
+        indicator = '\x1b[93m\u22EF' if colored else '\u22EF'
+    elif status == PrintStatus.DONE:
+        indicator = '\x1b[92m\u2714' if colored else '\u2714'
+    elif status == PrintStatus.FAILED:
+        indicator = '\x1b[91m\u2718' if colored else '\u2718'
+    elif status == PrintStatus.WARNING:
+        indicator = '\x1b[33m\u2219' if colored else '\u2219'
+    else:
+        raise ValueError
+    clear = '\x1b[0m' if colored else ''
+    return indicator + textwrap.indent(msg, '  ')[1:] + clear
+
+
+format_info = functools.partial(format_pretty, status=PrintStatus.NONE)
+format_wait = functools.partial(format_pretty, status=PrintStatus.WAITING)
+format_done = functools.partial(format_pretty, status=PrintStatus.DONE)
+format_fail = functools.partial(format_pretty, status=PrintStatus.FAILED)
+format_warn = functools.partial(format_pretty, status=PrintStatus.WARNING)
 
 
 def print_pretty(msg, *, status=PrintStatus.NONE, file=None):
@@ -32,6 +57,8 @@ def print_pretty(msg, *, status=PrintStatus.NONE, file=None):
         indicator = '\x1b[92m\u2714' if file.isatty() else '\u2714'
     elif status == PrintStatus.FAILED:
         indicator = '\x1b[91m\u2718' if file.isatty() else '\u2718'
+    elif status == PrintStatus.WARNING:
+        indicator = '\x1b[33m\u2219' if file.isatty() else '\u2219'
     else:
         raise ValueError
     if file.isatty():
@@ -50,6 +77,7 @@ print_info = functools.partial(print_pretty, status=PrintStatus.NONE)
 print_wait = functools.partial(print_pretty, status=PrintStatus.WAITING)
 print_done = functools.partial(print_pretty, status=PrintStatus.DONE)
 print_fail = functools.partial(print_pretty, status=PrintStatus.FAILED)
+print_warn = functools.partial(print_pretty, status=PrintStatus.WARNING)
 
 
 class ProgressReportingReader(io.BufferedReader):

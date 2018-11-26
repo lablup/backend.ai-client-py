@@ -141,17 +141,40 @@ More commands?
 Please run ``backend.ai --help`` to see more commands.
 
 
-Synchronous API
----------------
+Synchronous API (v1.2+)
+-----------------------
 
 .. code-block:: python
 
-   from ai.backend.client import Kernel
+   from ai.backend.client import Session
 
-   kern = Kernel.get_or_create('lua5', client_token='abc')
-   result = kern.execute('print("hello world")', mode='query')
-   print(result['console'])
-   kern.destroy()
+   with Session() as session:
+       kern = session.Kernel.get_or_create('lua5', client_token='mysession')
+       code = 'print("hello world")'
+       mode = 'query'
+       run_id = None
+       while True:
+           result = kern.execute(run_id, code, mode=mode)
+           run_id = result['runId']  # keeps track of this particular run loop
+           for rec in result.get('console', []):
+               if rec[0] == 'stdout':
+                   print(rec[1], end='', file=stdout)
+               elif rec[0] == 'stderr':
+                   print(rec[1], end='', file=stderr)
+               else:
+                   handle_media(rec)
+           if result['status'] == 'finished':
+               break
+           elif result['status'] == 'waiting-input':
+               mode = 'input'
+               if result['options'].get('is_password', False):
+                   code = getpass.getpass()
+               else:
+                   code = input()
+           else:
+               mode = 'continued'
+               code = ''
+       kern.destroy()
 
 You need to take care of ``client_token`` because it determines whether to
 reuse kernel sessions or not.
@@ -159,19 +182,47 @@ Backend.AI cloud has a timeout so that it terminates long-idle kernel sessions,
 but within the timeout, any kernel creation requests with the same ``client_token``
 let Backend.AI cloud to reuse the kernel.
 
-Asynchronous API
-----------------
+Asynchronous API (v18.12+)
+--------------------------
 
 .. code-block:: python
 
    import asyncio
-   from ai.backend.client.asyncio import AsyncKernel
+   import json
+   import aiohttp
+   from ai.backend.client import AsyncSession
 
    async def main():
-       kern = await AsyncKernel.get_or_create('lua5', client_token='abc')
-       result = await kern.execute('print("hello world")', mode='query')
-       print(result['console'])
-       await kern.destroy()
+       async with AsyncSession() as session:
+           kern = await session.Kernel.get_or_create('lua5', client_token='mysession')
+           code = 'print("hello world")'
+           mode = 'query'
+           stream = await kern.stream_execute(code, mode=mode)
+           # no need for explicit run_id since WebSocket connection represents it!
+           async for result in stream:
+               if result.type != aiohttp.WSMsgType.TEXT:
+                   continue
+               result = json.loads(result.data)
+               for rec in result.get('console', []):
+                   if rec[0] == 'stdout':
+                       print(rec[1], end='', file=stdout)
+                   elif rec[0] == 'stderr':
+                       print(rec[1], end='', file=stderr)
+                   else:
+                       handle_media(rec)
+               if result['status'] == 'finished':
+                   break
+               elif result['status'] == 'waiting-input':
+                   mode = 'input'
+                   if result['options'].get('is_password', False):
+                       code = getpass.getpass()
+                   else:
+                       code = input()
+                   await stream.send_text(code)
+               else:
+                   mode = 'continued'
+                   code = ''
+           await kern.destroy()
 
    loop = asyncio.get_event_loop()
    try:
@@ -179,13 +230,9 @@ Asynchronous API
    finally:
        loop.close()
 
-All the methods of ``AsyncKernel`` objects are exactly same to the synchronous version,
-except that they are coroutines.
-
-Additionally, ``AsyncKernel`` offers async-only method ``stream_pty()``.
-It returns a ``StreamPty`` object which allows you to access a pseudo-tty of the kernel.
-``StreamPty`` works like an async-generator and provides methods to send stdin inputs
-as well as resize the terminal.
+The async version has all sync-version interfaces as coroutines but comes with additional
+features such as ``stream_execute()`` which streams the execution results via websockets and
+``stream_pty()`` for interactive terminal streaming.
 
 
 Troubleshooting (FAQ)

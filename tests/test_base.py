@@ -1,45 +1,88 @@
-from aioresponses import aioresponses
+import asyncio
+
 import pytest
 
-from ai.backend.client.base import BaseFunction, SyncFunctionMixin
-from ai.backend.client.exceptions import BackendAPIError
-from ai.backend.client.request import Request
-from ai.backend.client.session import Session
+from ai.backend.client.base import BaseFunction, api_function
+from ai.backend.client.session import Session, AsyncSession
 
 
-class DummyFunction(SyncFunctionMixin, BaseFunction):
+class DummyFunction:
 
-    _session = None
+    session = None
 
-    def _do_this(self):
-        rqst = Request(self._session, 'POST', 'function')
-        resp = yield rqst
-        return resp
+    @api_function
+    @classmethod
+    async def get_or_create(cls):
+        await asyncio.sleep(0)
+        return 'created'
 
-    def __init__(self, *, config=None):
-        self.config = config
-        self.do_this = self._call_base_method(self._do_this)
+    @api_function
+    async def calculate(self):
+        await asyncio.sleep(0)
+        return 'done'
 
 
-def test_server_error(defconfig, dummy_endpoint):
-    func = DummyFunction(config=defconfig)
+def test_api_function_metaclass():
+    # Here, we repeat intentionally the same stuffs
+    # to check if our metaclass works across multiple
+    # re-definition and re-instantiation scenarios.
 
     with Session() as session:
-        DummyFunction._session = session
+        Dummy = type('DummyFunction', (BaseFunction, ), {
+            **DummyFunction.__dict__,
+            'session': session,
+        })
 
-        with aioresponses() as m:
-            m.post(dummy_endpoint + 'function', status=500, body=b'Ooops!')
-            with pytest.raises(BackendAPIError) as exc_info:
-                func.do_this()
-            assert exc_info.value.data['type'] == \
-                   'https://api.backend.ai/probs/generic-error'
+        assert Dummy.session is session
+        assert Dummy().session is session
 
-        with aioresponses() as m:
-            m.post(dummy_endpoint + 'function', status=500, payload={
-                'type': 'https://api.backend.ai/probs/internal-server-error',
-                'title': 'Internal Server Error',
-            })
-            with pytest.raises(BackendAPIError) as exc_info:
-                func.do_this()
-            assert exc_info.value.data['type'] == \
-                   'https://api.backend.ai/probs/internal-server-error'
+        assert Dummy.get_or_create() == 'created'
+        assert Dummy().calculate() == 'done'
+        assert Dummy.get_or_create() == 'created'
+        assert Dummy().calculate() == 'done'
+
+    with Session() as session:
+        Dummy = type('DummyFunction', (BaseFunction, ), {
+            **DummyFunction.__dict__,
+            'session': session,
+        })
+
+        assert Dummy.session is session
+        assert Dummy().session is session
+
+        assert Dummy.get_or_create() == 'created'
+        assert Dummy().calculate() == 'done'
+        assert Dummy.get_or_create() == 'created'
+        assert Dummy().calculate() == 'done'
+
+
+@pytest.mark.asyncio
+async def test_api_function_metaclass_async():
+
+    async with AsyncSession() as session:
+        Dummy = type('DummyFunction', (BaseFunction, ), {
+            **DummyFunction.__dict__,
+            'session': session,
+        })
+
+        assert Dummy.session is session
+        assert Dummy().session is session
+
+        assert await Dummy.get_or_create() == 'created'
+        assert await Dummy().calculate() == 'done'
+        assert await Dummy.get_or_create() == 'created'
+        assert await Dummy().calculate() == 'done'
+
+    async with AsyncSession() as session:
+        Dummy = type('DummyFunction', (BaseFunction, ), {
+            **DummyFunction.__dict__,
+            'session': session,
+        })
+
+        assert Dummy.session is session
+        assert Dummy().session is session
+
+        assert await Dummy.get_or_create() == 'created'
+        assert await Dummy().calculate() == 'done'
+        assert await Dummy.get_or_create() == 'created'
+        assert await Dummy().calculate() == 'done'

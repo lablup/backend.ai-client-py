@@ -5,7 +5,6 @@ import queue
 
 import aiohttp
 
-from .base import SyncFunctionMixin, AsyncFunctionMixin
 from .config import APIConfig, get_config
 
 
@@ -57,7 +56,7 @@ class _SyncWorkerThread(threading.Thread):
 class BaseSession(metaclass=abc.ABCMeta):
     __slots__ = (
         '_config', '_closed', 'aiohttp_session',
-        'Admin', 'Agent', 'Kernel', 'KeyPair', 'VFolder',
+        'Admin', 'Agent', 'Kernel', 'KeyPair', 'Manager', 'VFolder',
     )
 
     def __init__(self, *, config: APIConfig = None):
@@ -103,25 +102,36 @@ class Session(BaseSession):
 
         self.aiohttp_session = self.worker_thread.execute(_create_aiohttp_session())
 
-        from .admin import BaseAdmin
-        from .agent import BaseAgent
-        from .kernel import BaseKernel
-        from .keypair import BaseKeyPair
-        from .vfolder import BaseVFolder
-        self.Admin = type('Admin', (SyncFunctionMixin, BaseAdmin), {
+        from .base import BaseFunction
+        from .admin import Admin
+        from .agent import Agent
+        from .kernel import Kernel
+        from .keypair import KeyPair
+        from .manager import Manager
+        from .vfolder import VFolder
+        self.Admin = type('Admin', (BaseFunction, ), {
+            **Admin.__dict__,
+            'session': self,
+        })
+        self.Agent = type('Agent', (BaseFunction, ), {
+            **Agent.__dict__,
+            'session': self,
+        })
+        self.Kernel = type('Kernel', (BaseFunction, ), {
+            **Kernel.__dict__,
+            'session': self,
+        })
+        self.KeyPair = type('KeyPair', (BaseFunction, ), {
+            **KeyPair.__dict__,
+            'session': self,
+        })
+        self.Manager = type('Manager', (BaseFunction, ), {
+            **Manager.__dict__,
             '_session': self,
         })
-        self.Agent = type('Agent', (SyncFunctionMixin, BaseAgent), {
-            '_session': self,
-        })
-        self.Kernel = type('Kernel', (SyncFunctionMixin, BaseKernel), {
-            '_session': self,
-        })
-        self.KeyPair = type('KeyPair', (SyncFunctionMixin, BaseKeyPair), {
-            '_session': self,
-        })
-        self.VFolder = type('VFolder', (SyncFunctionMixin, BaseVFolder), {
-            '_session': self,
+        self.VFolder = type('VFolder', (BaseFunction, ), {
+            **VFolder.__dict__,
+            'session': self,
         })
 
     def close(self):
@@ -142,6 +152,7 @@ class Session(BaseSession):
 
     def __exit__(self, exc_type, exc_obj, exc_tb):
         self.close()
+        return False
 
 
 class AsyncSession(BaseSession):
@@ -163,25 +174,36 @@ class AsyncSession(BaseSession):
 
         self.aiohttp_session = aiohttp.ClientSession()
 
-        from .admin import BaseAdmin
-        from .agent import BaseAgent
-        from .kernel import BaseKernel
-        from .keypair import BaseKeyPair
-        from .vfolder import BaseVFolder
-        self.Admin = type('Admin', (AsyncFunctionMixin, BaseAdmin), {
+        from .base import BaseFunction
+        from .admin import Admin
+        from .agent import Agent
+        from .kernel import Kernel
+        from .keypair import KeyPair
+        from .manager import Manager
+        from .vfolder import VFolder
+        self.Admin = type('Admin', (BaseFunction, ), {
+            **Admin.__dict__,
+            'session': self,
+        })
+        self.Agent = type('Agent', (BaseFunction, ), {
+            **Agent.__dict__,
+            'session': self,
+        })
+        self.Kernel = type('Kernel', (BaseFunction, ), {
+            **Kernel.__dict__,
+            'session': self,
+        })
+        self.KeyPair = type('KeyPair', (BaseFunction, ), {
+            **KeyPair.__dict__,
+            'session': self,
+        })
+        self.Manager = type('Manager', (BaseFunction, ), {
+            **Manager.__dict__,
             '_session': self,
         })
-        self.Agent = type('Agent', (AsyncFunctionMixin, BaseAgent), {
-            '_session': self,
-        })
-        self.Kernel = type('Kernel', (AsyncFunctionMixin, BaseKernel), {
-            '_session': self,
-        })
-        self.KeyPair = type('KeyPair', (AsyncFunctionMixin, BaseKeyPair), {
-            '_session': self,
-        })
-        self.VFolder = type('VFolder', (AsyncFunctionMixin, BaseVFolder), {
-            '_session': self,
+        self.VFolder = type('VFolder', (BaseFunction, ), {
+            **VFolder.__dict__,
+            'session': self,
         })
 
     async def close(self):
@@ -196,3 +218,4 @@ class AsyncSession(BaseSession):
 
     async def __aexit__(self, exc_type, exc_obj, exc_tb):
         await self.close()
+        return False

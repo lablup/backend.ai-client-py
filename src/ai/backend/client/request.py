@@ -1,18 +1,19 @@
 import asyncio
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from datetime import datetime
+import functools
+import io
 from typing import Any, Callable, Mapping, Sequence, Union
 
 import aiohttp
 import aiohttp.web
-from async_timeout import timeout as _timeout
 from dateutil.tz import tzutc
 from multidict import CIMultiDict
-import json
+import json as modjson
 
 from .auth import generate_signature
-from .exceptions import BackendClientError
-from .session import BaseSession, Session
+from .exceptions import BackendClientError, BackendAPIError
+from .session import BaseSession, Session as SyncSession, AsyncSession
 
 __all__ = [
     'Request',
@@ -20,38 +21,107 @@ __all__ = [
 ]
 
 
-class BaseRequest:
+'''
+The type alias for the set of allowed types for request content.
+'''
+RequestContent = Union[
+    bytes, bytearray, str,
+    aiohttp.StreamReader,
+    io.IOBase,
+    None,
+]
 
-    __slots__ = ['config', 'session', 'method', 'path',
-                 'date', 'headers', 'streaming',
-                 'content_type', '_content']
+
+'''
+A struct that represents an attached file to the API request.
+
+:param str filename: The name of file to store. It may include paths
+                     and the server will create parent directories
+                     if required.
+
+:param Any stream: A file-like object that allows stream-reading bytes.
+
+:param str content_type: The content type for the stream.  For arbitrary
+                         binary data, use "application/octet-stream".
+'''
+AttachedFile = namedtuple('AttachedFile', 'filename stream content_type')
+
+
+class FetchContextManager:
+    '''
+    The wrapper for :func:`Request.fetch` for both sync/async sessions.
+    '''
+
+    __slots__ = ('session', 'rqst_ctx', 'async_mode')
+
+    def __init__(self, session, rqst_ctx):
+        self.session = session
+        self.rqst_ctx = rqst_ctx
+        self.async_mode = True
+
+    def __enter__(self):
+        assert isinstance(self.session, SyncSession)
+        self.async_mode = False
+        return self.session.worker_thread.execute(self.__aenter__())
+
+    async def __aenter__(self):
+        try:
+            raw_resp = await self.rqst_ctx.__aenter__()
+            if raw_resp.status // 100 != 2:
+                msg = await raw_resp.text()
+                raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
+            return Response(self.session, raw_resp, async_mode=self.async_mode)
+        except aiohttp.ClientError as e:
+            msg = 'Request to the API endpoint has failed.\n' \
+                  'Check your network connection and/or the server status.'
+            raise BackendClientError(msg) from e
+
+    def __exit__(self, *args):
+        return self.session.worker_thread.execute(self.__aexit__(*args))
+
+    async def __aexit__(self, *args):
+        return await self.rqst_ctx.__aexit__(*args)
+
+
+class Request:
+    '''
+    The API request object.
+    '''
+
+    __slots__ = (
+        'config', 'session', 'method', 'path',
+        'date', 'headers', 'content_type',
+        '_content', '_attached_files',
+        'reporthook',
+    )
 
     _allowed_methods = frozenset([
         'GET', 'HEAD', 'POST',
         'PUT', 'PATCH', 'DELETE',
         'OPTIONS'])
 
-    def __init__(self, session: Session,
+    def __init__(self, session: BaseSession,
                  method: str = 'GET',
                  path: str = None,
-                 content: Mapping = None,
-                 streaming: bool = False,
+                 content: RequestContent = None, *,
+                 content_type: str = None,
                  reporthook: Callable = None) -> None:
         '''
         Initialize an API request.
 
-        :param Session session: The session object where this request is executed on.
+        :param BaseSession session: The session where this request is executed on.
 
         :param str path: The query path. When performing requests, the version number
                          prefix will be automatically perpended if required.
 
-        :param Mapping content: The API query body which will be encoded as JSON.
+        :param RequestContent content: The API query body which will be encoded as
+                                       JSON.
 
-        :param bool streaming: Make the response to be StreamingResponse.
+        :param str content_type: Explicitly set the content type.  See also
+                                 :func:`Request.set_content`.
         '''
         self.session = session
         self.config = session.config
-        self.streaming = streaming
         self.method = method
         if path.startswith('/'):
             path = path[1:]
@@ -61,66 +131,52 @@ class BaseRequest:
             ('User-Agent', self.config.user_agent),
             ('X-BackendAI-Version', self.config.version),
         ])
-        self.content = content if content is not None else b''
+        self._attached_files = None
+        self.set_content(content, content_type=content_type)
         self.reporthook = reporthook
 
     @property
-    def content(self) -> Union[bytes, bytearray, None]:
+    def content(self) -> RequestContent:
         '''
         Retrieves the content in the original form.
         Private codes should NOT use this as it incurs duplicate
         encoding/decoding.
         '''
-        if self._content is None:
-            raise ValueError('content is not set.')
-        if self.content_type == 'application/octet-stream':
-            return self._content
-        elif self.content_type == 'application/json':
-            return json.loads(self._content.decode('utf-8'),
-                              object_pairs_hook=OrderedDict)
-        elif self.content_type == 'text/plain':
-            return self._content.decode('utf-8')
-        elif self.content_type == 'multipart/form-data':
-            return self._content
-        else:
-            raise RuntimeError('should not reach here')  # pragma: no cover
+        return self._content
 
-    @content.setter
-    def content(self, value: Union[bytes, bytearray,
-                                   Mapping[str, Any],
-                                   Sequence[Any],
-                                   None]):
+    def set_content(self, value: RequestContent, *,
+                    content_type: str = None):
         '''
         Sets the content of the request.
-        Depending on the type of content, it automatically sets appropriate
-        headers such as content-type and content-length.
         '''
-        if isinstance(value, (bytes, bytearray)):
-            self.content_type = 'application/octet-stream'
-            self._content = value
-            self.headers['Content-Type'] = self.content_type
-            self.headers['Content-Length'] = str(len(self._content))
+        assert self._attached_files is None, \
+               'cannot set content because you already attached files.'
+        guessed_content_type = 'application/octet-stream'
+        if value is None:
+            guessed_content_type = 'text/plain'
+            self._content = b''
         elif isinstance(value, str):
-            self.content_type = 'text/plain'
+            guessed_content_type = 'text/plain'
             self._content = value.encode('utf-8')
-            self.headers['Content-Type'] = self.content_type
-            self.headers['Content-Length'] = str(len(self._content))
-        elif isinstance(value, (dict, OrderedDict)):
-            self.content_type = 'application/json'
-            self._content = json.dumps(value).encode('utf-8')
-            self.headers['Content-Type'] = self.content_type
-            self.headers['Content-Length'] = str(len(self._content))
-        elif isinstance(value, (list, tuple)):
-            self.content_type = 'multipart/form-data'
-            self._content = value
-            # Let the http client library decide the header values.
-            # (e.g., message boundaries)
-            if 'Content-Length' in self.headers:
-                del self.headers['Content-Length']
-            if 'Content-Type' in self.headers:
-                del self.headers['Content-Type']
         else:
-            raise TypeError('Unsupported content value type.')
+            guessed_content_type = 'application/octet-stream'
+            self._content = value
+        self.content_type = (content_type if content_type is not None
+                             else guessed_content_type)
+
+    def set_json(self, value: object):
+        '''
+        A shortcut for set_content() with JSON objects.
+        '''
+        self.set_content(modjson.dumps(value), content_type='application/json')
+
+    def attach_files(self, files: Sequence[AttachedFile]):
+        '''
+        Attach a list of files represented as AttachedFile.
+        '''
+        assert not self._content, 'content must be empty to attach files.'
+        self.content_type = 'multipart/form-data'
+        self._attached_files = files
 
     def _sign(self, access_key=None, secret_key=None, hash_type=None):
         '''
@@ -141,82 +197,50 @@ class BaseRequest:
             access_key, secret_key, hash_type)
         self.headers.update(hdrs)
 
-    def build_url(self):
+    def _pack_content(self):
+        if self._attached_files is not None:
+            data = aiohttp.FormData()
+            for f in self._attached_files:
+                data.add_field('src',
+                               f.stream,
+                               filename=f.filename,
+                               content_type=f.content_type)
+            assert data.is_multipart
+            # Let aiohttp fill up the content-type header including
+            # multipart boundaries.
+            self.headers.pop('Content-Type', None)
+            return data
+        else:
+            return self._content
+
+    def _build_url(self):
         base_url = self.config.endpoint.path.rstrip('/')
-        major_ver = self.config.version.split('.', 1)[0]
         query_path = self.path.lstrip('/') if len(self.path) > 0 else ''
-        path = '{0}/{1}/{2}'.format(base_url, major_ver, query_path)
+        path = '{0}/{1}'.format(base_url, query_path)
         canonical_url = self.config.endpoint.with_path(path)
         return str(canonical_url)
 
     # TODO: attach rate-limit information
 
-    def fetch(self, *args, loop=None, **kwargs):
-        '''
-        Sends the request to the server.
-        '''
-        return self.session.worker_thread.execute(self.afetch(*args, **kwargs))
-
-    async def afetch(self, *, timeout=None):
+    def fetch(self, *args, **kwargs):
         '''
         Sends the request to the server.
 
-        This method is a coroutine.
+        You may use this method either with plain synchronous Session or
+        AsyncSession.
         '''
         assert self.method in self._allowed_methods
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
-        try:
-            self._sign()
-            async with _timeout(timeout):
-                client = self.session.aiohttp_session
-                rqst_ctx = client.request(
-                    self.method,
-                    self.build_url(),
-                    data=self.pack_content(),
-                    headers=self.headers)
-                if self.streaming:
-                    # Context manager should not be used for stream response.
-                    # The response object is released as soon as exiting the
-                    # context, which also closes the connection needed for
-                    # stream reader.
-                    # According to the aiohttp doc, "it is not required to call
-                    # `release`" manually: https://goo.gl/KXmeP4.
-                    resp = await rqst_ctx
-                    return StreamingResponse(
-                        self.session,
-                        resp,
-                        stream=resp.content,
-                        content_type=resp.content_type)
-                else:
-                    async with rqst_ctx as resp:
-                        body = await resp.read()
-                        return Response(
-                            self.session,
-                            resp,
-                            body=body,
-                            content_type=resp.content_type,
-                            charset=resp.charset)
-        except (asyncio.CancelledError, asyncio.TimeoutError):
-            # These exceptions must be bubbled up.
-            raise
-        except aiohttp.ClientError as e:
-            msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.'
-            raise BackendClientError(msg) from e
-
-    def pack_content(self):
-        if self.content_type == 'multipart/form-data':
-            data = aiohttp.FormData()
-            for f in self._content:
-                data.add_field(f.name,
-                               f.file,
-                               filename=f.filename,
-                               content_type=f.content_type)
-            assert data.is_multipart
-            return data
-        else:
-            return self._content
+        if self.content_type is not None:
+            self.headers['Content-Type'] = self.content_type
+        self._sign()
+        rqst_ctx = self.session.aiohttp_session.request(
+            self.method,
+            self._build_url(),
+            data=self._pack_content(),
+            headers=self.headers)
+        return FetchContextManager(self.session, rqst_ctx)
 
     async def connect_websocket(self):
         '''
@@ -224,13 +248,14 @@ class BaseRequest:
 
         This method is a coroutine.
         '''
+        assert isinstance(self.session, AsyncSession)
         assert self.method == 'GET'
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
         try:
             self._sign()
             client = self.session.aiohttp_session
-            ws = await client.ws_connect(self.build_url(), headers=self.headers)
+            ws = await client.ws_connect(self._build_url(), headers=self.headers)
             return client, ws
         except (asyncio.CancelledError, asyncio.TimeoutError):
             # These exceptions must be bubbled up.
@@ -241,117 +266,81 @@ class BaseRequest:
             raise BackendClientError(msg) from e
 
 
-class Request(BaseRequest):
-    pass
+class Response:
+    '''
+    Represents the Backend.AI API response.
 
+    The response objects are meant to be created by the SDK, not the callers.
 
-class BaseResponse:
+    :func:`text`, :func:`json` methods return the resolved content directly with
+    plain synchronous Session while they return the coroutines with AsyncSession.
+    '''
+
     __slots__ = (
-        '_response', '_session',
+        '_session', '_raw_response', '_async_mode',
     )
 
-    def __init__(self, session: Session,
-                 underlying_response: aiohttp.ClientResponse):
+    def __init__(self, session: BaseSession,
+                 underlying_response: aiohttp.ClientResponse, *,
+                 async_mode: bool = False):
         self._session = session
-        self._response = underlying_response
-
-    @property
-    def status(self) -> int:
-        return self._response.status
-
-    @property
-    def reason(self) -> str:
-        return self._response.reason
-
-    @property
-    def headers(self) -> Mapping[str, str]:
-        return self._response.headers
-
-    @property
-    def raw_response(self) -> aiohttp.ClientResponse:
-        return self._response
+        self._raw_response = underlying_response
+        self._async_mode = async_mode
 
     @property
     def session(self) -> BaseSession:
         return self._session
 
-
-class Response(BaseResponse):
-
-    __slots__ = BaseResponse.__slots__ + (
-        '_body', '_content_type', '_content_length', '_charset',
-    )
-
-    def __init__(self, session: Session,
-                 underlying_response: aiohttp.ClientResponse, *,
-                 body: Union[bytes, bytearray] = b'',
-                 content_type: str = 'text/plain',
-                 content_length: int = None,
-                 charset: str = None):
-        super().__init__(session, underlying_response)
-        self._body = body
-        self._content_type = content_type
-        self._content_length = content_length
-        self._charset = charset if charset else 'utf-8'
+    @property
+    def status(self) -> int:
+        return self._raw_response.status
 
     @property
-    def content_type(self):
-        return self._content_type
+    def reason(self) -> str:
+        return self._raw_response.reason
 
     @property
-    def content_length(self):
-        is_multipart = self._content_type.startswith('multipart/')
-        if self._content_length is None and not is_multipart and self._body:
-            return len(self._body)
-        return self._content_length
+    def headers(self) -> Mapping[str, str]:
+        return self._raw_response.headers
 
     @property
-    def charset(self):
-        return self._charset
+    def raw_response(self) -> aiohttp.ClientResponse:
+        return self._raw_response
 
     @property
-    def content(self) -> bytes:
-        return self._body
+    def content_type(self) -> str:
+        return self._raw_response.content_type
+
+    @property
+    def content_length(self) -> int:
+        return self._raw_response.content_length
+
+    @property
+    def content(self) -> aiohttp.StreamReader:
+        return self._raw_response.content
 
     def text(self) -> str:
-        return self._body.decode(self._charset)
+        if self._async_mode:
+            return self._raw_response.text()
+        else:
+            return self._session.worker_thread.execute(self._raw_response.text())
 
-    def json(self, loads=json.loads):
-        return loads(self.text(), object_pairs_hook=OrderedDict)
-
-
-class StreamingResponse(BaseResponse):
-
-    __slots__ = BaseResponse.__slots__ + (
-        '_stream', '_content_type',
-    )
-
-    def __init__(self, session: Session,
-                 underlying_response: aiohttp.ClientResponse, *,
-                 stream: aiohttp.streams.StreamReader = None,
-                 content_type: str = 'text/plain'):
-        super().__init__(session, underlying_response)
-        self._stream = stream
-        self._content_type = content_type
-
-    @property
-    def content_type(self):
-        return self._content_type
-
-    @property
-    def stream(self) -> aiohttp.streams.StreamReader:
-        return self._stream
+    def json(self, *, loads=modjson.loads) -> Any:
+        loads = functools.partial(loads, object_pairs_hook=OrderedDict)
+        if self._async_mode:
+            return self._raw_response.json(loads=loads)
+        else:
+            return self._session.worker_thread.execute(
+                self._raw_response.json(loads=loads))
 
     def read(self, n=-1) -> bytes:
         return self._session.worker_thread.execute(self.aread(n))
 
     async def aread(self, n=-1) -> bytes:
-        if self._stream.at_eof():
-            return b''
-        return await self._stream.read(n)
+        return await self._raw_response.content.read(n)
 
     def readall(self) -> bytes:
         return self._session.worker_thread.execute(self._areadall())
 
     async def areadall(self) -> bytes:
-        return await self._stream.read(-1)
+        return await self._raw_response.content.read(-1)

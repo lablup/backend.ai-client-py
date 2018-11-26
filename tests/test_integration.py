@@ -38,8 +38,8 @@ import pytest
 
 from ai.backend.client.compat import token_hex
 from ai.backend.client.request import Request
-from ai.backend.client.admin import Admin
-from ai.backend.client.kernel import Kernel
+from ai.backend.client.config import APIConfig
+from ai.backend.client import Session, AsyncSession
 from ai.backend.client.exceptions import BackendAPIError
 
 
@@ -52,107 +52,146 @@ def aggregate_console(c):
     }
 
 
-@pytest.mark.integration
-def test_connection(defconfig):
-    request = Request('GET', '/')
-    resp = request.fetch()
-    assert 'version' in resp.json()
+@pytest.fixture
+def intgr_config():
+    return APIConfig(
+        endpoint='http://localhost:8081',
+        access_key='AKIAIOSFODNN7EXAMPLE',
+        secret_key='wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+    )
 
 
 @pytest.mark.integration
-def test_not_found(defconfig):
-    request = Request('GET', '/invalid-url-wow')
-    resp = request.fetch()
-    assert resp.status == 404
-    request = Request('GET', '/authorize/uh-oh')
-    resp = request.fetch()
-    assert resp.status == 404
+def test_connection(intgr_config):
+    with Session(config=intgr_config) as sess:
+        request = Request(sess, 'GET', '/')
+        with request.fetch() as resp:
+            assert 'version' in resp.json()
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
-async def test_async_connection(defconfig):
-    request = Request('GET', '/')
-    resp = await request.afetch()
-    assert 'version' in resp.json()
-
-
-@pytest.mark.integration
-def test_auth(defconfig):
-    random_msg = uuid.uuid4().hex
-    request = Request('GET', '/authorize', {
-        'echo': random_msg,
-    })
-    resp = request.fetch()
-    assert resp.status == 200
-    data = resp.json()
-    assert data['authorized'] == 'yes'
-    assert data['echo'] == random_msg
-
-
-@pytest.mark.integration
-def test_auth_missing_signature(defconfig):
-    random_msg = uuid.uuid4().hex
-    request = Request('GET', '/authorize', {
-        'echo': random_msg,
-    })
-    # let it bypass actual signing
-    request._sign = lambda *args, **kwargs: None
-    resp = request.fetch()
-    assert resp.status == 401
-
-
-@pytest.mark.integration
-def test_auth_malformed(defconfig):
-    request = Request('GET', '/authorize')
-    request.content = b'<this is not json>'
-    resp = request.fetch()
-    assert resp.status == 400
-
-
-@pytest.mark.integration
-def test_auth_missing_body(defconfig):
-    request = Request('GET', '/authorize')
-    resp = request.fetch()
-    assert resp.status == 400
+def test_not_found(intgr_config):
+    with Session(config=intgr_config) as sess:
+        request = Request(sess, 'GET', '/invalid-url-wow')
+        with pytest.raises(BackendAPIError) as e:
+            with request.fetch():
+                pass
+        assert e.value.status == 404
+        request = Request(sess, 'GET', '/auth/uh-oh')
+        with pytest.raises(BackendAPIError) as e:
+            with request.fetch():
+                pass
+        assert e.value.status == 404
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_async_auth(defconfig):
-    random_msg = uuid.uuid4().hex
-    request = Request('GET', '/authorize', {
-        'echo': random_msg,
-    })
-    resp = await request.afetch()
-    assert resp.status == 200
-    data = resp.json()
-    assert data['authorized'] == 'yes'
-    assert data['echo'] == random_msg
+async def test_async_connection(intgr_config):
+    async with AsyncSession(config=intgr_config) as sess:
+        request = Request(sess, 'GET', '/')
+        async with request.fetch() as resp:
+            assert 'version' in await resp.json()
 
 
 @pytest.mark.integration
-def test_kernel_lifecycles(defconfig):
-    kernel = Kernel.get_or_create('python:latest')
-    kernel_id = kernel.kernel_id
-    info = kernel.get_info()
-    assert info['lang'] == 'python:latest'
-    assert info['numQueriesExecuted'] == 1
-    info = kernel.get_info()
-    assert info['numQueriesExecuted'] == 2
-    kernel.destroy()
-    # kernel destruction is no longer synchronous!
-    time.sleep(2.0)
-    with pytest.raises(BackendAPIError) as e:
-        info = Kernel(kernel_id).get_info()
-    assert e.value.args[0] == 404
+def test_auth(intgr_config):
+    random_msg = uuid.uuid4().hex
+    with Session(config=intgr_config) as sess:
+        request = Request(sess, 'GET', '/auth')
+        request.set_json({
+            'echo': random_msg,
+        })
+        with request.fetch() as resp:
+            assert resp.status == 200
+            data = resp.json()
+            assert data['authorized'] == 'yes'
+            assert data['echo'] == random_msg
+
+
+@pytest.mark.integration
+def test_auth_missing_signature(intgr_config, monkeypatch):
+    random_msg = uuid.uuid4().hex
+    with Session(config=intgr_config) as sess:
+        rqst = Request(sess, 'GET', '/auth')
+        rqst.set_json({
+            'echo': random_msg,
+        })
+        # let it bypass actual signing
+        from ai.backend.client import request
+        noop_sign = lambda *args, **kwargs: ({}, None)
+        monkeypatch.setattr(request, 'generate_signature', noop_sign)
+        with pytest.raises(BackendAPIError) as e:
+            with rqst.fetch():
+                pass
+        assert e.value.status == 401
+
+
+@pytest.mark.integration
+def test_auth_malformed(intgr_config):
+    with Session(config=intgr_config) as sess:
+        request = Request(sess, 'GET', '/auth')
+        request.set_content(
+            b'<this is not json>',
+            content_type='application/json',
+        )
+        with pytest.raises(BackendAPIError) as e:
+            with request.fetch():
+                pass
+        assert e.value.status == 400
+
+
+@pytest.mark.integration
+def test_auth_missing_body(intgr_config):
+    with Session(config=intgr_config) as sess:
+        request = Request(sess, 'GET', '/auth')
+        with pytest.raises(BackendAPIError) as e:
+            with request.fetch():
+                pass
+        assert e.value.status == 400
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_async_auth(intgr_config):
+    random_msg = uuid.uuid4().hex
+    async with AsyncSession(config=intgr_config) as sess:
+        request = Request(sess, 'GET', '/auth')
+        request.set_json({
+            'echo': random_msg,
+        })
+        async with request.fetch() as resp:
+            assert resp.status == 200
+            data = await resp.json()
+            assert data['authorized'] == 'yes'
+            assert data['echo'] == random_msg
+
+
+@pytest.mark.integration
+def test_kernel_lifecycles(intgr_config):
+    with Session(config=intgr_config) as sess:
+        kernel = sess.Kernel.get_or_create('python:latest')
+        kernel_id = kernel.kernel_id
+        info = kernel.get_info()
+        # the tag may be different depending on alias/metadata config.
+        lang = info['lang']
+        assert lang.startswith('python:') or lang.startswith('lablup/python:')
+        assert info['numQueriesExecuted'] == 1
+        info = kernel.get_info()
+        assert info['numQueriesExecuted'] == 2
+        kernel.destroy()
+        # kernel destruction is no longer synchronous!
+        time.sleep(2.0)
+        with pytest.raises(BackendAPIError) as e:
+            info = sess.Kernel(kernel_id).get_info()
+        assert e.value.status == 404
 
 
 @pytest.yield_fixture
-def py3_kernel():
-    kernel = Kernel.get_or_create('python:latest')
-    yield kernel
-    kernel.destroy()
+def py3_kernel(intgr_config):
+    with Session(config=intgr_config) as sess:
+        kernel = sess.Kernel.get_or_create('python:latest')
+        yield kernel
+        kernel.destroy()
 
 
 def exec_loop(kernel, code):
@@ -171,7 +210,7 @@ def exec_loop(kernel, code):
 
 
 @pytest.mark.integration
-def test_kernel_execution(defconfig, py3_kernel):
+def test_kernel_execution(py3_kernel):
     console, n = exec_loop(py3_kernel, 'print("hello world"); raise RuntimeError()')
     assert 'hello world' in console['stdout']
     assert 'RuntimeError' in console['stderr']
@@ -181,7 +220,7 @@ def test_kernel_execution(defconfig, py3_kernel):
 
 
 @pytest.mark.integration
-def test_kernel_restart(defconfig, py3_kernel):
+def test_kernel_restart(py3_kernel):
     num_queries = 1  # first query is done by py3_kernel fixture (creation)
     first_code = textwrap.dedent('''
     a = "first"
@@ -218,16 +257,18 @@ def test_kernel_restart(defconfig, py3_kernel):
 
 
 @pytest.mark.integration
-def test_admin_api(defconfig, py3_kernel):
+def test_admin_api(py3_kernel):
+    sess = py3_kernel.session
     q = '''
     query($ak: String!) {
         compute_sessions(access_key: $ak, status: "RUNNING") {
             lang
         }
     }'''
-    resp = Admin.query(q, {
-        'ak': defconfig.access_key,
+    resp = sess.Admin.query(q, {
+        'ak': sess.config.access_key,
     })
     assert 'compute_sessions' in resp
     assert len(resp['compute_sessions']) >= 1
-    assert resp['compute_sessions'][0]['lang'] == 'python:latest'
+    lang = resp['compute_sessions'][0]['lang']
+    assert lang.startswith('python:') or lang.startswith('lablup/python:')

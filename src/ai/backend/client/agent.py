@@ -1,22 +1,22 @@
 from typing import Optional, Iterable
 
-from .base import BaseFunction, SyncFunctionMixin
+from .base import api_function
 from .request import Request
 
 __all__ = (
-    'BaseAgent',
     'Agent',
 )
 
 
-class BaseAgent(BaseFunction):
+class Agent:
 
-    _session = None
+    session = None
 
+    @api_function
     @classmethod
-    def _list(cls,
-              status: str = 'ALIVE',
-              fields: Optional[Iterable[str]] = None):
+    async def list(cls,
+                   status: str = 'ALIVE',
+                   fields: Optional[Iterable[str]] = None):
         if fields is None:
             fields = (
                 'id',
@@ -33,23 +33,14 @@ class BaseAgent(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        vars = {
+        variables = {
             'status': status,
         }
-        resp = yield Request(cls._session,
-            'POST', '/admin/graphql', {
-                'query': q,
-                'variables': vars,
-            })
-        data = resp.json()
-        return data['agents']
-
-    def __init_subclass__(cls):
-        cls.list = cls._call_base_clsmethod(cls._list)
-
-
-class Agent(SyncFunctionMixin, BaseAgent):
-    '''
-    Deprecated! Use ai.backend.client.Session instead.
-    '''
-    pass
+        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst.set_json({
+            'query': q,
+            'variables': variables,
+        })
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            return data['agents']
