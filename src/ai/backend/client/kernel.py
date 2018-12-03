@@ -212,6 +212,7 @@ class Kernel:
 
     @api_function
     async def download(self, files: Sequence[Union[str, Path]],
+                       dest: Union[str, Path] = '.',
                        show_progress: bool = False):
         rqst = Request(self.session,
                        'GET', '/kernel/{}/download'.format(self.kernel_id))
@@ -220,9 +221,10 @@ class Kernel:
         })
         async with rqst.fetch() as resp:
             chunk_size = 1 * 1024
+            file_names = None
             tqdm_obj = tqdm(desc='Downloading files',
                             unit='bytes', unit_scale=True,
-                            total=resp.raw_response.stream_reader.total_bytes,
+                            total=resp.content.total_bytes,
                             disable=not show_progress)
             with tqdm_obj as pbar:
                 fp = None
@@ -237,7 +239,8 @@ class Kernel:
                             if fp:
                                 fp.close()
                                 with tarfile.open(fp.name) as tarf:
-                                    tarf.extractall()
+                                    tarf.extractall(path=dest)
+                                    file_names = tarf.getnames()
                                 os.unlink(fp.name)
                             fp = tempfile.NamedTemporaryFile(suffix='.tar',
                                                              delete=False)
@@ -248,7 +251,8 @@ class Kernel:
                 if fp:
                     fp.close()
                     os.unlink(fp.name)
-            return resp
+            result = {'file_names': file_names}
+            return result
 
     @api_function
     async def list_files(self, path: Union[str, Path] = '.'):

@@ -19,7 +19,7 @@ class WebSocketProxy:
         'upstream_buffer', 'upstream_buffer_task',
     )
 
-    def __init__(self, up_conn: web.WebSocketResponse,
+    def __init__(self, up_conn: aiohttp.ClientWebSocketResponse,
                  down_conn: web.WebSocketResponse):
         self.up_conn = up_conn
         self.down_conn = down_conn
@@ -63,14 +63,10 @@ class WebSocketProxy:
                 elif msg.type == aiohttp.WSMsgType.ERROR:
                     break
             # here, server gracefully disconnected
-        except ClientConnectorError:
-            print_fail("websocket connection failed")
-            await self.down_conn.close(code=503, message="Connection failed")
-        except ClientResponseError as e:
-            print_fail("websocket response error - {}".format(e.status))
-            await self.down_conn.close(code=e.status, message=e.message)
         except asyncio.CancelledError:
             pass
+        except Exception as e:
+            print_fail('unexpected error: {}'.format(e))
         finally:
             await self.close_upstream()
             print_info("websocket proxy termianted")

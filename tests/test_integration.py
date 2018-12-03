@@ -207,7 +207,7 @@ def exec_loop(kernel, mode, code, opts=None, user_inputs=None):
     while True:
         result = kernel.execute(
             run_id,
-            code=code if num_queries == 0 else '',
+            code=code if num_queries == 0 or mode == 'input' else '',
             mode=mode,
             opts=opts)
         num_queries += 1
@@ -227,10 +227,10 @@ def exec_loop(kernel, mode, code, opts=None, user_inputs=None):
 
 @pytest.mark.integration
 def test_kernel_execution_query_mode(py3_kernel):
-    code = 'print("hello world"); raise RuntimeError()'
+    code = 'print("hello world"); x = 1 / 0'
     console, n = exec_loop(py3_kernel, 'query', code, None)
     assert 'hello world' in console['stdout']
-    assert 'RuntimeError' in console['stderr']
+    assert 'ZeroDivisionError' in console['stderr']
     assert len(console['media']) == 0
     info = py3_kernel.get_info()
     assert info['numQueriesExecuted'] == n + 1
@@ -239,10 +239,10 @@ def test_kernel_execution_query_mode(py3_kernel):
 @pytest.mark.integration
 def test_kernel_execution_query_mode_user_input(py3_kernel):
     name = token_hex(8)
-    code = 'name = input("your name? "); print(f"hello, {name}")'
+    code = 'name = input("your name? "); print(f"hello, {name}!")'
     console, n = exec_loop(py3_kernel, 'query', code, None, user_inputs=[name])
     assert 'your name?' in console['stdout']
-    assert f'hello, {name}' in console['stdout']
+    assert f'hello, {name}!' in console['stdout']
 
 
 @pytest.mark.integration
@@ -261,7 +261,7 @@ def test_kernel_get_or_create_reuse(intgr_config):
 @pytest.mark.integration
 def test_kernel_execution_batch_mode(py3_kernel):
     with tempfile.NamedTemporaryFile('w', suffix='.py', dir=Path.cwd()) as f:
-        f.write('print("hello world")\nraise RuntimeError()\n')
+        f.write('print("hello world")\nx = 1 / 0\n')
         f.flush()
         f.seek(0)
         py3_kernel.upload([f.name])
@@ -270,7 +270,7 @@ def test_kernel_execution_batch_mode(py3_kernel):
         'exec': 'python {}'.format(Path(f.name).name),
     })
     assert 'hello world' in console['stdout']
-    assert 'RuntimeError' in console['stderr']
+    assert 'ZeroDivisionError' in console['stderr']
     assert len(console['media']) == 0
 
 
@@ -278,7 +278,7 @@ def test_kernel_execution_batch_mode(py3_kernel):
 def test_kernel_execution_batch_mode_user_input(py3_kernel):
     name = token_hex(8)
     with tempfile.NamedTemporaryFile('w', suffix='.py', dir=Path.cwd()) as f:
-        f.write('name = input("your name? "); print(f"hello, {name}")')
+        f.write('name = input("your name? "); print(f"hello, {name}!")')
         f.flush()
         f.seek(0)
         py3_kernel.upload([f.name])
@@ -287,7 +287,7 @@ def test_kernel_execution_batch_mode_user_input(py3_kernel):
         'exec': 'python {}'.format(Path(f.name).name),
     }, user_inputs=[name])
     assert 'your name?' in console['stdout']
-    assert f'hello, {name}' in console['stdout']
+    assert f'hello, {name}!' in console['stdout']
 
 
 @pytest.mark.integration
@@ -298,7 +298,7 @@ def test_kernel_execution_with_vfolder_mounts(intgr_config):
         vfolder = sess.VFolder(vfname)
         try:
             with tempfile.NamedTemporaryFile('w', suffix='.py', dir=Path.cwd()) as f:
-                f.write('print("hello world")\nraise RuntimeError()\n')
+                f.write('print("hello world")\nx = 1 / 0\n')
                 f.flush()
                 f.seek(0)
                 vfolder.upload([f.name])
@@ -311,7 +311,7 @@ def test_kernel_execution_with_vfolder_mounts(intgr_config):
                     'exec': 'python {}/{}'.format(vfname, Path(f.name).name),
                 })
                 assert 'hello world' in console['stdout']
-                assert 'RuntimeError' in console['stderr']
+                assert 'ZeroDivisionError' in console['stderr']
                 assert len(console['media']) == 0
             finally:
                 kernel.destroy()

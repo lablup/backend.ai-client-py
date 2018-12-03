@@ -115,7 +115,7 @@ async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
                     code = getpass.getpass()
                 else:
                     code = input()
-                await stream.send_text(code)
+                await stream.send_str(code)
             elif result['status'] == 'continued':
                 pass
 
