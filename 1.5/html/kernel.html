@@ -6,14 +6,16 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Kernel Functions &#8212; Backend.AI Client SDK for Python 1.5 documentation</title>
+    <title>Kernel Functions &#8212; Backend.AI Client SDK for Python 1.5.1
+ documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="canonical" href="/backend.ai-client-py/1.5/html/kernel.html" />
+    <link rel="canonical" href="/backend.ai-client-py/1.5
+/html/kernel.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="KeyPair Functions" href="keypair.html" />
@@ -39,57 +41,59 @@
 <dl class="class">
 <dt id="ai.backend.client.kernel.Kernel">
 <em class="property">class </em><code class="descclassname">ai.backend.client.kernel.</code><code class="descname">Kernel</code><span class="sig-paren">(</span><em>kernel_id: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements the request creation and response handling logic,
-while delegating the process of request sending to the subclasses
-via the generator protocol.</p>
+<dd><p>Provides various interactions with compute sessions in Backend.AI.</p>
+<p>The term ‘kernel’ is now deprecated and we prefer ‘compute sessions’.
+However, for historical reasons, we keep the backward compatibility
+with the naming of this API function class.</p>
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.complete">
-<em class="property">coroutine </em><code class="descname">complete</code><span class="sig-paren">(</span><em>code: str</em>, <em>opts: dict = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.complete" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">complete</code><span class="sig-paren">(</span><em>code: str</em>, <em>opts: dict = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.complete" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.destroy">
-<em class="property">coroutine </em><code class="descname">destroy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.destroy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.destroy" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">destroy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.destroy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.destroy" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.download">
-<em class="property">coroutine </em><code class="descname">download</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], dest: Union[str, pathlib.Path] = '.', show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.download" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">download</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], dest: Union[str, pathlib.Path] = '.', show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.download" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.execute">
-<em class="property">coroutine </em><code class="descname">execute</code><span class="sig-paren">(</span><em>run_id: str = None</em>, <em>code: str = None</em>, <em>mode: str = 'query'</em>, <em>opts: dict = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.execute" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">execute</code><span class="sig-paren">(</span><em>run_id: str = None</em>, <em>code: str = None</em>, <em>mode: str = 'query'</em>, <em>opts: dict = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.execute" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.get_info">
-<em class="property">coroutine </em><code class="descname">get_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_info" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">get_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_info" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.get_logs">
-<em class="property">coroutine </em><code class="descname">get_logs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_logs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_logs" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">get_logs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_logs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_logs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.get_or_create">
-<em class="property">coroutine </em><code class="descname">get_or_create</code><span class="sig-paren">(</span><em>lang: str</em>, <em>client_token: str = None</em>, <em>mounts: Iterable[str] = None</em>, <em>envs: Mapping[str</em>, <em>str] = None</em>, <em>resources: Mapping[str</em>, <em>int] = None</em>, <em>exec_timeout: int = 0</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_or_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_or_create" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">classmethod await </em><code class="descname">get_or_create</code><span class="sig-paren">(</span><em>lang: str</em>, <em>client_token: str = None</em>, <em>mounts: Iterable[str] = None</em>, <em>envs: Mapping[str</em>, <em>str] = None</em>, <em>resources: Mapping[str</em>, <em>int] = None</em>, <em>exec_timeout: int = 0</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_or_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_or_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get or create a compute session.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.interrupt">
-<em class="property">coroutine </em><code class="descname">interrupt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.interrupt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.interrupt" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">interrupt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.interrupt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.interrupt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.list_files">
-<em class="property">coroutine </em><code class="descname">list_files</code><span class="sig-paren">(</span><em>path: Union[str</em>, <em>pathlib.Path] = '.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.list_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.list_files" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">list_files</code><span class="sig-paren">(</span><em>path: Union[str</em>, <em>pathlib.Path] = '.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.list_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.list_files" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.restart">
-<em class="property">coroutine </em><code class="descname">restart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.restart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.restart" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">restart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.restart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.restart" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -99,12 +103,12 @@ via the generator protocol.</p>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.stream_pty">
-<em class="property">coroutine </em><code class="descname">stream_pty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.stream_pty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.stream_pty" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">stream_pty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.stream_pty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.stream_pty" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.upload">
-<em class="property">coroutine </em><code class="descname">upload</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], basedir: Union[str, pathlib.Path] = None, show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.upload" title="Permalink to this definition">¶</a></dt>
+<em class="property">await </em><code class="descname">upload</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], basedir: Union[str, pathlib.Path] = None, show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.upload" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -187,7 +191,7 @@ via the generator protocol.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2018, Joongi Kim.
+      &copy;2018, Lablup Inc..
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>

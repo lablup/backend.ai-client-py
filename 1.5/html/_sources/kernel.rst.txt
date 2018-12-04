@@ -6,5 +6,5 @@ Kernel Functions
 .. currentmodule:: ai.backend.client.kernel
 
 .. autoclass:: ai.backend.client.kernel.Kernel
-   :members:
-   :undoc-members:
+  :members:
+  :undoc-members:
