@@ -79,14 +79,28 @@
                             <span class="n">mounts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                             <span class="n">envs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                             <span class="n">resources</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-                            <span class="n">exec_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+                            <span class="n">exec_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;Kernel&#39;</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get-or-creates a compute session.</span>
+<span class="sd">        If *client_token* is ``None``, it creates a new compute session as long as</span>
+<span class="sd">        the server has enough resources and your API key has remaining quota.</span>
+<span class="sd">        If *client_token* is a valid string and there is an existing compute session</span>
+<span class="sd">        with the same token and the same *lang*, then it returns the :class:`Kernel`</span>
+<span class="sd">        instance representing the existing session.</span>
 
-<span class="sd">        :returns: The unique identifier of the created compute session.</span>
-<span class="sd">            You may construct a new :class:`Kernel` instance from it</span>
-<span class="sd">            for further interaction, but keep in mind that you must</span>
-<span class="sd">            use the ``Kernel`` class from the same session.</span>
+<span class="sd">        :param lang: The image name and tag for the compute session.</span>
+<span class="sd">            Example: ``python:3.6-ubuntu``.</span>
+<span class="sd">            Check out the full list of available images in your server using (TODO:</span>
+<span class="sd">            new API).</span>
+<span class="sd">        :param client_token: A client-side identifier to seamlessly reuse the compute</span>
+<span class="sd">            session already created.</span>
+<span class="sd">        :param mounts: The list of vfolder names that belongs to the currrent API</span>
+<span class="sd">            access key.</span>
+<span class="sd">        :param envs: The environment variables which always bypasses the jail policy.</span>
+<span class="sd">        :param resources: The resource specification. (TODO: details)</span>
+<span class="sd">        :param exec_timeout: (deprecated)</span>
+
+<span class="sd">        :returns: The :class:`Kernel` instance.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">client_token</span><span class="p">:</span>
             <span class="k">assert</span> <span class="mi">4</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_token</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">64</span><span class="p">,</span> \
@@ -123,6 +137,8 @@
     <span class="k">async</span> <span class="k">def</span> <span class="nf">destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Destroys the compute session.</span>
+<span class="sd">        Since the server literally kills the container(s), all ongoing executions are</span>
+<span class="sd">        forcibly interrupted.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                        <span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
