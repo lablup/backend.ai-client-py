@@ -17,7 +17,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Kernel Functions" href="kernel.html" />
-    <link rel="prev" title="Base Function" href="base.html" />
+    <link rel="prev" title="Admin Functions" href="admin.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -39,15 +39,38 @@
 <dl class="class">
 <dt id="ai.backend.client.agent.Agent">
 <em class="property">class </em><code class="descclassname">ai.backend.client.agent.</code><code class="descname">Agent</code><a class="reference internal" href="_modules/ai/backend/client/agent.html#Agent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.agent.Agent" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="ai.backend.client.agent.Agent.list">
-<em class="property">classmethod await </em><code class="descname">list</code><span class="sig-paren">(</span><em>status: str = 'ALIVE'</em>, <em>fields: Optional[Iterable[str]] = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/agent.html#Agent.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.agent.Agent.list" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<dd><p>Provides a shortcut of <a class="reference internal" href="admin.html#ai.backend.client.admin.Admin.query" title="ai.backend.client.admin.Admin.query"><code class="xref py py-func docutils literal notranslate"><span class="pre">Admin.query()</span></code></a> that fetches various agent
+information.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All methods in this function class require your API access key to
+have the <em>admin</em> privilege.</p>
+</div>
 <dl class="attribute">
 <dt id="ai.backend.client.agent.Agent.session">
 <code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.agent.Agent.session" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The client session instance that this function class is bound to.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.agent.Agent.list">
+<em class="property">classmethod await </em><code class="descname">list</code><span class="sig-paren">(</span><em>status='ALIVE'</em>, <em>fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/agent.html#Agent.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.agent.Agent.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the list of agents with the given status.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>status</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – An upper-cased string constant representing agent
+status (one of <code class="docutils literal notranslate"><span class="pre">'ALIVE'</span></code>, <code class="docutils literal notranslate"><span class="pre">'TERMINATED'</span></code>, <code class="docutils literal notranslate"><span class="pre">'LOST'</span></code>,
+etc.)</li>
+<li><strong>fields</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – Additional per-agent query fields to fetch.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </dd></dl>
 
@@ -78,15 +101,15 @@
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>
@@ -99,7 +122,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="base.html" title="previous chapter">Base Function</a></li>
+      <li>Previous: <a href="admin.html" title="previous chapter">Admin Functions</a></li>
       <li>Next: <a href="kernel.html" title="next chapter">Kernel Functions</a></li>
   </ul></li>
 </ul>

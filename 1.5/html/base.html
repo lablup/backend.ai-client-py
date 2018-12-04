@@ -16,8 +16,8 @@
     <link rel="canonical" href="/backend.ai-client-py/1.5/html/base.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Agent Functions" href="agent.html" />
-    <link rel="prev" title="Client Configuration" href="config.html" />
+    <link rel="next" title="Request API" href="request.html" />
+    <link rel="prev" title="Virtual Folder Functions" href="vfolder.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -36,9 +36,9 @@
             
   <div class="section" id="module-ai.backend.client.base">
 <span id="base-function"></span><h1>Base Function<a class="headerlink" href="#module-ai.backend.client.base" title="Permalink to this headline">¶</a></h1>
-<p>This module defines a few utilities that ease complexities to support
-both synchronous and asynchronous API functions, using some tricks
-with Python metaclasses.</p>
+<p>This module defines a few utilities that ease
+complexities to support both synchronous and asynchronous API functions, using
+some tricks with Python metaclasses.</p>
 <p>Unless your are contributing to the client SDK, probably you won’t
 have to use this module directly.</p>
 <dl class="class">
@@ -47,6 +47,12 @@ have to use this module directly.</p>
 <dd><p>Converts all methods marked with <a class="reference internal" href="#ai.backend.client.base.api_function" title="ai.backend.client.base.api_function"><code class="xref py py-func docutils literal notranslate"><span class="pre">api_function()</span></code></a> into
 session-aware methods that are either plain Python functions
 or coroutines.</p>
+<dl class="method">
+<dt id="ai.backend.client.base.APIFunctionMeta.mro">
+<code class="descname">mro</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; list<a class="headerlink" href="#ai.backend.client.base.APIFunctionMeta.mro" title="Permalink to this definition">¶</a></dt>
+<dd><p>return a type’s method resolution order</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -58,7 +64,7 @@ instances.</p>
 
 <dl class="function">
 <dt id="ai.backend.client.base.api_function">
-<code class="descclassname">ai.backend.client.base.</code><code class="descname">api_function</code><span class="sig-paren">(</span><em>meth</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/base.html#api_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.base.api_function" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">&#64;</code><code class="descclassname">ai.backend.client.base.</code><code class="descname">api_function</code><span class="sig-paren">(</span><em>meth</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/base.html#api_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.base.api_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mark the wrapped method as the API function method.</p>
 </dd></dl>
 
@@ -88,16 +94,16 @@ instances.</p>
 <li class="toctree-l1"><a class="reference internal" href="config.html">Client Configuration</a></li>
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Base Function</a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
-<ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>
@@ -110,8 +116,8 @@ instances.</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="config.html" title="previous chapter">Client Configuration</a></li>
-      <li>Next: <a href="agent.html" title="next chapter">Agent Functions</a></li>
+      <li>Previous: <a href="vfolder.html" title="previous chapter">Virtual Folder Functions</a></li>
+      <li>Next: <a href="request.html" title="next chapter">Request API</a></li>
   </ul></li>
 </ul>
 </div>

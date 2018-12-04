@@ -38,20 +38,21 @@
 <span id="client-session"></span><h1>Client Session<a class="headerlink" href="#module-ai.backend.client.session" title="Permalink to this headline">¶</a></h1>
 <p>This module is the first place to begin with your Python programs
 that use Backend.AI API functions.</p>
-<p>The high-level API functions cannot be used alone – you must initiate a session
-because each session provides <em>proxy attributes</em> that represent API functions and run
-on the session itself.
-To achieve this, internally session objcets construct new types from
-<a class="reference internal" href="base.html#ai.backend.client.base.BaseFunction" title="ai.backend.client.base.BaseFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseFunction</span></code></a> classes and the attributes in each API
-function classes, and makes the new types bound to itself.</p>
-<p>Creating new types every time when creating a new session instance may look weird,
+<p>The high-level API functions cannot be used alone – you must initiate a client
+session first because each session provides <em>proxy attributes</em> that represent API
+functions and run on the session itself.</p>
+<p>To achieve this, during initialization session objects internally construct new types
+by combining the <a class="reference internal" href="base.html#ai.backend.client.base.BaseFunction" title="ai.backend.client.base.BaseFunction"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseFunction</span></code></a> class with the
+attributes in each API function classes, and makes the new types bound to itself.
+Creating new types every time when creating a new session instance may look weird,
 but it is the most convenient way to provide <em>class-methods</em> in the API function
-classes to work with specific <em>session instances</em>.
-Also, session objects are intended to live long following the process’ lifecycle,
-instead of being created and disposed whenever making API requests.</p>
+classes to work with specific <em>session instances</em>.</p>
+<p>When designing your application, please note that session objects are intended to
+live long following the process’ lifecycle, instead of to be created and disposed
+whenever making API requests.</p>
 <dl class="class">
 <dt id="ai.backend.client.session.BaseSession">
-<em class="property">class </em><code class="descclassname">ai.backend.client.session.</code><code class="descname">BaseSession</code><span class="sig-paren">(</span><em>*</em>, <em>config: ai.backend.client.config.APIConfig = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#BaseSession"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.BaseSession" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">ai.backend.client.session.</code><code class="descname">BaseSession</code><span class="sig-paren">(</span><em>*</em>, <em>config=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#BaseSession"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.BaseSession" title="Permalink to this definition">¶</a></dt>
 <dd><p>The base abstract class for sessions.</p>
 <dl class="method">
 <dt id="ai.backend.client.session.BaseSession.close">
@@ -63,6 +64,14 @@ instead of being created and disposed whenever making API requests.</p>
 <dt id="ai.backend.client.session.BaseSession.closed">
 <code class="descname">closed</code><a class="headerlink" href="#ai.backend.client.session.BaseSession.closed" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks if the session is closed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -75,17 +84,11 @@ instead of being created and disposed whenever making API requests.</p>
 
 <dl class="class">
 <dt id="ai.backend.client.session.Session">
-<em class="property">class </em><code class="descclassname">ai.backend.client.session.</code><code class="descname">Session</code><span class="sig-paren">(</span><em>*</em>, <em>config: ai.backend.client.config.APIConfig = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.Session" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">ai.backend.client.session.</code><code class="descname">Session</code><span class="sig-paren">(</span><em>*</em>, <em>config=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#Session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.Session" title="Permalink to this definition">¶</a></dt>
 <dd><p>An API client session that makes API requests synchronously.
 You may call (almost) all function proxy methods like a plain Python function.
 It provides a context manager interface to ensure closing of the session
 upon errors and scope exits.</p>
-<dl class="attribute">
-<dt id="ai.backend.client.session.Session.config">
-<code class="descname">config</code><a class="headerlink" href="#ai.backend.client.session.Session.config" title="Permalink to this definition">¶</a></dt>
-<dd><p>The configuration used by this session object.</p>
-</dd></dl>
-
 <dl class="attribute">
 <dt id="ai.backend.client.session.Session.Admin">
 <code class="descname">Admin</code><a class="headerlink" href="#ai.backend.client.session.Session.Admin" title="Permalink to this definition">¶</a></dt>
@@ -137,15 +140,55 @@ thread to self-terminate by joining.</p>
 of the given API functions.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="ai.backend.client.session.Session.closed">
+<code class="descname">closed</code><a class="headerlink" href="#ai.backend.client.session.Session.closed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the session is closed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ai.backend.client.session.Session.config">
+<code class="descname">config</code><a class="headerlink" href="#ai.backend.client.session.Session.config" title="Permalink to this definition">¶</a></dt>
+<dd><p>The configuration used by this session object.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
 <dt id="ai.backend.client.session.AsyncSession">
-<em class="property">class </em><code class="descclassname">ai.backend.client.session.</code><code class="descname">AsyncSession</code><span class="sig-paren">(</span><em>*</em>, <em>config: ai.backend.client.config.APIConfig = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#AsyncSession"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.AsyncSession" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">ai.backend.client.session.</code><code class="descname">AsyncSession</code><span class="sig-paren">(</span><em>*</em>, <em>config=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#AsyncSession"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.AsyncSession" title="Permalink to this definition">¶</a></dt>
 <dd><p>An API client session that makes API requests asynchronously using coroutines.
 You may call all function proxy methods like a coroutine.
 It provides an async context manager interface to ensure closing of the session
 upon errors and scope exits.</p>
+<dl class="method">
+<dt id="ai.backend.client.session.AsyncSession.close">
+<em class="property">await </em><code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#AsyncSession.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.AsyncSession.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Terminates the session and releases underlying resources.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ai.backend.client.session.AsyncSession.closed">
+<code class="descname">closed</code><a class="headerlink" href="#ai.backend.client.session.AsyncSession.closed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the session is closed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="ai.backend.client.session.AsyncSession.config">
 <code class="descname">config</code><a class="headerlink" href="#ai.backend.client.session.AsyncSession.config" title="Permalink to this definition">¶</a></dt>
@@ -187,12 +230,6 @@ bound to this session.</p>
 bound to this session.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="ai.backend.client.session.AsyncSession.close">
-<em class="property">await </em><code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/session.html#AsyncSession.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.session.AsyncSession.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Terminates the session and releases underlying resources.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -222,15 +259,15 @@ bound to this session.</p>
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>

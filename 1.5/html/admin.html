@@ -16,8 +16,8 @@
     <link rel="canonical" href="/backend.ai-client-py/1.5/html/admin.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Request API" href="request.html" />
-    <link rel="prev" title="Virtual Folder Functions" href="vfolder.html" />
+    <link rel="next" title="Agent Functions" href="agent.html" />
+    <link rel="prev" title="Client Configuration" href="config.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -39,15 +39,44 @@
 <dl class="class">
 <dt id="ai.backend.client.admin.Admin">
 <em class="property">class </em><code class="descclassname">ai.backend.client.admin.</code><code class="descname">Admin</code><a class="reference internal" href="_modules/ai/backend/client/admin.html#Admin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.admin.Admin" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="ai.backend.client.admin.Admin.query">
-<em class="property">classmethod await </em><code class="descname">query</code><span class="sig-paren">(</span><em>query: str</em>, <em>variables: Optional[Mapping[str</em>, <em>Any]] = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/admin.html#Admin.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.admin.Admin.query" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<dd><p>Provides the function interface for making admin GrapQL queries.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Depending on the privilege of your API access key, you may or may not
+have access to querying/mutating server-side resources of other
+users.</p>
+</div>
 <dl class="attribute">
 <dt id="ai.backend.client.admin.Admin.session">
 <code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.admin.Admin.session" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The client session instance that this function class is bound to.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.admin.Admin.query">
+<em class="property">classmethod await </em><code class="descname">query</code><span class="sig-paren">(</span><em>query</em>, <em>variables=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/admin.html#Admin.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.admin.Admin.query" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends the GraphQL query and returns the response.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The GraphQL query string.</li>
+<li><strong>variables</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Mapping" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mapping</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]) – An optional key-value dictionary
+to fill the interpolated template variables
+in the query.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The object parsed from the response JSON string.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 </dd></dl>
 
@@ -78,15 +107,15 @@
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>
@@ -99,8 +128,8 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="vfolder.html" title="previous chapter">Virtual Folder Functions</a></li>
-      <li>Next: <a href="request.html" title="next chapter">Request API</a></li>
+      <li>Previous: <a href="config.html" title="previous chapter">Client Configuration</a></li>
+      <li>Next: <a href="agent.html" title="next chapter">Agent Functions</a></li>
   </ul></li>
 </ul>
 </div>

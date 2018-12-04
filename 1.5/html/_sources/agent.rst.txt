@@ -1,10 +1,9 @@
 Agent Functions
 ===============
 
-.. automodule:: ai.backend.client.agent
-
+.. module:: ai.backend.client.agent
 .. currentmodule:: ai.backend.client.agent
 
-.. autoclass:: ai.backend.client.agent.Agent
+.. autoclass:: Agent
    :members:
    :undoc-members:

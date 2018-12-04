@@ -33,25 +33,7 @@
           <div class="body" role="main">
             
   <h1>Source code for ai.backend.client.session</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">This module is the first place to begin with your Python programs</span>
-<span class="sd">that use Backend.AI API functions.</span>
-
-<span class="sd">The high-level API functions cannot be used alone -- you must initiate a session</span>
-<span class="sd">because each session provides *proxy attributes* that represent API functions and run</span>
-<span class="sd">on the session itself.</span>
-<span class="sd">To achieve this, internally session objcets construct new types from</span>
-<span class="sd">:class:`~ai.backend.client.base.BaseFunction` classes and the attributes in each API</span>
-<span class="sd">function classes, and makes the new types bound to itself.</span>
-
-<span class="sd">Creating new types every time when creating a new session instance may look weird,</span>
-<span class="sd">but it is the most convenient way to provide *class-methods* in the API function</span>
-<span class="sd">classes to work with specific *session instances*.</span>
-<span class="sd">Also, session objects are intended to live long following the process&#39; lifecycle,</span>
-<span class="sd">instead of being created and disposed whenever making API requests.</span>
-<span class="sd">&#39;&#39;&#39;</span>
-
-<span class="kn">import</span> <span class="nn">abc</span>
+<span></span><span class="kn">import</span> <span class="nn">abc</span>
 <span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">queue</span>
@@ -343,15 +325,15 @@
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">Exceptions</a></li>
 </ul>

@@ -157,8 +157,14 @@
         <li><a href="session.html#ai.backend.client.session.Session.close">(ai.backend.client.session.Session method)</a>
 </li>
       </ul></li>
-      <li><a href="session.html#ai.backend.client.session.BaseSession.closed">closed (ai.backend.client.session.BaseSession attribute)</a>
+      <li><a href="session.html#ai.backend.client.session.AsyncSession.closed">closed (ai.backend.client.session.AsyncSession attribute)</a>
+
+      <ul>
+        <li><a href="session.html#ai.backend.client.session.BaseSession.closed">(ai.backend.client.session.BaseSession attribute)</a>
 </li>
+        <li><a href="session.html#ai.backend.client.session.Session.closed">(ai.backend.client.session.Session attribute)</a>
+</li>
+      </ul></li>
       <li><a href="kernel.html#ai.backend.client.kernel.Kernel.complete">complete() (ai.backend.client.kernel.Kernel method)</a>
 </li>
       <li><a href="request.html#ai.backend.client.request.Request.config">config (ai.backend.client.request.Request attribute)</a>
@@ -183,12 +189,16 @@
       </ul></li>
       <li><a href="request.html#ai.backend.client.request.Response.content_length">content_length (ai.backend.client.request.Response attribute)</a>
 </li>
-      <li><a href="request.html#ai.backend.client.request.Request.content_type">content_type (ai.backend.client.request.Request attribute)</a>
+      <li><a href="request.html#ai.backend.client.request.AttachedFile.content_type">content_type (ai.backend.client.request.AttachedFile attribute)</a>
 
       <ul>
+        <li><a href="request.html#ai.backend.client.request.Request.content_type">(ai.backend.client.request.Request attribute)</a>
+</li>
         <li><a href="request.html#ai.backend.client.request.Response.content_type">(ai.backend.client.request.Response attribute)</a>
 </li>
       </ul></li>
+      <li><a href="request.html#ai.backend.client.request.AttachedFile.count">count() (ai.backend.client.request.AttachedFile method)</a>
+</li>
       <li><a href="keypair.html#ai.backend.client.keypair.KeyPair.create">create() (ai.backend.client.keypair.KeyPair method)</a>
 
       <ul>
@@ -247,6 +257,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="request.html#ai.backend.client.request.FetchContextManager">FetchContextManager (class in ai.backend.client.request)</a>
 </li>
+      <li><a href="request.html#ai.backend.client.request.AttachedFile.filename">filename (ai.backend.client.request.AttachedFile attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -287,12 +299,14 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="vfolder.html#ai.backend.client.vfolder.VFolder.info">info() (ai.backend.client.vfolder.VFolder method)</a>
+      <li><a href="request.html#ai.backend.client.request.AttachedFile.index">index() (ai.backend.client.request.AttachedFile method)</a>
 </li>
-      <li><a href="kernel.html#ai.backend.client.kernel.Kernel.interrupt">interrupt() (ai.backend.client.kernel.Kernel method)</a>
+      <li><a href="vfolder.html#ai.backend.client.vfolder.VFolder.info">info() (ai.backend.client.vfolder.VFolder method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="kernel.html#ai.backend.client.kernel.Kernel.interrupt">interrupt() (ai.backend.client.kernel.Kernel method)</a>
+</li>
       <li><a href="vfolder.html#ai.backend.client.vfolder.VFolder.invitations">invitations() (ai.backend.client.vfolder.VFolder method)</a>
 </li>
       <li><a href="vfolder.html#ai.backend.client.vfolder.VFolder.invite">invite() (ai.backend.client.vfolder.VFolder method)</a>
@@ -362,6 +376,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="vfolder.html#ai.backend.client.vfolder.VFolder.mkdir">mkdir() (ai.backend.client.vfolder.VFolder method)</a>
+</li>
+      <li><a href="base.html#ai.backend.client.base.APIFunctionMeta.mro">mro() (ai.backend.client.base.APIFunctionMeta method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -443,7 +459,11 @@
 </li>
       <li><a href="request.html#ai.backend.client.request.Response.status">status (ai.backend.client.request.Response attribute)</a>
 </li>
+      <li><a href="request.html#ai.backend.client.request.AttachedFile.stream">stream (ai.backend.client.request.AttachedFile attribute)</a>
+</li>
       <li><a href="kernel.html#ai.backend.client.kernel.Kernel.stream_pty">stream_pty() (ai.backend.client.kernel.Kernel method)</a>
+</li>
+      <li><a href="kernel.html#ai.backend.client.kernel.StreamPty">StreamPty (class in ai.backend.client.kernel)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -495,6 +515,16 @@
 <h2 id="W">W</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exceptions.html#ai.backend.client.exceptions.BackendAPIError.with_traceback">with_traceback() (ai.backend.client.exceptions.BackendAPIError method)</a>
+
+      <ul>
+        <li><a href="exceptions.html#ai.backend.client.exceptions.BackendClientError.with_traceback">(ai.backend.client.exceptions.BackendClientError method)</a>
+</li>
+        <li><a href="exceptions.html#ai.backend.client.exceptions.BackendError.with_traceback">(ai.backend.client.exceptions.BackendError method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="session.html#ai.backend.client.session.Session.worker_thread">worker_thread (ai.backend.client.session.Session attribute)</a>
 </li>
   </ul></td>
@@ -526,15 +556,15 @@
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>

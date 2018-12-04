@@ -1,10 +1,8 @@
 Admin Functions
 ===============
 
-.. automodule:: ai.backend.client.admin
-
+.. module:: ai.backend.client.admin
 .. currentmodule:: ai.backend.client.admin
 
-.. autoclass:: ai.backend.client.admin.Admin
+.. autoclass:: Admin
    :members:
-   :undoc-members:

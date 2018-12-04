@@ -1,15 +1,14 @@
 Exceptions
 ==========
 
-.. automodule:: ai.backend.client.exceptions
-
+.. module:: ai.backend.client.exceptions
 .. currentmodule:: ai.backend.client.exceptions
 
-.. autoclass:: ai.backend.client.exceptions.BackendError
+.. autoclass:: BackendError
    :members:
 
-.. autoclass:: ai.backend.client.exceptions.BackendAPIError
+.. autoclass:: BackendAPIError
    :members:
 
-.. autoclass:: ai.backend.client.exceptions.BackendClientError
+.. autoclass:: BackendClientError
    :members:

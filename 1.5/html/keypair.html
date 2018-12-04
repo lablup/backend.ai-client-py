@@ -39,29 +39,30 @@
 <dl class="class">
 <dt id="ai.backend.client.keypair.KeyPair">
 <em class="property">class </em><code class="descclassname">ai.backend.client.keypair.</code><code class="descname">KeyPair</code><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
+<dd><dl class="attribute">
+<dt id="ai.backend.client.keypair.KeyPair.session">
+<code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.session" title="Permalink to this definition">¶</a></dt>
+<dd><p>The client session instance that this function class is bound to.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="ai.backend.client.keypair.KeyPair.activate">
-<em class="property">classmethod await </em><code class="descname">activate</code><span class="sig-paren">(</span><em>access_key: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.activate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.activate" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod await </em><code class="descname">activate</code><span class="sig-paren">(</span><em>access_key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.activate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.activate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.keypair.KeyPair.create">
-<em class="property">classmethod await </em><code class="descname">create</code><span class="sig-paren">(</span><em>user_id: Union[int, str], is_active: bool = True, is_admin: bool = False, resource_policy: str = None, rate_limit: int = None, concurrency_limit: int = None, fields: Iterable[str] = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.create" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod await </em><code class="descname">create</code><span class="sig-paren">(</span><em>user_id</em>, <em>is_active=True</em>, <em>is_admin=False</em>, <em>resource_policy=None</em>, <em>rate_limit=None</em>, <em>concurrency_limit=None</em>, <em>fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.create" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.keypair.KeyPair.deactivate">
-<em class="property">classmethod await </em><code class="descname">deactivate</code><span class="sig-paren">(</span><em>access_key: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.deactivate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.deactivate" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod await </em><code class="descname">deactivate</code><span class="sig-paren">(</span><em>access_key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.deactivate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.deactivate" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.keypair.KeyPair.list">
-<em class="property">classmethod await </em><code class="descname">list</code><span class="sig-paren">(</span><em>user_id: Union[int, str], is_active: bool = None, fields: Iterable[str] = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.list" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="ai.backend.client.keypair.KeyPair.session">
-<code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.session" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod await </em><code class="descname">list</code><span class="sig-paren">(</span><em>user_id</em>, <em>is_active=None</em>, <em>fields=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/keypair.html#KeyPair.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.keypair.KeyPair.list" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -93,15 +94,15 @@
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>

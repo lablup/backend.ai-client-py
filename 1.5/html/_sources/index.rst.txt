@@ -18,17 +18,17 @@ Backend.AI Client SDK for Python
    :maxdepth: 2
    :caption: High-level Function Reference:
 
-   base
+   admin
    agent
    kernel
    keypair
    vfolder
-   admin
 
 .. toctree::
    :maxdepth: 2
    :caption: Low-level SDK Reference:
 
+   base
    request
    exceptions
 

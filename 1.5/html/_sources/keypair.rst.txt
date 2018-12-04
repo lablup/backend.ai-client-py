@@ -1,10 +1,9 @@
 KeyPair Functions
 =================
 
-.. automodule:: ai.backend.client.keypair
-
+.. module:: ai.backend.client.keypair
 .. currentmodule:: ai.backend.client.keypair
 
-.. autoclass:: ai.backend.client.keypair.KeyPair
+.. autoclass:: KeyPair
    :members:
    :undoc-members:

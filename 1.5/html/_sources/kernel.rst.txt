@@ -1,10 +1,11 @@
 Kernel Functions
 ================
 
-.. automodule:: ai.backend.client.kernel
-
+.. module:: ai.backend.client.kernel
 .. currentmodule:: ai.backend.client.kernel
 
-.. autoclass:: ai.backend.client.kernel.Kernel
+.. autoclass:: Kernel
   :members:
-  :undoc-members:
+
+.. autoclass:: StreamPty
+  :members:

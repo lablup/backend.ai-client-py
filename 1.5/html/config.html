@@ -16,7 +16,7 @@
     <link rel="canonical" href="/backend.ai-client-py/1.5/html/config.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Base Function" href="base.html" />
+    <link rel="next" title="Admin Functions" href="admin.html" />
     <link rel="prev" title="Client Session" href="session.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -56,7 +56,7 @@ keypairs (access and secret keys), and a few others.</p>
 notebook kernels.</p>
 <dl class="function">
 <dt id="ai.backend.client.config.get_env">
-<code class="descclassname">ai.backend.client.config.</code><code class="descname">get_env</code><span class="sig-paren">(</span><em>key: str</em>, <em>default: Any = None</em>, <em>clean: Callable = &lt;function &lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/config.html#get_env"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.config.get_env" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ai.backend.client.config.</code><code class="descname">get_env</code><span class="sig-paren">(</span><em>key</em>, <em>default=None</em>, <em>clean=&lt;function &lt;lambda&gt;&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/config.html#get_env"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.config.get_env" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieves a configuration value from the environment variables.
 The given <em>key</em> is uppercased and prefixed by <code class="docutils literal notranslate"><span class="pre">&quot;BACKEND_&quot;</span></code> and then
 <code class="docutils literal notranslate"><span class="pre">&quot;SORNA_&quot;</span></code> if the former does not exist.</p>
@@ -65,10 +65,10 @@ The given <em>key</em> is uppercased and prefixed by <code class="docutils liter
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>key</strong> – The key name.</li>
-<li><strong>default</strong> – The default value returned when there is no corresponding
+<li><strong>key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The key name.</li>
+<li><strong>default</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]) – The default value returned when there is no corresponding
 environment variable.</li>
-<li><strong>clean</strong> – A single-argument function that is applied to the result of lookup
+<li><strong>clean</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Callable" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code></a>[[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]) – A single-argument function that is applied to the result of lookup
 (in both successes and the default value for failures).
 The default is returning the value as-is.</li>
 </ul>
@@ -92,13 +92,13 @@ and defaults.</p>
 
 <dl class="function">
 <dt id="ai.backend.client.config.set_config">
-<code class="descclassname">ai.backend.client.config.</code><code class="descname">set_config</code><span class="sig-paren">(</span><em>conf: ai.backend.client.config.APIConfig</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/config.html#set_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.config.set_config" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ai.backend.client.config.</code><code class="descname">set_config</code><span class="sig-paren">(</span><em>conf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/config.html#set_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.config.set_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the configuration used throughout the current process.</p>
 </dd></dl>
 
 <dl class="class">
 <dt id="ai.backend.client.config.APIConfig">
-<em class="property">class </em><code class="descclassname">ai.backend.client.config.</code><code class="descname">APIConfig</code><span class="sig-paren">(</span><em>*</em>, <em>endpoint: Union[yarl.URL</em>, <em>str] = None</em>, <em>version: str = None</em>, <em>user_agent: str = None</em>, <em>access_key: str = None</em>, <em>secret_key: str = None</em>, <em>hash_type: str = None</em>, <em>vfolder_mounts: Iterable[str] = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/config.html#APIConfig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.config.APIConfig" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">ai.backend.client.config.</code><code class="descname">APIConfig</code><span class="sig-paren">(</span><em>*</em>, <em>endpoint=None</em>, <em>version=None</em>, <em>user_agent=None</em>, <em>access_key=None</em>, <em>secret_key=None</em>, <em>hash_type=None</em>, <em>vfolder_mounts=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/config.html#APIConfig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.config.APIConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a set of API client configurations.
 The access key and secret key are mandatory – they must be set in either
 environment variables or as the explicit arguments.</p>
@@ -107,15 +107,15 @@ environment variables or as the explicit arguments.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>endpoint</strong> – The URL prefix to make API requests via HTTP/HTTPS.</li>
-<li><strong>version</strong> – The API protocol version.</li>
-<li><strong>user_agent</strong> – A custom user-agent string which is sent to the API
+<li><strong>endpoint</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://yarl.readthedocs.io/en/stable/api.html#yarl.URL" title="(in yarl v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">URL</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – The URL prefix to make API requests via HTTP/HTTPS.</li>
+<li><strong>version</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – The API protocol version.</li>
+<li><strong>user_agent</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – A custom user-agent string which is sent to the API
 server as a <code class="docutils literal notranslate"><span class="pre">User-Agent</span></code> HTTP header.</li>
-<li><strong>access_key</strong> – The API access key.</li>
-<li><strong>secret_key</strong> – The API secret key.</li>
-<li><strong>hash_type</strong> – The hash type to generate per-request authentication
+<li><strong>access_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – The API access key.</li>
+<li><strong>secret_key</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – The API secret key.</li>
+<li><strong>hash_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – The hash type to generate per-request authentication
 signatures.</li>
-<li><strong>vfolder_mounts</strong> – A list of vfolder names (that must belong to the given
+<li><strong>vfolder_mounts</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – A list of vfolder names (that must belong to the given
 access key) to be automatically mounted upon any
 <a class="reference internal" href="kernel.html#ai.backend.client.kernel.Kernel.get_or_create" title="ai.backend.client.kernel.Kernel.get_or_create"><code class="xref py py-func docutils literal notranslate"><span class="pre">Kernel.get_or_create()</span></code></a> calls.</li>
 </ul>
@@ -130,45 +130,101 @@ access key) to be automatically mounted upon any
 </dd></dl>
 
 <dl class="attribute">
-<dt id="ai.backend.client.config.APIConfig.access_key">
-<code class="descname">access_key</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.access_key" title="Permalink to this definition">¶</a></dt>
-<dd><p>The configured API access key.</p>
-</dd></dl>
-
-<dl class="attribute">
 <dt id="ai.backend.client.config.APIConfig.endpoint">
 <code class="descname">endpoint</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.endpoint" title="Permalink to this definition">¶</a></dt>
 <dd><p>The configured endpoint URL prefix.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="ai.backend.client.config.APIConfig.hash_type">
-<code class="descname">hash_type</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.hash_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>The configured hash algorithm for API authentication signatures.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="ai.backend.client.config.APIConfig.secret_key">
-<code class="descname">secret_key</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.secret_key" title="Permalink to this definition">¶</a></dt>
-<dd><p>The configured API secret key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://yarl.readthedocs.io/en/stable/api.html#yarl.URL" title="(in yarl v1.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">URL</span></code></a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="ai.backend.client.config.APIConfig.user_agent">
 <code class="descname">user_agent</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.user_agent" title="Permalink to this definition">¶</a></dt>
 <dd><p>The configured user agent string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ai.backend.client.config.APIConfig.access_key">
+<code class="descname">access_key</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.access_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>The configured API access key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ai.backend.client.config.APIConfig.secret_key">
+<code class="descname">secret_key</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.secret_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>The configured API secret key.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="ai.backend.client.config.APIConfig.version">
 <code class="descname">version</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.version" title="Permalink to this definition">¶</a></dt>
 <dd><p>The configured API protocol version.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ai.backend.client.config.APIConfig.hash_type">
+<code class="descname">hash_type</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.hash_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The configured hash algorithm for API authentication signatures.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="ai.backend.client.config.APIConfig.vfolder_mounts">
 <code class="descname">vfolder_mounts</code><a class="headerlink" href="#ai.backend.client.config.APIConfig.vfolder_mounts" title="Permalink to this definition">¶</a></dt>
 <dd><p>The configured auto-mounted vfolder list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, …]</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -200,15 +256,15 @@ access key) to be automatically mounted upon any
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>
@@ -222,7 +278,7 @@ access key) to be automatically mounted upon any
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
       <li>Previous: <a href="session.html" title="previous chapter">Client Session</a></li>
-      <li>Next: <a href="base.html" title="next chapter">Base Function</a></li>
+      <li>Next: <a href="admin.html" title="next chapter">Admin Functions</a></li>
   </ul></li>
 </ul>
 </div>

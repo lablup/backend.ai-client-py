@@ -55,16 +55,16 @@
 
 
 <div class="viewcode-block" id="Kernel"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel">[docs]</a><span class="k">class</span> <span class="nc">Kernel</span><span class="p">:</span>
-
     <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">    Provides various interactions with compute sessions in Backend.AI.</span>
 
 <span class="sd">    The term &#39;kernel&#39; is now deprecated and we prefer &#39;compute sessions&#39;.</span>
-<span class="sd">    However, for historical reasons, we keep the backward compatibility</span>
-<span class="sd">    with the naming of this API function class.</span>
+<span class="sd">    However, for historical reasons and to avoid confusion with client sessions, we</span>
+<span class="sd">    keep the backward compatibility with the naming of this API function class.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="n">session</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&#39;&#39;&#39;The client session instance that this function class is bound to.&#39;&#39;&#39;</span>
 
 <div class="viewcode-block" id="Kernel.get_or_create"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.get_or_create">[docs]</a>    <span class="nd">@api_function</span>
     <span class="nd">@classmethod</span>
@@ -76,6 +76,11 @@
                             <span class="n">exec_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">        Get or create a compute session.</span>
+
+<span class="sd">        :returns: The unique identifier of the created compute session.</span>
+<span class="sd">            You may construct a new :class:`Kernel` instance from it</span>
+<span class="sd">            for further interaction, but keep in mind that you must</span>
+<span class="sd">            use the ``Kernel`` class from the same session.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
         <span class="k">if</span> <span class="n">client_token</span><span class="p">:</span>
             <span class="k">assert</span> <span class="mi">4</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_token</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">64</span><span class="p">,</span> \
@@ -110,6 +115,9 @@
 
 <div class="viewcode-block" id="Kernel.destroy"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.destroy">[docs]</a>    <span class="nd">@api_function</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">destroy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Destroys the compute session.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                        <span class="s1">&#39;DELETE&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">rqst</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
@@ -118,6 +126,11 @@
 
 <div class="viewcode-block" id="Kernel.restart"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.restart">[docs]</a>    <span class="nd">@api_function</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Restarts the compute session.</span>
+<span class="sd">        The server force-destroys the current running container(s), but keeps their</span>
+<span class="sd">        temporary scratch directories intact.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                        <span class="s1">&#39;PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">rqst</span><span class="o">.</span><span class="n">fetch</span><span class="p">():</span>
@@ -125,13 +138,32 @@
 
 <div class="viewcode-block" id="Kernel.interrupt"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.interrupt">[docs]</a>    <span class="nd">@api_function</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">interrupt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Tries to interrupt the current ongoing code execution.</span>
+<span class="sd">        This may fail without any explicit errors depending on the code being</span>
+<span class="sd">        executed.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                        <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">/interrupt&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">rqst</span><span class="o">.</span><span class="n">fetch</span><span class="p">():</span>
             <span class="k">pass</span></div>
 
 <div class="viewcode-block" id="Kernel.complete"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.complete">[docs]</a>    <span class="nd">@api_function</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Get the auto-completion candidates from the given code string,</span>
+<span class="sd">        as if a user has pressed the tab key just after the code in</span>
+<span class="sd">        IDEs.</span>
+
+<span class="sd">        Depending on the language of the compute session, this feature</span>
+<span class="sd">        may not be supported.  Unsupported sessions returns an empty list.</span>
+
+<span class="sd">        :param code: An (incomplete) code text.</span>
+<span class="sd">        :param opts: Additional information about the current cursor position,</span>
+<span class="sd">            such as row, col, line and the remainder text.</span>
+
+<span class="sd">        :returns: An ordered list of strings.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">opts</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">opts</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
             <span class="s1">&#39;POST&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">/complete&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
@@ -149,6 +181,9 @@
 
 <div class="viewcode-block" id="Kernel.get_info"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.get_info">[docs]</a>    <span class="nd">@api_function</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieves a brief information about the compute session.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                        <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">rqst</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
@@ -156,6 +191,9 @@
 
 <div class="viewcode-block" id="Kernel.get_logs"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.get_logs">[docs]</a>    <span class="nd">@api_function</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">get_logs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieves the console log of the compute session container.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                        <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">/logs&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
         <span class="k">async</span> <span class="k">with</span> <span class="n">rqst</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span> <span class="k">as</span> <span class="n">resp</span><span class="p">:</span>
@@ -166,6 +204,17 @@
                       <span class="n">code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                       <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;query&#39;</span><span class="p">,</span>
                       <span class="n">opts</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Executes a code snippet directly in the compute session or sends a set of</span>
+<span class="sd">        build/clean/execute commands to the compute session.</span>
+
+<span class="sd">        :param run_id:</span>
+<span class="sd">        :param code:</span>
+<span class="sd">        :param mode:</span>
+<span class="sd">        :param opts:</span>
+
+<span class="sd">        :returns: A dictionary that describes the execution result.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span> <span class="k">if</span> <span class="n">opts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;query&#39;</span><span class="p">,</span> <span class="s1">&#39;continue&#39;</span><span class="p">,</span> <span class="s1">&#39;input&#39;</span><span class="p">}:</span>
             <span class="k">assert</span> <span class="n">code</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> \
@@ -211,6 +260,19 @@
     <span class="k">async</span> <span class="k">def</span> <span class="nf">upload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]],</span>
                      <span class="n">basedir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                      <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Uploads the given list of files to the compute session.</span>
+<span class="sd">        You may refer them in the batch-mode execution or from the code</span>
+<span class="sd">        executed in the server afterwards.</span>
+
+<span class="sd">        :param files: The list of file paths in the client-side.</span>
+<span class="sd">            If the paths include directories, the location of them in the compute</span>
+<span class="sd">            session is calculated from the relative path to *basedir* and all</span>
+<span class="sd">            intermediate parent directories are automatically created if not exists.</span>
+<span class="sd">        :param basedir: The directory prefix where the files reside.</span>
+<span class="sd">            The default value is the current working directory.</span>
+<span class="sd">        :param show_progress: Displays a progress bar during uploads.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">base_path</span> <span class="o">=</span> <span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span> <span class="k">if</span> <span class="n">basedir</span> <span class="ow">is</span> <span class="kc">None</span>
                      <span class="k">else</span> <span class="n">Path</span><span class="p">(</span><span class="n">basedir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">())</span>
         <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">]</span>
@@ -246,6 +308,15 @@
     <span class="k">async</span> <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]],</span>
                        <span class="n">dest</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
                        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Downloads the given list of files from the compute session.</span>
+
+<span class="sd">        :param files: The list of file paths in the compute session.</span>
+<span class="sd">            If they are relative paths, the path is calculated from</span>
+<span class="sd">            ``/home/work`` in the compute session container.</span>
+<span class="sd">        :param dest: The destination directory in the client-side.</span>
+<span class="sd">        :param show_progress: Displays a progress bar during downloads.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                        <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">/download&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
         <span class="n">rqst</span><span class="o">.</span><span class="n">set_json</span><span class="p">({</span>
@@ -288,6 +359,12 @@
 
 <div class="viewcode-block" id="Kernel.list_files"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.list_files">[docs]</a>    <span class="nd">@api_function</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">list_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Gets the list of files in the given path inside the compute session</span>
+<span class="sd">        container.</span>
+
+<span class="sd">        :param path: The directory path in the compute session.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">rqst</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
             <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;/kernel/</span><span class="si">{}</span><span class="s1">/files&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">),</span> <span class="p">{</span>
                 <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
@@ -297,6 +374,12 @@
 
     <span class="c1"># only supported in AsyncKernel</span>
 <div class="viewcode-block" id="Kernel.stream_pty"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.stream_pty">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">stream_pty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Opens a pseudo-terminal of the kernel (if supported) streamed via</span>
+<span class="sd">        websockets.</span>
+
+<span class="sd">        :returns: a :class:`StreamPty` object.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span>
                           <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;/stream/kernel/</span><span class="si">{}</span><span class="s1">/pty&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">))</span>
         <span class="k">try</span><span class="p">:</span>
@@ -306,12 +389,10 @@
         <span class="k">return</span> <span class="n">StreamPty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_id</span><span class="p">,</span> <span class="n">ws</span><span class="p">)</span></div></div>
 
 
-<span class="k">class</span> <span class="nc">StreamPty</span><span class="p">:</span>
+<div class="viewcode-block" id="StreamPty"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.StreamPty">[docs]</a><span class="k">class</span> <span class="nc">StreamPty</span><span class="p">:</span>
 
     <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">    A very thin wrapper of aiohttp.WebSocketResponse object.</span>
-<span class="sd">    It keeps the reference to the mother aiohttp.ClientSession object while the</span>
-<span class="sd">    connection is alive.</span>
+<span class="sd">    A very thin wrapper of :class:`aiohttp.ClientWebSocketResponse` object.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel_id</span><span class="p">,</span> <span class="n">ws</span><span class="p">):</span>
@@ -348,7 +429,7 @@
         <span class="p">}))</span>
 
     <span class="k">async</span> <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">ws</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 </pre></div>
 
           </div>
@@ -375,15 +456,15 @@
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">Exceptions</a></li>
 </ul>

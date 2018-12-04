@@ -38,77 +38,205 @@
 <span id="kernel-functions"></span><h1>Kernel Functions<a class="headerlink" href="#module-ai.backend.client.kernel" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="ai.backend.client.kernel.Kernel">
-<em class="property">class </em><code class="descclassname">ai.backend.client.kernel.</code><code class="descname">Kernel</code><span class="sig-paren">(</span><em>kernel_id: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">ai.backend.client.kernel.</code><code class="descname">Kernel</code><span class="sig-paren">(</span><em>kernel_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides various interactions with compute sessions in Backend.AI.</p>
 <p>The term ‘kernel’ is now deprecated and we prefer ‘compute sessions’.
-However, for historical reasons, we keep the backward compatibility
-with the naming of this API function class.</p>
+However, for historical reasons and to avoid confusion with client sessions, we
+keep the backward compatibility with the naming of this API function class.</p>
+<dl class="attribute">
+<dt id="ai.backend.client.kernel.Kernel.session">
+<code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.kernel.Kernel.session" title="Permalink to this definition">¶</a></dt>
+<dd><p>The client session instance that this function class is bound to.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.complete">
-<em class="property">await </em><code class="descname">complete</code><span class="sig-paren">(</span><em>code: str</em>, <em>opts: dict = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.complete" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">await </em><code class="descname">complete</code><span class="sig-paren">(</span><em>code</em>, <em>opts=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the auto-completion candidates from the given code string,
+as if a user has pressed the tab key just after the code in
+IDEs.</p>
+<p>Depending on the language of the compute session, this feature
+may not be supported.  Unsupported sessions returns an empty list.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>code</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – An (incomplete) code text.</li>
+<li><strong>opts</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]) – Additional information about the current cursor position,
+such as row, col, line and the remainder text.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Iterable" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">An ordered list of strings.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.destroy">
 <em class="property">await </em><code class="descname">destroy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.destroy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.destroy" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Destroys the compute session.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.download">
-<em class="property">await </em><code class="descname">download</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], dest: Union[str, pathlib.Path] = '.', show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.download" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">await </em><code class="descname">download</code><span class="sig-paren">(</span><em>files</em>, <em>dest='.'</em>, <em>show_progress=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Downloads the given list of files from the compute session.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>files</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]]) – The list of file paths in the compute session.
+If they are relative paths, the path is calculated from
+<code class="docutils literal notranslate"><span class="pre">/home/work</span></code> in the compute session container.</li>
+<li><strong>dest</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]) – The destination directory in the client-side.</li>
+<li><strong>show_progress</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Displays a progress bar during downloads.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.execute">
-<em class="property">await </em><code class="descname">execute</code><span class="sig-paren">(</span><em>run_id: str = None</em>, <em>code: str = None</em>, <em>mode: str = 'query'</em>, <em>opts: dict = None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.execute" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">await </em><code class="descname">execute</code><span class="sig-paren">(</span><em>run_id=None</em>, <em>code=None</em>, <em>mode='query'</em>, <em>opts=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Executes a code snippet directly in the compute session or sends a set of
+build/clean/execute commands to the compute session.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>run_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – </li>
+<li><strong>code</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – </li>
+<li><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – </li>
+<li><strong>opts</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]) – </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dictionary that describes the execution result.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.get_info">
 <em class="property">await </em><code class="descname">get_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_info" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves a brief information about the compute session.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.get_logs">
 <em class="property">await </em><code class="descname">get_logs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_logs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_logs" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Retrieves the console log of the compute session container.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.get_or_create">
-<em class="property">classmethod await </em><code class="descname">get_or_create</code><span class="sig-paren">(</span><em>lang: str</em>, <em>client_token: str = None</em>, <em>mounts: Iterable[str] = None</em>, <em>envs: Mapping[str</em>, <em>str] = None</em>, <em>resources: Mapping[str</em>, <em>int] = None</em>, <em>exec_timeout: int = 0</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_or_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_or_create" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod await </em><code class="descname">get_or_create</code><span class="sig-paren">(</span><em>lang</em>, <em>client_token=None</em>, <em>mounts=None</em>, <em>envs=None</em>, <em>resources=None</em>, <em>exec_timeout=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_or_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_or_create" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get or create a compute session.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The unique identifier of the created compute session.
+You may construct a new <a class="reference internal" href="#ai.backend.client.kernel.Kernel" title="ai.backend.client.kernel.Kernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></a> instance from it
+for further interaction, but keep in mind that you must
+use the <code class="docutils literal notranslate"><span class="pre">Kernel</span></code> class from the same session.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.interrupt">
 <em class="property">await </em><code class="descname">interrupt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.interrupt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.interrupt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Tries to interrupt the current ongoing code execution.
+This may fail without any explicit errors depending on the code being
+executed.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.list_files">
-<em class="property">await </em><code class="descname">list_files</code><span class="sig-paren">(</span><em>path: Union[str</em>, <em>pathlib.Path] = '.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.list_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.list_files" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">await </em><code class="descname">list_files</code><span class="sig-paren">(</span><em>path='.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.list_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.list_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the list of files in the given path inside the compute session
+container.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]) – The directory path in the compute session.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.restart">
 <em class="property">await </em><code class="descname">restart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.restart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.restart" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="ai.backend.client.kernel.Kernel.session">
-<code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.kernel.Kernel.session" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Restarts the compute session.
+The server force-destroys the current running container(s), but keeps their
+temporary scratch directories intact.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.stream_pty">
 <em class="property">await </em><code class="descname">stream_pty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.stream_pty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.stream_pty" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Opens a pseudo-terminal of the kernel (if supported) streamed via
+websockets.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a <a class="reference internal" href="#ai.backend.client.kernel.StreamPty" title="ai.backend.client.kernel.StreamPty"><code class="xref py py-class docutils literal notranslate"><span class="pre">StreamPty</span></code></a> object.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.upload">
-<em class="property">await </em><code class="descname">upload</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], basedir: Union[str, pathlib.Path] = None, show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.upload" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property">await </em><code class="descname">upload</code><span class="sig-paren">(</span><em>files</em>, <em>basedir=None</em>, <em>show_progress=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.upload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uploads the given list of files to the compute session.
+You may refer them in the batch-mode execution or from the code
+executed in the server afterwards.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>files</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]]) – The list of file paths in the client-side.
+If the paths include directories, the location of them in the compute
+session is calculated from the relative path to <em>basedir</em> and all
+intermediate parent directories are automatically created if not exists.</li>
+<li><strong>basedir</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – The directory prefix where the files reside.
+The default value is the current working directory.</li>
+<li><strong>show_progress</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Displays a progress bar during uploads.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
+</dd></dl>
+
+<dl class="class">
+<dt id="ai.backend.client.kernel.StreamPty">
+<em class="property">class </em><code class="descclassname">ai.backend.client.kernel.</code><code class="descname">StreamPty</code><span class="sig-paren">(</span><em>kernel_id</em>, <em>ws</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#StreamPty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.StreamPty" title="Permalink to this definition">¶</a></dt>
+<dd><p>A very thin wrapper of <a class="reference external" href="https://aiohttp.readthedocs.io/en/stable/client_reference.html#aiohttp.ClientWebSocketResponse" title="(in aiohttp v3.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">aiohttp.ClientWebSocketResponse</span></code></a> object.</p>
 </dd></dl>
 
 </div>
@@ -138,15 +266,15 @@ with the naming of this API function class.</p>
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>

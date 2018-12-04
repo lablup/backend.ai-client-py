@@ -40,12 +40,26 @@
 <dt id="ai.backend.client.exceptions.BackendError">
 <em class="property">class </em><code class="descclassname">ai.backend.client.exceptions.</code><code class="descname">BackendError</code><a class="reference internal" href="_modules/ai/backend/client/exceptions.html#BackendError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.exceptions.BackendError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exception type to catch all ai.backend-related errors.</p>
+<dl class="method">
+<dt id="ai.backend.client.exceptions.BackendError.with_traceback">
+<code class="descname">with_traceback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ai.backend.client.exceptions.BackendError.with_traceback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception.with_traceback(tb) –
+set self.__traceback__ to tb and return self.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
 <dt id="ai.backend.client.exceptions.BackendAPIError">
-<em class="property">class </em><code class="descclassname">ai.backend.client.exceptions.</code><code class="descname">BackendAPIError</code><span class="sig-paren">(</span><em>status: int</em>, <em>reason: str</em>, <em>data: Any</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/exceptions.html#BackendAPIError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.exceptions.BackendAPIError" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">ai.backend.client.exceptions.</code><code class="descname">BackendAPIError</code><span class="sig-paren">(</span><em>status</em>, <em>reason</em>, <em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/exceptions.html#BackendAPIError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.exceptions.BackendAPIError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exceptions returned by the API gateway.</p>
+<dl class="method">
+<dt id="ai.backend.client.exceptions.BackendAPIError.with_traceback">
+<code class="descname">with_traceback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ai.backend.client.exceptions.BackendAPIError.with_traceback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception.with_traceback(tb) –
+set self.__traceback__ to tb and return self.</p>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -53,6 +67,13 @@
 <em class="property">class </em><code class="descclassname">ai.backend.client.exceptions.</code><code class="descname">BackendClientError</code><a class="reference internal" href="_modules/ai/backend/client/exceptions.html#BackendClientError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.exceptions.BackendClientError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exceptions from the client library, such as argument validation
 errors.</p>
+<dl class="method">
+<dt id="ai.backend.client.exceptions.BackendClientError.with_traceback">
+<code class="descname">with_traceback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ai.backend.client.exceptions.BackendClientError.with_traceback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception.with_traceback(tb) –
+set self.__traceback__ to tb and return self.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -82,15 +103,15 @@ errors.</p>
 </ul>
 <p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vfolder.html">Virtual Folder Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
 <li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Exceptions</a></li>
 </ul>

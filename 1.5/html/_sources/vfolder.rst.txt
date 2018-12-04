@@ -1,10 +1,9 @@
 Virtual Folder Functions
 ========================
 
-.. automodule:: ai.backend.client.vfolder
-
+.. module:: ai.backend.client.vfolder
 .. currentmodule:: ai.backend.client.vfolder
 
-.. autoclass:: ai.backend.client.vfolder.VFolder
+.. autoclass:: VFolder
   :members:
   :undoc-members:
