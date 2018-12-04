@@ -61,6 +61,12 @@
 <span class="sd">    The term &#39;kernel&#39; is now deprecated and we prefer &#39;compute sessions&#39;.</span>
 <span class="sd">    However, for historical reasons and to avoid confusion with client sessions, we</span>
 <span class="sd">    keep the backward compatibility with the naming of this API function class.</span>
+
+<span class="sd">    For multi-container sessions, all methods take effects to the master container</span>
+<span class="sd">    only, except :func:`~Kernel.destroy` and :func:`~Kernel.restart` methods.</span>
+<span class="sd">    So it is the user&#39;s responsibility to distribute uploaded files to multiple</span>
+<span class="sd">    containers using explicit copies or virtual folders which are commonly mounted to</span>
+<span class="sd">    all containers belonging to the same compute session.</span>
 <span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="n">session</span> <span class="o">=</span> <span class="kc">None</span>
@@ -75,7 +81,7 @@
                             <span class="n">resources</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                             <span class="n">exec_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get or create a compute session.</span>
+<span class="sd">        Get-or-creates a compute session.</span>
 
 <span class="sd">        :returns: The unique identifier of the created compute session.</span>
 <span class="sd">            You may construct a new :class:`Kernel` instance from it</span>
@@ -151,7 +157,7 @@
 <div class="viewcode-block" id="Kernel.complete"><a class="viewcode-back" href="../../../../kernel.html#ai.backend.client.kernel.Kernel.complete">[docs]</a>    <span class="nd">@api_function</span>
     <span class="k">async</span> <span class="k">def</span> <span class="nf">complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">        Get the auto-completion candidates from the given code string,</span>
+<span class="sd">        Gets the auto-completion candidates from the given code string,</span>
 <span class="sd">        as if a user has pressed the tab key just after the code in</span>
 <span class="sd">        IDEs.</span>
 
@@ -269,6 +275,11 @@
 <span class="sd">            If the paths include directories, the location of them in the compute</span>
 <span class="sd">            session is calculated from the relative path to *basedir* and all</span>
 <span class="sd">            intermediate parent directories are automatically created if not exists.</span>
+
+<span class="sd">            For example, if a file path is ``/home/user/test/data.txt`` (or</span>
+<span class="sd">            ``test/data.txt``) where *basedir* is ``/home/user`` (or the current</span>
+<span class="sd">            working directory is ``/home/user``), the uploaded file is located at</span>
+<span class="sd">            ``/home/work/test/data.txt`` in the compute session container.</span>
 <span class="sd">        :param basedir: The directory prefix where the files reside.</span>
 <span class="sd">            The default value is the current working directory.</span>
 <span class="sd">        :param show_progress: Displays a progress bar during uploads.</span>

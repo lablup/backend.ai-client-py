@@ -43,6 +43,11 @@
 <p>The term ‘kernel’ is now deprecated and we prefer ‘compute sessions’.
 However, for historical reasons and to avoid confusion with client sessions, we
 keep the backward compatibility with the naming of this API function class.</p>
+<p>For multi-container sessions, all methods take effects to the master container
+only, except <a class="reference internal" href="#ai.backend.client.kernel.Kernel.destroy" title="ai.backend.client.kernel.Kernel.destroy"><code class="xref py py-func docutils literal notranslate"><span class="pre">destroy()</span></code></a> and <a class="reference internal" href="#ai.backend.client.kernel.Kernel.restart" title="ai.backend.client.kernel.Kernel.restart"><code class="xref py py-func docutils literal notranslate"><span class="pre">restart()</span></code></a> methods.
+So it is the user’s responsibility to distribute uploaded files to multiple
+containers using explicit copies or virtual folders which are commonly mounted to
+all containers belonging to the same compute session.</p>
 <dl class="attribute">
 <dt id="ai.backend.client.kernel.Kernel.session">
 <code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.kernel.Kernel.session" title="Permalink to this definition">¶</a></dt>
@@ -52,7 +57,7 @@ keep the backward compatibility with the naming of this API function class.</p>
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.complete">
 <em class="property">await </em><code class="descname">complete</code><span class="sig-paren">(</span><em>code</em>, <em>opts=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.complete" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the auto-completion candidates from the given code string,
+<dd><p>Gets the auto-completion candidates from the given code string,
 as if a user has pressed the tab key just after the code in
 IDEs.</p>
 <p>Depending on the language of the compute session, this feature
@@ -144,7 +149,7 @@ build/clean/execute commands to the compute session.</p>
 <dl class="method">
 <dt id="ai.backend.client.kernel.Kernel.get_or_create">
 <em class="property">classmethod await </em><code class="descname">get_or_create</code><span class="sig-paren">(</span><em>lang</em>, <em>client_token=None</em>, <em>mounts=None</em>, <em>envs=None</em>, <em>resources=None</em>, <em>exec_timeout=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.get_or_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.get_or_create" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get or create a compute session.</p>
+<dd><p>Get-or-creates a compute session.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -217,10 +222,15 @@ executed in the server afterwards.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>files</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]]) – The list of file paths in the client-side.
+<li><strong>files</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>]]) – <p>The list of file paths in the client-side.
 If the paths include directories, the location of them in the compute
 session is calculated from the relative path to <em>basedir</em> and all
-intermediate parent directories are automatically created if not exists.</li>
+intermediate parent directories are automatically created if not exists.</p>
+<p>For example, if a file path is <code class="docutils literal notranslate"><span class="pre">/home/user/test/data.txt</span></code> (or
+<code class="docutils literal notranslate"><span class="pre">test/data.txt</span></code>) where <em>basedir</em> is <code class="docutils literal notranslate"><span class="pre">/home/user</span></code> (or the current
+working directory is <code class="docutils literal notranslate"><span class="pre">/home/user</span></code>), the uploaded file is located at
+<code class="docutils literal notranslate"><span class="pre">/home/work/test/data.txt</span></code> in the compute session container.</p>
+</li>
 <li><strong>basedir</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Path</span></code></a>, <code class="docutils literal notranslate"><span class="pre">None</span></code>]) – The directory prefix where the files reside.
 The default value is the current working directory.</li>
 <li><strong>show_progress</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Displays a progress bar during uploads.</li>
