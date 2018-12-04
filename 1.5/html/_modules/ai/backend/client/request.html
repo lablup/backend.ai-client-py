@@ -1,0 +1,474 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ai.backend.client.request &#8212; Backend.AI Client SDK for Python 1.5 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ai.backend.client.request</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">aiohttp</span>
+<span class="kn">import</span> <span class="nn">aiohttp.web</span>
+<span class="kn">from</span> <span class="nn">dateutil.tz</span> <span class="k">import</span> <span class="n">tzutc</span>
+<span class="kn">from</span> <span class="nn">multidict</span> <span class="k">import</span> <span class="n">CIMultiDict</span>
+<span class="kn">import</span> <span class="nn">json</span> <span class="k">as</span> <span class="nn">modjson</span>
+
+<span class="kn">from</span> <span class="nn">.auth</span> <span class="k">import</span> <span class="n">generate_signature</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="k">import</span> <span class="n">BackendClientError</span><span class="p">,</span> <span class="n">BackendAPIError</span>
+<span class="kn">from</span> <span class="nn">.session</span> <span class="k">import</span> <span class="n">BaseSession</span><span class="p">,</span> <span class="n">Session</span> <span class="k">as</span> <span class="n">SyncSession</span><span class="p">,</span> <span class="n">AsyncSession</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Request&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Response&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">RequestContent</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span>
+    <span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytearray</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">aiohttp</span><span class="o">.</span><span class="n">StreamReader</span><span class="p">,</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">IOBase</span><span class="p">,</span>
+    <span class="kc">None</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">The type alias for the set of allowed types for request content.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<span class="n">AttachedFile</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;AttachedFile&#39;</span><span class="p">,</span> <span class="s1">&#39;filename stream content_type&#39;</span><span class="p">)</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">A struct that represents an attached file to the API request.</span>
+
+<span class="sd">:param str filename: The name of file to store. It may include paths</span>
+<span class="sd">                     and the server will create parent directories</span>
+<span class="sd">                     if required.</span>
+
+<span class="sd">:param Any stream: A file-like object that allows stream-reading bytes.</span>
+
+<span class="sd">:param str content_type: The content type for the stream.  For arbitrary</span>
+<span class="sd">                         binary data, use &quot;application/octet-stream&quot;.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="FetchContextManager"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.FetchContextManager">[docs]</a><span class="k">class</span> <span class="nc">FetchContextManager</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    The wrapper for :func:`Request.fetch` for both sync/async sessions.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;session&#39;</span><span class="p">,</span> <span class="s1">&#39;rqst_ctx&#39;</span><span class="p">,</span> <span class="s1">&#39;async_mode&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">,</span> <span class="n">rqst_ctx</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rqst_ctx</span> <span class="o">=</span> <span class="n">rqst_ctx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_mode</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="n">SyncSession</span><span class="p">),</span> \
+               <span class="s1">&#39;Cannot reuse fetch context manager&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">async_mode</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">worker_thread</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__aenter__</span><span class="p">())</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">__aenter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">raw_resp</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rqst_ctx</span><span class="o">.</span><span class="fm">__aenter__</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">raw_resp</span><span class="o">.</span><span class="n">status</span> <span class="o">//</span> <span class="mi">100</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="k">await</span> <span class="n">raw_resp</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+                <span class="k">raise</span> <span class="n">BackendAPIError</span><span class="p">(</span><span class="n">raw_resp</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="n">raw_resp</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Response</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="n">raw_resp</span><span class="p">,</span> <span class="n">async_mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">async_mode</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Request to the API endpoint has failed.</span><span class="se">\n</span><span class="s1">&#39;</span> \
+                  <span class="s1">&#39;Check your network connection and/or the server status.&#39;</span>
+            <span class="k">raise</span> <span class="n">BackendClientError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">worker_thread</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__aexit__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">__aexit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">rqst_ctx</span><span class="o">.</span><span class="fm">__aexit__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Request"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Request">[docs]</a><span class="k">class</span> <span class="nc">Request</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    The API request object.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="s1">&#39;session&#39;</span><span class="p">,</span> <span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="s1">&#39;path&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;date&#39;</span><span class="p">,</span> <span class="s1">&#39;headers&#39;</span><span class="p">,</span> <span class="s1">&#39;content_type&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;_content&#39;</span><span class="p">,</span> <span class="s1">&#39;_attached_files&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;reporthook&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_allowed_methods</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;HEAD&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;PUT&#39;</span><span class="p">,</span> <span class="s1">&#39;PATCH&#39;</span><span class="p">,</span> <span class="s1">&#39;DELETE&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;OPTIONS&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">:</span> <span class="n">BaseSession</span><span class="p">,</span>
+                 <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span>
+                 <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">content</span><span class="p">:</span> <span class="n">RequestContent</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                 <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">reporthook</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initialize an API request.</span>
+
+<span class="sd">        :param BaseSession session: The session where this request is executed on.</span>
+
+<span class="sd">        :param str path: The query path. When performing requests, the version number</span>
+<span class="sd">                         prefix will be automatically perpended if required.</span>
+
+<span class="sd">        :param RequestContent content: The API query body which will be encoded as</span>
+<span class="sd">                                       JSON.</span>
+
+<span class="sd">        :param str content_type: Explicitly set the content type.  See also</span>
+<span class="sd">                                 :func:`Request.set_content`.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">=</span> <span class="n">method</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">CIMultiDict</span><span class="p">([</span>
+            <span class="p">(</span><span class="s1">&#39;User-Agent&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">user_agent</span><span class="p">),</span>
+            <span class="p">(</span><span class="s1">&#39;X-BackendAI-Version&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+        <span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attached_files</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_content</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">content_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reporthook</span> <span class="o">=</span> <span class="n">reporthook</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">content</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RequestContent</span><span class="p">:</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Retrieves the content in the original form.</span>
+<span class="sd">        Private codes should NOT use this as it incurs duplicate</span>
+<span class="sd">        encoding/decoding.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span>
+
+<div class="viewcode-block" id="Request.set_content"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Request.set_content">[docs]</a>    <span class="k">def</span> <span class="nf">set_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">RequestContent</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                    <span class="n">content_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sets the content of the request.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attached_files</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> \
+               <span class="s1">&#39;cannot set content because you already attached files.&#39;</span>
+        <span class="n">guessed_content_type</span> <span class="o">=</span> <span class="s1">&#39;application/octet-stream&#39;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">guessed_content_type</span> <span class="o">=</span> <span class="s1">&#39;text/plain&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">guessed_content_type</span> <span class="o">=</span> <span class="s1">&#39;text/plain&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">guessed_content_type</span> <span class="o">=</span> <span class="s1">&#39;application/octet-stream&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_content</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="p">(</span><span class="n">content_type</span> <span class="k">if</span> <span class="n">content_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                             <span class="k">else</span> <span class="n">guessed_content_type</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Request.set_json"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Request.set_json">[docs]</a>    <span class="k">def</span> <span class="nf">set_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        A shortcut for set_content() with JSON objects.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_content</span><span class="p">(</span><span class="n">modjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">content_type</span><span class="o">=</span><span class="s1">&#39;application/json&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Request.attach_files"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Request.attach_files">[docs]</a>    <span class="k">def</span> <span class="nf">attach_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AttachedFile</span><span class="p">]):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Attach a list of files represented as AttachedFile.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">,</span> <span class="s1">&#39;content must be empty to attach files.&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s1">&#39;multipart/form-data&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attached_files</span> <span class="o">=</span> <span class="n">files</span></div>
+
+    <span class="k">def</span> <span class="nf">_sign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">access_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">secret_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hash_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Calculates the signature of the given request and adds the</span>
+<span class="sd">        Authorization HTTP header.</span>
+<span class="sd">        It should be called at the very end of request preparation and before</span>
+<span class="sd">        sending the request to the server.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">access_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">access_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">access_key</span>
+        <span class="k">if</span> <span class="n">secret_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">secret_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">secret_key</span>
+        <span class="k">if</span> <span class="n">hash_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">hash_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hash_type</span>
+        <span class="n">hdrs</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">generate_signature</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span><span class="p">,</span>
+            <span class="n">access_key</span><span class="p">,</span> <span class="n">secret_key</span><span class="p">,</span> <span class="n">hash_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">hdrs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pack_content</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attached_files</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">FormData</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_attached_files</span><span class="p">:</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s1">&#39;src&#39;</span><span class="p">,</span>
+                               <span class="n">f</span><span class="o">.</span><span class="n">stream</span><span class="p">,</span>
+                               <span class="n">filename</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
+                               <span class="n">content_type</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">content_type</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">is_multipart</span><span class="p">,</span> <span class="s1">&#39;Failed to pack files as multipart.&#39;</span>
+            <span class="c1"># Let aiohttp fill up the content-type header including</span>
+            <span class="c1"># multipart boundaries.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_content</span>
+
+    <span class="k">def</span> <span class="nf">_build_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">base_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="n">query_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base_url</span><span class="p">,</span> <span class="n">query_path</span><span class="p">)</span>
+        <span class="n">canonical_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">with_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">canonical_url</span><span class="p">)</span>
+
+    <span class="c1"># TODO: attach rate-limit information</span>
+
+<div class="viewcode-block" id="Request.fetch"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Request.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Sends the request to the server.</span>
+
+<span class="sd">        You may use this method either with plain synchronous Session or</span>
+<span class="sd">        AsyncSession.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_methods</span><span class="p">,</span> \
+               <span class="s1">&#39;Disallowed HTTP method: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">tzutc</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sign</span><span class="p">()</span>
+        <span class="n">rqst_ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">aiohttp_session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">method</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_build_url</span><span class="p">(),</span>
+            <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pack_content</span><span class="p">(),</span>
+            <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FetchContextManager</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="n">rqst_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Request.connect_websocket"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Request.connect_websocket">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">connect_websocket</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Creates a WebSocket connection.</span>
+
+<span class="sd">        This method is a coroutine.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="n">AsyncSession</span><span class="p">),</span> \
+               <span class="s1">&#39;Cannot use websockets with sessions in the synchronous mode&#39;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;Invalid websocket method&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">tzutc</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">date</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sign</span><span class="p">()</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">aiohttp_session</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">ws_connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_url</span><span class="p">(),</span> <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">client</span><span class="p">,</span> <span class="n">ws</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">,</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">TimeoutError</span><span class="p">):</span>
+            <span class="c1"># These exceptions must be bubbled up.</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Request to the API endpoint has failed.</span><span class="se">\n</span><span class="s1">&#39;</span> \
+                  <span class="s1">&#39;Check your network connection and/or the server status.</span><span class="se">\n</span><span class="s1">&#39;</span> \
+                  <span class="s1">&#39;Error detail: </span><span class="si">{!r}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">BackendClientError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span></div></div>
+
+
+<div class="viewcode-block" id="Response"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Response">[docs]</a><span class="k">class</span> <span class="nc">Response</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Represents the Backend.AI API response.</span>
+
+<span class="sd">    The response objects are meant to be created by the SDK, not the callers.</span>
+
+<span class="sd">    :func:`text`, :func:`json` methods return the resolved content directly with</span>
+<span class="sd">    plain synchronous Session while they return the coroutines with AsyncSession.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;_session&#39;</span><span class="p">,</span> <span class="s1">&#39;_raw_response&#39;</span><span class="p">,</span> <span class="s1">&#39;_async_mode&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="p">:</span> <span class="n">BaseSession</span><span class="p">,</span>
+                 <span class="n">underlying_response</span><span class="p">:</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientResponse</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                 <span class="n">async_mode</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span> <span class="o">=</span> <span class="n">underlying_response</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_async_mode</span> <span class="o">=</span> <span class="n">async_mode</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseSession</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">status</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">reason</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">reason</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">headers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">headers</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">raw_response</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">ClientResponse</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">content_type</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">content_length</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">content_length</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">content</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">aiohttp</span><span class="o">.</span><span class="n">StreamReader</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">content</span>
+
+<div class="viewcode-block" id="Response.text"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Response.text">[docs]</a>    <span class="k">def</span> <span class="nf">text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_mode</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">worker_thread</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">text</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Response.json"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Response.json">[docs]</a>    <span class="k">def</span> <span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">loads</span><span class="o">=</span><span class="n">modjson</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">loads</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">loads</span><span class="p">,</span> <span class="n">object_pairs_hook</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_async_mode</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="n">loads</span><span class="o">=</span><span class="n">loads</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">worker_thread</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="n">loads</span><span class="o">=</span><span class="n">loads</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Response.read"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Response.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">worker_thread</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aread</span><span class="p">(</span><span class="n">n</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Response.aread"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Response.aread">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">aread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">n</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Response.readall"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Response.readall">[docs]</a>    <span class="k">def</span> <span class="nf">readall</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">worker_thread</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_areadall</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="Response.areadall"><a class="viewcode-back" href="../../../../request.html#ai.backend.client.request.Response.areadall">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">areadall</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_response</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Backend.AI Client SDK for Python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../session.html">Client Session</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../config.html">Client Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../agent.html">Agent Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../kernel.html">Kernel Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../keypair.html">KeyPair Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../vfolder.html">Virtual Folder Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../admin.html">Admin Functions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../request.html">Request API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">Exceptions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command-line Interface:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cli.examples.html">CLI Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Joongi Kim.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

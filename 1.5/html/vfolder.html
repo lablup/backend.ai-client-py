@@ -1,0 +1,206 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Virtual Folder Functions &#8212; Backend.AI Client SDK for Python 1.5 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Admin Functions" href="admin.html" />
+    <link rel="prev" title="KeyPair Functions" href="keypair.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-ai.backend.client.vfolder">
+<span id="virtual-folder-functions"></span><h1>Virtual Folder Functions<a class="headerlink" href="#module-ai.backend.client.vfolder" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="ai.backend.client.vfolder.VFolder">
+<em class="property">class </em><code class="descclassname">ai.backend.client.vfolder.</code><code class="descname">VFolder</code><span class="sig-paren">(</span><em>name: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.accept_invitation">
+<em class="property">coroutine </em><code class="descname">accept_invitation</code><span class="sig-paren">(</span><em>inv_id: str</em>, <em>inv_ak: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.accept_invitation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.accept_invitation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.create">
+<em class="property">coroutine </em><code class="descname">create</code><span class="sig-paren">(</span><em>name: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.create" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.delete">
+<em class="property">coroutine </em><code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.delete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.delete_files">
+<em class="property">coroutine </em><code class="descname">delete_files</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], recursive: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.delete_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.delete_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.delete_invitation">
+<em class="property">coroutine </em><code class="descname">delete_invitation</code><span class="sig-paren">(</span><em>inv_id: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.delete_invitation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.delete_invitation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.download">
+<em class="property">coroutine </em><code class="descname">download</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.download" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.info">
+<em class="property">coroutine </em><code class="descname">info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.invitations">
+<em class="property">coroutine </em><code class="descname">invitations</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.invitations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.invitations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.invite">
+<em class="property">coroutine </em><code class="descname">invite</code><span class="sig-paren">(</span><em>perm: str, emails: Sequence[str]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.invite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.invite" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.list">
+<em class="property">coroutine </em><code class="descname">list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.list_files">
+<em class="property">coroutine </em><code class="descname">list_files</code><span class="sig-paren">(</span><em>path: Union[str</em>, <em>pathlib.Path] = '.'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.list_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.list_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.mkdir">
+<em class="property">coroutine </em><code class="descname">mkdir</code><span class="sig-paren">(</span><em>path: Union[str, pathlib.Path]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.mkdir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.mkdir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ai.backend.client.vfolder.VFolder.session">
+<code class="descname">session</code><em class="property"> = None</em><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.session" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ai.backend.client.vfolder.VFolder.upload">
+<em class="property">coroutine </em><code class="descname">upload</code><span class="sig-paren">(</span><em>files: Sequence[Union[str, pathlib.Path]], basedir: Union[str, pathlib.Path] = None, show_progress: bool = False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/vfolder.html#VFolder.upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.vfolder.VFolder.upload" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Backend.AI Client SDK for Python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="session.html">Client Session</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">Client Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="agent.html">Agent Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kernel.html">Kernel Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="keypair.html">KeyPair Functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Virtual Folder Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Functions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="request.html">Request API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command-line Interface:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cli.examples.html">CLI Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="keypair.html" title="previous chapter">KeyPair Functions</a></li>
+      <li>Next: <a href="admin.html" title="next chapter">Admin Functions</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Joongi Kim.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/vfolder.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

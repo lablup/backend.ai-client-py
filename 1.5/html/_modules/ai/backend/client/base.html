@@ -1,0 +1,193 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ai.backend.client.base &#8212; Backend.AI Client SDK for Python 1.5 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ai.backend.client.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">This module defines a few utilities that ease complexities to support</span>
+<span class="sd">both synchronous and asynchronous API functions, using some tricks</span>
+<span class="sd">with Python metaclasses.</span>
+
+<span class="sd">Unless your are contributing to the client SDK, probably you won&#39;t</span>
+<span class="sd">have to use this module directly.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">functools</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;APIFunctionMeta&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;BaseFunction&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;api_function&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_wrap_method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">orig_name</span><span class="p">,</span> <span class="n">meth</span><span class="p">):</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">meth</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">cls</span><span class="o">.</span><span class="n">session</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> \
+               <span class="s1">&#39;You must use API wrapper functions via a Session object.&#39;</span>
+        <span class="c1"># We need to keep the original attributes so that they could be correctly</span>
+        <span class="c1"># bound to the class/instance at runtime.</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">orig_name</span><span class="p">)</span>
+        <span class="n">coro</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">session</span><span class="p">,</span> <span class="s1">&#39;worker_thread&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">worker_thread</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">coro</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">coro</span>
+
+    <span class="k">return</span> <span class="n">_method</span>
+
+
+<div class="viewcode-block" id="api_function"><a class="viewcode-back" href="../../../../base.html#ai.backend.client.base.api_function">[docs]</a><span class="k">def</span> <span class="nf">api_function</span><span class="p">(</span><span class="n">meth</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Mark the wrapped method as the API function method.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">meth</span><span class="p">,</span> <span class="s1">&#39;_backend_api&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">meth</span></div>
+
+
+<div class="viewcode-block" id="APIFunctionMeta"><a class="viewcode-back" href="../../../../base.html#ai.backend.client.base.APIFunctionMeta">[docs]</a><span class="k">class</span> <span class="nc">APIFunctionMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Converts all methods marked with :func:`api_function` into</span>
+<span class="sd">    session-aware methods that are either plain Python functions</span>
+<span class="sd">    or coroutines.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="s1">&#39;session&#39;</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">,</span> \
+               <span class="s1">&#39;An API function class must define the session attribute.&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">attr_value</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">attr_value</span><span class="p">,</span> <span class="s1">&#39;_backend_api&#39;</span><span class="p">):</span>
+                <span class="n">orig_name</span> <span class="o">=</span> <span class="s1">&#39;_orig_&#39;</span> <span class="o">+</span> <span class="n">attr_name</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">orig_name</span><span class="p">,</span> <span class="n">attr_value</span><span class="p">)</span>
+                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">_wrap_method</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">orig_name</span><span class="p">,</span> <span class="n">attr_value</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseFunction"><a class="viewcode-back" href="../../../../base.html#ai.backend.client.base.BaseFunction">[docs]</a><span class="k">class</span> <span class="nc">BaseFunction</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">APIFunctionMeta</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    The class used to build API functions proxies bound to specific session</span>
+<span class="sd">    instances.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="kc">None</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Backend.AI Client SDK for Python</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Getting Started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../session.html">Client Session</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../config.html">Client Configuration</a></li>
+</ul>
+<p class="caption"><span class="caption-text">High-level Function Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../base.html">Base Function</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../agent.html">Agent Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../kernel.html">Kernel Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../keypair.html">KeyPair Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../vfolder.html">Virtual Folder Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../admin.html">Admin Functions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Low-level SDK Reference:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../request.html">Request API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../exceptions.html">Exceptions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Command-line Interface:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../cli.examples.html">CLI Examples</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Joongi Kim.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
