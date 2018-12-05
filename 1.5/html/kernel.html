@@ -254,15 +254,26 @@ If they are relative paths, the path is calculated from
 <em class="property">await </em><code class="descname">execute</code><span class="sig-paren">(</span><em>run_id=None</em>, <em>code=None</em>, <em>mode='query'</em>, <em>opts=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ai/backend/client/kernel.html#Kernel.execute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ai.backend.client.kernel.Kernel.execute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Executes a code snippet directly in the compute session or sends a set of
 build/clean/execute commands to the compute session.</p>
+<p>For more details about using this API, please refer <a class="reference external" href="http://docs.backend.ai/en/latest/user-api/intro.html" title="(in Backend.AI v1.0)"><span class="xref std std-doc">the official API
+documentation</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>run_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – </li>
-<li><strong>code</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – </li>
-<li><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – </li>
-<li><strong>opts</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]) – </li>
+<li><strong>run_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – A unique identifier for a particular run loop.  In the
+first call, it may be <code class="docutils literal notranslate"><span class="pre">None</span></code> so that the server auto-assigns one.
+Subsequent calls must use the returned <code class="docutils literal notranslate"><span class="pre">runId</span></code> value to request
+continuation or to send user inputs.</li>
+<li><strong>code</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]) – A code snippet as string.  In the continuation requests, it
+must be an empty string.  When sending user inputs, this is where the
+user input string is stored.</li>
+<li><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – A constant string which is one of <code class="docutils literal notranslate"><span class="pre">&quot;query&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;batch&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;continue&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;user-input&quot;</span></code>.</li>
+<li><strong>opts</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.7)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]) – A dict for specifying additional options. Mainly used in the
+batch mode to specify build/clean/execution commands.
+See <a class="reference external" href="http://docs.backend.ai/en/latest/common-api/objects.html#batch-execution-query-object" title="(in Backend.AI v1.0)"><span class="xref std std-ref">the API object reference</span></a>
+for details.</li>
 </ul>
 </td>
 </tr>

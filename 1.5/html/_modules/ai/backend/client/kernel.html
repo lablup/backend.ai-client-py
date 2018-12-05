@@ -365,10 +365,22 @@
 <span class="sd">        Executes a code snippet directly in the compute session or sends a set of</span>
 <span class="sd">        build/clean/execute commands to the compute session.</span>
 
-<span class="sd">        :param run_id:</span>
-<span class="sd">        :param code:</span>
-<span class="sd">        :param mode:</span>
-<span class="sd">        :param opts:</span>
+<span class="sd">        For more details about using this API, please refer :doc:`the official API</span>
+<span class="sd">        documentation &lt;user-api/intro&gt;`.</span>
+
+<span class="sd">        :param run_id: A unique identifier for a particular run loop.  In the</span>
+<span class="sd">            first call, it may be ``None`` so that the server auto-assigns one.</span>
+<span class="sd">            Subsequent calls must use the returned ``runId`` value to request</span>
+<span class="sd">            continuation or to send user inputs.</span>
+<span class="sd">        :param code: A code snippet as string.  In the continuation requests, it</span>
+<span class="sd">            must be an empty string.  When sending user inputs, this is where the</span>
+<span class="sd">            user input string is stored.</span>
+<span class="sd">        :param mode: A constant string which is one of ``&quot;query&quot;``, ``&quot;batch&quot;``,</span>
+<span class="sd">            ``&quot;continue&quot;``, and ``&quot;user-input&quot;``.</span>
+<span class="sd">        :param opts: A dict for specifying additional options. Mainly used in the</span>
+<span class="sd">            batch mode to specify build/clean/execution commands.</span>
+<span class="sd">            See :ref:`the API object reference &lt;batch-execution-query-object&gt;`</span>
+<span class="sd">            for details.</span>
 
 <span class="sd">        :returns: A dictionary that describes the execution result.</span>
 <span class="sd">        &#39;&#39;&#39;</span>
