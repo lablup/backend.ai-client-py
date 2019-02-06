@@ -119,7 +119,11 @@ class Session(BaseSession):
         self._worker_thread.start()
 
         async def _create_aiohttp_session():
-            return aiohttp.ClientSession()
+            ssl = None
+            if self._config.skip_sslcert_validation:
+                ssl = False
+            connector = aiohttp.TCPConnector(ssl=ssl)
+            return aiohttp.ClientSession(connector=connector)
 
         self.aiohttp_session = self.worker_thread.execute(_create_aiohttp_session())
 
@@ -232,7 +236,11 @@ class AsyncSession(BaseSession):
     def __init__(self, *, config: APIConfig = None):
         super().__init__(config=config)
 
-        self.aiohttp_session = aiohttp.ClientSession()
+        ssl = None
+        if self._config.skip_sslcert_validation:
+            ssl = False
+        connector = aiohttp.TCPConnector(ssl=ssl)
+        self.aiohttp_session = aiohttp.ClientSession(connector=connector)
 
         from .base import BaseFunction
         from .admin import Admin

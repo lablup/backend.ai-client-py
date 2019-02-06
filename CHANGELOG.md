@@ -1,6 +1,21 @@
 Changes
 =======
 
+19.03.0b2 (2018-01-30)
+----------------------
+
+ - Minor fix for the CLI to show extra error details only when they are present.
+
+19.03.0b1 (2018-01-30)
+----------------------
+
+ - Support API v4.20190315 and change GraphQL fields for various admin commands
+   to match with the v19.03 series server.
+
+   This renders the client after this version won't be compatible with old servers.
+
+ - Fix various bugs.
+
 18.12.1 (2018-01-21)
 --------------------
 

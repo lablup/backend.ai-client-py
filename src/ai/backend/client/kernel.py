@@ -98,10 +98,7 @@ class Kernel:
                 'mounts': mounts,
                 'environ': envs,
                 'clusterSize': cluster_size,
-                'instanceMemory': resources.get('mem', None),
-                'instanceCores': resources.get('cpu', None),
-                'instanceGPUs': resources.get('gpu', None),
-                'instanceTPUs': resources.get('tpu', None),
+                'resources': resources,
             },
         })
         async with rqst.fetch() as resp:

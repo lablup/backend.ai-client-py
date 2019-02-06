@@ -201,42 +201,11 @@ def _format_stats(stats):
     return tabulate(formatted)
 
 
-def _get_mem_slots(memslot):
-    """Accept MB unit, and convert to GB"""
-    assert 0 < len(memslot) < 3
-    size = float(memslot[0])
-    suffix = memslot[1].lower() if len(memslot) == 2 else None
-    mod_size = None
-    if suffix in ('k', 'kb', 'kib'):
-        mod_size = size / 2 ** 10
-    elif suffix in ('m', 'mb', 'mib'):
-        mod_size = size
-    elif suffix in ('g', 'gb', 'gib'):
-        mod_size = size * 2 ** 10
-    elif suffix in ('t', 'tb', 'tib'):
-        mod_size = size * 2 ** 20
-    elif suffix in ('p', 'pb', 'pib'):
-        mod_size = size * 2 ** 30
-    else:
-        mod_size = size
-    mod_size = mod_size / (2 ** 10) if mod_size else None
-    return mod_size
-
-
 def _prepare_resource_arg(resources):
     if resources:
         resources = {k: v for k, v in map(lambda s: s.split('=', 1), resources)}
     else:
         resources = {}  # use the defaults configured in the server
-    # Reverse humanized memory unit
-    mem = resources.pop('mem', None)
-    mem = resources.pop('ram', None) if mem is None else mem
-    if mem:
-        memlist = re.findall(r'[A-Za-z]+|[\d\.]+', mem)
-        if memlist:
-            memslot = _get_mem_slots(memlist)
-            if memslot:
-                resources['mem'] = memslot
     return resources
 
 
@@ -294,9 +263,8 @@ def _prepare_mount_arg(mount):
 @click.option('--tag', type=str, default=None,
               help='User-defined tag string to annotate sessions.')
 @click.option('-r', '--resources', metavar='KEY=VAL', type=str, multiple=True,
-              help='Set computation resources (e.g: -r cpu=2 -r mem=256 -r gpu=1)'
-                   '. 1 slot of cpu/gpu represents 1 core. The unit of mem(ory) '
-                   'is MiB.')
+              help='Set computation resources '
+                   '(e.g: -r cpu=2 -r mem=256 -r cuda.device=1)')
 @click.option('-q', '--quiet', is_flag=True,
               help='Hide execution details but show only the kernel outputs.')
 # @click.option('--legacy', is_flag=True,

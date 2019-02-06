@@ -39,6 +39,15 @@ def get_env(key: str,
     return clean(v)
 
 
+def bool_env(v: str) -> bool:
+    v = v.lower()
+    if v in ('y', 'yes', 't', 'true', '1'):
+        return True
+    if v in ('n', 'no', 'f', 'false', '0'):
+        return False
+    raise ValueError('Unrecognized value of boolean environment variable', v)
+
+
 def _clean_url(v):
     v = v if isinstance(v, URL) else URL(v)
     if not v.is_absolute():
@@ -76,7 +85,7 @@ class APIConfig:
 
     DEFAULTS = {
         'endpoint': 'https://api.backend.ai',
-        'version': 'v4.20181215',
+        'version': 'v4.20190315',
         'hash_type': 'sha256',
     }
     '''
@@ -90,7 +99,8 @@ class APIConfig:
                  access_key: str = None,
                  secret_key: str = None,
                  hash_type: str = None,
-                 vfolder_mounts: Iterable[str] = None) -> None:
+                 vfolder_mounts: Iterable[str] = None,
+                 skip_sslcert_validation: bool = None) -> None:
         from . import get_user_agent  # noqa; to avoid circular imports
         self._endpoint = (
             _clean_url(endpoint) if endpoint else
@@ -104,6 +114,10 @@ class APIConfig:
         arg_vfolders = set(vfolder_mounts) if vfolder_mounts else set()
         env_vfolders = set(get_env('VFOLDER_MOUNTS', [], clean=_clean_tokens))
         self._vfolder_mounts = [*(arg_vfolders | env_vfolders)]
+        # prefer the argument flag and fallback to env if the flag is not set.
+        self._skip_sslcert_validation = (skip_sslcert_validation
+             if skip_sslcert_validation else
+             get_env('SKIP_SSLCERT_VALIDATION', default='no', clean=bool_env))
 
     @property
     def endpoint(self) -> URL:
@@ -139,6 +153,11 @@ class APIConfig:
     def vfolder_mounts(self) -> Tuple[str, ...]:
         '''The configured auto-mounted vfolder list.'''
         return self._vfolder_mounts
+
+    @property
+    def skip_sslcert_validation(self) -> bool:
+        '''Whether to skip SSL certificate validation for the API gateway.'''
+        return self._skip_sslcert_validation
 
 
 def get_config():

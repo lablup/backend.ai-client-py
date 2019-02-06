@@ -20,14 +20,10 @@ def agent(agent_id):
         ('Status', 'status'),
         ('Region', 'region'),
         ('First Contact', 'first_contact'),
-        ('Total CPU Cores', 'cpu_slots'),
-        ('Allocated CPU Cores', 'used_cpu_slots'),
         ('CPU Usage (%)', 'cpu_cur_pct'),
-        ('Total Memory (MiB)', 'mem_slots'),
-        ('Allocated Memory (MiB)', 'used_mem_slots'),
         ('Used Memory (MiB)', 'mem_cur_bytes'),
-        ('Total GPU Cores', 'gpu_slots'),
-        ('Used GPU Cores', 'used_gpu_slots'),
+        ('Total slots', 'available_slots'),
+        ('Occupied slots', 'occupied_slots'),
     ]
     if is_legacy_server():
         del fields[9]
@@ -62,14 +58,10 @@ def agents(status):
         ('Status', 'status'),
         ('Region', 'region'),
         ('First Contact', 'first_contact'),
-        ('Total CPU Cores', 'cpu_slots'),
-        ('Allocated CPU Cores', 'used_cpu_slots'),
         ('CPU Usage (%)', 'cpu_cur_pct'),
-        ('Total Memory (MiB)', 'mem_slots'),
-        ('Allocated Memory (MiB)', 'used_mem_slots'),
         ('Used Memory (MiB)', 'mem_cur_bytes'),
-        ('Total GPU Cores', 'gpu_slots'),
-        ('Used GPU Cores', 'used_gpu_slots'),
+        ('Total slots', 'available_slots'),
+        ('Occupied slots', 'occupied_slots'),
     ]
     if is_legacy_server():
         del fields[9]

@@ -107,6 +107,10 @@ def format_error(exc: Exception):
         yield '{0}: {1} {2}\n'.format(exc.__class__.__name__,
                                       exc.status, exc.reason)
         yield '{0[title]}'.format(exc.data)
+        other_details = exc.data.get('data', None)
+        if other_details:
+            yield '\n\u279c Error details: '
+            yield str(other_details)
         agent_details = exc.data.get('agent-details', None)
         if agent_details is not None:
             yield '\n\u279c This is an agent-side error. '

@@ -3,6 +3,8 @@ import sys
 
 import click
 
+from ..config import APIConfig, set_config
+
 
 class AliasGroup(click.Group):
     """
@@ -80,11 +82,16 @@ class AliasGroup(click.Group):
 
 @click.group(cls=AliasGroup,
              context_settings=dict(help_option_names=['-h', '--help']))
+@click.option('--skip-sslcert-validation',
+              help='Skip SSL certificate validation for all API requests.',
+              is_flag=True)
 @click.version_option()
-def main():
+def main(skip_sslcert_validation):
     """
     Backend.AI command line interface.
     """
+    config = APIConfig(skip_sslcert_validation=skip_sslcert_validation)
+    set_config(config)
 
 
 @click.command(context_settings=dict(ignore_unknown_options=True,

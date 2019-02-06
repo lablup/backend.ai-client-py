@@ -13,8 +13,9 @@ def images():
     '''
     fields = [
         ('Name', 'name'),
+        ('Registry', 'registry'),
         ('Tag', 'tag'),
-        ('Hash', 'hash'),
+        ('Digest', 'digest'),
     ]
     with Session() as session:
         try:
