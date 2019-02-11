@@ -29,3 +29,8 @@ docs/_build
 venv*
 .python-version
 .pytest_cache
+
+local-samples
+env-*.sh
+env_*.sh
+.ipynb_checkpoints
