@@ -10,7 +10,6 @@ install_requires = [
     'aiohttp~=3.4.0',
     'async_timeout~=3.0',  # to avoid pip10 resolver issue
     'attrs>=18.0',       # to avoid pip10 resolver issue
-    'namedlist>=1.6',
     'python-dateutil>=2.5',
     'tabulate>=0.7.7',
     'tqdm~=4.21',
