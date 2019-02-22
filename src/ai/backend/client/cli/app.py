@@ -1,15 +1,56 @@
 import asyncio
 import signal
-
+import functools
 import aiohttp
 import click
+import os
+import shutil
+import json
 
 from . import main
 from .pretty import print_info, print_error
 from ..request import Request
 from ..session import AsyncSession
 from ..compat import asyncio_run_forever, current_loop
+from ..kernel import StreamPty
 
+
+class IpythonClient:
+    STDIN_FILENO = 0
+    STDOUT_FILENO = 1
+    def __init__(self, session_id):
+        self.loop = current_loop()
+        self.stream = None
+        self.session_id = session_id
+
+        def signal_handler(signame):
+            if signame == 'SIGTERM':
+                sys.exit(0)
+            else:
+                asyncio.run_coroutine_threadsafe(self.stream.send_signal(signame), self.loop)
+        for signame in ['SIGINT', 'SIGTSTP', 'SIGTERM']:
+            self.loop.add_signal_handler(
+                getattr(signal, signame),
+                functools.partial(signal_handler, signame))
+        
+        def listen_stdin():
+            data = os.read(self.STDIN_FILENO, 1024)
+            data = data.decode()
+            asyncio.run_coroutine_threadsafe(self.stream.send_stdin(data), self.loop)
+        self.loop.add_reader(self.STDIN_FILENO, listen_stdin)
+    
+    def start(self):
+        async def listen_ws():
+            async with AsyncSession() as session:
+                async with session.Kernel(self.session_id).stream_pty() as _stream:
+                    self.stream = _stream
+                    cols, rows = shutil.get_terminal_size(fallback=(80, 24))
+                    await self.stream.resize(rows, cols)
+                    async for msg in self.stream:
+                        data = json.loads(msg.data)
+                        os.write(self.STDOUT_FILENO, data['bytes'])
+        self.loop.create_task(listen_ws())
+        self.loop.run_forever()
 
 class WSProxy:
     __slots__ = (
@@ -144,33 +185,64 @@ def app(session_id, app, bind, port):
     SESSID: The compute session ID.
     APP: The name of service provided by the given session.
     """
-    api_session = None
-    runner = None
+    if app == 'ipython':
+        # STDIN_FILENO = 0
+        # STDOUT_FILENO = 1
+        print_info("ipython kernel started. type ^\ to exit")
+        # loop = current_loop()
+        # async def set_stream():
+        #     global stream
+        #     async with AsyncSession() as session:
+        #         async with session.Kernel(session_id).stream_pty() as _stream:
+        #             await _stream.send_stdin('v')
+        #             stream = _stream
+        # loop.run_until_complete(set_stream())
 
-    async def app_setup():
-        nonlocal api_session, runner
-        loop = current_loop()
-        api_session = AsyncSession()
-        # TODO: generalize protocol using service ports metadata
-        protocol = 'http'
-        runner = ProxyRunner(api_session, session_id, app,
-                             protocol, bind, port,
-                             loop=loop)
-        await runner.ready()
-        print_info(
-            "A local proxy to the application \"{0}\" ".format(app) +
-            "provided by the session \"{0}\" ".format(session_id) +
-            "is available at: {0}://{1}:{2}"
-            .format(protocol, bind, port)
-        )
+        # def signal_handler(signame):
+        #     if signame == 'SIGTERM':
+        #         sys.exit(0)
+        #     else:
+        #         asyncio.run_coroutine_threadsafe(stream.send_signal(signame), loop)
+        # for signame in ['SIGINT', 'SIGTSTP', 'SIGTERM']:
+        #     loop.add_signal_handler(
+        #         getattr(signal, signame),
+        #         functools.partial(signal_handler, signame))
+        
+        # def listen_stdin():
+        #     data = os.read(STDIN_FILENO, 1024)
+        #     asyncio.run_coroutine_threadsafe(stream.send_stdin(data), loop)
+        # loop.add_reader(STDIN_FILENO, listen_stdin)
+        # loop.run_forever()
+        IpythonClient(session_id).start()
+    else:
+        api_session = None
+        runner = None
 
-    async def app_shutdown():
-        nonlocal api_session, runner
-        print_info("Shutting down....")
-        await runner.close()
-        await api_session.close()
-        print_info("The local proxy to \"{}\" has terminated."
-                   .format(app))
+        async def app_setup():
+            nonlocal api_session, runner
+            loop = current_loop()
+            api_session = AsyncSession()
+            # TODO: generalize protocol using service ports metadata
+            protocol = 'http'
+            runner = ProxyRunner(api_session, session_id, app,
+                                protocol, bind, port,
+                                loop=loop)
+            await runner.ready()
+            print_info(
+                "A local proxy to the application \"{0}\" ".format(app) +
+                "provided by the session \"{0}\" ".format(session_id) +
+                "is available at: {0}://{1}:{2}"
+                .format(protocol, bind, port)
+            )
 
-    asyncio_run_forever(app_setup(), app_shutdown(),
-                        stop_signals={signal.SIGINT, signal.SIGTERM})
+        async def app_shutdown():
+            nonlocal api_session, runner
+            print_info("Shutting down....")
+            await runner.close()
+            await api_session.close()
+            print_info("The local proxy to \"{}\" has terminated."
+                    .format(app))
+
+        asyncio_run_forever(app_setup(), app_shutdown(),
+                            stop_signals={signal.SIGINT, signal.SIGTERM})
+
