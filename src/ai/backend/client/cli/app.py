@@ -186,33 +186,7 @@ def app(session_id, app, bind, port):
     APP: The name of service provided by the given session.
     """
     if app == 'ipython':
-        # STDIN_FILENO = 0
-        # STDOUT_FILENO = 1
         print_info("ipython kernel started. type ^\ to exit")
-        # loop = current_loop()
-        # async def set_stream():
-        #     global stream
-        #     async with AsyncSession() as session:
-        #         async with session.Kernel(session_id).stream_pty() as _stream:
-        #             await _stream.send_stdin('v')
-        #             stream = _stream
-        # loop.run_until_complete(set_stream())
-
-        # def signal_handler(signame):
-        #     if signame == 'SIGTERM':
-        #         sys.exit(0)
-        #     else:
-        #         asyncio.run_coroutine_threadsafe(stream.send_signal(signame), loop)
-        # for signame in ['SIGINT', 'SIGTSTP', 'SIGTERM']:
-        #     loop.add_signal_handler(
-        #         getattr(signal, signame),
-        #         functools.partial(signal_handler, signame))
-        
-        # def listen_stdin():
-        #     data = os.read(STDIN_FILENO, 1024)
-        #     asyncio.run_coroutine_threadsafe(stream.send_stdin(data), loop)
-        # loop.add_reader(STDIN_FILENO, listen_stdin)
-        # loop.run_forever()
         IpythonClient(session_id).start()
     else:
         api_session = None

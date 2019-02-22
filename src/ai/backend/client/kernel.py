@@ -447,16 +447,16 @@ class StreamPty(WebSocketResponse):
     __slots__ = ('ws', )
 
     async def resize(self, rows, cols):
-        await self.send_json({
+        await self.ws.send_str(json.dumps({
             'type': 'resize',
             'rows': rows,
             'cols': cols,
-        })
+        }))
 
     async def restart(self):
-        await self.send_json({
+        await self.ws.send_str(json.dumps({
             'type': 'restart',
-        })
+        }))
 
     async def send_stdin(self, stdin_chars):
         await self.send_json({
