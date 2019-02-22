@@ -487,7 +487,7 @@ class WebSocketContextManager:
                  response_cls: WebSocketResponse = WebSocketResponse):
         self.session = session
         self.ws_ctx = ws_ctx
-        self.response_cls = WebSocketResponse
+        self.response_cls = response_cls
         self.on_enter = on_enter
 
     async def __aenter__(self):
