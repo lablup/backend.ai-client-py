@@ -62,7 +62,11 @@ class WSProxy:
                 finally:
                     self.writer.close()
                     if hasattr(self.writer, 'wait_closed'):  # Python 3.7+
-                        await self.writer.wait_closed()
+                        try:
+                            await self.writer.wait_closed()
+                        except (BrokenPipeError, IOError):
+                            # closed
+                            pass
 
             self.down_task = asyncio.ensure_future(downstream())
             try:
