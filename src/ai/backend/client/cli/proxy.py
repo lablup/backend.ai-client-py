@@ -106,6 +106,7 @@ async def web_handler(request):
         # to be a transparent proxy.
         api_rqst = Request(
             session, request.method, path, request.content,
+            params=request.query,
             content_type=request.content_type)
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
@@ -148,6 +149,7 @@ async def websocket_handler(request):
     try:
         api_rqst = Request(
             session, request.method, path, request.content,
+            params=request.query,
             content_type=request.content_type)
         async with api_rqst.connect_websocket() as up_conn:
             down_conn = web.WebSocketResponse()
