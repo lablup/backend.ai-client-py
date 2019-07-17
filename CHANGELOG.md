@@ -1,6 +1,11 @@
 Changes
 =======
 
+19.03.2 (2018-07-17)
+--------------------
+
+ - Fix passing URL query parameters in `backend.ai proxy` command.
+
 19.03.1 (2018-05-10)
 --------------------
 
