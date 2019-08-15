@@ -72,7 +72,7 @@ class BaseSession(metaclass=abc.ABCMeta):
 
     __slots__ = (
         '_config', '_closed', 'aiohttp_session',
-        'Admin', 'Agent', 'Domain', 'Group', 'ScalingGroup',
+        'Admin', 'Agent', 'AgentWatcher', 'Domain', 'Group', 'ScalingGroup',
         'Image', 'Kernel', 'KeyPair', 'Manager', 'Resource',
         'KeypairResourcePolicy', 'User', 'VFolder',
     )
@@ -131,7 +131,7 @@ class Session(BaseSession):
 
         from .base import BaseFunction
         from .admin import Admin
-        from .agent import Agent
+        from .agent import Agent, AgentWatcher
         from .domain import Domain
         from .group import Group
         from .image import Image
@@ -159,6 +159,15 @@ class Session(BaseSession):
         })
         '''
         The :class:`~ai.backend.client.agent.Agent` function proxy
+        bound to this session.
+        '''
+
+        self.AgentWatcher = type('AgentWatcher', (BaseFunction, ), {
+            **AgentWatcher.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.agent.AgentWatcher` function proxy
         bound to this session.
         '''
 
@@ -313,7 +322,7 @@ class AsyncSession(BaseSession):
 
         from .base import BaseFunction
         from .admin import Admin
-        from .agent import Agent
+        from .agent import Agent, AgentWatcher
         from .group import Group
         from .image import Image
         from .kernel import Kernel
@@ -340,6 +349,15 @@ class AsyncSession(BaseSession):
         })
         '''
         The :class:`~ai.backend.client.agent.Agent` function proxy
+        bound to this session.
+        '''
+
+        self.AgentWatcher = type('AgentWatcher', (BaseFunction, ), {
+            **AgentWatcher.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.agent.AgentWatcher` function proxy
         bound to this session.
         '''
 

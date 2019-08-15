@@ -127,3 +127,106 @@ def agents(status, all):
                             headers=(item[0] for item in fields)))
             if total_count > paginating_interval:
                 print("More agents can be displayed by using --all option.")
+
+
+@admin.group()
+def watcher():
+    '''Provides agent watcher operations.
+
+    Watcher operations are available only for Linux distributions.
+    '''
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def status(agent):
+    '''
+    Get agent and watcher status.
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.get_status(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def soft_reset(agent):
+    '''
+    Soft reset an agent (reload agent service).
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.soft_reset(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def hard_reset(agent):
+    '''
+    Hard reset an agent (restart agent/docker services).
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.hard_reset(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def shutdown(agent):
+    '''
+    Stop agent service.
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.shutdown(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def start(agent):
+    '''
+    Start agent service.
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.start(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)

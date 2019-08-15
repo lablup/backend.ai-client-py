@@ -6,6 +6,7 @@ from .request import Request
 
 __all__ = (
     'Agent',
+    'AgentWatcher',
 )
 
 
@@ -95,3 +96,93 @@ class Agent:
         async with rqst.fetch() as resp:
             data = await resp.json()
             return data['agent']
+
+
+class AgentWatcher:
+    '''
+    Provides a shortcut of :func:`Admin.query()
+    <ai.backend.client.admin.Admin.query>` that manipulate agent status.
+
+    .. note::
+
+      All methods in this function class require you to
+      have the *superadmin* privilege.
+    '''
+
+    session = None
+    '''The client session instance that this function class is bound to.'''
+
+    @api_function
+    @classmethod
+    async def get_status(cls, agent_id: str) -> dict:
+        '''
+        Get agent and watcher status.
+        '''
+        rqst = Request(cls.session, 'GET', '/resource/watcher')
+        rqst.set_json({'agent_id': agent_id})
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            if 'message' in data:
+                return data['message']
+            else:
+                return data
+
+    @api_function
+    @classmethod
+    async def soft_reset(cls, agent_id: str) -> dict:
+        '''
+        Soft reset an agent.
+        '''
+        rqst = Request(cls.session, 'POST', '/resource/watcher/soft-reset')
+        rqst.set_json({'agent_id': agent_id})
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            if 'message' in data:
+                return data['message']
+            else:
+                return data
+
+    @api_function
+    @classmethod
+    async def hard_reset(cls, agent_id: str) -> dict:
+        '''
+        Hard reset an agent.
+        '''
+        rqst = Request(cls.session, 'POST', '/resource/watcher/hard-reset')
+        rqst.set_json({'agent_id': agent_id})
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            if 'message' in data:
+                return data['message']
+            else:
+                return data
+
+    @api_function
+    @classmethod
+    async def shutdown(cls, agent_id: str) -> dict:
+        '''
+        Shutdown an agent.
+        '''
+        rqst = Request(cls.session, 'POST', '/resource/watcher/shutdown')
+        rqst.set_json({'agent_id': agent_id})
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            if 'message' in data:
+                return data['message']
+            else:
+                return data
+
+    @api_function
+    @classmethod
+    async def start(cls, agent_id: str) -> dict:
+        '''
+        Start an agent.
+        '''
+        rqst = Request(cls.session, 'POST', '/resource/watcher/start')
+        rqst.set_json({'agent_id': agent_id})
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            if 'message' in data:
+                return data['message']
+            else:
+                return data
