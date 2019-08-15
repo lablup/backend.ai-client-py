@@ -129,11 +129,11 @@ class AgentWatcher:
 
     @api_function
     @classmethod
-    async def soft_reset(cls, agent_id: str) -> dict:
+    async def agent_start(cls, agent_id: str) -> dict:
         '''
-        Soft reset an agent.
+        Start agent.
         '''
-        rqst = Request(cls.session, 'POST', '/resource/watcher/soft-reset')
+        rqst = Request(cls.session, 'POST', '/resource/watcher/agent/start')
         rqst.set_json({'agent_id': agent_id})
         async with rqst.fetch() as resp:
             data = await resp.json()
@@ -144,11 +144,11 @@ class AgentWatcher:
 
     @api_function
     @classmethod
-    async def hard_reset(cls, agent_id: str) -> dict:
+    async def stop(cls, agent_id: str) -> dict:
         '''
-        Hard reset an agent.
+        Stop agent.
         '''
-        rqst = Request(cls.session, 'POST', '/resource/watcher/hard-reset')
+        rqst = Request(cls.session, 'POST', '/resource/watcher/agent/stop')
         rqst.set_json({'agent_id': agent_id})
         async with rqst.fetch() as resp:
             data = await resp.json()
@@ -159,26 +159,11 @@ class AgentWatcher:
 
     @api_function
     @classmethod
-    async def shutdown(cls, agent_id: str) -> dict:
+    async def restart(cls, agent_id: str) -> dict:
         '''
-        Shutdown an agent.
+        Restart agent.
         '''
-        rqst = Request(cls.session, 'POST', '/resource/watcher/shutdown')
-        rqst.set_json({'agent_id': agent_id})
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            if 'message' in data:
-                return data['message']
-            else:
-                return data
-
-    @api_function
-    @classmethod
-    async def start(cls, agent_id: str) -> dict:
-        '''
-        Start an agent.
-        '''
-        rqst = Request(cls.session, 'POST', '/resource/watcher/start')
+        rqst = Request(cls.session, 'POST', '/resource/watcher/agent/restart')
         rqst.set_json({'agent_id': agent_id})
         async with rqst.fetch() as resp:
             data = await resp.json()
