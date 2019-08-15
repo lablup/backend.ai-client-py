@@ -144,7 +144,7 @@ class AgentWatcher:
 
     @api_function
     @classmethod
-    async def stop(cls, agent_id: str) -> dict:
+    async def agent_stop(cls, agent_id: str) -> dict:
         '''
         Stop agent.
         '''
@@ -159,7 +159,7 @@ class AgentWatcher:
 
     @api_function
     @classmethod
-    async def restart(cls, agent_id: str) -> dict:
+    async def agent_restart(cls, agent_id: str) -> dict:
         '''
         Restart agent.
         '''
