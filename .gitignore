@@ -34,3 +34,5 @@ local-samples
 env-*.sh
 env_*.sh
 .ipynb_checkpoints
+
+.vscode/

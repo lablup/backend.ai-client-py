@@ -127,3 +127,87 @@ def agents(status, all):
                             headers=(item[0] for item in fields)))
             if total_count > paginating_interval:
                 print("More agents can be displayed by using --all option.")
+
+
+@admin.group()
+def watcher():
+    '''Provides agent watcher operations.
+
+    Watcher operations are available only for Linux distributions.
+    '''
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def status(agent):
+    '''
+    Get agent and watcher status.
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.get_status(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def agent_start(agent):
+    '''
+    Start agent service.
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.agent_start(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def agent_stop(agent):
+    '''
+    Stop agent service.
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.agent_stop(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@watcher.command()
+@click.argument('agent', type=str)
+def agent_restart(agent):
+    '''
+    Restart agent service.
+    (superadmin privilege required)
+
+    \b
+    AGENT: Agent id.
+    '''
+    with Session() as session:
+        try:
+            status = session.AgentWatcher.agent_restart(agent)
+            print(status)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
