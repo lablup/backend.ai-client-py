@@ -4,6 +4,7 @@ from pathlib import Path
 import click
 
 from . import main
+from .pretty import print_warn
 from .. import __version__
 from ..config import get_config
 
@@ -44,6 +45,11 @@ def login():
     '''
     user_id = input('User ID: ')
     password = getpass.getpass()
+
+    config = get_config()
+    if config.endpoint_type != 'session':
+        print_warn('To use login, your endpoint type must be "session".')
+        raise click.Abort()
 
     local_config_path = Path.home() / '.config' / 'backend.ai'
     local_config_path.mkdir(parents=True, exist_ok=True)
