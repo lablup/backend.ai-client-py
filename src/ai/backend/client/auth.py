@@ -4,6 +4,15 @@ import hmac
 
 import attr
 
+from .base import api_function
+
+__all__ = (
+    'Auth',
+    'AuthToken',
+    'AuthTokenTypes',
+    'generate_signature',
+)
+
 
 class AuthTokenTypes(enum.Enum):
     KEYPAIR = 'keypair'
@@ -55,3 +64,31 @@ def generate_signature(method, version, endpoint,
         ),
     }
     return headers, signature
+
+
+class Auth:
+    '''
+    Provides the function interface for login session management and authorization.
+    '''
+
+    @api_function
+    @classmethod
+    async def login(cls, user_id: str, password: str):
+        from .request import Request
+        rqst = Request(cls.session, 'POST', '/server/login')
+        rqst.set_json({
+            'username': user_id,
+            'password': password,
+        })
+        async with rqst.fetch(anonymous=True) as resp:
+            data = await resp.json()
+            data['cookies'] = resp.raw_response.cookies
+            return data
+
+    @api_function
+    @classmethod
+    async def logout(cls):
+        from .request import Request
+        rqst = Request(cls.session, 'POST', '/server/logout')
+        async with rqst.fetch() as resp:
+            resp.raw_response.raise_for_status()

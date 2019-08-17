@@ -1,12 +1,14 @@
 import getpass
 from pathlib import Path
+import sys
 
 import click
 
 from . import main
-from .pretty import print_warn
+from .pretty import print_done, print_fail, print_warn
 from .. import __version__
 from ..config import get_config
+from ..session import Session
 
 
 @main.command()
@@ -51,7 +53,34 @@ def login():
         print_warn('To use login, your endpoint type must be "session".')
         raise click.Abort()
 
-    local_config_path = Path.home() / '.config' / 'backend.ai'
-    local_config_path.mkdir(parents=True, exist_ok=True)
-    with open(local_config_path / 'session.cfg', 'w') as f:
-        ...
+    with Session() as session:
+        result = session.Auth.login(user_id, password)
+        if not result['authenticated']:
+            print_fail('Login failed.')
+            sys.exit(1)
+        print_done('Login succeeded.')
+
+        local_config_path = Path.home() / '.config' / 'backend.ai'
+        local_config_path.mkdir(parents=True, exist_ok=True)
+        session.aiohttp_session.cookie_jar.update_cookies(result['cookies'])
+        session.aiohttp_session.cookie_jar.save(local_config_path / 'cookie.dat')
+
+
+@main.command()
+def logout():
+    '''
+    Log-in to the console API proxy.
+    '''
+    config = get_config()
+    if config.endpoint_type != 'session':
+        print_warn('To use logout, your endpoint type must be "session".')
+        raise click.Abort()
+
+    with Session() as session:
+        session.Auth.logout()
+        print_done('Logout done.')
+        try:
+            local_config_path = Path.home() / '.config' / 'backend.ai'
+            (local_config_path / 'cookie.dat').unlink()
+        except (IOError, PermissionError):
+            pass

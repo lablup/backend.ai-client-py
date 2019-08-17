@@ -117,8 +117,14 @@ class APIConfig:
         self._group = group if group else get_env('GROUP', self.DEFAULTS['group'])
         self._version = version if version else self.DEFAULTS['version']
         self._user_agent = user_agent if user_agent else get_user_agent()
-        self._access_key = access_key if access_key is not None else get_env('ACCESS_KEY', '')
-        self._secret_key = secret_key if secret_key is not None else get_env('SECRET_KEY', '')
+        if self._endpoint_type == 'api':
+            self._access_key = access_key if access_key is not None \
+                               else get_env('ACCESS_KEY', '')
+            self._secret_key = secret_key if secret_key is not None \
+                               else get_env('SECRET_KEY', '')
+        else:
+            self._access_key = 'dummy'
+            self._secret_key = 'dummy'
         self._hash_type = hash_type.lower() if hash_type else \
                           self.DEFAULTS['hash_type']
         arg_vfolders = set(vfolder_mounts) if vfolder_mounts else set()

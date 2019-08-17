@@ -176,11 +176,21 @@ class Request:
             secret_key = self.config.secret_key
         if hash_type is None:
             hash_type = self.config.hash_type
-        hdrs, _ = generate_signature(
-            self.method, self.config.version, self.config.endpoint,
-            self.date, str(rel_url), self.content_type, self._content,
-            access_key, secret_key, hash_type)
-        self.headers.update(hdrs)
+        if self.config.endpoint_type == 'api':
+            hdrs, _ = generate_signature(
+                self.method, self.config.version, self.config.endpoint,
+                self.date, str(rel_url), self.content_type, self._content,
+                access_key, secret_key, hash_type)
+            self.headers.update(hdrs)
+        elif self.config.endpoint_type == 'session':
+            local_config_path = Path.home() / '.config' / 'backend.ai'
+            try:
+                self.session.aiohttp_session.cookie_jar.load(
+                    local_config_path / 'cookie.dat')
+            except (IOError, PermissionError):
+                pass
+        else:
+            raise ValueError('unsupported endpoint type')
 
     def _pack_content(self):
         if self._attached_files is not None:
@@ -201,6 +211,9 @@ class Request:
     def _build_url(self):
         base_url = self.config.endpoint.path.rstrip('/')
         query_path = self.path.lstrip('/') if len(self.path) > 0 else ''
+        if self.config.endpoint_type == 'session':
+            if not query_path.startswith('server'):
+                query_path = f'func/{query_path}'
         path = '{0}/{1}'.format(base_url, query_path)
         url = self.config.endpoint.with_path(path)
         if self.params:
@@ -243,7 +256,8 @@ class Request:
         if self.content_type is not None and 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = self.content_type
         full_url = self._build_url()
-        if not self.config.is_anonymous:
+        force_anonymous = kwargs.pop('anonymous', False)
+        if not self.config.is_anonymous and not force_anonymous:
             self._sign(full_url.relative())
         rqst_ctx = self.session.aiohttp_session.request(
             self.method,
