@@ -2,6 +2,7 @@ import getpass
 from pathlib import Path
 import sys
 
+import appdirs
 import click
 
 from . import main
@@ -61,10 +62,10 @@ def login():
                 sys.exit(1)
             print_done('Login succeeded.')
 
-            local_config_path = Path.home() / '.config' / 'backend.ai'
-            local_config_path.mkdir(parents=True, exist_ok=True)
+            local_state_path = Path(appdirs.user_state_dir('backend.ai'))
+            local_state_path.mkdir(parents=True, exist_ok=True)
             session.aiohttp_session.cookie_jar.update_cookies(result['cookies'])
-            session.aiohttp_session.cookie_jar.save(local_config_path / 'cookie.dat')
+            session.aiohttp_session.cookie_jar.save(local_state_path / 'cookie.dat')
         except Exception as e:
             print_error(e)
 
@@ -84,8 +85,8 @@ def logout():
             session.Auth.logout()
             print_done('Logout done.')
             try:
-                local_config_path = Path.home() / '.config' / 'backend.ai'
-                (local_config_path / 'cookie.dat').unlink()
+                local_state_path = Path(appdirs.user_state_dir('backend.ai'))
+                (local_state_path / 'cookie.dat').unlink()
             except (IOError, PermissionError):
                 pass
         except Exception as e:

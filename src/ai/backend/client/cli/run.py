@@ -1,4 +1,3 @@
-from argparse import ArgumentTypeError
 import asyncio
 import collections
 from decimal import Decimal
@@ -12,6 +11,7 @@ import sys
 import traceback
 
 import aiohttp
+import appdirs
 import click
 from humanize import naturalsize
 import tabulate as tabulate_mod
@@ -517,7 +517,7 @@ def run(image, files, session_id,                          # base args
             stdout = sys.stdout
             stderr = sys.stderr
         else:
-            log_dir = Path.home() / '.cache' / 'backend.ai' / 'client-logs'
+            log_dir = Path(appdirs.user_cache_dir('backend.ai')) / 'client-logs'
             log_dir.mkdir(parents=True, exist_ok=True)
             stdout = open(log_dir / '{0}.stdout.log'.format(session_id),
                           'w', encoding='utf-8')

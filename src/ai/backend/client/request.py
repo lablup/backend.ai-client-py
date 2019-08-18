@@ -8,6 +8,7 @@ from typing import Any, Callable, Mapping, Sequence, Union
 
 import aiohttp
 import aiohttp.web
+import appdirs
 from dateutil.tz import tzutc
 from multidict import CIMultiDict
 import json as modjson
@@ -183,10 +184,10 @@ class Request:
                 access_key, secret_key, hash_type)
             self.headers.update(hdrs)
         elif self.config.endpoint_type == 'session':
-            local_config_path = Path.home() / '.config' / 'backend.ai'
+            local_state_path = Path(appdirs.user_state_dir('backend.ai'))
             try:
                 self.session.aiohttp_session.cookie_jar.load(
-                    local_config_path / 'cookie.dat')
+                    local_state_path / 'cookie.dat')
             except (IOError, PermissionError):
                 pass
         else:
