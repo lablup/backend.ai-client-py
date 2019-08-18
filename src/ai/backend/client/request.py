@@ -184,7 +184,7 @@ class Request:
                 access_key, secret_key, hash_type)
             self.headers.update(hdrs)
         elif self.config.endpoint_type == 'session':
-            local_state_path = Path(appdirs.user_state_dir('backend.ai'))
+            local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
             try:
                 self.session.aiohttp_session.cookie_jar.load(
                     local_state_path / 'cookie.dat')

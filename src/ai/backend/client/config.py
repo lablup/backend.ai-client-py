@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
 from yarl import URL
 from typing import Any, Callable, Iterable, Tuple, Union
+
+import appdirs
 
 __all__ = [
     'get_config',
@@ -9,6 +12,9 @@ __all__ = [
 ]
 
 _config = None
+
+local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
+local_cache_path = Path(appdirs.user_cache_dir('backend.ai', 'Lablup'))
 
 
 def get_env(key: str, default: Any = None, *,

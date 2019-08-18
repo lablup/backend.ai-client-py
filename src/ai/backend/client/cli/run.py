@@ -4,14 +4,12 @@ from decimal import Decimal
 import getpass
 import itertools
 import json
-from pathlib import Path
 import re
 import string
 import sys
 import traceback
 
 import aiohttp
-import appdirs
 import click
 from humanize import naturalsize
 import tabulate as tabulate_mod
@@ -19,6 +17,7 @@ from tabulate import tabulate
 
 from . import main
 from .admin.sessions import session as cli_admin_session
+from ..config import local_cache_path
 from ..compat import current_loop, token_hex
 from ..exceptions import BackendError, BackendAPIError
 from ..session import Session, AsyncSession, is_legacy_server
@@ -517,7 +516,7 @@ def run(image, files, session_id,                          # base args
             stdout = sys.stdout
             stderr = sys.stderr
         else:
-            log_dir = Path(appdirs.user_cache_dir('backend.ai')) / 'client-logs'
+            log_dir = local_cache_path / 'client-logs'
             log_dir.mkdir(parents=True, exist_ok=True)
             stdout = open(log_dir / '{0}.stdout.log'.format(session_id),
                           'w', encoding='utf-8')
