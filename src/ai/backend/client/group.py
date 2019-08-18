@@ -2,7 +2,6 @@ import textwrap
 from typing import Iterable, Sequence
 
 from .base import api_function
-from .exceptions import BackendClientError
 from .request import Request
 
 __all__ = (
