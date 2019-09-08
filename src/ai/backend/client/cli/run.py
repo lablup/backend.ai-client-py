@@ -323,8 +323,8 @@ def _prepare_mount_arg(mount):
                    '(e.g: -r cpu=2 -r mem=256 -r cuda.device=1)')
 @click.option('--cluster-size', metavar='NUMBER', type=int, default=1,
               help='The size of cluster in number of containers.')
-@click.option('--extra-resources', metavar='KEY=VAL', type=str, multiple=True,
-              help='Extra resource specs for creating compute session. '
+@click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
+              help='Resource options for creating compute session. '
                    '(e.g: shm-size=64m)')
 # resource grouping
 @click.option('-d', '--domain', metavar='DOMAIN_NAME', default=None,
@@ -340,7 +340,7 @@ def run(image, files, session_id,                          # base args
         rm, stats, tag, quiet,                             # extra options
         env_range, build_range, exec_range, max_parallel,  # experiment support
         mount, scaling_group, resources, cluster_size,     # resource spec
-        extra_resources,
+        resource_opts,
         domain, group):                                    # resource grouping
     '''
     Run the given code snippet or files in a session.
@@ -369,7 +369,7 @@ def run(image, files, session_id,                          # base args
 
     envs = _prepare_env_arg(env)
     resources = _prepare_resource_arg(resources)
-    extra_resources = _prepare_resource_arg(extra_resources)
+    resource_opts = _prepare_resource_arg(resource_opts)
     mount = _prepare_mount_arg(mount)
 
     if not (1 <= cluster_size < 4):
@@ -504,7 +504,7 @@ def run(image, files, session_id,                          # base args
                 mounts=mount,
                 envs=envs,
                 resources=resources,
-                extra_resources=extra_resources,
+                resource_opts=resources_opts,
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
@@ -689,8 +689,8 @@ def run(image, files, session_id,                          # base args
                    'The unit of mem(ory) is MiB.')
 @click.option('--cluster-size', metavar='NUMBER', type=int, default=1,
               help='The size of cluster in number of containers.')
-@click.option('--extra-resources', metavar='KEY=VAL', type=str, multiple=True,
-              help='Extra resource specs for creating compute session '
+@click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
+              help='Resource options for creating compute session '
                    '(e.g: shm-size=64m)')
 # resource grouping
 @click.option('-d', '--domain', metavar='DOMAIN_NAME', default=None,
@@ -703,7 +703,7 @@ def start(image, session_id, owner,                        # base args
           env,                                            # execution environment
           tag,                                            # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
-          extra_resources,
+          resource_opts,
           domain, group):                                 # resource grouping
     '''
     Prepare and start a single compute session without executing codes.
@@ -724,7 +724,7 @@ def start(image, session_id, owner,                        # base args
     ######
     envs = _prepare_env_arg(env)
     resources = _prepare_resource_arg(resources)
-    extra_resources = _prepare_resource_arg(extra_resources)
+    resource_opts = _prepare_resource_arg(resource_opts)
     mount = _prepare_mount_arg(mount)
     with Session() as session:
         try:
@@ -735,7 +735,7 @@ def start(image, session_id, owner,                        # base args
                 mounts=mount,
                 envs=envs,
                 resources=resources,
-                extra_resources=extra_resources,
+                resource_opts=resource_opts,
                 owner_access_key=owner,
                 domain_name=domain,
                 group_name=group,
