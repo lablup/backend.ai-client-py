@@ -53,6 +53,7 @@ class Kernel:
                             mounts: Iterable[str] = None,
                             envs: Mapping[str, str] = None,
                             resources: Mapping[str, int] = None,
+                            extra_resources: Mapping[str, int] = None,
                             cluster_size: int = 1,
                             domain_name: str = None,
                             group_name: str = None,
@@ -94,6 +95,8 @@ class Kernel:
             mounts = []
         if resources is None:
             resources = {}
+        if extra_resources is None:
+            extra_resources = {}
         if domain_name is None:
             # Even if config.domain is None, it can be guessed in the manager by user information.
             domain_name = cls.session.config.domain
@@ -113,6 +116,7 @@ class Kernel:
                 'environ': envs,
                 'clusterSize': cluster_size,
                 'resources': resources,
+                'extra_resources': extra_resources,
                 'scalingGroup': scaling_group,
             },
         })
