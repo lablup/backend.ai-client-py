@@ -203,9 +203,9 @@ class User:
     @api_function
     @classmethod
     async def update(cls, email: str, password: str = None, username: str = None,
-                     full_name: str = None, role: str = None, is_active: bool = None,
-                     need_password_change: bool = None, description: str = None,
-                     group_ids: Iterable[str] = None,
+                     full_name: str = None, domain_name: str = None, role: str = None,
+                     is_active: bool = None, need_password_change: bool = None,
+                     description: str = None, group_ids: Iterable[str] = None,
                      fields: Iterable[str] = None) -> dict:
         '''
         Update existing user.
@@ -224,6 +224,7 @@ class User:
                 'password': password,
                 'username': username,
                 'full_name': full_name,
+                'domain_name': domain_name,
                 'role': role,
                 'is_active': is_active,
                 'need_password_change': need_password_change,

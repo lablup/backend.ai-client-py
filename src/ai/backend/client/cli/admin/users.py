@@ -129,6 +129,7 @@ def add(domain_name, email, password, username, full_name, role, inactive,
 @click.option('-p', '--password', type=str, help='Username.')
 @click.option('-u', '--username', type=str, help='Username.')
 @click.option('-n', '--full-name', type=str, help='Full name.')
+@click.option('-d', '--domain-name', type=str, help='Domain name.')
 @click.option('-r', '--role', type=str, default='user',
               help='Role of the user. One of (admin, user, monitor).')
 @click.option('--is-active', type=bool, help='Make user active or inactive.')
@@ -136,8 +137,8 @@ def add(domain_name, email, password, username, full_name, role, inactive,
               help='Flag indicate that user needs to change password. '
                    'Useful when admin manually create password.')
 @click.option('--description', type=str, default='', help='Description of the user.')
-def update(email, password, username, full_name, role, is_active, need_password_change,
-           description):
+def update(email, password, username, full_name, domain_name, role, is_active,
+           need_password_change, description):
     '''
     Update an existing user.
 
@@ -148,6 +149,7 @@ def update(email, password, username, full_name, role, is_active, need_password_
             data = session.User.update(
                 email,
                 password=password, username=username, full_name=full_name,
+                domain_name=domain_name,
                 role=role, is_active=is_active, need_password_change=need_password_change,
                 description=description,
             )
