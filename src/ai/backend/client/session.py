@@ -54,7 +54,7 @@ class _SyncWorkerThread(threading.Thread):
         except (SystemExit, KeyboardInterrupt):
             pass
         finally:
-            loop.close()
+            loop.stop()
 
     def execute(self, coro):
         self.work_queue.put(coro)

@@ -185,6 +185,6 @@ features such as ``stream_execute()`` which streams the execution results via we
   try:
       loop.run_until_complete(main())
   finally:
-      loop.close()
+      loop.stop()
 
 .. versionadded:: 1.5

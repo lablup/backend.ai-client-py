@@ -658,7 +658,7 @@ def run(image, files, session_id,                          # base args
             try:
                 loop.run_until_complete(_run_cases())
             finally:
-                loop.close()
+                loop.stop()
     except Exception as e:
         print_fail('{0}'.format(e))
 

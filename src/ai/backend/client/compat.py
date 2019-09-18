@@ -67,8 +67,8 @@ def _asyncio_run(coro, *, debug=False):
             if hasattr(loop, 'shutdown_asyncgens'):  # Python 3.6+
                 loop.run_until_complete(loop.shutdown_asyncgens())
         finally:
+            loop.stop()
             asyncio.set_event_loop(None)
-            loop.close()
 
 
 if hasattr(asyncio, 'run'):  # Python 3.7+
@@ -107,5 +107,5 @@ def asyncio_run_forever(setup_coro, shutdown_coro, *,
             if hasattr(loop, 'shutdown_asyncgens'):  # Python 3.6+
                 loop.run_until_complete(loop.shutdown_asyncgens())
         finally:
+            loop.stop()
             asyncio.set_event_loop(None)
-            loop.close()
