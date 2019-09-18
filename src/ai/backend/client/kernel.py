@@ -49,8 +49,12 @@ class Kernel:
 
     @api_function
     @classmethod
-    async def get_or_create(cls, lang: str, *,
+    async def get_or_create(cls, image: str, *,
                             client_token: str = None,
+                            type_: str = 'interactive',
+                            enqueue_only: bool = False,
+                            max_wait: int = 0,
+                            no_reuse: bool = False,
                             mounts: Iterable[str] = None,
                             envs: Mapping[str, str] = None,
                             resources: Mapping[str, int] = None,
@@ -66,10 +70,10 @@ class Kernel:
         If *client_token* is ``None``, it creates a new compute session as long as
         the server has enough resources and your API key has remaining quota.
         If *client_token* is a valid string and there is an existing compute session
-        with the same token and the same *lang*, then it returns the :class:`Kernel`
+        with the same token and the same *image*, then it returns the :class:`Kernel`
         instance representing the existing session.
 
-        :param lang: The image name and tag for the compute session.
+        :param image: The image name and tag for the compute session.
             Example: ``python:3.6-ubuntu``.
             Check out the full list of available images in your server using (TODO:
             new API).
@@ -106,12 +110,9 @@ class Kernel:
 
         mounts.extend(cls.session.config.vfolder_mounts)
         rqst = Request(cls.session, 'POST', '/kernel/create')
-        rqst.set_json({
-            'lang': lang,
+        params = {
             'tag': tag,
             'clientSessionToken': client_token,
-            'domain_name': domain_name,
-            'group_name': group_name,
             'config': {
                 'mounts': mounts,
                 'environ': envs,
@@ -120,11 +121,26 @@ class Kernel:
                 'resource_opts': resource_opts,
                 'scalingGroup': scaling_group,
             },
-        })
+        }
+        if cls.session.config.version >= 'v4.20190615':
+            params.update({
+                'domain': domain_name,
+                'group': group_name,
+                'type': type_,
+                'enqueueOnly': enqueue_only,
+                'maxWaitSeconds': max_wait,
+                'reuseIfExists': not no_reuse,
+            })
+        if cls.session.config.version >= 'v4.20181215':
+            params['image'] = image
+        else:
+            params['lang'] = image
+        rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
             o = cls(data['kernelId'], owner_access_key)  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
+            o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
             o.domain = domain_name
             o.group = group_name

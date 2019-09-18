@@ -274,6 +274,15 @@ def _prepare_mount_arg(mount):
 @click.option('-t', '--session-id', '--client-token', metavar='SESSID',
               help='Specify a human-readable session ID or name. '
                    'If not set, a random hex string is used.')
+# job scheduling options
+@click.option('--type', metavar='SESSTYPE', default='interactive',
+              help='Either batch or interactive')
+@click.option('--enqueue-only', is_flag=True,
+              help='Enqueue the session and return immediately without waiting for its startup.')
+@click.option('--max-wait', metavar='SECONDS', type=int, default=0,
+              help='The maximum duration to wait until the session starts.')
+@click.option('--no-reuse', is_flag=True,
+              help='Do not reuse existing sessions but return an error.')
 # query-mode options
 @click.option('-c', '--code', metavar='CODE',
               help='The code snippet as a single string')
@@ -334,6 +343,7 @@ def _prepare_mount_arg(mount):
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
 def run(image, files, session_id,                          # base args
+        type, enqueue_only, max_wait, no_reuse,            # job scheduling options
         code, terminal,                                    # query-mode options
         clean, build, exec, basedir,                       # batch-mode options
         env,                                               # execution environment
@@ -431,6 +441,10 @@ def run(image, files, session_id,                          # base args
             kernel = session.Kernel.get_or_create(
                 image,
                 client_token=session_id,
+                type_=type,
+                enqueue_only=enqueue_only,
+                max_wait=max_wait,
+                no_reuse=no_reuse,
                 cluster_size=cluster_size,
                 mounts=mount,
                 envs=envs,
@@ -500,6 +514,10 @@ def run(image, files, session_id,                          # base args
             kernel = await session.Kernel.get_or_create(
                 image,
                 client_token=session_id,
+                type_=type,
+                enqueue_only=enqueue_only,
+                max_wait=max_wait,
+                no_reuse=no_reuse,
                 cluster_size=cluster_size,
                 mounts=mount,
                 envs=envs,
