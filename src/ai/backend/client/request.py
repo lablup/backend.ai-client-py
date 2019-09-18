@@ -1,8 +1,10 @@
+import asyncio
 from collections import OrderedDict, namedtuple
 from datetime import datetime
 from decimal import Decimal
 import functools
 import io
+import logging
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence, Union
 
@@ -16,6 +18,8 @@ import json as modjson
 from .auth import generate_signature
 from .exceptions import BackendClientError, BackendAPIError
 from .session import BaseSession, Session as SyncSession, AsyncSession
+
+log = logging.getLogger('ai.backend.client.request')
 
 __all__ = [
     'Request',
@@ -293,6 +297,31 @@ class Request:
             headers=self.headers)
         return WebSocketContextManager(self.session, ws_ctx, **kwargs)
 
+    def connect_events(self, **kwargs) -> 'SSEContextManager':
+        '''
+        Creates a Server-Sent Events connection.
+
+        .. warning::
+
+          This method only works with
+          :class:`~ai.backend.client.session.AsyncSession`.
+        '''
+        assert isinstance(self.session, AsyncSession), \
+               'Cannot use event streams with sessions in the synchronous mode'
+        assert self.method == 'GET', 'Invalid event stream method'
+        self.date = datetime.now(tzutc())
+        self.headers['Date'] = self.date.isoformat()
+        self.content_type = 'application/octet-stream'
+        full_url = self._build_url()
+        if not self.config.is_anonymous:
+            self._sign(full_url.relative())
+        rqst_ctx = self.session.aiohttp_session.request(
+            self.method,
+            str(full_url),
+            timeout=_default_request_timeout,
+            headers=self.headers)
+        return SSEContextManager(self.session, rqst_ctx, **kwargs)
+
 
 class Response:
     '''
@@ -505,7 +534,7 @@ class WebSocketContextManager:
                  response_cls: WebSocketResponse = WebSocketResponse):
         self.session = session
         self.ws_ctx = ws_ctx
-        self.response_cls = WebSocketResponse
+        self.response_cls = response_cls
         self.on_enter = on_enter
 
     async def __aenter__(self):
@@ -523,3 +552,81 @@ class WebSocketContextManager:
 
     async def __aexit__(self, *args):
         return await self.ws_ctx.__aexit__(*args)
+
+
+class SSEResponse(Response):
+
+    __slots__ = (
+        '_session', '_raw_response', '_async_mode',
+        '_auto_reconnect',
+    )
+
+    def __init__(self, session: BaseSession,
+                 underlying_response: aiohttp.ClientResponse):
+        super().__init__(session, underlying_response, async_mode=True)
+
+    async def fetch_events(self):
+        msg_lines = []
+        while True:
+            line = await self._raw_response.content.readline()
+            if not line:
+                # connection closed
+                break
+            line = line.strip(b'\r\n')
+            if line.startswith(b':'):
+                # comment
+                continue
+            if not line:
+                # message boundary
+                if len(msg_lines) == 0:
+                    continue
+                evdata = {
+                    'event': 'message',
+                    'data': '',
+                }
+                data_lines = []
+                try:
+                    for line in msg_lines:
+                        hdr, text = line.split(':', maxsplit=1)
+                        text = text.lstrip(' ')
+                        if hdr == 'data':
+                            data_lines.append(text)
+                        elif hdr == 'event':
+                            evdata['event'] = text
+                        elif hdr == 'id':
+                            evdata['id'] = text
+                        elif hdr == 'retry':
+                            evdata['retry'] = int(text)
+                except (IndexError, ValueError):
+                    log.exception('SSEResponse: parsing-error')
+                    continue
+                evdata['data'] = '\n'.join(data_lines)
+                msg_lines.clear()
+                yield evdata
+            else:
+                msg_lines.append(line.decode('utf-8'))
+
+
+class SSEContextManager:
+
+    def __init__(self, session, rqst_ctx, *,
+                 response_cls: SSEResponse = SSEResponse):
+        self.session = session
+        self.rqst_ctx = rqst_ctx
+        self.response_cls = response_cls
+
+    async def __aenter__(self):
+        try:
+            raw_resp = await self.rqst_ctx.__aenter__()
+            if raw_resp.status // 100 != 2:
+                msg = await raw_resp.text()
+                raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
+            return self.response_cls(self.session, raw_resp)
+        except aiohttp.ClientError as e:
+            msg = 'Request to the API endpoint has failed.\n' \
+                  'Check your network connection and/or the server status.\n' \
+                  '\u279c {!r}'.format(e)
+            raise BackendClientError(msg) from e
+
+    async def __aexit__(self, *args):
+        return await self.rqst_ctx.__aexit__(*args)

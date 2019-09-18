@@ -798,12 +798,12 @@ def terminate(sess_id_or_alias, owner, stats):
                     print('Statistics is not available.')
 
 
-@click.command()
+@main.command()
 @click.argument('sess_id_or_alias', metavar='NAME')
-@click.option('-o', '--owner', '--owner-access-key', metavar='ACCESS_KEY',
+@click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
               help='Specify the owner of the target session explicitly.')
 @click.pass_context
-def info(ctx, sess_id_or_alias, owner):
+def info(ctx, sess_id_or_alias, owner_access_key):
     '''
     Show detailed information for a running compute session.
     This is an alias of the "admin session <sess_id>" command.
@@ -811,3 +811,31 @@ def info(ctx, sess_id_or_alias, owner):
     SESSID: session ID or its alias given when creating the session.
     '''
     ctx.forward(cli_admin_session)
+
+
+@main.command()
+@click.argument('sess_id_or_alias', metavar='SESSID')
+@click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
+              help='Specify the owner of the target session explicitly.')
+def events(sess_id_or_alias, owner_access_key):
+    '''
+    Monitor the lifecycle events of a compute session.
+
+    SESSID: session ID or its alias given when creating the session.
+    '''
+
+    async def _run_events():
+        async with AsyncSession() as session:
+            kernel = session.Kernel(sess_id_or_alias, owner_access_key)
+            async with kernel.stream_events() as sse_response:
+                async for ev in sse_response.fetch_events():
+                    print(click.style(ev['event'], fg='cyan', bold=True), json.loads(ev['data']))
+
+    try:
+        loop = asyncio.get_event_loop()
+        try:
+            loop.run_until_complete(_run_events())
+        finally:
+            loop.stop()
+    except Exception as e:
+        print_error(e)
