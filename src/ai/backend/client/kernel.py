@@ -12,7 +12,8 @@ from .base import api_function
 from .exceptions import BackendClientError
 from .request import (
     Request, AttachedFile,
-    WebSocketResponse
+    WebSocketResponse,
+    SSEResponse,
 )
 from .cli.pretty import ProgressReportingReader
 
@@ -454,6 +455,23 @@ class Kernel:
         })
         async with rqst.fetch() as resp:
             return await resp.json()
+
+    # only supported in AsyncKernel
+    def stream_events(self) -> SSEResponse:
+        '''
+        Opens the stream of the kernel lifecycle events.
+
+        :returns: a :class:`StreamEvents` object.
+        '''
+        params = {
+            'sessionId': self.kernel_id,
+        }
+        if self.owner_access_key:
+            params['owner_access_key'] = self.owner_access_key
+        request = Request(self.session,
+                          'GET', '/stream/kernel/_/events',
+                          params=params)
+        return request.connect_events()
 
     # only supported in AsyncKernel
     def stream_pty(self) -> 'StreamPty':
