@@ -56,7 +56,7 @@ A struct that represents an attached file to the API request.
 
 _default_request_timeout = aiohttp.ClientTimeout(
     total=None, connect=None,
-    sock_connect=30.0, sock_read=None,
+    sock_connect=10.0, sock_read=None,
 )
 
 
@@ -457,7 +457,7 @@ class FetchContextManager:
                     raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
                 return self.response_cls(self.session, raw_resp,
                                          async_mode=self._async_mode)
-            except aiohttp.ClientError as e:
+            except aiohttp.ClientConnectionError as e:
                 if retry_count == max_retries:
                     msg = 'Request to the API endpoint has failed.\n' \
                           'Check your network connection and/or the server status.\n' \
@@ -466,6 +466,10 @@ class FetchContextManager:
                 else:
                     self.session.config.rotate_endpoints()
                     continue
+            except aiohttp.ClientResponseError as e:
+                msg = 'API endpoint response error.\n' \
+                      '\u279c {!r}'.format(e)
+                raise BackendClientError(msg) from e
 
     def __exit__(self, *args):
         return self.session.worker_thread.execute(self.__aexit__(*args))
@@ -572,7 +576,7 @@ class WebSocketContextManager:
                 retry_count += 1
                 self._ws_ctx = self.ws_ctx_builder()
                 raw_ws = await self._ws_ctx.__aenter__()
-            except aiohttp.ClientError as e:
+            except aiohttp.ClientConnectionError as e:
                 if retry_count == max_retries:
                     msg = 'Request to the API endpoint has failed.\n' \
                           'Check your network connection and/or the server status.\n' \
@@ -581,6 +585,10 @@ class WebSocketContextManager:
                 else:
                     self.session.config.rotate_endpoints()
                     continue
+            except aiohttp.ClientResponseError as e:
+                msg = 'API endpoint response error.\n' \
+                      '\u279c {!r}'.format(e)
+                raise BackendClientError(msg) from e
             else:
                 break
 
@@ -675,7 +683,7 @@ class SSEContextManager:
                     msg = await raw_resp.text()
                     raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
                 return self.response_cls(self.session, raw_resp)
-            except aiohttp.ClientError as e:
+            except aiohttp.ClientConnectionError as e:
                 if retry_count == max_retries:
                     msg = 'Request to the API endpoint has failed.\n' \
                           'Check your network connection and/or the server status.\n' \
@@ -684,6 +692,10 @@ class SSEContextManager:
                 else:
                     self.session.config.rotate_endpoints()
                     continue
+            except aiohttp.ClientResponseError as e:
+                msg = 'API endpoint response error.\n' \
+                      '\u279c {!r}'.format(e)
+                raise BackendClientError(msg) from e
 
     async def __aexit__(self, *args):
         ret = await self._rqst_ctx.__aexit__(*args)
