@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence, Union
 
 import aiohttp
+from aiohttp.client import _RequestContextManager, _WSRequestContextManager
 import aiohttp.web
 import appdirs
 from dateutil.tz import tzutc
@@ -260,17 +261,20 @@ class Request:
         self.headers['Date'] = self.date.isoformat()
         if self.content_type is not None and 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = self.content_type
-        full_url = self._build_url()
         force_anonymous = kwargs.pop('anonymous', False)
-        if not self.config.is_anonymous and not force_anonymous:
-            self._sign(full_url.relative())
-        rqst_ctx = self.session.aiohttp_session.request(
-            self.method,
-            str(full_url),
-            data=self._pack_content(),
-            timeout=_default_request_timeout,
-            headers=self.headers)
-        return FetchContextManager(self.session, rqst_ctx, **kwargs)
+
+        def _rqst_ctx_builder():
+            full_url = self._build_url()
+            if not self.config.is_anonymous and not force_anonymous:
+                self._sign(full_url.relative())
+            return self.session.aiohttp_session.request(
+                self.method,
+                str(full_url),
+                data=self._pack_content(),
+                timeout=_default_request_timeout,
+                headers=self.headers)
+
+        return FetchContextManager(self.session, _rqst_ctx_builder, **kwargs)
 
     def connect_websocket(self, **kwargs) -> 'WebSocketContextManager':
         '''
@@ -288,14 +292,17 @@ class Request:
         self.headers['Date'] = self.date.isoformat()
         # websocket is always a "binary" stream.
         self.content_type = 'application/octet-stream'
-        full_url = self._build_url()
-        if not self.config.is_anonymous:
-            self._sign(full_url.relative())
-        ws_ctx = self.session.aiohttp_session.ws_connect(
-            str(full_url),
-            autoping=True, heartbeat=30.0,
-            headers=self.headers)
-        return WebSocketContextManager(self.session, ws_ctx, **kwargs)
+
+        def _ws_ctx_builder():
+            full_url = self._build_url()
+            if not self.config.is_anonymous:
+                self._sign(full_url.relative())
+            return self.session.aiohttp_session.ws_connect(
+                str(full_url),
+                autoping=True, heartbeat=30.0,
+                headers=self.headers)
+
+        return WebSocketContextManager(self.session, _ws_ctx_builder, **kwargs)
 
     def connect_events(self, **kwargs) -> 'SSEContextManager':
         '''
@@ -312,15 +319,18 @@ class Request:
         self.date = datetime.now(tzutc())
         self.headers['Date'] = self.date.isoformat()
         self.content_type = 'application/octet-stream'
-        full_url = self._build_url()
-        if not self.config.is_anonymous:
-            self._sign(full_url.relative())
-        rqst_ctx = self.session.aiohttp_session.request(
-            self.method,
-            str(full_url),
-            timeout=_default_request_timeout,
-            headers=self.headers)
-        return SSEContextManager(self.session, rqst_ctx, **kwargs)
+
+        def _rqst_ctx_builder():
+            full_url = self._build_url()
+            if not self.config.is_anonymous:
+                self._sign(full_url.relative())
+            return self.session.aiohttp_session.request(
+                self.method,
+                str(full_url),
+                timeout=_default_request_timeout,
+                headers=self.headers)
+
+        return SSEContextManager(self.session, _rqst_ctx_builder, **kwargs)
 
 
 class Response:
@@ -412,19 +422,22 @@ class FetchContextManager:
     '''
 
     __slots__ = (
-        'session', 'rqst_ctx', 'response_cls',
+        'session', 'rqst_ctx_builder', 'response_cls',
         'check_status',
         '_async_mode',
+        '_rqst_ctx',
     )
 
-    def __init__(self, session, rqst_ctx, *,
+    def __init__(self, session: BaseSession,
+                 rqst_ctx_builder: Callable[[], _RequestContextManager], *,
                  response_cls: Response = Response,
                  check_status: bool = True):
         self.session = session
-        self.rqst_ctx = rqst_ctx
+        self.rqst_ctx_builder = rqst_ctx_builder
         self.response_cls = response_cls
         self.check_status = check_status
         self._async_mode = True
+        self._rqst_ctx = None
 
     def __enter__(self):
         assert isinstance(self.session, SyncSession)
@@ -432,24 +445,35 @@ class FetchContextManager:
         return self.session.worker_thread.execute(self.__aenter__())
 
     async def __aenter__(self):
-        try:
-            raw_resp = await self.rqst_ctx.__aenter__()
-            if self.check_status and raw_resp.status // 100 != 2:
-                msg = await raw_resp.text()
-                raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
-            return self.response_cls(self.session, raw_resp,
-                                     async_mode=self._async_mode)
-        except aiohttp.ClientError as e:
-            msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.\n' \
-                  '\u279c {!r}'.format(e)
-            raise BackendClientError(msg) from e
+        max_retries = len(self.session.config.endpoints)
+        retry_count = 0
+        while True:
+            try:
+                retry_count += 1
+                self._rqst_ctx = self.rqst_ctx_builder()
+                raw_resp = await self._rqst_ctx.__aenter__()
+                if self.check_status and raw_resp.status // 100 != 2:
+                    msg = await raw_resp.text()
+                    raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
+                return self.response_cls(self.session, raw_resp,
+                                         async_mode=self._async_mode)
+            except aiohttp.ClientError as e:
+                if retry_count == max_retries:
+                    msg = 'Request to the API endpoint has failed.\n' \
+                          'Check your network connection and/or the server status.\n' \
+                          '\u279c {!r}'.format(e)
+                    raise BackendClientError(msg) from e
+                else:
+                    self.session.config.rotate_endpoints()
+                    continue
 
     def __exit__(self, *args):
         return self.session.worker_thread.execute(self.__aexit__(*args))
 
     async def __aexit__(self, *args):
-        return await self.rqst_ctx.__aexit__(*args)
+        ret = await self._rqst_ctx.__aexit__(*args)
+        self._rqst_ctx = None
+        return ret
 
 
 class WebSocketResponse:
@@ -525,33 +549,50 @@ class WebSocketContextManager:
     '''
 
     __slots__ = (
-        'session', 'ws_ctx', 'response_cls',
+        'session', 'ws_ctx_builder', 'response_cls',
         'on_enter',
+        '_ws_ctx',
     )
 
-    def __init__(self, session, ws_ctx, *,
+    def __init__(self, session: BaseSession,
+                 ws_ctx_builder: Callable[[], _WSRequestContextManager], *,
                  on_enter: Callable = None,
                  response_cls: WebSocketResponse = WebSocketResponse):
         self.session = session
-        self.ws_ctx = ws_ctx
+        self.ws_ctx_builder = ws_ctx_builder
         self.response_cls = response_cls
         self.on_enter = on_enter
+        self._ws_ctx = None
 
     async def __aenter__(self):
-        try:
-            raw_ws = await self.ws_ctx.__aenter__()
-        except aiohttp.ClientError as e:
-            msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.\n' \
-                  'Error detail: {!r}'.format(e)
-            raise BackendClientError(msg) from e
+        max_retries = len(self.session.config.endpoints)
+        retry_count = 0
+        while True:
+            try:
+                retry_count += 1
+                self._ws_ctx = self.ws_ctx_builder()
+                raw_ws = await self._ws_ctx.__aenter__()
+            except aiohttp.ClientError as e:
+                if retry_count == max_retries:
+                    msg = 'Request to the API endpoint has failed.\n' \
+                          'Check your network connection and/or the server status.\n' \
+                          'Error detail: {!r}'.format(e)
+                    raise BackendClientError(msg) from e
+                else:
+                    self.session.config.rotate_endpoints()
+                    continue
+            else:
+                break
+
         wrapped_ws = self.response_cls(self.session, raw_ws)
         if self.on_enter is not None:
             await self.on_enter(wrapped_ws)
         return wrapped_ws
 
     async def __aexit__(self, *args):
-        return await self.ws_ctx.__aexit__(*args)
+        ret = await self._ws_ctx.__aexit__(*args)
+        self._ws_ctx = None
+        return ret
 
 
 class SSEResponse(Response):
@@ -609,24 +650,42 @@ class SSEResponse(Response):
 
 class SSEContextManager:
 
-    def __init__(self, session, rqst_ctx, *,
+    __slots__ = (
+        'session', 'rqst_ctx_builder', 'response_cls',
+        '_rqst_ctx',
+    )
+
+    def __init__(self, session: BaseSession,
+                 rqst_ctx_builder: Callable[[], _RequestContextManager], *,
                  response_cls: SSEResponse = SSEResponse):
         self.session = session
-        self.rqst_ctx = rqst_ctx
+        self.rqst_ctx_builder = rqst_ctx_builder
         self.response_cls = response_cls
+        self._rqst_ctx = None
 
     async def __aenter__(self):
-        try:
-            raw_resp = await self.rqst_ctx.__aenter__()
-            if raw_resp.status // 100 != 2:
-                msg = await raw_resp.text()
-                raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
-            return self.response_cls(self.session, raw_resp)
-        except aiohttp.ClientError as e:
-            msg = 'Request to the API endpoint has failed.\n' \
-                  'Check your network connection and/or the server status.\n' \
-                  '\u279c {!r}'.format(e)
-            raise BackendClientError(msg) from e
+        max_retries = len(self.session.config.endpoints)
+        retry_count = 0
+        while True:
+            try:
+                retry_count += 1
+                self._rqst_ctx = self.rqst_ctx_builder()
+                raw_resp = await self._rqst_ctx.__aenter__()
+                if raw_resp.status // 100 != 2:
+                    msg = await raw_resp.text()
+                    raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
+                return self.response_cls(self.session, raw_resp)
+            except aiohttp.ClientError as e:
+                if retry_count == max_retries:
+                    msg = 'Request to the API endpoint has failed.\n' \
+                          'Check your network connection and/or the server status.\n' \
+                          '\u279c {!r}'.format(e)
+                    raise BackendClientError(msg) from e
+                else:
+                    self.session.config.rotate_endpoints()
+                    continue
 
     async def __aexit__(self, *args):
-        return await self.rqst_ctx.__aexit__(*args)
+        ret = await self._rqst_ctx.__aexit__(*args)
+        self._rqst_ctx = None
+        return ret

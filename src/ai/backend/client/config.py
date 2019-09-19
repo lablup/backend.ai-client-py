@@ -4,7 +4,7 @@ import random
 from yarl import URL
 from typing import (
     Any, Callable, Iterable, Union,
-    List, Tuple,
+    List, Tuple, Sequence,
 )
 
 import appdirs
@@ -158,8 +158,17 @@ class APIConfig:
 
     @property
     def endpoint(self) -> URL:
-        '''The configured endpoint URL prefix.'''
+        '''
+        The currently active endpoint URL.
+        This may change if there are multiple configured endpoints
+        and the current one is not accessible.
+        '''
         return self._endpoints[0]
+
+    @property
+    def endpoints(self) -> Sequence[URL]:
+        '''All configured endpoint URLs.'''
+        return self._endpoints
 
     def rotate_endpoints(self):
         if len(self._endpoints) > 1:
@@ -168,7 +177,9 @@ class APIConfig:
 
     @property
     def endpoint_type(self) -> str:
-        '''The configured endpoint URL prefix.'''
+        '''
+        The configured endpoint type.
+        '''
         return self._endpoint_type
 
     @property
