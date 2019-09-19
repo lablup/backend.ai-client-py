@@ -1,4 +1,3 @@
-import asyncio
 from collections import OrderedDict, namedtuple
 from datetime import datetime
 from decimal import Decimal
