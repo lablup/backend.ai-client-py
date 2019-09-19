@@ -456,13 +456,29 @@ def run(image, files, session_id,                          # base args
         except Exception as e:
             print_error(e)
             sys.exit(1)
-        if kernel.created:
-            vprint_done('[{0}] Session {0} is ready.'.format(idx, kernel.kernel_id))
-        else:
-            vprint_done('[{0}] Reusing session {0}...'.format(idx, kernel.kernel_id))
-        if kernel.service_ports:
-            print_info('This session provides the following app services: '
-                       ', '.join(sport['name'] for sport in kernel.service_ports))
+        if kernel.status == 'PENDING':
+            print_info('Session ID {0} is enqueued for scheduling.'
+                       .format(session_id))
+            return
+        elif kernel.status == 'RUNNING':
+            if kernel.created:
+                vprint_done('[{0}] Session {1} is ready (domain={2}, group={3}).'
+                            .format(idx, kernel.kernel_id, kernel.domain, kernel.group))
+            else:
+                vprint_done('[{0}] Reusing session {1}...'.format(idx, kernel.kernel_id))
+        elif kernel.status == 'TERMINATED':
+            print_warn('Session ID {0} is already terminated.\n'
+                       'This may be an error in the kernel image.'
+                       .format(session_id))
+            return
+        elif kernel.status == 'TIMEOUT':
+            print_info('Session ID {0} is still on the job queue.'
+                       .format(session_id))
+            return
+        elif kernel.status == 'ERROR':
+            print_fail('Session ID {0} has an error during scheduling/startup.'
+                       .format(session_id))
+            return
 
         try:
             if files:
@@ -530,11 +546,29 @@ def run(image, files, session_id,                          # base args
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
-        if kernel.created:
-            vprint_done('[{0}] Session {1} is ready (domain={2}, group={3}).'
-                        .format(idx, kernel.kernel_id, kernel.domain, kernel.group))
-        else:
-            vprint_done('[{0}] Reusing session {1}...'.format(idx, kernel.kernel_id))
+        if kernel.status == 'PENDING':
+            print_info('Session ID {0} is enqueued for scheduling.'
+                       .format(session_id))
+            return
+        elif kernel.status == 'RUNNING':
+            if kernel.created:
+                vprint_done('[{0}] Session {1} is ready (domain={2}, group={3}).'
+                            .format(idx, kernel.kernel_id, kernel.domain, kernel.group))
+            else:
+                vprint_done('[{0}] Reusing session {1}...'.format(idx, kernel.kernel_id))
+        elif kernel.status == 'TERMINATED':
+            print_warn('Session ID {0} is already terminated.\n'
+                       'This may be an error in the kernel image.'
+                       .format(session_id))
+            return
+        elif kernel.status == 'TIMEOUT':
+            print_info('Session ID {0} is still on the job queue.'
+                       .format(session_id))
+            return
+        elif kernel.status == 'ERROR':
+            print_fail('Session ID {0} has an error during scheduling/startup.'
+                       .format(session_id))
+            return
 
         if not is_multi:
             stdout = sys.stdout
@@ -688,6 +722,15 @@ def run(image, files, session_id,                          # base args
                    'If not set, a random hex string is used.')
 @click.option('-o', '--owner', '--owner-access-key', metavar='ACCESS_KEY',
               help='Set the owner of the target session explicitly.')
+# job scheduling options
+@click.option('--type', metavar='SESSTYPE', default='interactive',
+              help='Either batch or interactive')
+@click.option('--enqueue-only', is_flag=True,
+              help='Enqueue the session and return immediately without waiting for its startup.')
+@click.option('--max-wait', metavar='SECONDS', type=int, default=0,
+              help='The maximum duration to wait until the session starts.')
+@click.option('--no-reuse', is_flag=True,
+              help='Do not reuse existing sessions but return an error.')
 # execution environment
 @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
               help='Environment variable (may appear multiple times)')
@@ -717,7 +760,8 @@ def run(image, files, session_id,                          # base args
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
-def start(image, session_id, owner,                        # base args
+def start(image, session_id, owner,                       # base args
+          type, enqueue_only, max_wait, no_reuse,         # job scheduling options
           env,                                            # execution environment
           tag,                                            # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
@@ -749,6 +793,10 @@ def start(image, session_id, owner,                        # base args
             kernel = session.Kernel.get_or_create(
                 image,
                 client_token=session_id,
+                type_=type,
+                enqueue_only=enqueue_only,
+                max_wait=max_wait,
+                no_reuse=no_reuse,
                 cluster_size=cluster_size,
                 mounts=mount,
                 envs=envs,
@@ -763,16 +811,30 @@ def start(image, session_id, owner,                        # base args
             print_error(e)
             sys.exit(1)
         else:
-            if kernel.created:
-                print_info('Session ID {0} is created and ready.'
+            if kernel.status == 'PENDING':
+                print_info('Session ID {0} is enqueued for scheduling.'
                            .format(session_id))
-            else:
-                print_info('Session ID {0} is already running and ready.'
+            elif kernel.status == 'RUNNING':
+                if kernel.created:
+                    print_info('Session ID {0} is created and ready.'
+                               .format(session_id))
+                else:
+                    print_info('Session ID {0} is already running and ready.'
+                               .format(session_id))
+                if kernel.service_ports:
+                    print_info('This session provides the following app services: ' +
+                               ', '.join(sport['name']
+                                         for sport in kernel.service_ports))
+            elif kernel.status == 'TERMINATED':
+                print_warn('Session ID {0} is already terminated.\n'
+                           'This may be an error in the kernel image.'
                            .format(session_id))
-            if kernel.service_ports:
-                print_info('This session provides the following app services: ' +
-                           ', '.join(sport['name']
-                                     for sport in kernel.service_ports))
+            elif kernel.status == 'TIMEOUT':
+                print_info('Session ID {0} is still on the job queue.'
+                           .format(session_id))
+            elif kernel.status == 'ERROR':
+                print_fail('Session ID {0} has an error during scheduling/startup.'
+                           .format(session_id))
 
 
 @main.command(aliases=['rm', 'kill'])
