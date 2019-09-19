@@ -65,7 +65,7 @@ def _clean_urls(v: str) -> List[URL]:
         for entry in v.split(','):
             url = URL(entry)
             if not url.is_absolute():
-                raise ValueError(f'URL {url} is not absolute.')
+                raise ValueError('URL {} is not absolute.'.format(url))
             urls.append(url)
     return urls
 
