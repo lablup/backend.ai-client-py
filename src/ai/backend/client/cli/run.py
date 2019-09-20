@@ -475,8 +475,8 @@ def run(image, files, session_id,                          # base args
             print_info('Session ID {0} is still on the job queue.'
                        .format(session_id))
             return
-        elif kernel.status == 'ERROR':
-            print_fail('Session ID {0} has an error during scheduling/startup.'
+        elif kernel.status in ('ERROR', 'CANCELLED'):
+            print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                        .format(session_id))
             return
 
@@ -565,8 +565,8 @@ def run(image, files, session_id,                          # base args
             print_info('Session ID {0} is still on the job queue.'
                        .format(session_id))
             return
-        elif kernel.status == 'ERROR':
-            print_fail('Session ID {0} has an error during scheduling/startup.'
+        elif kernel.status in ('ERROR', 'CANCELLED'):
+            print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                        .format(session_id))
             return
 
@@ -832,8 +832,8 @@ def start(image, session_id, owner,                       # base args
             elif kernel.status == 'TIMEOUT':
                 print_info('Session ID {0} is still on the job queue.'
                            .format(session_id))
-            elif kernel.status == 'ERROR':
-                print_fail('Session ID {0} has an error during scheduling/startup.'
+            elif kernel.status in ('ERROR', 'CANCELLED'):
+                print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                            .format(session_id))
 
 
