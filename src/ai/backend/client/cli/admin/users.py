@@ -126,7 +126,7 @@ def add(domain_name, email, password, username, full_name, role, inactive,
 
 @users.command()
 @click.argument('email', type=str, metavar='EMAIL')
-@click.option('-p', '--password', type=str, help='Username.')
+@click.option('-p', '--password', type=str, help='Password.')
 @click.option('-u', '--username', type=str, help='Username.')
 @click.option('-n', '--full-name', type=str, help='Full name.')
 @click.option('-d', '--domain-name', type=str, help='Domain name.')

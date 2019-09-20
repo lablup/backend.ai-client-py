@@ -21,6 +21,7 @@ class Image:
     @api_function
     @classmethod
     async def list(cls,
+                   operation: bool = False,
                    fields: Iterable[str] = None) -> Sequence[dict]:
         '''
         Fetches the list of registered images in this cluster.
@@ -32,15 +33,19 @@ class Image:
                 'tag',
                 'hash',
             )
-        q = 'query {' \
-            '  images {' \
+        q = 'query($is_operation: Boolean) {' \
+            '  images(is_operation: $is_operation) {' \
             '    $fields' \
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
+        variables = {
+            'is_operation': operation,
+        }
         rqst = Request(cls.session, 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
+            'variables': variables,
         })
         async with rqst.fetch() as resp:
             data = await resp.json()

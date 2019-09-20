@@ -8,7 +8,8 @@ from ..pretty import print_error
 
 
 @admin.command()
-def images():
+@click.option('--operation', is_flag=True, help='Get operational images only')
+def images(operation):
     '''
     Show the list of registered images in this cluster.
     '''
@@ -22,7 +23,8 @@ def images():
     ]
     with Session() as session:
         try:
-            items = session.Image.list(fields=(item[1] for item in fields))
+            items = session.Image.list(operation=operation,
+                                       fields=(item[1] for item in fields))
         except Exception as e:
             print_error(e)
             sys.exit(1)

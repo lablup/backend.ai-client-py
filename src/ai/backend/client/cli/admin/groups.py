@@ -180,6 +180,7 @@ def add_users(gid, user_uuids):
     '''
     Add users to a group.
 
+    \b
     GROUP_ID: Group ID where users will be belong to.
     USER_UUIDS: List of users' uuids to be added to the group.
     '''
@@ -202,6 +203,7 @@ def remove_users(gid, user_uuids):
     '''
     Remove users from a group.
 
+    \b
     GROUP_ID: Group ID where users currently belong to.
     USER_UUIDS: List of users' uuids to be removed from the group.
     '''

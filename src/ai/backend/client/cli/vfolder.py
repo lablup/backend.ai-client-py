@@ -181,7 +181,7 @@ def download(name, filenames):
 
     \b
     NAME: Name of a virtual folder.
-    FILENAMES: Paths of the files to be uploaded.
+    FILENAMES: Paths of the files to be downloaded inside a vfolder.
     '''
     with Session() as session:
         try:
