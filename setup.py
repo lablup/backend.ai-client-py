@@ -39,11 +39,11 @@ dev_requires = [
 ] + build_requires + test_requires
 docs_requires = [
     'sphinx~=2.2',
-    'sphinx-intl',
+    'sphinx-intl~=2.0',
     'sphinx_rtd_theme>=0.4.3',
-    'sphinxcontrib-trio~=1.0.2',
-    'sphinx-autodoc-typehints~=1.6.0',
-    'pygments~=2.3',
+    'sphinxcontrib-trio~=1.1.0',
+    'sphinx-autodoc-typehints~=1.8.0',
+    'pygments~=2.4.2',
 ]
 
 
