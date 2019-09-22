@@ -1,5 +1,6 @@
 language: python
 dist: xenial
+osx_image: xcode11
 cache: pip
 
 stages:
