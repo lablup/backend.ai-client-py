@@ -1,5 +1,6 @@
 language: python
 dist: xenial
+# osx_image: xcode11
 cache: pip
 
 stages:
@@ -14,7 +15,7 @@ python:
   - "3.8-dev"
 os:
   - linux
-  # - osx  # not supported yet
+  # - osx  # Travis CI does not officially support Python on macOS.
 env:
   global:
     - BACKEND_CLIENT_CLOUD_TEST=1  # use beta server for integration tests
@@ -22,7 +23,7 @@ env:
 matrix:
   allow_failures:
     - python: "3.8-dev"
-      env: BACKEND_CLIENT_CLOUD_TEST=1
+      os: linux
   fast_finish: true
 
 # test stage
@@ -39,7 +40,7 @@ after_success:
 jobs:
   include:
     - stage: deploy
-      python: "3.6"
+      python: "3.7"
       install: skip
       script: skip
       deploy:
