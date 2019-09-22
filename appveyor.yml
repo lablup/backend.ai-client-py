@@ -1,10 +1,10 @@
 version: 1.0.dev{build}
 environment:
   matrix:
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python37"
+    - PYTHON: "C:\\Python37-x64"
 install:
   - '%PYTHON%\\python.exe -m pip install -U pip'
   - '%PYTHON%\\python.exe -m pip install -U wheel setuptools'

@@ -70,13 +70,13 @@ setup(
     author_email='joongi@lablup.com',
     license='MIT',
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',  # noqa
         'Intended Audience :: Developers',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Operating System :: POSIX',
         'Operating System :: MacOS :: MacOS X',
         'Environment :: No Input/Output (Daemon)',

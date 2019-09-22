@@ -9,15 +9,21 @@ stages:
 
 # build matrix for test stage
 python:
-  - "3.5"
   - "3.6"
   - "3.7"
+  - "3.8-dev"
 os:
   - linux
   # - osx  # not supported yet
 env:
   global:
     - BACKEND_CLIENT_CLOUD_TEST=1  # use beta server for integration tests
+
+matrix:
+  allow_failures:
+    - python: "3.8-dev"
+      env: BACKEND_CLIENT_CLOUD_TEST=1
+  fast_finish: true
 
 # test stage
 install:
@@ -31,7 +37,6 @@ after_success:
 
 # other stages
 jobs:
-  fast_finish: true
   include:
     - stage: deploy
       python: "3.6"
