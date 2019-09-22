@@ -34,14 +34,14 @@ if on_rtd:
     try:
         from ai.backend.client import request  # noqa
     except ImportError:
-        subprocess.run('pip install -U "pip>=18.0" "setuptools>=40.1"', shell=True)
+        subprocess.run('pip install -U "pip>=19.2" "setuptools>=41.2"', shell=True)
         subprocess.run('pip install -e "..[docs]"', shell=True)
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'Backend.AI Client SDK for Python'
-copyright = '2018, Lablup Inc.'
+copyright = '2019, Lablup Inc.'
 author = 'Lablup Inc.'
 
 # The short X.Y version.
