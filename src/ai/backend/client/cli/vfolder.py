@@ -328,15 +328,23 @@ def invitations():
                         # TODO: Let user can select access_key among many.
                         #       Currently, the config objects holds only one key.
                         config = get_config()
-                        result = session.VFolder.accept_invitation(
-                            invitations[selection]['id'], config.access_key)
-                        print(result['msg'])
+                        session.VFolder.accept_invitation(invitations[selection]['id'],
+                                                          config.access_key)
+                        msg = (
+                            'You can now access vfolder {}'.format(
+                                invitations[selection]['id']
+                            )
+                        )
+                        print(msg)
                         break
                     elif action.lower() == 'r':
-                        result = session.VFolder.delete_invitation(
-                            invitations[selection]['id'])
-                        print(result['msg'])
-                        break
+                        session.VFolder.delete_invitation(invitations[selection]['id'])
+                        msg = (
+                            'vfolder invitation rejected: {}'.format(
+                                invitations[selection]['id']
+                            )
+                        )
+                        print(msg)
                     elif action.lower() == 'c':
                         break
         except Exception as e:
