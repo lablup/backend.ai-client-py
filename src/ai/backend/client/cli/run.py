@@ -276,7 +276,9 @@ def _prepare_mount_arg(mount):
               help='Specify a human-readable session ID or name. '
                    'If not set, a random hex string is used.')
 # job scheduling options
-@click.option('--type', metavar='SESSTYPE', default='interactive',
+@click.option('--type', metavar='SESSTYPE',
+              type=click.Choice(['batch', 'interactive']),
+              default='interactive',
               help='Either batch or interactive')
 @click.option('--enqueue-only', is_flag=True,
               help='Enqueue the session and return immediately without waiting for its startup.')
@@ -724,8 +726,12 @@ def run(image, files, session_id,                          # base args
 @click.option('-o', '--owner', '--owner-access-key', metavar='ACCESS_KEY',
               help='Set the owner of the target session explicitly.')
 # job scheduling options
-@click.option('--type', metavar='SESSTYPE', default='interactive',
+@click.option('--type', metavar='SESSTYPE',
+              type=click.Choice(['batch', 'interactive']),
+              default='interactive',
               help='Either batch or interactive')
+@click.option('-c', '--startup-command', metavar='COMMAND',
+              default='Set the command to execute for batch-type sessions.')
 @click.option('--enqueue-only', is_flag=True,
               help='Enqueue the session and return immediately without waiting for its startup.')
 @click.option('--max-wait', metavar='SECONDS', type=int, default=0,
@@ -761,8 +767,8 @@ def run(image, files, session_id,                          # base args
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
-def start(image, session_id, owner,                       # base args
-          type, enqueue_only, max_wait, no_reuse,         # job scheduling options
+def start(image, session_id, owner,                                 # base args
+          type, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
           tag,                                            # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
@@ -801,6 +807,7 @@ def start(image, session_id, owner,                       # base args
                 cluster_size=cluster_size,
                 mounts=mount,
                 envs=envs,
+                startup_command=startup_command,
                 resources=resources,
                 resource_opts=resource_opts,
                 owner_access_key=owner,

@@ -24,6 +24,7 @@ from ..pretty import print_error
               help='Get sessions for a specific access key '
                    '(only works if you are a super-admin)')
 @click.option('--id-only', is_flag=True, help='Display session ids only.')
+@click.option('--show-tid', is_flag=True, help='Display task/kernel IDs.')
 @click.option('--dead', is_flag=True,
               help='Filter only dead sessions. Ignores --status option.')
 @click.option('--running', is_flag=True,
@@ -31,7 +32,7 @@ from ..pretty import print_error
 @click.option('-a', '--all', is_flag=True,
               help='Display all sessions matching the condition using pagination.')
 @click.option('--detail', is_flag=True, help='Show more details using more columns.')
-def sessions(status, access_key, id_only, dead, running, all, detail):
+def sessions(status, access_key, id_only, show_tid, dead, running, all, detail):
     '''
     List and manage compute sessions.
     '''
@@ -48,10 +49,16 @@ def sessions(status, access_key, id_only, dead, running, all, detail):
     if not id_only:
         fields.extend([
             ('Image', 'image'),
+            ('Type', 'sess_type'),
             ('Status', 'status'),
             ('Status Info', 'status_info'),
             ('Last updated', 'status_changed'),
+            ('Result', 'result'),
         ])
+        if show_tid:
+            fields.insert(
+                2,
+                ('Task/Kernel ID', 'id'))
         if detail:
             fields.extend([
                 ('Tag', 'tag'),

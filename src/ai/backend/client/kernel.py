@@ -2,7 +2,10 @@ import json
 import os
 import tarfile
 import tempfile
-from typing import Iterable, Mapping, Sequence, Union
+from typing import (
+    Iterable, Mapping, Sequence, Union,
+    AsyncGenerator,
+)
 from pathlib import Path
 import uuid
 
@@ -49,6 +52,21 @@ class Kernel:
 
     @api_function
     @classmethod
+    async def get_task_logs(cls, task_id: str, *,
+                            chunk_size: int = 8192
+                            ) -> AsyncGenerator[bytes, None]:
+        rqst = Request(cls.session, 'GET', '/kernel/_/logs', params={
+            'taskId': task_id,
+        })
+        async with rqst.fetch() as resp:
+            while True:
+                chunk = await resp.raw_response.content.read(chunk_size)
+                if not chunk:
+                    break
+                yield chunk
+
+    @api_function
+    @classmethod
     async def get_or_create(cls, image: str, *,
                             client_token: str = None,
                             type_: str = 'interactive',
@@ -57,6 +75,7 @@ class Kernel:
                             no_reuse: bool = False,
                             mounts: Iterable[str] = None,
                             envs: Mapping[str, str] = None,
+                            startup_command: str = None,
                             resources: Mapping[str, int] = None,
                             resource_opts: Mapping[str, int] = None,
                             cluster_size: int = 1,
@@ -79,7 +98,7 @@ class Kernel:
             new API).
         :param client_token: A client-side identifier to seamlessly reuse the compute
             session already created.
-        :param type\_: Either ``"interactive"`` (default) or ``"batch"``.
+        :param type_: Either ``"interactive"`` (default) or ``"batch"``.
 
             .. versionadded:: 19.09.0
         :param enqueue_only: Just enqueue the session creation request and return immediately,
@@ -149,6 +168,7 @@ class Kernel:
                 'enqueueOnly': enqueue_only,
                 'maxWaitSeconds': max_wait,
                 'reuseIfExists': not no_reuse,
+                'startupCommand': startup_command,
             })
         if cls.session.config.version >= 'v4.20181215':
             params['image'] = image
