@@ -346,14 +346,24 @@ def invitations():
                 while True:
                     action = input('Choose action. (a)ccept, (r)eject, (c)ancel: ')
                     if action.lower() == 'a':
-                        result = session.VFolder.accept_invitation(
-                            invitations[selection]['id'])
-                        print(result['msg'])
+                        session.VFolder.accept_invitation(invitations[selection]['id'])
+                        msg = (
+                            'You can now access vfolder {} ({})'.format(
+                                invitations[selection]['vfolder_name'],
+                                invitations[selection]['id']
+                            )
+                        )
+                        print(msg)
                         break
                     elif action.lower() == 'r':
-                        result = session.VFolder.delete_invitation(
-                            invitations[selection]['id'])
-                        print(result['msg'])
+                        session.VFolder.delete_invitation(invitations[selection]['id'])
+                        msg = (
+                            'vfolder invitation rejected: {} ({})'.format(
+                                invitations[selection]['vfolder_name'],
+                                invitations[selection]['id']
+                            )
+                        )
+                        print(msg)
                         break
                     elif action.lower() == 'c':
                         break
