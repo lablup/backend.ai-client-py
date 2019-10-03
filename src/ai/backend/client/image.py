@@ -118,3 +118,11 @@ class Image:
         rqst = Request(cls.session, 'GET', '/image/import')
         async with rqst.fetch() as resp:
             return await resp.json()
+
+    @api_function
+    @classmethod
+    async def build(cls, **kwargs) -> dict:
+        rqst = Request(cls.session, 'POST', '/image/import')
+        rqst.set_json(kwargs)
+        async with rqst.fetch() as resp:
+            return await resp.json()
