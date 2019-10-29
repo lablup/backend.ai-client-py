@@ -174,14 +174,17 @@ def app(session_id, app, protocol, bind):
             api_session, "GET", path, b'',
             params={'app': app},
             content_type="application/json")
-        async with api_rqst.fetch() as resp:
-            data = await resp.json()
-            if 'url_template' in data.keys():
-                user_url_template = data['url_template']
-            elif app == 'vnc-web':
-                user_url_template = \
-                    "{protocol}://{host}:{port}/vnc.html" \
-                    "?host={host}&port={port}&password=backendai&autoconnect=true"
+        try:
+            async with api_rqst.fetch() as resp:
+                data = await resp.json()
+                if 'url_template' in data.keys():
+                    user_url_template = data['url_template']
+                elif app == 'vnc-web':
+                    user_url_template = \
+                        "{protocol}://{host}:{port}/vnc.html" \
+                        "?host={host}&port={port}&password=backendai&autoconnect=true"
+        except:
+            pass
 
         user_url = user_url_template.format(protocol=protocol, host=host, port=port)
         print_info(
