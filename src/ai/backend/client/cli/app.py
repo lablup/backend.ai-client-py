@@ -167,12 +167,22 @@ def app(session_id, app, protocol, bind):
                              protocol, host, port,
                              loop=loop)
         await runner.ready()
-        if app == 'vnc-web':
-            user_url_template = \
-                "{protocol}://{host}:{port}/vnc.html" \
-                "?host={host}&port={port}&password=backendai&autoconnect=true"
-        else:
-            user_url_template = "{protocol}://{host}:{port}"
+
+        user_url_template = "{protocol}://{host}:{port}"
+        path = "/stream/kernel/{0}/extrainfo".format(session_id)
+        api_rqst = Request(
+            api_session, "GET", path, b'',
+            params={'app': app},
+            content_type="application/json")
+        async with api_rqst.fetch() as resp:
+            data = await resp.json()
+            if 'url_template' in data.keys():
+                user_url_template = data['url_template']
+            elif app == 'vnc-web':
+                user_url_template = \
+                    "{protocol}://{host}:{port}/vnc.html" \
+                    "?host={host}&port={port}&password=backendai&autoconnect=true"
+
         user_url = user_url_template.format(protocol=protocol, host=host, port=port)
         print_info(
             "A local proxy to the application \"{0}\" ".format(app) +
