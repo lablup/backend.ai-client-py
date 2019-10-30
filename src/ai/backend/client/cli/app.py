@@ -169,7 +169,7 @@ def app(session_id, app, protocol, bind):
         await runner.ready()
 
         user_url_template = "{protocol}://{host}:{port}"
-        path = "/stream/kernel/{0}/extrainfo".format(session_id)
+        path = "/stream/kernel/{0}/apps".format(session_id)
         api_rqst = Request(
             api_session, "GET", path, b'',
             params={'app': app},
