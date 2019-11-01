@@ -1,5 +1,7 @@
 import asyncio
+import json
 import signal
+from typing import MutableMapping
 
 import aiohttp
 import click
@@ -16,6 +18,7 @@ class WSProxy:
     __slots__ = (
         'api_session', 'session_id',
         'app_name', 'protocol',
+        'args', 'envs',
         'reader', 'writer',
         'down_task',
     )
@@ -24,21 +27,32 @@ class WSProxy:
                  session_id: str,
                  app_name: str,
                  protocol: str,
+                 args: MutableMapping[str, str], 
+                 envs: MutableMapping[str, str],
                  reader: asyncio.StreamReader,
                  writer: asyncio.StreamWriter):
         self.api_session = api_session
         self.session_id = session_id
         self.app_name = app_name
         self.protocol = protocol
+        self.args = args
+        self.envs = envs
         self.reader = reader
         self.writer = writer
         self.down_task = None
 
     async def run(self):
         path = "/stream/kernel/{0}/{1}proxy".format(self.session_id, self.protocol)
+        params = {'app': self.app_name}
+
+        if len(self.args.keys()) > 0:
+            params['arguments'] = json.dumps(self.args)
+        if len(self.envs.keys()) > 0:
+            params['envs'] = json.dumps(self.envs)
+
         api_rqst = Request(
             self.api_session, "GET", path, b'',
-            params={'app': self.app_name},
+            params=params,
             content_type="application/json")
         async with api_rqst.connect_websocket() as ws:
 
@@ -96,23 +110,27 @@ class ProxyRunner:
     __slots__ = (
         'session_id', 'app_name',
         'protocol', 'host', 'port',
+        'args', 'envs',
         'api_session', 'local_server', 'loop',
     )
 
     def __init__(self, api_session, session_id, app_name,
-                 protocol, host, port, *, loop=None):
+                 protocol, host, port, args, envs, *, loop=None):
         self.api_session = api_session
         self.session_id = session_id
         self.app_name = app_name
         self.protocol = protocol
         self.host = host
         self.port = port
+        self.args = args 
+        self.envs = envs
         self.local_server = None
         self.loop = loop if loop else current_loop()
 
     async def handle_connection(self, reader, writer):
         p = WSProxy(self.api_session, self.session_id,
                     self.app_name, self.protocol,
+                    self.args, self.envs,
                     reader, writer)
         try:
             await p.run()
@@ -138,7 +156,11 @@ class ProxyRunner:
               help='The application-level protocol to use.')
 @click.option('-b', '--bind', type=str, default='127.0.0.1:8080', metavar='[HOST:]PORT',
               help='The IP/host address and the port number to bind this proxy.')
-def app(session_id, app, protocol, bind):
+@click.option('--arg', type=str, multiple=True, metavar='"--option <value>"', help='Add additional argument when starting service.')
+@click.option('--env', type=str, multiple=True, metavar='"ENVNAME=envvalue"', help='Add additional environment variable when starting service.')
+@click.option('--show-configurables', is_flag=True, 
+              help='List available additional arguments and environment variables when starting service.')
+def app(session_id, app, protocol, bind, arg, env, show_configurables):
     """
     Run a local proxy to a service provided by Backend.AI compute sessions.
 
@@ -150,6 +172,30 @@ def app(session_id, app, protocol, bind):
     """
     api_session = None
     runner = None
+
+    async def print_arguments():
+        nonlocal api_session
+        api_session = AsyncSession()
+        path = "/stream/kernel/{0}/apps".format(session_id)
+        api_rqst = Request(
+            api_session, "GET", path, b'',
+            params={'app': app},
+            content_type="application/json")
+        try:
+            async with api_rqst.fetch() as resp:
+                data = await resp.json()
+                if 'allowed_arguments' in data.keys():
+                    print_info('Available arguments: {0}'.format(data['allowed_arguments']))
+                if 'allowed_envs' in data.keys():
+                    print_info('Available environment variables: {0}'.format(data['allowed_envs']))
+            await api_session.close()
+        except:
+            pass
+
+    if show_configurables:
+        loop = current_loop()
+        loop.run_until_complete(print_arguments())
+        return 
 
     bind_parts = bind.rsplit(':', maxsplit=1)
     if len(bind_parts) == 1:
@@ -163,8 +209,26 @@ def app(session_id, app, protocol, bind):
         nonlocal api_session, runner
         loop = current_loop()
         api_session = AsyncSession()
+        arguments, envs = {}, {}
+        if len(arg) > 0:
+            for argline in arg:
+                split = argline.strip().split(' ', maxsplit=2)
+                if len(split) == 2:
+                    arguments[split[0]] = split[1]
+                else:
+                    arguments[split[0]] = ''
+        
+        if len(env) > 0:
+            for envline in env:
+                split = envline.strip().split('=', maxsplit=2)
+                if len(split) == 2:
+                    envs[split[0]] = split[1]
+                else:
+                    envs[split[0]] = ''
+
         runner = ProxyRunner(api_session, session_id, app,
                              protocol, host, port,
+                             arguments, envs,
                              loop=loop)
         await runner.ready()
 
