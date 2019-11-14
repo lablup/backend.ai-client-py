@@ -28,7 +28,7 @@ class WSProxy:
                  session_id: str,
                  app_name: str,
                  protocol: str,
-                 args: MutableMapping[str, Union[None, str, List[str]]], 
+                 args: MutableMapping[str, Union[None, str, List[str]]],
                  envs: MutableMapping[str, str],
                  reader: asyncio.StreamReader,
                  writer: asyncio.StreamWriter):
@@ -123,7 +123,7 @@ class ProxyRunner:
         self.protocol = protocol
         self.host = host
         self.port = port
-        self.args = args 
+        self.args = args
         self.envs = envs
         self.local_server = None
         self.loop = loop if loop else current_loop()
@@ -157,8 +157,10 @@ class ProxyRunner:
               help='The application-level protocol to use.')
 @click.option('-b', '--bind', type=str, default='127.0.0.1:8080', metavar='[HOST:]PORT',
               help='The IP/host address and the port number to bind this proxy.')
-@click.option('--arg', type=str, multiple=True, metavar='"--option <value>"', help='Add additional argument when starting service.')
-@click.option('--env', type=str, multiple=True, metavar='"ENVNAME=envvalue"', help='Add additional environment variable when starting service.')
+@click.option('--arg', type=str, multiple=True, metavar='"--option <value>"',
+                help='Add additional argument when starting service.')
+@click.option('--env', type=str, multiple=True, metavar='"ENVNAME=envvalue"',
+                help='Add additional environment variable when starting service.')
 def app(session_id, app, protocol, bind, arg, env):
     """
     Run a local proxy to a service provided by Backend.AI compute sessions.
@@ -268,7 +270,7 @@ def apps(session_id, app):
     SESSID: The compute session ID.
     APP: The name of service provided by the given session.
     '''
-    
+
     async def print_arguments():
         api_session = AsyncSession()
         path = "/stream/kernel/{0}/apps".format(session_id)
