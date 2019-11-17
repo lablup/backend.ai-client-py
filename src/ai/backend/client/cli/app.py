@@ -261,8 +261,8 @@ def app(session_id, app, protocol, bind, arg, env):
 
 @main.command()
 @click.argument('session_id', type=str, metavar='SESSID')
-@click.argument('app', type=str)
-def apps(session_id, app):
+@click.argument('app_name', type=str)
+def apps(session_id, app_name):
     '''
     List available additional arguments and environment variables when starting service.
 
@@ -273,22 +273,17 @@ def apps(session_id, app):
 
     async def print_arguments():
         async with AsyncSession() as api_session:
-            path = "/stream/kernel/{0}/apps".format(session_id)
-            api_rqst = Request(
-                api_session, "GET", path, b'',
-                params={'app': app},
-                content_type="application/json")
-            async with api_rqst.fetch() as resp:
-                data = await resp.json()
-                has_custom_args = False
-                if 'allowed_arguments' in data.keys():
-                    print_info('Available arguments: {0}'.format(data['allowed_arguments']))
-                    has_custom_args = True
-                if 'allowed_envs' in data.keys():
-                    print_info('Available environment variables: {0}'.format(data['allowed_envs']))
-                    has_custom_args = True
-                if not has_custom_args:
-                    print_info('This app does not have customizable arguments.')
+            kernel = api_session.Kernel(session_id)
+            data = await kernel.stream_app_info(app_name)
+            has_custom_args = False
+            if 'allowed_arguments' in data.keys():
+                print_info('Available arguments: {0}'.format(data['allowed_arguments']))
+                has_custom_args = True
+            if 'allowed_envs' in data.keys():
+                print_info('Available environment variables: {0}'.format(data['allowed_envs']))
+                has_custom_args = True
+            if not has_custom_args:
+                print_info('This app does not have customizable arguments.')
 
     try:
         asyncio_run(print_arguments())
