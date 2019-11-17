@@ -1,10 +1,10 @@
-import asyncio
 import sys
 
 import click
 
 from . import main
 from .pretty import print_wait, print_done, print_error
+from ..compat import asyncio_run
 from ..session import Session, AsyncSession
 
 
@@ -45,11 +45,7 @@ def task_logs(task_id):
                 print(chunk.decode('utf8', errors='replace'), end='')
 
     try:
-        loop = asyncio.get_event_loop()
-        try:
-            loop.run_until_complete(_task_logs())
-        finally:
-            loop.stop()
+        asyncio_run(_task_logs())
     except Exception as e:
         print_error(e)
         sys.exit(1)

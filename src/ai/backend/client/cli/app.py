@@ -12,7 +12,7 @@ from .pretty import print_info, print_warn, print_error
 from ..config import DEFAULT_CHUNK_SIZE
 from ..request import Request
 from ..session import AsyncSession
-from ..compat import asyncio_run_forever, current_loop
+from ..compat import asyncio_run, asyncio_run_forever, current_loop
 
 
 class WSProxy:
@@ -272,23 +272,25 @@ def apps(session_id, app):
     '''
 
     async def print_arguments():
-        api_session = AsyncSession()
-        path = "/stream/kernel/{0}/apps".format(session_id)
-        api_rqst = Request(
-            api_session, "GET", path, b'',
-            params={'app': app},
-            content_type="application/json")
-        try:
+        async with AsyncSession() as api_session:
+            path = "/stream/kernel/{0}/apps".format(session_id)
+            api_rqst = Request(
+                api_session, "GET", path, b'',
+                params={'app': app},
+                content_type="application/json")
             async with api_rqst.fetch() as resp:
                 data = await resp.json()
+                has_custom_args = False
                 if 'allowed_arguments' in data.keys():
                     print_info('Available arguments: {0}'.format(data['allowed_arguments']))
+                    has_custom_args = True
                 if 'allowed_envs' in data.keys():
                     print_info('Available environment variables: {0}'.format(data['allowed_envs']))
-        except Exception as e:
-            print(e)
-        finally:
-            await api_session.close()
+                    has_custom_args = True
+                if not has_custom_args:
+                    print_info('This app does not have customizable arguments.')
 
-    loop = current_loop()
-    loop.run_until_complete(print_arguments())
+    try:
+        asyncio_run(print_arguments())
+    except Exception as e:
+        print_error(e)

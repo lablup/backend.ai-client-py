@@ -18,7 +18,7 @@ from tabulate import tabulate
 from . import main
 from .admin.sessions import session as cli_admin_session
 from ..config import local_cache_path
-from ..compat import current_loop, token_hex
+from ..compat import asyncio_run, current_loop, token_hex
 from ..exceptions import BackendError, BackendAPIError
 from ..session import Session, AsyncSession, is_legacy_server
 from .pretty import (
@@ -709,11 +709,7 @@ def run(image, files, session_id,                          # base args
         if is_legacy_server():
             _run_cases_legacy()
         else:
-            loop = asyncio.get_event_loop()
-            try:
-                loop.run_until_complete(_run_cases())
-            finally:
-                loop.stop()
+            asyncio_run(_run_cases())
     except Exception as e:
         print_fail('{0}'.format(e))
 
@@ -920,10 +916,6 @@ def events(sess_id_or_alias, owner_access_key):
                     print(click.style(ev['event'], fg='cyan', bold=True), json.loads(ev['data']))
 
     try:
-        loop = asyncio.get_event_loop()
-        try:
-            loop.run_until_complete(_run_events())
-        finally:
-            loop.stop()
+        asyncio_run(_run_events())
     except Exception as e:
         print_error(e)
