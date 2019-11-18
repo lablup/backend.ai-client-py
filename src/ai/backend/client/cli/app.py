@@ -221,14 +221,10 @@ def app(session_id, app, protocol, bind, arg, env):
         await runner.ready()
 
         user_url_template = "{protocol}://{host}:{port}"
-        path = "/stream/kernel/{0}/apps".format(session_id)
-        api_rqst = Request(
-            api_session, "GET", path, b'',
-            params={'app': app},
-            content_type="application/json")
         try:
-            async with api_rqst.fetch() as resp:
-                data = await resp.json()
+            async with AsyncSession() as api_session:
+                kernel = api_session.Kernel(session_id)
+                data = await kernel.stream_app_info(app)
                 if 'url_template' in data.keys():
                     user_url_template = data['url_template']
         except:
@@ -260,30 +256,46 @@ def app(session_id, app, protocol, bind, arg, env):
 
 
 @main.command()
-@click.argument('session_id', type=str, metavar='SESSID')
-@click.argument('app_name', type=str)
-def apps(session_id, app_name):
+@click.argument('session_id', type=str, metavar='SESSID', nargs=1)
+@click.argument('app_name', type=str, metavar='APP', nargs=-1)
+@click.option('-l', '--list-names', is_flag=True,
+              help='Just print all available services.')
+def apps(session_id, app_name, list_names):
     '''
     List available additional arguments and environment variables when starting service.
 
     \b
     SESSID: The compute session ID.
-    APP: The name of service provided by the given session.
+    APP: The name of service provided by the given session. Repeatable.
+         If none provided, this will print all available services.
     '''
 
     async def print_arguments():
+        apps = {}
         async with AsyncSession() as api_session:
             kernel = api_session.Kernel(session_id)
-            data = await kernel.stream_app_info(app_name)
-            has_custom_args = False
-            if 'allowed_arguments' in data.keys():
-                print_info('Available arguments: {0}'.format(data['allowed_arguments']))
-                has_custom_args = True
-            if 'allowed_envs' in data.keys():
-                print_info('Available environment variables: {0}'.format(data['allowed_envs']))
-                has_custom_args = True
-            if not has_custom_args:
-                print_info('This app does not have customizable arguments.')
+            if len(app_name) == 0:
+                apps = await kernel.stream_apps_info()
+            else:
+                for name in app_name:
+                    apps.update(await kernel.stream_app_info(name))
+
+        if list_names:
+            print_info('This session provides the following app services: {0}'
+                        .format(', '.join(apps.keys())))
+            return
+        for service_name, data in apps.items():
+            has_arguments = 'allowed_arguments' in data.keys()
+            has_envs = 'allowed_envs' in data.keys()
+
+            if has_arguments or has_envs:
+                print_info('Information for service {0}:'.format(service_name))
+                if has_arguments:
+                    print('\tAvailable arguments: {0}'.format(data['allowed_arguments']))
+                if has_envs:
+                    print('\tAvailable environment variables: {0}'.format(data['allowed_envs']))
+            else:
+                print_warn('Service {0} does not have customizable arguments.'.format(service_name))
 
     try:
         asyncio_run(print_arguments())
