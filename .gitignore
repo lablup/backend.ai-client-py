@@ -3,9 +3,11 @@
 .idea/
 .*.swp
 *.egg-info/
+.eggs/
 
 __pycache__
 *.py[ocd]
+.mypy_cache/
 
 build/
 sdist/
