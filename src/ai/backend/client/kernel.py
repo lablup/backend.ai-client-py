@@ -164,7 +164,6 @@ class Kernel:
             'clientSessionToken': client_token,
             'config': {
                 'mounts': mounts,
-                'mount_map': mount_map,
                 'environ': envs,
                 'clusterSize': cluster_size,
                 'resources': resources,
@@ -172,6 +171,10 @@ class Kernel:
                 'scalingGroup': scaling_group,
             },
         }
+        if cls.session.config.version >= 'v4.20191119':
+            params['config'].update({
+                'mount_map': mount_map,
+            })
         if cls.session.config.version >= 'v4.20190615':
             params.update({
                 'owner_access_key': owner_access_key,

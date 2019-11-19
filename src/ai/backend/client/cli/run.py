@@ -265,16 +265,16 @@ def _prepare_env_arg(env):
     return envs
 
 
-def _prepare_mount_arg(mount, mount_map):
-    return list(set(list(mount) + list(mount_map.keys())))
-
-
-def _prepare_mount_map_arg(mount_map):
-    if mount_map is not None:
-        mount_maps = {k: v for k, v in map(lambda s: s.split('=', 1), mount_map)}
-    else:
-        mount_maps = {}
-    return mount_maps
+def _prepare_mount_arg(mount):
+    mounts = set()
+    mount_map = {}
+    if mount is not None:
+        for line in mount:
+            sp = line.split('=', 1)
+            mounts.add(sp[0])
+            if len(sp) == 2:
+                mount_map[sp[0]] = sp[1]
+    return list(mounts), mount_map
 
 
 @main.command()
@@ -333,12 +333,11 @@ def _prepare_mount_map_arg(mount_map):
 @click.option('--max-parallel', metavar='NUM', type=int, default=2,
               help='The maximum number of parallel sessions.')
 # resource spec
-@click.option('-m', '--mount', type=str, multiple=True,
-              help='User-owned virtual folder names to mount')
-@click.option('--mount-map', metavar='KEY=VAL', type=str, multiple=True,
-              help='mount virtual volder with custom mount path. '
+@click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
+              help='User-owned virtual folder names to mount. '
+                   'If path is not provided, virtual folder will be mounted under /home/work. '
                    'All virtual folders can only be mounted under /home/work. '
-                   'vfolders with a dot prefix in its name will ignore custom mount path.')
+                   'Virtual folders with a dot prefix in its name will ignore custom mount path.')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='The scaling group to execute session. If not specified, '
                    'all available scaling groups are included in the scheduling.')
@@ -364,7 +363,7 @@ def run(image, files, session_id,                          # base args
         env,                                               # execution environment
         rm, stats, tag, quiet,                             # extra options
         env_range, build_range, exec_range, max_parallel,  # experiment support
-        mount, mount_map, scaling_group, resources, cluster_size,     # resource spec
+        mount, scaling_group, resources, cluster_size,     # resource spec
         resource_opts,
         domain, group):                                    # resource grouping
     '''
@@ -395,8 +394,7 @@ def run(image, files, session_id,                          # base args
     envs = _prepare_env_arg(env)
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
-    mount_map = _prepare_mount_map_arg(mount_map)
-    mount = _prepare_mount_arg(mount, mount_map)
+    mount, mount_map = _prepare_mount_arg(mount)
 
     if not (1 <= cluster_size < 4):
         print('Invalid cluster size.', file=sys.stderr)
@@ -760,12 +758,11 @@ def run(image, files, session_id,                          # base args
 @click.option('--tag', type=str, default=None,
               help='User-defined tag string to annotate sessions.')
 # resource spec
-@click.option('-m', '--mount', type=str, multiple=True,
-              help='User-owned virtual folder names to mount')
-@click.option('--mount-map', metavar='KEY=VAL', type=str, multiple=True,
-              help='mount virtual volder with custom mount path. '
+@click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
+              help='User-owned virtual folder names to mount. '
+                   'If path is not provided, virtual folder will be mounted under /home/work. '
                    'All virtual folders can only be mounted under /home/work. '
-                   'vfolders with a dot prefix in its name will ignore custom mount path.')
+                   'Virtual folders with a dot prefix in its name will ignore custom mount path.')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='The scaling group to execute session. If not specified, '
                    'all available scaling groups are included in the scheduling.')
@@ -790,7 +787,7 @@ def start(image, session_id, owner,                                 # base args
           type, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
           tag,                                            # extra options
-          mount, mount_map, scaling_group, resources, cluster_size,  # resource spec
+          mount, scaling_group, resources, cluster_size,  # resource spec
           resource_opts,
           domain, group):                                 # resource grouping
     '''
@@ -813,8 +810,7 @@ def start(image, session_id, owner,                                 # base args
     envs = _prepare_env_arg(env)
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
-    mount_map = _prepare_mount_map_arg(mount_map)
-    mount = _prepare_mount_arg(mount, mount_map)
+    mount, mount_map = _prepare_mount_arg(mount)
     with Session() as session:
         try:
             kernel = session.Kernel.get_or_create(
