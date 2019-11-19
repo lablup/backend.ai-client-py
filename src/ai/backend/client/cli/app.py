@@ -2,7 +2,11 @@ import asyncio
 import json
 import shlex
 import signal
-from typing import MutableMapping, Union, List
+from typing import (
+    Union, Optional,
+    MutableMapping, Dict,
+    Sequence, List,
+)
 
 import aiohttp
 import click
@@ -12,7 +16,7 @@ from .pretty import print_info, print_warn, print_error
 from ..config import DEFAULT_CHUNK_SIZE
 from ..request import Request
 from ..session import AsyncSession
-from ..compat import asyncio_run, asyncio_run_forever, current_loop
+from ..compat import asyncio_run, asyncio_run_forever
 
 
 class WSProxy:
@@ -107,28 +111,68 @@ class WSProxy:
         await self.writer.drain()
 
 
-class ProxyRunner:
+class ProxyRunnerContext:
+
     __slots__ = (
         'session_id', 'app_name',
         'protocol', 'host', 'port',
         'args', 'envs',
-        'api_session', 'local_server', 'loop',
+        'api_session', 'local_server',
     )
 
-    def __init__(self, api_session, session_id, app_name,
-                 protocol, host, port, args, envs, *, loop=None):
-        self.api_session = api_session
+    session_id: str
+    app_name: str
+    protocol: str
+    host: str
+    port: int
+    args: Dict[str, str]
+    envs: Dict[str, str]
+    api_session: Optional[AsyncSession]
+    local_server: Optional[asyncio.AbstractServer]
+
+    def __init__(self, host: str, port: int,
+                 session_id: str, app_name: str, *,
+                 protocol: str = 'http',
+                 args: Sequence[str] = None,
+                 envs: Sequence[str] = None) -> None:
+        self.host = host
+        self.port = port
         self.session_id = session_id
         self.app_name = app_name
         self.protocol = protocol
-        self.host = host
-        self.port = port
-        self.args = args
-        self.envs = envs
-        self.local_server = None
-        self.loop = loop if loop else current_loop()
 
-    async def handle_connection(self, reader, writer):
+        self.api_session = None
+        self.local_server = None
+
+        self.args, self.envs = {}, {}
+        if len(args) > 0:
+            for argline in args:
+                tokens = []
+                for token in shlex.shlex(argline,
+                                         punctuation_chars=True):
+                    kv = token.split('=', maxsplit=1)
+                    if len(kv) == 1:
+                        tokens.append(shlex.split(token)[0])
+                    else:
+                        tokens.append(kv[0])
+                        tokens.append(shlex.split(kv[1])[0])
+
+                if len(tokens) == 1:
+                    self.args[tokens[0]] = None
+                elif len(tokens) == 2:
+                    self.args[tokens[0]] = tokens[1]
+                else:
+                    self.args[tokens[0]] = tokens[1:]
+        if len(envs) > 0:
+            for envline in envs:
+                split = envline.strip().split('=', maxsplit=2)
+                if len(split) == 2:
+                    self.envs[split[0]] = split[1]
+                else:
+                    self.envs[split[0]] = ''
+
+    async def handle_connection(self, reader: asyncio.StreamReader,
+                                writer: asyncio.StreamWriter) -> None:
         p = WSProxy(self.api_session, self.session_id,
                     self.app_name, self.protocol,
                     self.args, self.envs,
@@ -140,14 +184,47 @@ class ProxyRunner:
         except Exception as e:
             print_error(e)
 
-    async def ready(self):
+    async def __aenter__(self) -> None:
+        self.api_session = AsyncSession()
+        await self.api_session.__aenter__()
         self.local_server = await asyncio.start_server(
-            self.handle_connection, self.host, self.port,
-            loop=self.loop)
+            self.handle_connection, self.host, self.port)
 
-    async def close(self):
+        user_url_template = "{protocol}://{host}:{port}"
+        try:
+            kernel = self.api_session.Kernel(self.session_id)
+            data = await kernel.stream_app_info(self.app_name)
+            if 'url_template' in data.keys():
+                user_url_template = data['url_template']
+        except:
+            if self.app_name == 'vnc-web':
+                user_url_template = \
+                    "{protocol}://{host}:{port}/vnc.html" \
+                    "?host={host}&port={port}" \
+                    "&password=backendai&autoconnect=true"
+
+        user_url = user_url_template.format(
+            protocol=self.protocol,
+            host=self.host,
+            port=self.port,
+        )
+        print_info(
+            "A local proxy to the application \"{0}\" ".format(self.app_name) +
+            "provided by the session \"{0}\" ".format(self.session_id) +
+            "is available at:\n{0}".format(user_url)
+        )
+        if self.host == '0.0.0.0':
+            print_warn('NOTE: Replace "0.0.0.0" with the actual hostname you use '
+                       'to connect with the CLI app proxy.')
+
+    async def __aexit__(self, *exc_info) -> None:
+        print_info("Shutting down....")
         self.local_server.close()
         await self.local_server.wait_closed()
+        await self.api_session.__aexit__(*exc_info)
+        assert self.api_session.closed
+        print_info("The local proxy to \"{}\" has terminated."
+                   .format(self.app_name))
 
 
 @main.command()
@@ -171,9 +248,6 @@ def app(session_id, app, protocol, bind, arg, env):
     SESSID: The compute session ID.
     APP: The name of service provided by the given session.
     """
-    api_session = None
-    runner = None
-
     bind_parts = bind.rsplit(':', maxsplit=1)
     if len(bind_parts) == 1:
         host = '127.0.0.1'
@@ -181,78 +255,15 @@ def app(session_id, app, protocol, bind, arg, env):
     elif len(bind_parts) == 2:
         host = bind_parts[0]
         port = int(bind_parts[1])
-
-    async def app_setup():
-        nonlocal api_session, runner
-        loop = current_loop()
-        api_session = AsyncSession()
-        arguments, envs = {}, {}
-
-        if len(arg) > 0:
-            for argline in arg:
-                tokens = []
-                for token in shlex.shlex(argline, punctuation_chars=True):
-                    kv = token.split('=', maxsplit=1)
-                    if len(kv) == 1:
-                        tokens.append(shlex.split(token)[0])
-                    else:
-                        tokens.append(kv[0])
-                        tokens.append(shlex.split(kv[1])[0])
-
-                if len(tokens) == 1:
-                    arguments[tokens[0]] = None
-                elif len(tokens) == 2:
-                    arguments[tokens[0]] = tokens[1]
-                else:
-                    arguments[tokens[0]] = tokens[1:]
-
-        if len(env) > 0:
-            for envline in env:
-                split = envline.strip().split('=', maxsplit=2)
-                if len(split) == 2:
-                    envs[split[0]] = split[1]
-                else:
-                    envs[split[0]] = ''
-
-        runner = ProxyRunner(api_session, session_id, app,
-                             protocol, host, port,
-                             arguments, envs,
-                             loop=loop)
-        await runner.ready()
-
-        user_url_template = "{protocol}://{host}:{port}"
-        try:
-            async with AsyncSession() as api_session:
-                kernel = api_session.Kernel(session_id)
-                data = await kernel.stream_app_info(app)
-                if 'url_template' in data.keys():
-                    user_url_template = data['url_template']
-        except:
-            if app == 'vnc-web':
-                user_url_template = \
-                    "{protocol}://{host}:{port}/vnc.html" \
-                    "?host={host}&port={port}&password=backendai&autoconnect=true"
-
-        user_url = user_url_template.format(protocol=protocol, host=host, port=port)
-        print_info(
-            "A local proxy to the application \"{0}\" ".format(app) +
-            "provided by the session \"{0}\" ".format(session_id) +
-            "is available at:\n{0}".format(user_url)
-        )
-        if host == '0.0.0.0':
-            print_warn('NOTE: Replace "0.0.0.0" with the actual hostname you use '
-                       'to connect with the CLI app proxy.')
-
-    async def app_shutdown():
-        nonlocal api_session, runner
-        print_info("Shutting down....")
-        await runner.close()
-        await api_session.close()
-        print_info("The local proxy to \"{}\" has terminated."
-                   .format(app))
-
-    asyncio_run_forever(app_setup(), app_shutdown(),
-                        stop_signals={signal.SIGINT, signal.SIGTERM})
+    proxy_ctx = ProxyRunnerContext(
+        host, port,
+        session_id, app,
+        protocol=protocol,
+        args=arg,
+        envs=env,
+    )
+    stop_signals = {signal.SIGINT, signal.SIGTERM}
+    asyncio_run_forever(proxy_ctx, stop_signals=stop_signals)
 
 
 @main.command()
