@@ -171,7 +171,7 @@ class Kernel:
                 'scalingGroup': scaling_group,
             },
         }
-        if cls.session.config.version >= 'v4.20191119':
+        if cls.session.config.version >= 'v5.20191215':
             params['config'].update({
                 'mount_map': mount_map,
             })

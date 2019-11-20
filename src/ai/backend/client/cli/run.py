@@ -336,8 +336,7 @@ def _prepare_mount_arg(mount):
 @click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
               help='User-owned virtual folder names to mount. '
                    'If path is not provided, virtual folder will be mounted under /home/work. '
-                   'All virtual folders can only be mounted under /home/work. '
-                   'Virtual folders with a dot prefix in its name will ignore custom mount path.')
+                   'All virtual folders can only be mounted under /home/work. ')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='The scaling group to execute session. If not specified, '
                    'all available scaling groups are included in the scheduling.')
@@ -761,8 +760,7 @@ def run(image, files, session_id,                          # base args
 @click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
               help='User-owned virtual folder names to mount. '
                    'If path is not provided, virtual folder will be mounted under /home/work. '
-                   'All virtual folders can only be mounted under /home/work. '
-                   'Virtual folders with a dot prefix in its name will ignore custom mount path.')
+                   'All virtual folders can only be mounted under /home/work. ')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='The scaling group to execute session. If not specified, '
                    'all available scaling groups are included in the scheduling.')
