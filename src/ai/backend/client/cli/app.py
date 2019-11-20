@@ -282,31 +282,31 @@ def apps(session_id, app_name, list_names):
     '''
 
     async def print_arguments():
-        apps = {}
+        apps = []
         async with AsyncSession() as api_session:
             kernel = api_session.Kernel(session_id)
             if len(app_name) == 0:
-                apps = await kernel.stream_apps_info()
+                apps = await kernel.stream_app_info()
             else:
                 for name in app_name:
-                    apps.update(await kernel.stream_app_info(name))
+                    apps += await kernel.stream_app_info(name)
 
         if list_names:
             print_info('This session provides the following app services: {0}'
-                        .format(', '.join(apps.keys())))
+                        .format(', '.join(list(map(lambda x: x['name'], apps)))))
             return
-        for service_name, data in apps.items():
-            has_arguments = 'allowed_arguments' in data.keys()
-            has_envs = 'allowed_envs' in data.keys()
+        for service in apps:
+            has_arguments = 'allowed_arguments' in service.keys()
+            has_envs = 'allowed_envs' in service.keys()
 
             if has_arguments or has_envs:
-                print_info('Information for service {0}:'.format(service_name))
+                print_info('Information for service {0}:'.format(service['name']))
                 if has_arguments:
-                    print('\tAvailable arguments: {0}'.format(data['allowed_arguments']))
+                    print('\tAvailable arguments: {0}'.format(service['allowed_arguments']))
                 if has_envs:
-                    print('\tAvailable environment variables: {0}'.format(data['allowed_envs']))
+                    print('\tAvailable environment variables: {0}'.format(service['allowed_envs']))
             else:
-                print_warn('Service {0} does not have customizable arguments.'.format(service_name))
+                print_info('Service {0} does not have customizable arguments.'.format(service['name']))
 
     try:
         asyncio_run(print_arguments())
