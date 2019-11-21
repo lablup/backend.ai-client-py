@@ -1,6 +1,7 @@
 from aioresponses import aioresponses
 
 from ai.backend.client.session import Session
+from ai.backend.client.test_utils import AsyncMock
 
 
 def build_url(config, path):
@@ -120,12 +121,11 @@ def test_vfolder_delete_files():
 
 
 def test_vfolder_download(mocker):
-    import asynctest
-    mock_reader = asynctest.CoroutineMock()
+    mock_reader = AsyncMock()
     mock_from_response = mocker.patch(
         'ai.backend.client.vfolder.aiohttp.MultipartReader.from_response',
         return_value=mock_reader)
-    mock_reader.next = asynctest.CoroutineMock()
+    mock_reader.next = AsyncMock()
     mock_reader.next.return_value = None
     with Session() as session:
         with aioresponses() as m:

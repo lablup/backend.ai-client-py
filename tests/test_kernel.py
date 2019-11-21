@@ -1,17 +1,15 @@
 from unittest import mock
 
-import asynctest
-
 from ai.backend.client.compat import token_hex
 from ai.backend.client.config import APIConfig
 from ai.backend.client.session import Session
-from ai.backend.client.test_utils import ContextMagicMock
+from ai.backend.client.test_utils import AsyncContextMock, AsyncMock
 
 
 def test_create_with_config(mocker):
     mock_req_obj = mock.Mock()
-    mock_req_obj.fetch.return_value = ContextMagicMock(
-        status=201, json=asynctest.CoroutineMock())
+    mock_req_obj.fetch.return_value = AsyncContextMock(
+        status=201, json=AsyncMock())
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)
 
@@ -33,8 +31,8 @@ def test_create_with_config(mocker):
 
 def test_create_kernel_url(mocker):
     mock_req_obj = mock.Mock()
-    mock_req_obj.fetch.return_value = ContextMagicMock(
-        status=201, json=asynctest.CoroutineMock())
+    mock_req_obj.fetch.return_value = AsyncContextMock(
+        status=201, json=AsyncMock())
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)
 
@@ -47,9 +45,9 @@ def test_create_kernel_url(mocker):
 
 def test_create_kernel_return_id_only(mocker):
     return_value = {'kernelId': 'mock_kernel_id'}
-    mock_json_coro = asynctest.CoroutineMock(return_value=return_value)
+    mock_json_coro = AsyncMock(return_value=return_value)
     mock_req_obj = mock.Mock()
-    mock_req_obj.fetch.return_value = ContextMagicMock(
+    mock_req_obj.fetch.return_value = AsyncContextMock(
         status=201, json=mock_json_coro)
     mocker.patch('ai.backend.client.kernel.Request', return_value=mock_req_obj)
 
@@ -60,7 +58,7 @@ def test_create_kernel_return_id_only(mocker):
 
 def test_destroy_kernel_url(mocker):
     mock_req_obj = mock.Mock()
-    mock_req_obj.fetch.return_value = ContextMagicMock(status=204)
+    mock_req_obj.fetch.return_value = AsyncContextMock(status=204)
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)
 
@@ -77,7 +75,7 @@ def test_destroy_kernel_url(mocker):
 
 def test_restart_kernel_url(mocker):
     mock_req_obj = mock.Mock()
-    mock_req_obj.fetch.return_value = ContextMagicMock(status=204)
+    mock_req_obj.fetch.return_value = AsyncContextMock(status=204)
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)
 
@@ -94,9 +92,9 @@ def test_restart_kernel_url(mocker):
 
 def test_get_kernel_info_url(mocker):
     return_value = {}
-    mock_json_coro = asynctest.CoroutineMock(return_value=return_value)
+    mock_json_coro = AsyncMock(return_value=return_value)
     mock_req_obj = mock.Mock()
-    mock_req_obj.fetch.return_value = ContextMagicMock(
+    mock_req_obj.fetch.return_value = AsyncContextMock(
         status=200, json=mock_json_coro)
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)
@@ -115,9 +113,9 @@ def test_get_kernel_info_url(mocker):
 
 def test_execute_code_url(mocker):
     return_value = {'result': 'hi'}
-    mock_json_coro = asynctest.CoroutineMock(return_value=return_value)
+    mock_json_coro = AsyncMock(return_value=return_value)
     mock_req_obj = mock.Mock()
-    mock_req_obj.fetch.return_value = ContextMagicMock(
+    mock_req_obj.fetch.return_value = AsyncContextMock(
         status=200, json=mock_json_coro)
     mock_req = mocker.patch('ai.backend.client.kernel.Request',
                             return_value=mock_req_obj)

@@ -266,7 +266,15 @@ def _prepare_env_arg(env):
 
 
 def _prepare_mount_arg(mount):
-    return list(mount)
+    mounts = set()
+    mount_map = {}
+    if mount is not None:
+        for line in mount:
+            sp = line.split('=', 1)
+            mounts.add(sp[0])
+            if len(sp) == 2:
+                mount_map[sp[0]] = sp[1]
+    return list(mounts), mount_map
 
 
 @main.command()
@@ -325,8 +333,10 @@ def _prepare_mount_arg(mount):
 @click.option('--max-parallel', metavar='NUM', type=int, default=2,
               help='The maximum number of parallel sessions.')
 # resource spec
-@click.option('-m', '--mount', type=str, multiple=True,
-              help='User-owned virtual folder names to mount')
+@click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
+              help='User-owned virtual folder names to mount. '
+                   'If path is not provided, virtual folder will be mounted under /home/work. '
+                   'All virtual folders can only be mounted under /home/work. ')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='The scaling group to execute session. If not specified, '
                    'all available scaling groups are included in the scheduling.')
@@ -383,7 +393,7 @@ def run(image, files, session_id,                          # base args
     envs = _prepare_env_arg(env)
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
-    mount = _prepare_mount_arg(mount)
+    mount, mount_map = _prepare_mount_arg(mount)
 
     if not (1 <= cluster_size < 4):
         print('Invalid cluster size.', file=sys.stderr)
@@ -450,6 +460,7 @@ def run(image, files, session_id,                          # base args
                 no_reuse=no_reuse,
                 cluster_size=cluster_size,
                 mounts=mount,
+                mount_map=mount_map,
                 envs=envs,
                 resources=resources,
                 domain_name=domain,
@@ -539,6 +550,7 @@ def run(image, files, session_id,                          # base args
                 no_reuse=no_reuse,
                 cluster_size=cluster_size,
                 mounts=mount,
+                mount_map=mount_map,
                 envs=envs,
                 resources=resources,
                 resource_opts=resource_opts,
@@ -741,8 +753,10 @@ def run(image, files, session_id,                          # base args
 @click.option('--tag', type=str, default=None,
               help='User-defined tag string to annotate sessions.')
 # resource spec
-@click.option('-m', '--mount', type=str, multiple=True,
-              help='User-owned virtual folder names to mount')
+@click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
+              help='User-owned virtual folder names to mount. '
+                   'If path is not provided, virtual folder will be mounted under /home/work. '
+                   'All virtual folders can only be mounted under /home/work. ')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='The scaling group to execute session. If not specified, '
                    'all available scaling groups are included in the scheduling.')
@@ -790,7 +804,7 @@ def start(image, session_id, owner,                                 # base args
     envs = _prepare_env_arg(env)
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
-    mount = _prepare_mount_arg(mount)
+    mount, mount_map = _prepare_mount_arg(mount)
     with Session() as session:
         try:
             kernel = session.Kernel.get_or_create(
@@ -802,6 +816,7 @@ def start(image, session_id, owner,                                 # base args
                 no_reuse=no_reuse,
                 cluster_size=cluster_size,
                 mounts=mount,
+                mount_map=mount_map,
                 envs=envs,
                 startup_command=startup_command,
                 resources=resources,

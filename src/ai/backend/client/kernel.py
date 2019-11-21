@@ -78,6 +78,7 @@ class Kernel:
                             max_wait: int = 0,
                             no_reuse: bool = False,
                             mounts: Iterable[str] = None,
+                            mount_map: Mapping[str, str] = None,
                             envs: Mapping[str, str] = None,
                             startup_command: str = None,
                             resources: Mapping[str, int] = None,
@@ -123,6 +124,10 @@ class Kernel:
             .. versionadded:: 19.09.0
         :param mounts: The list of vfolder names that belongs to the currrent API
             access key.
+        :param mount_map: Mapping which contains custom path to mount vfolder.
+            Key and value of this map should be vfolder name and custom path.
+            All custom mounts should be under /home/work.
+            vFolders which has a dot(.) prefix in its name are not affected.
         :param envs: The environment variables which always bypasses the jail policy.
         :param resources: The resource specification. (TODO: details)
         :param cluster_size: The number of containers in this compute session.
@@ -140,6 +145,8 @@ class Kernel:
             client_token = uuid.uuid4().hex
         if mounts is None:
             mounts = []
+        if mount_map is None:
+            mount_map = {}
         if resources is None:
             resources = {}
         if resource_opts is None:
@@ -164,6 +171,10 @@ class Kernel:
                 'scalingGroup': scaling_group,
             },
         }
+        if cls.session.config.version >= 'v5.20191215':
+            params['config'].update({
+                'mount_map': mount_map,
+            })
         if cls.session.config.version >= 'v4.20190615':
             params.update({
                 'owner_access_key': owner_access_key,

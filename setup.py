@@ -23,12 +23,12 @@ build_requires = [
     'twine>=1.14.0',
 ]
 test_requires = [
-    'pytest~=5.0.1',
+    'pytest~=5.2.4',
     'pytest-cov',
     'pytest-mock',
     'pytest-asyncio>=0.10.0',
-    'aioresponses>=0.4.2',
-    'asynctest>=0.13',
+    'aioresponses>=0.6',
+    'asynctest>=0.13; python_version<"3.8"',
     'codecov',
     'flake8>=3.7.8',
 ]

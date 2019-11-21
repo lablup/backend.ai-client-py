@@ -121,7 +121,7 @@ class APIConfig:
     DEFAULTS = {
         'endpoint': 'https://api.backend.ai',
         'endpoint_type': 'api',
-        'version': 'v4.20190615',
+        'version': 'v5.20191215',
         'hash_type': 'sha256',
         'domain': 'default',
         'group': 'default',
