@@ -285,12 +285,9 @@ def apps(session_id, app_name, list_names):
         apps = []
         async with AsyncSession() as api_session:
             kernel = api_session.Kernel(session_id)
-            if len(app_name) == 0:
-                apps = await kernel.stream_app_info()
-            else:
-                for name in app_name:
-                    apps += await kernel.stream_app_info(name)
-
+            apps = await kernel.stream_app_info()
+            if len(app_name) > 0:
+                apps = list(filter(lambda x: x['name'] in app_name))
         if list_names:
             print_info('This session provides the following app services: {0}'
                         .format(', '.join(list(map(lambda x: x['name'], apps)))))

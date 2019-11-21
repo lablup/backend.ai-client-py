@@ -514,15 +514,13 @@ class Kernel:
             return await resp.json()
 
     @api_function
-    async def stream_app_info(self, selected_service: str = ''):
+    async def stream_app_info(self):
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        path = '/stream/kernel/{0}/apps'.format(self.kernel_id)
-        if selected_service:
-            path += '/{0}'.format(selected_service)
 
-        api_rqst = Request(self.session, "GET", path, params=params)
+        api_rqst = Request(self.session, "GET", path, 
+                           params='/stream/kernel/{0}/apps'.format(self.kernel_id))
         async with api_rqst.fetch() as resp:
             return await resp.json()
 
