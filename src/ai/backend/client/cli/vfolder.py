@@ -74,7 +74,10 @@ def list_allowed_types():
 @click.argument('host', type=str, default=None)
 @click.option('-g', '--group', metavar='GROUP', type=str, default=None,
               help='Group ID or NAME. Specify this option if you want to create a group folder.')
-def create(name, host, group):
+@click.option('--host-path', type=bool, is_flag=True,
+              help='Treats HOST as a mount point of unmanaged virtual folder. '
+                   'This option can only be used by Admin or Superadmin.')
+def create(name, host, group, host_path):
     '''Create a new virtual folder.
 
     \b
@@ -83,7 +86,10 @@ def create(name, host, group):
     '''
     with Session() as session:
         try:
-            result = session.VFolder.create(name, host, group)
+            if host_path:
+                result = session.VFolder.create(name=name, unmanaged_path=host, group=group)
+            else:
+                result = session.VFolder.create(name=name, host=host, group=group)
             print('Virtual folder "{0}" is created.'.format(result['name']))
         except Exception as e:
             print_error(e)
@@ -187,6 +193,26 @@ def download(name, filenames):
         try:
             session.VFolder(name).download(filenames, show_progress=True)
             print_done('Done.')
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolder.command()
+@click.argument('name', type=str)
+@click.argument('filename', type=Path)
+def request_download(name, filename):
+    '''
+    Request JWT-formated download token for later use.
+
+    \b
+    NAME: Name of a virtual folder.
+    FILENAME: Path of the file to be downloaded.
+    '''
+    with Session() as session:
+        try:
+            response = json.loads(session.VFolder(name).request_download(filename))
+            print_done(f'Download token: {response["token"]}')
         except Exception as e:
             print_error(e)
             sys.exit(1)

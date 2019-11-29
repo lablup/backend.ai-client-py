@@ -27,11 +27,12 @@ class VFolder:
 
     @api_function
     @classmethod
-    async def create(cls, name: str, host: str = None, group: str = None):
+    async def create(cls, name: str, host: str = None, unmanaged_path: str = None, group: str = None):
         rqst = Request(cls.session, 'POST', '/folders')
         rqst.set_json({
             'name': name,
             'host': host,
+            'unmanaged_path': unmanaged_path,
             'group': group,
         })
         async with rqst.fetch() as resp:
@@ -129,6 +130,16 @@ class VFolder:
                        '/folders/{}/mkdir'.format(self.name))
         rqst.set_json({
             'path': path,
+        })
+        async with rqst.fetch() as resp:
+            return await resp.text()
+
+    @api_function
+    async def request_download(self, filename: Union[str, Path]):
+        rqst = Request(self.session, 'POST',
+                       '/folders/{}/request_download'.format(self.name))
+        rqst.set_json({
+            'file': filename
         })
         async with rqst.fetch() as resp:
             return await resp.text()
