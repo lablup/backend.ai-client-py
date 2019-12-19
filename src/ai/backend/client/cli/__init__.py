@@ -115,6 +115,7 @@ def run_alias():
 def _attach_command():
     from . import admin, config, app, files, logs, manager, proxy, ps, run  # noqa
     from . import vfolder       # noqa
+    from . import task_template  # noqa
 
 
 _attach_command()

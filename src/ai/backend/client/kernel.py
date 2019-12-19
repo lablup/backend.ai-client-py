@@ -83,6 +83,7 @@ class Kernel:
                             startup_command: str = None,
                             resources: Mapping[str, int] = None,
                             resource_opts: Mapping[str, int] = None,
+                            template_id: str = None,
                             cluster_size: int = 1,
                             domain_name: str = None,
                             group_name: str = None,
@@ -135,6 +136,7 @@ class Kernel:
         :param tag: An optional string to annotate extra information.
         :param owner: An optional access key that owns the created session. (Only
             available to administrators)
+        :param template_id: Task template to apply to compute session. 
 
         :returns: The :class:`Kernel` instance.
         '''
@@ -171,6 +173,8 @@ class Kernel:
                 'scalingGroup': scaling_group,
             },
         }
+        if template_id:
+            params['template_id'] = template_id
         if cls.session.config.version >= 'v5.20191215':
             params['config'].update({
                 'mount_map': mount_map,
@@ -530,8 +534,9 @@ class Kernel:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
 
-        api_rqst = Request(self.session, "GET", path, 
-                           params='/stream/kernel/{0}/apps'.format(self.kernel_id))
+        api_rqst = Request(self.session,
+                           "GET", '/stream/kernel/{0}/apps'.format(self.kernel_id),
+                           params=params)
         async with api_rqst.fetch() as resp:
             return await resp.json()
 

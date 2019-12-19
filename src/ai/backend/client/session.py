@@ -75,7 +75,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         'Admin', 'Agent', 'AgentWathcer', 'Auth', 'Domain', 'Group', 'ScalingGroup',
         'Admin', 'Agent', 'AgentWatcher', 'Domain', 'Group', 'ScalingGroup',
         'Image', 'Kernel', 'KeyPair', 'Manager', 'Resource',
-        'KeypairResourcePolicy', 'User', 'VFolder',
+        'KeypairResourcePolicy', 'User', 'TaskTemplate', 'VFolder',
     )
 
     def __init__(self, *, config: APIConfig = None):
@@ -143,6 +143,7 @@ class Session(BaseSession):
         from .resource import Resource
         from .keypair_resource_policy import KeypairResourcePolicy
         from .scaling_group import ScalingGroup
+        from .task_template import TaskTemplate
         from .user import User
         from .vfolder import VFolder
 
@@ -272,6 +273,15 @@ class Session(BaseSession):
         bound to this session.
         '''
 
+        self.TaskTemplate = type('TaskTemplate', (BaseFunction, ), {
+            **TaskTemplate.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.task_template.TaskTemplate` function proxy
+        bound to this session.
+        '''
+
         self.VFolder = type('VFolder', (BaseFunction, ), {
             **VFolder.__dict__,
             'session': self,
@@ -343,6 +353,7 @@ class AsyncSession(BaseSession):
         from .resource import Resource
         from .keypair_resource_policy import KeypairResourcePolicy
         from .scaling_group import ScalingGroup
+        from .task_template import TaskTemplate
         from .user import User
         from .vfolder import VFolder
 
@@ -460,6 +471,15 @@ class AsyncSession(BaseSession):
         })
         '''
         The :class:`~ai.backend.client.scaling_group.ScalingGroup` function proxy
+        bound to this session.
+        '''
+
+        self.TaskTemplate = type('TaskTemplate', (BaseFunction, ), {
+            **TaskTemplate.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.task_template.TaskTemplate` function proxy
         bound to this session.
         '''
 
