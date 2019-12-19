@@ -17,6 +17,7 @@ install_requires = [
     'humanize>=0.5.1',
     'yarl>=1.1.1',
     'Click>=7.0',
+    'PyYAML~=5.1.2'
 ]
 build_requires = [
     'wheel>=0.33.6',

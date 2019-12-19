@@ -136,7 +136,7 @@ class Kernel:
         :param tag: An optional string to annotate extra information.
         :param owner: An optional access key that owns the created session. (Only
             available to administrators)
-        :param template_id: Task template to apply to compute session. 
+        :param template_id: Task template to apply to compute session.
 
         :returns: The :class:`Kernel` instance.
         '''
