@@ -21,6 +21,7 @@ from ..config import local_cache_path
 from ..compat import asyncio_run, current_loop, token_hex
 from ..exceptions import BackendError, BackendAPIError
 from ..session import Session, AsyncSession, is_legacy_server
+from ..utils import undefined
 from .pretty import (
     print_info, print_wait, print_done, print_error, print_fail, print_warn,
     format_info,
@@ -742,7 +743,7 @@ def run(image_or_template_id, files, session_id,                          # base
 
 
 @main.command()
-@click.argument('image_or_template_id')
+@click.argument('image')
 @click.option('-t', '--session-id', '--client-token', metavar='SESSID',
               help='Specify a human-readable session ID or name. '
                    'If not set, a random hex string is used.')
@@ -785,11 +786,6 @@ def run(image_or_template_id, files, session_id,                          # base
 @click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
               help='Resource options for creating compute session '
                    '(e.g: shmem=64m)')
-@click.option('--template', type=bool, is_flag=True,
-              help='If specified, CLI will treat argument as task template ID. ')
-@click.option('--override-image', type=str, default=None,
-              help='Override kernel image of task template. '
-                   'Can only be used if --template option is active. ')
 # resource grouping
 @click.option('-d', '--domain', metavar='DOMAIN_NAME', default=None,
               help='Domain name where the session will be spawned. '
@@ -797,14 +793,12 @@ def run(image_or_template_id, files, session_id,                          # base
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
-def start(image_or_template_id, session_id, owner,                                 # base args
+def start(image, session_id, owner,                                 # base args
           type, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
           tag,                                            # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
           resource_opts,
-          template,
-          override_image,
           domain, group):                                 # resource grouping
     '''
     Prepare and start a single compute session without executing codes.
@@ -821,13 +815,6 @@ def start(image_or_template_id, session_id, owner,                              
         session_id = token_hex(5)
     else:
         session_id = session_id
-
-    if template:
-        image = override_image
-        template_id = image_or_template_id
-    else:
-        image = image_or_template_id
-        template_id = None
 
     ######
     envs = _prepare_env_arg(env)
@@ -850,7 +837,168 @@ def start(image_or_template_id, session_id, owner,                              
                 startup_command=startup_command,
                 resources=resources,
                 resource_opts=resource_opts,
-                template_id=template_id,
+                owner_access_key=owner,
+                domain_name=domain,
+                group_name=group,
+                scaling_group=scaling_group,
+                tag=tag)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+        else:
+            if kernel.status == 'PENDING':
+                print_info('Session ID {0} is enqueued for scheduling.'
+                           .format(session_id))
+            elif kernel.status == 'RUNNING':
+                if kernel.created:
+                    print_info('Session ID {0} is created and ready.'
+                               .format(session_id))
+                else:
+                    print_info('Session ID {0} is already running and ready.'
+                               .format(session_id))
+                if kernel.service_ports:
+                    print_info('This session provides the following app services: ' +
+                               ', '.join(sport['name']
+                                         for sport in kernel.service_ports))
+            elif kernel.status == 'TERMINATED':
+                print_warn('Session ID {0} is already terminated.\n'
+                           'This may be an error in the kernel image.'
+                           .format(session_id))
+            elif kernel.status == 'TIMEOUT':
+                print_info('Session ID {0} is still on the job queue.'
+                           .format(session_id))
+            elif kernel.status in ('ERROR', 'CANCELLED'):
+                print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
+                           .format(session_id))
+
+
+@main.command()
+@click.argument('template_id')
+@click.option('-t', '--session-id', '--client-token', metavar='SESSID',
+              default=undefined,
+              help='Specify a human-readable session ID or name. '
+                   'If not set, a random hex string is used.')
+@click.option('-o', '--owner', '--owner-access-key', metavar='ACCESS_KEY',
+              default=undefined,
+              help='Set the owner of the target session explicitly.')
+# job scheduling options
+@click.option('--type', 'type_', metavar='SESSTYPE',
+              type=click.Choice(['batch', 'interactive', undefined]),
+              default=undefined,
+              help='Either batch or interactive')
+@click.option('-i', '--image', default=undefined,
+              help='Set kernel image to run.')
+@click.option('-c', '--startup-command', metavar='COMMAND',
+              default=undefined,
+              help='Set the command to execute for batch-type sessions.')
+@click.option('--enqueue-only', is_flag=True,
+              help='Enqueue the session and return immediately without waiting for its startup.')
+@click.option('--max-wait', metavar='SECONDS', type=int,
+              default=-1,
+              help='The maximum duration to wait until the session starts.')
+@click.option('--no-reuse', is_flag=True,
+              help='Do not reuse existing sessions but return an error.')
+# execution environment
+@click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
+              help='Environment variable (may appear multiple times)')
+# extra options
+@click.option('--tag', type=str,
+              default='$NODEF$',
+              help='User-defined tag string to annotate sessions.')
+# resource spec
+@click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
+              help='User-owned virtual folder names to mount. '
+                   'If path is not provided, virtual folder will be mounted under /home/work. '
+                   'All virtual folders can only be mounted under /home/work. ')
+@click.option('--scaling-group', '--sgroup', type=str,
+              default='$NODEF$',
+              help='The scaling group to execute session. If not specified, '
+                   'all available scaling groups are included in the scheduling.')
+@click.option('-r', '--resources', metavar='KEY=VAL', type=str, multiple=True,
+              help='Set computation resources used by the session '
+                   '(e.g: -r cpu=2 -r mem=256 -r gpu=1).'
+                   '1 slot of cpu/gpu represents 1 core. '
+                   'The unit of mem(ory) is MiB.')
+@click.option('--cluster-size', metavar='NUMBER', type=int,
+              default=-1,
+              help='The size of cluster in number of containers.')
+@click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
+              help='Resource options for creating compute session '
+                   '(e.g: shmem=64m)')
+# resource grouping
+@click.option('-d', '--domain', metavar='DOMAIN_NAME', default=None,
+              help='Domain name where the session will be spawned. '
+                   'If not specified, config\'s domain name will be used.')
+@click.option('-g', '--group', metavar='GROUP_NAME', default=None,
+              help='Group name where the session is spawned. '
+                   'User should be a member of the group to execute the code.')
+@click.option('--no-mount', is_flag=True,
+              help='If specified, client.py will request server not to mount '
+                   'any vFolders specified at template,')
+@click.option('--no-env', is_flag=True,
+              help='If specified, client.py will request server not to add '
+                   'any environs specified at template,')
+@click.option('--no-resource', is_flag=True,
+              help='If specified, client.py will request server not to add '
+                   'any resource specified at template,')
+def start_template(template_id, session_id, owner,        # base args
+          type_, image, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
+          env,                                            # execution environment
+          tag,                                            # extra options
+          mount, scaling_group, resources, cluster_size,  # resource spec
+          resource_opts,
+          domain, group,                                  # resource grouping
+          no_mount, no_env, no_resource):
+    '''
+    Prepare and start a single compute session without executing codes.
+    You may use the created session to execute codes using the "run" command
+    or connect to an application service provided by the session using the "app"
+    command.
+
+
+    \b
+    IMAGE: The name (and version/platform tags appended after a colon) of session
+           runtime or programming language.
+    '''
+    if session_id is undefined:
+        session_id = token_hex(5)
+    else:
+        session_id = session_id
+
+    if max_wait == -1:
+        max_wait = undefined
+    if tag == '$NODEF$':
+        tag = undefined
+    if scaling_group == '$NODEF$':
+        scaling_group = undefined
+    if cluster_size == -1:
+        cluster_size = undefined
+
+    ######
+
+    envs = _prepare_env_arg(env) if len(env) > 0 or no_env else undefined
+    resources = _prepare_resource_arg(resources) if len(resources) > 0 or no_resource else undefined
+    resource_opts = (_prepare_resource_arg(resource_opts)
+                     if len(resource_opts) > 0 or no_resource else undefined)
+    mount, mount_map = (_prepare_mount_arg(mount)
+                        if len(mount) > 0 or no_mount else (undefined, undefined))
+    with Session() as session:
+        try:
+            kernel = session.Kernel.create_from_template(
+                template_id,
+                image=image,
+                client_token=session_id,
+                type_=type_,
+                enqueue_only=enqueue_only,
+                max_wait=max_wait,
+                no_reuse=no_reuse,
+                cluster_size=cluster_size,
+                mounts=mount,
+                mount_map=mount_map,
+                envs=envs,
+                startup_command=startup_command,
+                resources=resources,
+                resource_opts=resource_opts,
                 owner_access_key=owner,
                 domain_name=domain,
                 group_name=group,

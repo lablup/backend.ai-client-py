@@ -74,7 +74,7 @@ def list_allowed_types():
 @click.argument('host', type=str, default=None)
 @click.option('-g', '--group', metavar='GROUP', type=str, default=None,
               help='Group ID or NAME. Specify this option if you want to create a group folder.')
-@click.option('--unmanaged', type=bool, is_flag=True,
+@click.option('--unmanaged', 'host_path', type=bool, is_flag=True,
               help='Treats HOST as a mount point of unmanaged virtual folder. '
                    'This option can only be used by Admin or Superadmin.')
 def create(name, host, group, host_path):

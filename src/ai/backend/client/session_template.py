@@ -1,35 +1,47 @@
 from typing import List, Mapping
-import yaml
 
 from .base import api_function
 from .request import Request
 
 
-class TaskTemplate:
+class SessionTemplate:
 
     session = None
     @api_function
     @classmethod
-    async def create(cls, template: str) -> 'TaskTemplate':
+    async def create(cls,
+                     template: str,
+                     template_type: str,
+                     domain_name: str = None,
+                     group_name: str = None,
+                     owner_access_key: str = None,
+                     ) -> 'SessionTemplate':
         rqst = Request(cls.session,
-                       'POST', '/task-template')
-        rqst.set_content(
-            template.encode(),
-            content_type='text/yaml'
-        )
+                       'POST', '/template/session')
+        if domain_name is None:
+            # Even if config.domain is None, it can be guessed in the manager by user information.
+            domain_name = cls.session.config.domain
+        if group_name is None:
+            group_name = cls.session.config.group
+        body = {
+            'payload': template,
+            'type': template_type,
+            'group_name': group_name,
+            'domain_name': domain_name,
+            'owner_access_key': owner_access_key
+        }
+        rqst.set_json(body)
         async with rqst.fetch() as resp:
             if resp.status == 200:
                 response = await resp.json()
 
-                body = yaml.load(template, Loader=yaml.BaseLoader)
-                owner_access_key = body.get('scope', {}).get('owner_access_key', None)
                 return cls(response['id'], owner_access_key=owner_access_key)
 
     @api_function
     @classmethod
     async def list_templates(cls, list_all: bool = False) -> 'List[Mapping[str, str]]':
         rqst = Request(cls.session,
-                       'GET', '/task-template')
+                       'GET', '/template/session')
         rqst.set_json({'all': list_all})
         async with rqst.fetch() as resp:
             if resp.status == 200:
@@ -45,7 +57,7 @@ class TaskTemplate:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'GET', f'/task-template/{self.template_id}',
+                       'GET', f'/template/session/{self.template_id}',
                        params=params)
         async with rqst.fetch() as resp:
             if resp.status == 200:
@@ -53,20 +65,26 @@ class TaskTemplate:
 
     @api_function
     async def put(self, template: str):
+        body = {
+            'payload': template
+        }
+        if self.owner_access_key:
+            body['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'PUT', f'/task-template/{self.template_id}')
-        rqst.set_content(
-            template.encode(),
-            content_type='text/yaml'
-        )
+                       'PUT', f'/template/session/{self.template_id}')
+        rqst.set_json(body)
 
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     async def delete(self):
+        params = {}
+        if self.owner_access_key:
+            params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'DELETE', f'/task-template/{self.template_id}')
+                       'DELETE', f'/template/session/{self.template_id}',
+                       params=params)
 
         async with rqst.fetch() as resp:
             return await resp.json()

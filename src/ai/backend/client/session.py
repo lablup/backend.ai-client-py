@@ -75,7 +75,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         'Admin', 'Agent', 'AgentWathcer', 'Auth', 'Domain', 'Group', 'ScalingGroup',
         'Admin', 'Agent', 'AgentWatcher', 'Domain', 'Group', 'ScalingGroup',
         'Image', 'Kernel', 'KeyPair', 'Manager', 'Resource',
-        'KeypairResourcePolicy', 'User', 'TaskTemplate', 'VFolder',
+        'KeypairResourcePolicy', 'User', 'SessionTemplate', 'VFolder',
     )
 
     def __init__(self, *, config: APIConfig = None):
@@ -143,7 +143,7 @@ class Session(BaseSession):
         from .resource import Resource
         from .keypair_resource_policy import KeypairResourcePolicy
         from .scaling_group import ScalingGroup
-        from .task_template import TaskTemplate
+        from .session_template import SessionTemplate
         from .user import User
         from .vfolder import VFolder
 
@@ -273,12 +273,12 @@ class Session(BaseSession):
         bound to this session.
         '''
 
-        self.TaskTemplate = type('TaskTemplate', (BaseFunction, ), {
-            **TaskTemplate.__dict__,
+        self.SessionTemplate = type('SessionTemplate', (BaseFunction, ), {
+            **SessionTemplate.__dict__,
             'session': self,
         })
         '''
-        The :class:`~ai.backend.client.task_template.TaskTemplate` function proxy
+        The :class:`~ai.backend.client.session_template.SessionTemplate` function proxy
         bound to this session.
         '''
 
@@ -353,7 +353,7 @@ class AsyncSession(BaseSession):
         from .resource import Resource
         from .keypair_resource_policy import KeypairResourcePolicy
         from .scaling_group import ScalingGroup
-        from .task_template import TaskTemplate
+        from .session_template import SessionTemplate
         from .user import User
         from .vfolder import VFolder
 
@@ -474,12 +474,12 @@ class AsyncSession(BaseSession):
         bound to this session.
         '''
 
-        self.TaskTemplate = type('TaskTemplate', (BaseFunction, ), {
-            **TaskTemplate.__dict__,
+        self.SessionTemplate = type('SessionTemplate', (BaseFunction, ), {
+            **SessionTemplate.__dict__,
             'session': self,
         })
         '''
-        The :class:`~ai.backend.client.task_template.TaskTemplate` function proxy
+        The :class:`~ai.backend.client.session_template.SessionTemplate` function proxy
         bound to this session.
         '''
 

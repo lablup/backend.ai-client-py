@@ -23,10 +23,21 @@ from .request import (
     SSEResponse,
 )
 from .cli.pretty import ProgressReportingReader
+from .utils import undefined
 
 __all__ = (
     'Kernel',
 )
+
+
+def drop(d, dropval):
+    newd = {}
+    for k, v in d.items():
+        if isinstance(v, Mapping) or isinstance(v, dict):
+            newd[k] = drop(v, dropval)
+        elif v != dropval:
+            newd[k] = v
+    return newd
 
 
 class Kernel:
@@ -83,10 +94,10 @@ class Kernel:
                             startup_command: str = None,
                             resources: Mapping[str, int] = None,
                             resource_opts: Mapping[str, int] = None,
-                            template_id: str = None,
                             cluster_size: int = 1,
                             domain_name: str = None,
                             group_name: str = None,
+                            bootstrap_script: str = None,
                             tag: str = None,
                             scaling_group: str = None,
                             owner_access_key: str = None) -> 'Kernel':
@@ -136,7 +147,6 @@ class Kernel:
         :param tag: An optional string to annotate extra information.
         :param owner: An optional access key that owns the created session. (Only
             available to administrators)
-        :param template_id: Task template to apply to compute session.
 
         :returns: The :class:`Kernel` instance.
         '''
@@ -158,6 +168,8 @@ class Kernel:
             domain_name = cls.session.config.domain
         if group_name is None:
             group_name = cls.session.config.group
+        if bootstrap_script is None:
+            bootstrap_script = ''
 
         mounts.extend(cls.session.config.vfolder_mounts)
         rqst = Request(cls.session, 'POST', '/kernel/create')
@@ -173,11 +185,12 @@ class Kernel:
                 'scalingGroup': scaling_group,
             },
         }
-        if template_id:
-            params['template_id'] = template_id
         if cls.session.config.version >= 'v5.20191215':
             params['config'].update({
                 'mount_map': mount_map,
+            })
+            params.update({
+                'bootstrap_script': bootstrap_script,
             })
         if cls.session.config.version >= 'v4.20190615':
             params.update({
@@ -194,6 +207,130 @@ class Kernel:
             params['image'] = image
         else:
             params['lang'] = image
+        rqst.set_json(params)
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            o = cls(data['kernelId'], owner_access_key)  # type: ignore
+            o.created = data.get('created', True)     # True is for legacy
+            o.status = data.get('status', 'RUNNING')
+            o.service_ports = data.get('servicePorts', [])
+            o.domain = domain_name
+            o.group = group_name
+            return o
+
+    @api_function
+    @classmethod
+    async def create_from_template(cls, template_id: str, *,
+                                   client_token: str = undefined,
+                                   type_: str = undefined,
+                                   enqueue_only: bool = undefined,
+                                   max_wait: int = undefined,
+                                   no_reuse: bool = undefined,
+                                   image: str = undefined,
+                                   mounts: Iterable[str] = undefined,
+                                   mount_map: Mapping[str, str] = undefined,
+                                   envs: Mapping[str, str] = undefined,
+                                   startup_command: str = undefined,
+                                   resources: Mapping[str, int] = undefined,
+                                   resource_opts: Mapping[str, int] = undefined,
+                                   cluster_size: int = undefined,
+                                   domain_name: str = undefined,
+                                   group_name: str = undefined,
+                                   bootstrap_script: str = undefined,
+                                   tag: str = undefined,
+                                   scaling_group: str = undefined,
+                                   owner_access_key: str = undefined) -> 'Kernel':
+        '''
+        Get-or-creates a compute session from template.
+        All other parameters provided  will be overwritten to template, including
+        vfolder mounts (not appended!).
+        If *client_token* is ``None``, it creates a new compute session as long as
+        the server has enough resources and your API key has remaining quota.
+        If *client_token* is a valid string and there is an existing compute session
+        with the same token and the same *image*, then it returns the :class:`Kernel`
+        instance representing the existing session.
+
+        :param template_id: Task template to apply to compute session.
+        :param image: The image name and tag for the compute session.
+            Example: ``python:3.6-ubuntu``.
+            Check out the full list of available images in your server using (TODO:
+            new API).
+        :param client_token: A client-side identifier to seamlessly reuse the compute
+            session already created.
+        :param type_: Either ``"interactive"`` (default) or ``"batch"``.
+
+            .. versionadded:: 19.09.0
+        :param enqueue_only: Just enqueue the session creation request and return immediately,
+            without waiting for its startup. (default: ``false`` to preserve the legacy
+            behavior)
+
+            .. versionadded:: 19.09.0
+        :param max_wait: The time to wait for session startup. If the cluster resource
+            is being fully utilized, this waiting time can be arbitrarily long due to
+            job queueing.  If the timeout reaches, the returned *status* field becomes
+            ``"TIMEOUT"``.  Still in this case, the session may start in the future.
+
+            .. versionadded:: 19.09.0
+        :param no_reuse: Raises an explicit error if a session with the same *image* and
+            the same *client_token* already exists instead of returning the information
+            of it.
+
+            .. versionadded:: 19.09.0
+        :param mounts: The list of vfolder names that belongs to the currrent API
+            access key.
+        :param mount_map: Mapping which contains custom path to mount vfolder.
+            Key and value of this map should be vfolder name and custom path.
+            All custom mounts should be under /home/work.
+            vFolders which has a dot(.) prefix in its name are not affected.
+        :param envs: The environment variables which always bypasses the jail policy.
+        :param resources: The resource specification. (TODO: details)
+        :param cluster_size: The number of containers in this compute session.
+            Must be at least 1.
+        :param tag: An optional string to annotate extra information.
+        :param owner: An optional access key that owns the created session. (Only
+            available to administrators)
+
+        :returns: The :class:`Kernel` instance.
+        '''
+        if client_token:
+            assert 4 <= len(client_token) <= 64, \
+                   'Client session token should be 4 to 64 characters long.'
+        else:
+            client_token = uuid.uuid4().hex
+
+        if domain_name is None:
+            # Even if config.domain is None, it can be guessed in the manager by user information.
+            domain_name = cls.session.config.domain
+        if group_name is None:
+            group_name = cls.session.config.group
+        if cls.session.config.vfolder_mounts:
+            mounts.extend(cls.session.config.vfolder_mounts)
+        rqst = Request(cls.session, 'POST', '/kernel/from-template')
+        params = {
+            'template_id': template_id,
+            'tag': tag,
+            'image': image,
+            'domain': domain_name,
+            'group': group_name,
+            'clientSessionToken': client_token,
+            'bootstrap_script': bootstrap_script,
+            'enqueueOnly': enqueue_only,
+            'maxWaitSeconds': max_wait,
+            'reuseIfExists': not no_reuse,
+            'startupCommand': startup_command,
+            'owner_access_key': owner_access_key,
+            'type': type_,
+            'config': {
+                'mounts': mounts,
+                'mount_map': mount_map,
+                'environ': envs,
+                'clusterSize': cluster_size,
+                'resources': resources,
+                'resource_opts': resource_opts,
+                'scalingGroup': scaling_group,
+            },
+        }
+        params = drop(params, undefined)
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
