@@ -279,7 +279,7 @@ def _prepare_mount_arg(mount):
 
 
 @main.command()
-@click.argument('image_or_template_id', type=str)
+@click.argument('image', type=str)
 @click.argument('files', nargs=-1, type=click.Path())
 @click.option('-t', '--session-id', '--client-token', metavar='SESSID',
               help='Specify a human-readable session ID or name. '
@@ -361,7 +361,7 @@ def _prepare_mount_arg(mount):
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
-def run(image_or_template_id, files, session_id,                          # base args
+def run(image, files, session_id,                          # base args
         type, enqueue_only, max_wait, no_reuse,            # job scheduling options
         code, terminal,                                    # query-mode options
         clean, build, exec, basedir,                       # batch-mode options
@@ -370,8 +370,6 @@ def run(image_or_template_id, files, session_id,                          # base
         env_range, build_range, exec_range, max_parallel,  # experiment support
         mount, scaling_group, resources, cluster_size,     # resource spec
         resource_opts,
-        template,
-        override_image,
         domain, group):                                    # resource grouping
     '''
     Run the given code snippet or files in a session.
@@ -397,13 +395,6 @@ def run(image_or_template_id, files, session_id,                          # base
         print('You should provide the command-line code snippet using '
               '"-c" option if run without files.', file=sys.stderr)
         sys.exit(1)
-
-    if template:
-        image = override_image
-        template_id = image_or_template_id
-    else:
-        image = image_or_template_id
-        template_id = None
 
     envs = _prepare_env_arg(env)
     resources = _prepare_resource_arg(resources)
@@ -479,7 +470,6 @@ def run(image_or_template_id, files, session_id,                          # base
                 envs=envs,
                 resources=resources,
                 domain_name=domain,
-                template_id=template_id,
                 group_name=group,
                 scaling_group=scaling_group,
                 tag=tag)

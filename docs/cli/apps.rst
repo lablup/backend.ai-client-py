@@ -122,3 +122,107 @@ updated by Backend.AI when the session launches.
   $ cat id_container.pub > authorized_keys
   $ backend.ai vfolder create .ssh
   $ backend.ai vfolder upload .ssh authorized_keys
+
+
+Creating and starting task template
+-----------------------------------
+
+Users can define some commonly used sessions into template, and save it
+for later use.
+First, define task template (in yaml format), like:
+.. code-block:: text
+
+  ---
+  api_version: v1
+  kind: taskTemplate
+  metadata:
+    name: template1234
+    tag: example-tag
+  spec:
+    kernel:
+      environ:
+        MYCONFIG: XXX
+      git:
+        branch: '19.09'
+        commit: 10daee9e328876d75e6d0fa4998d4456711730db
+        repository: https://github.com/lablup/backend.ai-agent
+        destinationDir: /home/work/baiagent
+      image: python:3.6-ubuntu18.04
+    resources:
+      cpu: '2'
+      mem: 4g
+    mounts:
+      hostpath-test: /home/work/hostDesktop
+      test-vfolder:
+    sessionType: interactive
+
+then upload task template to server, with command ``sesstpl create``.
+``create`` CLI accepts yaml by STDIN, so following command will work:
+.. code-block:: console
+
+  $ backend.ai sesstpl create < session-template.yaml
+
+or if you work in environment where STDIN is not supported, you can manually
+specify file name to import by ``-f`` flag:
+.. code-block:: console
+
+  $ backend.ai sesstpl create -f session-template.yaml
+
+Once session template is uploaded, user can use it to start kernel session:
+.. code-block:: console
+
+  $ backend.ai start-template <Template ID>
+
+with substituting <Template ID> to your template ID.
+
+Basic CRUD operations for task template are also supported.
+So you can edit template,
+.. code-block:: console
+
+  $ backend.ai sesstpl update <Template ID> < session-template.yaml
+
+list available templates,
+.. code-block:: console
+
+  $ backend.ai sesstpl list
+
+get template,
+.. code-block:: console
+
+  $ backend.ai sesstpl get <Template ID>
+
+or delete template.
+.. code-block:: console
+
+  $ backend.ai sesstpl delete <Template ID>
+
+
+Full syntax for task template
+-----------------------------
+
+.. code-block:: text
+
+  ---
+  api_version or apiVersion: str, required
+  kind: Enum['taskTemplate', 'task_template'], required
+  metadata: required
+    name: str, required
+    tag: str (optional)
+  spec:
+    type or sessionType: Enum['interactive', 'batch'] (optional), default=interactive
+    kernel:
+      image: str, required
+      environ: map[str, str] (optional)
+      run: (optional)
+        bootstrap: str (optional)
+        stratup or startup_command or startupCommand: str (optional)
+      git: (optional)
+        repository: str, required
+        commit: str (optional)
+        branch: str (optional)
+        credential: (optional)
+          username: str
+          password: str
+        destination_dir or destinationDir: str (optional)
+    mounts: map[str, str] (optional)
+    resources: map[str, str] (optional)
