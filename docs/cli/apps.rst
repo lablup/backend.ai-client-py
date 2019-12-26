@@ -130,6 +130,7 @@ Creating and starting task template
 Users can define some commonly used sessions into template, and save it
 for later use.
 First, define task template (in yaml format), like:
+
 .. code-block:: text
 
   ---
@@ -158,17 +159,20 @@ First, define task template (in yaml format), like:
 
 then upload task template to server, with command ``sesstpl create``.
 ``create`` CLI accepts yaml by STDIN, so following command will work:
+
 .. code-block:: console
 
   $ backend.ai sesstpl create < session-template.yaml
 
 or if you work in environment where STDIN is not supported, you can manually
 specify file name to import by ``-f`` flag:
+
 .. code-block:: console
 
   $ backend.ai sesstpl create -f session-template.yaml
 
 Once session template is uploaded, user can use it to start kernel session:
+
 .. code-block:: console
 
   $ backend.ai start-template <Template ID>
@@ -177,21 +181,25 @@ with substituting <Template ID> to your template ID.
 
 Basic CRUD operations for task template are also supported.
 So you can edit template,
+
 .. code-block:: console
 
   $ backend.ai sesstpl update <Template ID> < session-template.yaml
 
 list available templates,
+
 .. code-block:: console
 
   $ backend.ai sesstpl list
 
 get template,
+
 .. code-block:: console
 
   $ backend.ai sesstpl get <Template ID>
 
 or delete template.
+
 .. code-block:: console
 
   $ backend.ai sesstpl delete <Template ID>
