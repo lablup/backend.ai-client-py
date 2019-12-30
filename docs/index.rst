@@ -77,6 +77,7 @@ Command-line Interface
    cli/apps
    cli/storage
    cli/code-execution
+   cli/session-templates
 
 Developer Reference
 -------------------
