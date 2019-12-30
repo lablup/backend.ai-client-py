@@ -14,3 +14,4 @@ High-level Function Reference
    manager
    vfolder
    scaling-group
+   session-template
