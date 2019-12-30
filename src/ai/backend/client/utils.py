@@ -8,6 +8,9 @@ class Singleton(type):
 
 
 class Undefined(metaclass=Singleton):
+    '''
+    A special type to represent an undefined value.
+    '''
     pass
 
 
