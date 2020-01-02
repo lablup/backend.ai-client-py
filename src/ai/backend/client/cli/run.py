@@ -349,11 +349,6 @@ def _prepare_mount_arg(mount):
 @click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
               help='Resource options for creating compute session. '
                    '(e.g: shmem=64m)')
-@click.option('--template', type=bool, is_flag=True,
-              help='If specified, CLI will treat argument as task template ID. ')
-@click.option('--override-image', type=str, default=None,
-              help='Override kernel image of task template. '
-                   'Can only be used if --template option is active. ')
 # resource grouping
 @click.option('-d', '--domain', metavar='DOMAIN_NAME', default=None,
               help='Domain name where the session will be spawned. '
@@ -923,13 +918,13 @@ def start(image, session_id, owner,                                 # base args
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
 @click.option('--no-mount', is_flag=True,
-              help='If specified, client.py will request server not to mount '
+              help='If specified, client.py will tell server not to mount '
                    'any vFolders specified at template,')
 @click.option('--no-env', is_flag=True,
-              help='If specified, client.py will request server not to add '
+              help='If specified, client.py will tell server not to add '
                    'any environs specified at template,')
 @click.option('--no-resource', is_flag=True,
-              help='If specified, client.py will request server not to add '
+              help='If specified, client.py will tell server not to add '
                    'any resource specified at template,')
 def start_template(template_id, session_id, owner,        # base args
           type_, image, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
