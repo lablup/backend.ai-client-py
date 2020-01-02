@@ -168,8 +168,6 @@ class Kernel:
             domain_name = cls.session.config.domain
         if group_name is None:
             group_name = cls.session.config.group
-        if bootstrap_script is None:
-            bootstrap_script = ''
 
         mounts.extend(cls.session.config.vfolder_mounts)
         rqst = Request(cls.session, 'POST', '/kernel/create')
