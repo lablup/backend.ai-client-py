@@ -41,7 +41,7 @@ def create(template_path, domain, group, owner_access_key):
     with Session() as session:
         try:
             # TODO: Make user select template type when cluster template is implemented
-            template = session.SessionTemplate.create(body, 'task',
+            template = session.SessionTemplate.create(body,
                                                       domain_name=domain,
                                                       group_name=group,
                                                       owner_access_key=owner_access_key)

@@ -11,7 +11,6 @@ class SessionTemplate:
     @classmethod
     async def create(cls,
                      template: str,
-                     template_type: str,
                      domain_name: str = None,
                      group_name: str = None,
                      owner_access_key: str = None,
@@ -25,7 +24,6 @@ class SessionTemplate:
             group_name = cls.session.config.group
         body = {
             'payload': template,
-            'type': template_type,
             'group_name': group_name,
             'domain_name': domain_name,
             'owner_access_key': owner_access_key
