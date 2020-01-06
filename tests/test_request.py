@@ -181,10 +181,36 @@ def test_invalid_requests(dummy_endpoint):
         with pytest.raises(BackendAPIError) as e:
             with rqst.fetch():
                 pass
-            assert e.status == 404
-            assert e.data['type'] == \
-                'https://api.backend.ai/probs/kernel-not-found'
-            assert e.data['title'] == 'Kernel Not Found'
+        assert e.value.status == 404
+        assert e.value.data['type'] == \
+            'https://api.backend.ai/probs/kernel-not-found'
+        assert e.value.data['title'] == 'Kernel Not Found'
+
+
+@pytest.mark.asyncio
+async def test_invalid_websocket_request(dummy_endpoint):
+    with aioresponses() as m:
+        async with AsyncSession() as session:
+            body = json.dumps({
+                'type': 'https://api.backend.ai/probs/kernel-not-found',
+                'title': 'Kernel Not Found',
+            }).encode('utf8')
+            m.get(
+                dummy_endpoint, status=404, body=body,
+                headers={'Content-Type': 'application/problem+json; charset=utf-8',
+                         'Content-Length': str(len(body))},
+            )
+            rqst = Request(session, 'GET', '/')
+            with pytest.raises(BackendAPIError) as e:
+                async with rqst.connect_websocket():
+                    pass
+            assert e.value.status == 404
+            assert e.value.reason == 'Invalid response status'  # set by aiohttp
+            assert e.value.data['title'].startswith('aiohttp patch required')
+            # FIXME: update after upstream patch
+            # assert e.value.data['type'] == \
+            #     'https://api.backend.ai/probs/kernel-not-found'
+            # assert e.value.data['title'] == 'Kernel Not Found'
 
 
 @pytest.mark.asyncio
@@ -208,7 +234,6 @@ async def test_fetch_client_error_async(dummy_endpoint):
                     pass
 
 
-@pytest.mark.xfail
 @pytest.mark.asyncio
 async def test_fetch_cancellation_async(dummy_endpoint):
     # It seems that aiohttp swallows asyncio.CancelledError
