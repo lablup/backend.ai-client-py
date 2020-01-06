@@ -7,7 +7,26 @@ import textwrap
 from . import admin
 from ...helper import is_admin
 from ...session import Session, is_legacy_server
-from ..pretty import print_error
+from ..pretty import print_error, print_fail
+
+
+# Lets say formattable options are:
+format_options = {
+    'id':              ('Session ID', 'sess_id'),
+    'status':          ('Status', 'status'),
+    'status_info':     ('Status Info', 'status_info'),
+    'created_at':      ('Created At', 'created_at'),
+    'last_updated':    ('Last updated', 'status_changed'),
+    'result':          ('Result', 'result'),
+    'image':           ('Image', 'image'),
+    'type':            ('Type', 'sess_type'),
+    'task_id':         ('Task/Kernel ID', 'id'),
+    'tag':             ('Tag', 'tag'),
+    'occupied_slots':  ('Occupied Resource', 'occupied_slots'),
+    'used_memory':     ('Used Memory (MiB)', 'mem_cur_bytes'),
+    'max_used_memory': ('Max Used Memory (MiB)', 'mem_max_bytes'),
+    'cpu_using':       ('CPU Using (%)', 'cpu_using'),
+}
 
 
 @admin.command()
@@ -32,7 +51,9 @@ from ..pretty import print_error
 @click.option('-a', '--all', is_flag=True,
               help='Display all sessions matching the condition using pagination.')
 @click.option('--detail', is_flag=True, help='Show more details using more columns.')
-def sessions(status, access_key, id_only, show_tid, dead, running, all, detail):
+@click.option('-f', '--format', default=None,  help='Customizable CLI command.')
+@click.option('--plain', is_flag=True, help='Show process status in plain format.')
+def sessions(status, access_key, id_only, show_tid, dead, running, all, detail, plain, format):
     '''
     List and manage compute sessions.
     '''
@@ -46,7 +67,18 @@ def sessions(status, access_key, id_only, show_tid, dead, running, all, detail):
     except Exception as e:
         print_error(e)
         sys.exit(1)
-    if not id_only:
+    if id_only:
+        pass
+    elif format is not None:
+        options = format.split(',')
+        for opt in options:
+            if opt not in format_options:
+                print_fail(f'There is no such format option: {opt}')
+                sys.exit(1)
+        fields.extend([
+            format_options[opt] for opt in options
+        ])
+    else:
         fields.extend([
             ('Image', 'image'),
             ('Type', 'sess_type'),
@@ -140,7 +172,8 @@ def sessions(status, access_key, id_only, show_tid, dead, running, all, detail):
             else:
                 table = tabulate(
                     [item.values() for item in items],
-                    headers=(item[0] for item in fields)
+                    headers=[] if plain else (item[0] for item in fields),
+                    tablefmt="plain" if plain else None
                 )
                 if not is_first:
                     table_rows = table.split('\n')
@@ -171,7 +204,8 @@ def sessions(status, access_key, id_only, show_tid, dead, running, all, detail):
                         print(item['sess_id'])
                 else:
                     print(tabulate([item.values() for item in items],
-                                    headers=(item[0] for item in fields)))
+                                    headers=[] if plain else (item[0] for item in fields),
+                                    tablefmt="plain" if plain else None))
                 if total_count > paginating_interval:
                     print("More sessions can be displayed by using -a/--all option.")
         except Exception as e:
