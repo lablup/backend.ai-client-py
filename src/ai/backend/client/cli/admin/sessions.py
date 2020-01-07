@@ -52,7 +52,7 @@ format_options = {
               help='Display all sessions matching the condition using pagination.')
 @click.option('--detail', is_flag=True, help='Show more details using more columns.')
 @click.option('-f', '--format', default=None,  help='Display only specified fields.')
-@click.option('--plain', is_flag=True, help='Display process status in plain format.')
+@click.option('--plain', is_flag=True, help='Display the session list without decorative line drawings and the header.')
 def sessions(status, access_key, id_only, show_tid, dead, running, all, detail, plain, format):
     '''
     List and manage compute sessions.
