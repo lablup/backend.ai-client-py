@@ -75,7 +75,7 @@ Both commands offer options to specify which fields of sessions should be printe
        ``Max Used Memory (MiB)``, and ``CPU Using (%)``.
 
    * - ``-f``, ``--format``
-     - ``Session ID``, ``Owner``, and specified fields by user.
+     - Specified fields by user.
 
 .. note::
     Fields for ``-f/--format`` option can be displayed by specifying comma-separated parameters.
