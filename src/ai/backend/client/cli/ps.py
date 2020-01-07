@@ -3,6 +3,7 @@ import click
 from . import main
 from .admin.sessions import sessions
 
+
 @main.command()
 @click.option('-s', '--status', default=None,
               type=click.Choice([
