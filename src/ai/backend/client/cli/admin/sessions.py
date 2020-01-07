@@ -51,8 +51,8 @@ format_options = {
 @click.option('-a', '--all', is_flag=True,
               help='Display all sessions matching the condition using pagination.')
 @click.option('--detail', is_flag=True, help='Show more details using more columns.')
-@click.option('-f', '--format', default=None,  help='Customizable CLI command.')
-@click.option('--plain', is_flag=True, help='Show process status in plain format.')
+@click.option('-f', '--format', default=None,  help='Display only specified fields.')
+@click.option('--plain', is_flag=True, help='Display process status in plain format.')
 def sessions(status, access_key, id_only, show_tid, dead, running, all, detail, plain, format):
     '''
     List and manage compute sessions.
