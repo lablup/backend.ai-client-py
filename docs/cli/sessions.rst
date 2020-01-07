@@ -28,7 +28,7 @@ other users by adding ``--access-key`` option here.
 
   backend.ai admin sessions
 
-Both commands offers options to set the status filter as follows.
+Both commands offer options to set the status filter as follows.
 For other options, please consult the output of ``--help``.
 
 .. list-table::
@@ -48,7 +48,7 @@ For other options, please consult the output of ``--help``.
    * - ``--dead``
      - ``CANCELLED`` and ``TERMINATED``.
 
-Both commands offers options to specify which fields of sessions should be printed as follows.
+Both commands offer options to specify which fields of sessions should be printed as follows.
 
 .. list-table::
    :widths: 20 80
