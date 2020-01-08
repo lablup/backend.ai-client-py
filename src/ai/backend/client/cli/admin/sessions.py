@@ -71,9 +71,6 @@ def sessions(status, access_key, id_only, show_tid, dead, running, all, detail, 
         pass
     elif format is not None:
         options = format.split(',')
-        if len(options) == 0:
-            print_fail(f'At least one field is required for custom format')
-            sys.exit(1)
         for opt in options:
             if opt not in format_options:
                 print_fail(f'There is no such format option: {opt}')
