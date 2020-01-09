@@ -208,7 +208,7 @@ class ComputeSession:
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(data['kernelId'], owner_access_key)  # type: ignore
+            o = cls(data['sessId'], owner_access_key)  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -332,7 +332,7 @@ class ComputeSession:
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(data['kernelId'], owner_access_key)  # type: ignore
+            o = cls(data['sessId'], owner_access_key)  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -684,7 +684,7 @@ class ComputeSession:
         :returns: a :class:`StreamEvents` object.
         '''
         params = {
-            'sessionId': self.kernel_id,
+            'sessId': self.kernel_id,
         }
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
