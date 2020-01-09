@@ -2,7 +2,7 @@ import pytest
 
 import uuid
 
-from ai.backend.client import Session, AsyncSession
+from ai.backend.client.session import Session, AsyncSession
 from ai.backend.client.request import Request
 from ai.backend.client.exceptions import BackendAPIError
 
