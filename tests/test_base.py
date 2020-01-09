@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from ai.backend.client.base import BaseFunction, api_function
+from ai.backend.client.func.base import BaseFunction, api_function
 from ai.backend.client.session import Session, AsyncSession
 
 

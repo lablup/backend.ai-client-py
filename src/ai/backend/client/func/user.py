@@ -2,8 +2,8 @@ import textwrap
 from typing import Iterable, Sequence
 
 from .base import api_function
-from .auth import AuthToken, AuthTokenTypes
-from .request import Request
+from ..request import Request
+from ..auth import AuthToken, AuthTokenTypes
 
 __all__ = (
     'User',

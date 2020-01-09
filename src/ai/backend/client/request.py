@@ -24,6 +24,9 @@ log = logging.getLogger('ai.backend.client.request')
 __all__ = [
     'Request',
     'Response',
+    'WebSocketResponse',
+    'SSEResponse',
+    'AttachedFile',
 ]
 
 

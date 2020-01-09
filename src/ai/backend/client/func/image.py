@@ -1,7 +1,7 @@
 from typing import Iterable, Sequence
 
-from .base import api_function
-from .request import Request
+from ai.backend.client.func.base import api_function
+from ai.backend.client.request import Request
 
 __all__ = (
     'Image',

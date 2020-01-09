@@ -1,7 +1,7 @@
 from typing import Mapping
 
 from .base import api_function
-from .request import Request
+from ..request import Request
 
 __all__ = (
     'System',

@@ -13,6 +13,7 @@ __all__ = [
     'get_config',
     'set_config',
     'APIConfig',
+    'DEFAULT_CHUNK_SIZE',
 ]
 
 _config = None

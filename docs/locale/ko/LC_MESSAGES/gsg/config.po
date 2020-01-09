@@ -195,10 +195,10 @@ msgstr "API 요청별 인증 서명 생성 알고리즘을 위한 해쉬 알고�
 #: ai.backend.client.config.APIConfig:20 of
 msgid ""
 "A list of vfolder names (that must belong to the given access key) to be "
-"automatically mounted upon any :func:`Kernel.get_or_create() "
-"<ai.backend.client.kernel.Kernel.get_or_create>` calls."
+"automatically mounted upon any :func:`ComputeSession.get_or_create() "
+"<ai.backend.client.kernel.ComputeSession.get_or_create>` calls."
 msgstr ""
-":func:`Kernel.get_or_create() <ai.backend.client.kernel.Kernel.get_or_create>`\ 와 같이 세션 생성 API 호출 시 "
+":func:`ComputeSession.get_or_create() <ai.backend.client.kernel.ComputeSession.get_or_create>`\ 와 같이 세션 생성 API 호출 시 "
 "자동으로 탑재될 가상폴더의 목록 (반드시 요청자의 access key가 소유 또는 접근 가능한 것이어야 함)"
 
 # 6b26e74504d641c68d85a9006247f0be

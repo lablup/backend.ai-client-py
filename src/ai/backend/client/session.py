@@ -131,23 +131,23 @@ class Session(BaseSession):
 
         self.aiohttp_session = self.worker_thread.execute(_create_aiohttp_session())
 
-        from .base import BaseFunction
-        from .system import System
-        from .admin import Admin
-        from .agent import Agent, AgentWatcher
-        from .auth import Auth
-        from .domain import Domain
-        from .group import Group
-        from .image import Image
-        from .kernel import Kernel
-        from .keypair import KeyPair
-        from .manager import Manager
-        from .resource import Resource
-        from .keypair_resource_policy import KeypairResourcePolicy
-        from .scaling_group import ScalingGroup
-        from .session_template import SessionTemplate
-        from .user import User
-        from .vfolder import VFolder
+        from ai.backend.client.func.base import BaseFunction
+        from .func.system import System
+        from .func.admin import Admin
+        from .func.agent import Agent, AgentWatcher
+        from .func.auth import Auth
+        from .func.domain import Domain
+        from .func.group import Group
+        from .func.image import Image
+        from .func.session import ComputeSession
+        from .func.keypair import KeyPair
+        from .func.manager import Manager
+        from .func.resource import Resource
+        from .func.keypair_resource_policy import KeypairResourcePolicy
+        from .func.scaling_group import ScalingGroup
+        from .func.session_template import SessionTemplate
+        from .func.user import User
+        from .func.vfolder import VFolder
 
         self.System = type('System', (BaseFunction, ), {
             **System.__dict__,
@@ -222,7 +222,7 @@ class Session(BaseSession):
         '''
 
         self.Kernel = type('Kernel', (BaseFunction, ), {
-            **Kernel.__dict__,
+            **ComputeSession.__dict__,
             'session': self,
         })
         '''
@@ -352,22 +352,22 @@ class AsyncSession(BaseSession):
         connector = aiohttp.TCPConnector(ssl=ssl)
         self.aiohttp_session = aiohttp.ClientSession(connector=connector)
 
-        from .base import BaseFunction
-        from .system import System
-        from .admin import Admin
-        from .agent import Agent, AgentWatcher
-        from .auth import Auth
-        from .group import Group
-        from .image import Image
-        from .kernel import Kernel
-        from .keypair import KeyPair
-        from .manager import Manager
-        from .resource import Resource
-        from .keypair_resource_policy import KeypairResourcePolicy
-        from .scaling_group import ScalingGroup
-        from .session_template import SessionTemplate
-        from .user import User
-        from .vfolder import VFolder
+        from ai.backend.client.func.base import BaseFunction
+        from .func.system import System
+        from .func.admin import Admin
+        from .func.agent import Agent, AgentWatcher
+        from .func.auth import Auth
+        from .func.group import Group
+        from .func.image import Image
+        from .func.session import ComputeSession
+        from .func.keypair import KeyPair
+        from .func.manager import Manager
+        from .func.resource import Resource
+        from .func.keypair_resource_policy import KeypairResourcePolicy
+        from .func.scaling_group import ScalingGroup
+        from .func.session_template import SessionTemplate
+        from .func.user import User
+        from .func.vfolder import VFolder
 
         self.System = type('System', (BaseFunction, ), {
             **System.__dict__,
@@ -433,7 +433,7 @@ class AsyncSession(BaseSession):
         '''
 
         self.Kernel = type('Kernel', (BaseFunction, ), {
-            **Kernel.__dict__,
+            **ComputeSession.__dict__,
             'session': self,
         })
         '''

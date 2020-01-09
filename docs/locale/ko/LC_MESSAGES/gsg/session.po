@@ -129,7 +129,7 @@ msgstr ""
 #: ai.backend.client.session.AsyncSession.Kernel:1
 #: ai.backend.client.session.Session.Kernel:1 of
 msgid ""
-"The :class:`~ai.backend.client.kernel.Kernel` function proxy bound to "
+"The :class:`~ai.backend.client.kernel.ComputeSession` function proxy bound to "
 "this session."
 msgstr ""
 

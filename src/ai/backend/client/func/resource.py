@@ -1,7 +1,7 @@
 from typing import Sequence
 
 from .base import api_function
-from .request import Request
+from ..request import Request
 
 __all__ = (
     'Resource'

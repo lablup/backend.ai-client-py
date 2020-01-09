@@ -20,7 +20,7 @@ msgstr ""
 
 # 4cb8460d73a249efbf594e68f226e625
 #: ../../func/kernel.rst:2
-msgid "Kernel Functions"
+msgid "ComputeSession Functions"
 msgstr "커널 함수"
 
 # 9c7262da0af04da993d60a30569085fa
@@ -44,14 +44,14 @@ msgstr ""
 #: ai.backend.client.kernel.Kernel:7 of
 msgid ""
 "For multi-container sessions, all methods take effects to the master "
-"container only, except :func:`~Kernel.destroy` and "
-":func:`~Kernel.restart` methods. So it is the user's responsibility to "
+"container only, except :func:`~ComputeSession.destroy` and "
+":func:`~ComputeSession.restart` methods. So it is the user's responsibility to "
 "distribute uploaded files to multiple containers using explicit copies or"
 " virtual folders which are commonly mounted to all containers belonging "
 "to the same compute session."
 msgstr ""
-"여러 개의 다중 컨테이너로 이뤄진 연산 세션에서는, :func:`~Kernel.destroy` 및 "
-":func:`~Kernel.restart` 메소드를 제외한 모든 메소드는 세션의 마스터 컨테이너에게만 "
+"여러 개의 다중 컨테이너로 이뤄진 연산 세션에서는, :func:`~ComputeSession.destroy` 및 "
+":func:`~ComputeSession.restart` 메소드를 제외한 모든 메소드는 세션의 마스터 컨테이너에게만 "
 "유효합니다. 따라서 여러 컨테이너가 동일한 데이터를 바라보거나 분산 처리하도록 "
 "하기 위해서는 가상폴더 탑재 옵션을 활용하여야 합니다. 현재 이러한 작업은 "
 "사용자의 몫입니다. (추후 업데이트로 편의성 개선 예정)"
@@ -232,7 +232,7 @@ msgid ""
 "creates a new compute session as long as the server has enough resources "
 "and your API key has remaining quota. If *client_token* is a valid string"
 " and there is an existing compute session with the same token and the "
-"same *lang*, then it returns the :class:`Kernel` instance representing "
+"same *lang*, then it returns the :class:`ComputeSession` instance representing "
 "the existing session."
 msgstr ""
 
@@ -278,12 +278,12 @@ msgstr ""
 
 # 06268f9393be48a79612500e1701b57e
 #: ai.backend.client.kernel.Kernel.get_or_create:29 of
-msgid ":py:class:`~ai.backend.client.kernel.Kernel`"
+msgid ":py:class:`~ai.backend.client.kernel.ComputeSession`"
 msgstr ""
 
 # 1b943060d8914f20ad8b8f0b9c6ab952
 #: ai.backend.client.kernel.Kernel.get_or_create:30 of
-msgid "The :class:`Kernel` instance."
+msgid "The :class:`ComputeSession` instance."
 msgstr ""
 
 # 3c3f2172f52f409ab77747baf65aba81

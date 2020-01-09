@@ -12,7 +12,7 @@ import time
 import pytest
 
 from ai.backend.client.compat import token_hex
-from ai.backend.client.kernel import Kernel
+from ai.backend.client.func.session import ComputeSession
 
 # module-level marker
 pytestmark = pytest.mark.integration
@@ -40,7 +40,7 @@ def print_stat(msg, times_taken):
 def run_create_kernel(_idx):
     begin = time.monotonic()
     try:
-        k = Kernel.get_or_create('python3')
+        k = ComputeSession.get_or_create('python3')
         ret = k.kernel_id
     except:
         log.exception('run_create_kernel')
@@ -77,7 +77,7 @@ def run_execute_code(kid):
         console = []
         run_id = token_hex(8)
         while True:
-            result = Kernel(kid).execute(run_id, sample_code)
+            result = ComputeSession(kid).execute(run_id, sample_code)
             console.extend(result['console'])
             if result['status'] == 'finished':
                 break
@@ -110,7 +110,7 @@ def run_restart_kernel(kid):
     # 2nd params is currently ignored.
     if kid is not None:
         begin = time.monotonic()
-        Kernel(kid).restart()
+        ComputeSession(kid).restart()
         end = time.monotonic()
         return end - begin
     return None
@@ -137,7 +137,7 @@ def restart_kernels(kernel_ids, parallel=False):
 def run_destroy_kernel(kid):
     if kid is not None:
         begin = time.monotonic()
-        Kernel(kid).destroy()
+        ComputeSession(kid).destroy()
         end = time.monotonic()
         return end - begin
     return None

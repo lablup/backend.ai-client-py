@@ -1,6 +1,5 @@
-from ai.backend.client.base import api_function
-
-from .request import Request
+from .base import api_function
+from ..request import Request
 
 
 class Manager:

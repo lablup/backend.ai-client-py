@@ -1,8 +1,8 @@
 Scaling Group Functions
 =======================
 
-.. module:: ai.backend.client.scaling_group
-.. currentmodule:: ai.backend.client.scaling_group
+.. module:: ai.backend.client.func.scaling_group
+.. currentmodule:: ai.backend.client.func.scaling_group
 
 .. autoclass:: ScalingGroup
   :members:

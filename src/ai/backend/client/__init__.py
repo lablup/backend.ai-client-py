@@ -1,10 +1,10 @@
-from .exceptions import *  # noqa
-from .session import *  # noqa
+from . import exceptions
+from . import session
 
-__all__ = [
-    exceptions.__all__,  # noqa
-    session.__all__,  # noqa
-]
+__all__ = (
+    *exceptions.__all__,
+    *session.__all__,
+)
 
 __version__ = '19.12.0a1'
 

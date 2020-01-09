@@ -14,19 +14,19 @@ from aiohttp import hdrs
 from tqdm import tqdm
 
 from .base import api_function
-from .compat import current_loop
-from .config import DEFAULT_CHUNK_SIZE
-from .exceptions import BackendClientError
-from .request import (
+from ..compat import current_loop
+from ..config import DEFAULT_CHUNK_SIZE
+from ..exceptions import BackendClientError
+from ..request import (
     Request, AttachedFile,
     WebSocketResponse,
     SSEResponse,
 )
-from .cli.pretty import ProgressReportingReader
-from .utils import undefined
+from ..cli.pretty import ProgressReportingReader
+from ..utils import undefined
 
 __all__ = (
-    'Kernel',
+    'ComputeSession',
 )
 
 
@@ -40,7 +40,7 @@ def drop(d, dropval):
     return newd
 
 
-class Kernel:
+class ComputeSession:
     '''
     Provides various interactions with compute sessions in Backend.AI.
 
@@ -100,7 +100,7 @@ class Kernel:
                             bootstrap_script: str = None,
                             tag: str = None,
                             scaling_group: str = None,
-                            owner_access_key: str = None) -> 'Kernel':
+                            owner_access_key: str = None) -> 'ComputeSession':
         '''
         Get-or-creates a compute session.
         If *client_token* is ``None``, it creates a new compute session as long as
@@ -237,7 +237,7 @@ class Kernel:
                                    bootstrap_script: str = undefined,
                                    tag: str = undefined,
                                    scaling_group: str = undefined,
-                                   owner_access_key: str = undefined) -> 'Kernel':
+                                   owner_access_key: str = undefined) -> 'ComputeSession':
         '''
         Get-or-creates a compute session from template.
         All other parameters provided  will be overwritten to template, including

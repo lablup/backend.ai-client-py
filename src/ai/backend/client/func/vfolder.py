@@ -6,11 +6,11 @@ from aiohttp import hdrs
 from tqdm import tqdm
 
 from .base import api_function
-from .compat import current_loop
-from .config import DEFAULT_CHUNK_SIZE
-from .exceptions import BackendAPIError
-from .request import Request, AttachedFile
-from .cli.pretty import ProgressReportingReader
+from ..compat import current_loop
+from ..config import DEFAULT_CHUNK_SIZE
+from ..exceptions import BackendAPIError
+from ..request import Request, AttachedFile
+from ..cli.pretty import ProgressReportingReader
 
 __all__ = (
     'VFolder',

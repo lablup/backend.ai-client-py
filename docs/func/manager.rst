@@ -1,8 +1,8 @@
 Manager Functions
 =================
 
-.. module:: ai.backend.client.manager
-.. currentmodule:: ai.backend.client.manager
+.. module:: ai.backend.client.func.manager
+.. currentmodule:: ai.backend.client.func.manager
 
 .. autoclass:: Manager
    :members:

@@ -1,7 +1,7 @@
 from typing import List, Mapping
 
 from .base import api_function
-from .request import Request
+from ..request import Request
 
 
 class SessionTemplate:
