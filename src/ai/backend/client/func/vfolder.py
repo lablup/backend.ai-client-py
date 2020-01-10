@@ -10,7 +10,7 @@ from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE
 from ..exceptions import BackendAPIError
 from ..request import Request, AttachedFile
-from ..cli.pretty import ProgressReportingReader
+from ..utils import ProgressReportingReader
 
 __all__ = (
     'VFolder',
@@ -154,8 +154,8 @@ class VFolder:
 
     @api_function
     async def delete_files(self,
-                            files: Sequence[Union[str, Path]],
-                            recursive: bool = False):
+                           files: Sequence[Union[str, Path]],
+                           recursive: bool = False):
         rqst = Request(self.session, 'DELETE',
                        '/folders/{}/delete_files'.format(self.name))
         rqst.set_json({
@@ -167,7 +167,7 @@ class VFolder:
 
     @api_function
     async def download(self, files: Sequence[Union[str, Path]],
-                        show_progress: bool = False):
+                       show_progress: bool = False):
 
         rqst = Request(self.session, 'GET',
                        '/folders/{}/download'.format(self.name))

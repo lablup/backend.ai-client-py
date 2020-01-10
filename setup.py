@@ -29,7 +29,7 @@ test_requires = [
     'pytest-cov',
     'pytest-mock',
     'pytest-asyncio>=0.10.0',
-    'aioresponses>=0.6',
+    'aioresponses==0.6.1',
     'asynctest>=0.13; python_version<"3.8"',
     'codecov',
     'flake8>=3.7.8',

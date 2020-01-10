@@ -22,8 +22,7 @@ from ..request import (
     WebSocketResponse,
     SSEResponse,
 )
-from ..cli.pretty import ProgressReportingReader
-from ..utils import undefined
+from ..utils import undefined, ProgressReportingReader
 
 __all__ = (
     'ComputeSession',
