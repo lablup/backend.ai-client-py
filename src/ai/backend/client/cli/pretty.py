@@ -1,12 +1,9 @@
 import enum
 import functools
-import io
-import os
 import sys
 import textwrap
 import traceback
 
-from tqdm import tqdm
 from click import echo, style
 
 from ..exceptions import BackendAPIError

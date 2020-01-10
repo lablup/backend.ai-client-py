@@ -1,11 +1,13 @@
 import abc
 import asyncio
 import threading
+from typing import Tuple
 import queue
 
 import aiohttp
+from multidict import CIMultiDict
 
-from .config import APIConfig, get_config
+from .config import APIConfig, get_config, parse_api_version
 
 
 __all__ = (
@@ -25,6 +27,29 @@ def is_legacy_server():
     bai_version = ret['version']
     legacy = True if bai_version <= 'v4.20181215' else False
     return legacy
+
+
+async def _negotiate_api_version(
+    http_session: aiohttp.ClientSession,
+    config: APIConfig,
+) -> Tuple[int, str]:
+    try:
+        timeout_config = aiohttp.ClientTimeout(
+            total=None, connect=None,
+            sock_connect=config.connection_timeout,
+            sock_read=config.read_timeout,
+        )
+        headers = CIMultiDict([
+            ('User-Agent', config.user_agent),
+        ])
+        probe_url = config.endpoint / 'func/' if config.endpoint_type == 'session' else config.endpoint
+        async with http_session.get(probe_url, timeout=timeout_config, headers=headers) as resp:
+            resp.raise_for_status()
+            server_info = await resp.json()
+            return min(parse_api_version(server_info['version']), parse_api_version(config.version))
+    except (asyncio.TimeoutError, aiohttp.ClientError):
+        # fallback to the configured API version
+        return parse_api_version(config.version)
 
 
 class _SyncWorkerThread(threading.Thread):
@@ -72,12 +97,17 @@ class BaseSession(metaclass=abc.ABCMeta):
 
     __slots__ = (
         '_config', '_closed', 'aiohttp_session',
-        'System',
-        'Admin', 'Agent', 'AgentWathcer', 'Auth', 'Domain', 'Group', 'ScalingGroup',
-        'Admin', 'Agent', 'AgentWatcher', 'Domain', 'Group', 'ScalingGroup',
-        'Image', 'ComputeSession', 'KeyPair', 'Manager', 'Resource',
-        'KeypairResourcePolicy', 'User', 'SessionTemplate', 'VFolder',
+        'api_version',
+        'System', 'Manager', 'Admin',
+        'Agent', 'AgentWatcher', 'ScalingGroup',
+        'Image', 'ComputeSession', 'SessionTemplate',
+        'Domain', 'Group', 'Auth', 'User', 'KeyPair',
+        'Resource', 'KeypairResourcePolicy',
+        'VFolder',
     )
+
+    aiohttp_session: aiohttp.ClientSession
+    api_version: Tuple[int, str]
 
     def __init__(self, *, config: APIConfig = None):
         self._closed = False
@@ -117,12 +147,12 @@ class Session(BaseSession):
         '_worker_thread',
     )
 
-    def __init__(self, *, config: APIConfig = None):
+    def __init__(self, *, config: APIConfig = None) -> None:
         super().__init__(config=config)
         self._worker_thread = _SyncWorkerThread()
         self._worker_thread.start()
 
-        async def _create_aiohttp_session():
+        async def _create_aiohttp_session() -> aiohttp.ClientSession:
             ssl = None
             if self._config.skip_sslcert_validation:
                 ssl = False
@@ -326,6 +356,8 @@ class Session(BaseSession):
 
     def __enter__(self):
         assert not self.closed, 'Cannot reuse closed session'
+        self.api_version = self.worker_thread.execute(
+            _negotiate_api_version(self.aiohttp_session, self.config))
         return self
 
     def __exit__(self, exc_type, exc_obj, exc_tb):
@@ -521,6 +553,7 @@ class AsyncSession(BaseSession):
 
     async def __aenter__(self):
         assert not self.closed, 'Cannot reuse closed session'
+        self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
         return self
 
     async def __aexit__(self, exc_type, exc_obj, exc_tb):

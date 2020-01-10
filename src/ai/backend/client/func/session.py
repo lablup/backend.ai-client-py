@@ -3,8 +3,11 @@ import os
 import tarfile
 import tempfile
 from typing import (
-    Iterable, Mapping, Sequence, Union,
+    Iterable, Union,
     AsyncGenerator,
+    Mapping,
+    Sequence,
+    Tuple,
 )
 from pathlib import Path
 import uuid
@@ -39,6 +42,12 @@ def drop(d, dropval):
     return newd
 
 
+def _get_session_api_prefix(api_version: Tuple[int, str]) -> str:
+    if api_version[0] <= 4:
+        return 'kernel'
+    return 'session'
+
+
 class ComputeSession:
     '''
     Provides various interactions with compute sessions in Backend.AI.
@@ -69,7 +78,8 @@ class ComputeSession:
     async def get_task_logs(cls, task_id: str, *,
                             chunk_size: int = 8192
                             ) -> AsyncGenerator[bytes, None]:
-        rqst = Request(cls.session, 'GET', '/session/_/logs', params={
+        prefix = _get_session_api_prefix(cls.session.api_version)
+        rqst = Request(cls.session, 'GET', f'/{prefix}/_/logs', params={
             'taskId': task_id,
         })
         async with rqst.fetch() as resp:
@@ -169,7 +179,8 @@ class ComputeSession:
             group_name = cls.session.config.group
 
         mounts.extend(cls.session.config.vfolder_mounts)
-        rqst = Request(cls.session, 'POST', '/session/create')
+        prefix = _get_session_api_prefix(cls.session.api_version)
+        rqst = Request(cls.session, 'POST', f'/{prefix}/create')
         params = {
             'tag': tag,
             'clientSessionToken': client_token,
@@ -182,14 +193,14 @@ class ComputeSession:
                 'scalingGroup': scaling_group,
             },
         }
-        if cls.session.config.version >= 'v5.20191215':
+        if cls.session.api_version >= (5, '20191215'):
             params['config'].update({
                 'mount_map': mount_map,
             })
             params.update({
                 'bootstrap_script': bootstrap_script,
             })
-        if cls.session.config.version >= 'v4.20190615':
+        if cls.session.api_version >= (4, '20190615'):
             params.update({
                 'owner_access_key': owner_access_key,
                 'domain': domain_name,
@@ -200,14 +211,14 @@ class ComputeSession:
                 'reuseIfExists': not no_reuse,
                 'startupCommand': startup_command,
             })
-        if cls.session.config.version > 'v4.20181215':
+        if cls.session.api_version > (4, '20181215'):
             params['image'] = image
         else:
             params['lang'] = image
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(data['sessionId'], owner_access_key)  # type: ignore
+            o = cls(data[f'{prefix}Id'], owner_access_key)  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -302,7 +313,8 @@ class ComputeSession:
             group_name = cls.session.config.group
         if cls.session.config.vfolder_mounts:
             mounts.extend(cls.session.config.vfolder_mounts)
-        rqst = Request(cls.session, 'POST', '/session/from-template')
+        prefix = _get_session_api_prefix(cls.session.api_version)
+        rqst = Request(cls.session, 'POST', f'/{prefix}/from-template')
         params = {
             'template_id': template_id,
             'tag': tag,
@@ -331,7 +343,7 @@ class ComputeSession:
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(data['sessionId'], owner_access_key)  # type: ignore
+            o = cls(data[f'{prefix}Id'], owner_access_key)  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -353,9 +365,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-                       'DELETE', '/session/{}'.format(self.session_id),
-                       params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'DELETE', f'/{prefix}/{self.session_id}',
+            params=params,
+        )
         async with rqst.fetch() as resp:
             if resp.status == 200:
                 return await resp.json()
@@ -370,9 +385,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-                       'PATCH', '/session/{}'.format(self.session_id),
-                       params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'PATCH', f'/{prefix}/{self.session_id}',
+            params=params,
+        )
         async with rqst.fetch():
             pass
 
@@ -386,9 +404,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-                       'POST', '/session/{}/interrupt'.format(self.session_id),
-                       params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'POST', f'/{prefix}/{self.session_id}/interrupt',
+            params=params,
+        )
         async with rqst.fetch():
             pass
 
@@ -412,9 +433,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-            'POST', '/session/{}/complete'.format(self.session_id),
-            params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'POST', f'/{prefix}/{self.session_id}/complete',
+            params=params,
+        )
         rqst.set_json({
             'code': code,
             'options': {
@@ -435,9 +459,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-                       'GET', '/session/{}'.format(self.session_id),
-                       params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'GET', f'/{prefix}/{self.session_id}',
+            params=params,
+        )
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -449,9 +476,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-                       'GET', '/session/{}/logs'.format(self.session_id),
-                       params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'GET', f'/{prefix}/{self.session_id}/logs',
+            params=params,
+        )
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -487,21 +517,26 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
+        prefix = _get_session_api_prefix(self.session.api_version)
         if mode in {'query', 'continue', 'input'}:
             assert code is not None, \
                    'The code argument must be a valid string even when empty.'
-            rqst = Request(self.session,
-                'POST', '/session/{}'.format(self.session_id),
-                params=params)
+            rqst = Request(
+                self.session,
+                'POST', f'/{prefix}/{self.session_id}',
+                params=params,
+            )
             rqst.set_json({
                 'mode': mode,
                 'code': code,
                 'runId': run_id,
             })
         elif mode == 'batch':
-            rqst = Request(self.session,
-                'POST', '/session/{}'.format(self.session_id),
-                params=params)
+            rqst = Request(
+                self.session,
+                'POST', f'/{prefix}/{self.session_id}',
+                params=params,
+            )
             rqst.set_json({
                 'mode': mode,
                 'code': code,
@@ -514,9 +549,11 @@ class ComputeSession:
                 },
             })
         elif mode == 'complete':
-            rqst = Request(self.session,
-                'POST', '/session/{}/complete'.format(self.session_id),
-                params=params)
+            rqst = Request(
+                self.session,
+                'POST', f'/{prefix}/{self.session_id}',
+                params=params,
+            )
             rqst.set_json({
                 'code': code,
                 'options': {
@@ -556,8 +593,11 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        base_path = (Path.cwd() if basedir is None
-                     else Path(basedir).resolve())
+        prefix = _get_session_api_prefix(self.session.api_version)
+        base_path = (
+            Path.cwd() if basedir is None
+            else Path(basedir).resolve()
+        )
         files = [Path(file).resolve() for file in files]
         total_size = 0
         for file_path in files:
@@ -581,9 +621,11 @@ class ComputeSession:
                           .format(file_path, base_path)
                     raise ValueError(msg) from None
 
-            rqst = Request(self.session,
-                           'POST', '/session/{}/upload'.format(self.session_id),
-                           params=params)
+            rqst = Request(
+                self.session,
+                'POST', f'/{prefix}/{self.session_id}/upload',
+                params=params,
+            )
             rqst.attach_files(attachments)
             async with rqst.fetch() as resp:
                 return resp
@@ -604,9 +646,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-                       'GET', '/session/{}/download'.format(self.session_id),
-                       params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'GET', f'/{prefix}/{self.session_id}/download',
+            params=params,
+        )
         rqst.set_json({
             'files': [*map(str, files)],
         })
@@ -653,9 +698,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
-                       'GET', '/session/{}/files'.format(self.session_id),
-                       params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        rqst = Request(
+            self.session,
+            'GET', f'/{prefix}/{self.session_id}/files',
+            params=params,
+        )
         rqst.set_json({
             'path': path,
         })
@@ -667,10 +715,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-
-        api_rqst = Request(self.session,
-                           'GET', '/stream/session/{0}/apps'.format(self.session_id),
-                           params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        api_rqst = Request(
+            self.session,
+            'GET', f'/stream/{prefix}/{self.session_id}/apps',
+            params=params,
+        )
         async with api_rqst.fetch() as resp:
             return await resp.json()
 
@@ -687,9 +737,12 @@ class ComputeSession:
         }
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        request = Request(self.session,
-                          'GET', '/stream/session/_/events',
-                          params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        request = Request(
+            self.session,
+            'GET', f'/stream/{prefix}/_/events',
+            params=params,
+        )
         return request.connect_events()
 
     # only supported in AsyncKernel
@@ -703,9 +756,12 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        request = Request(self.session,
-                          'GET', '/stream/session/{}/pty'.format(self.session_id),
-                          params=params)
+        prefix = _get_session_api_prefix(self.session.api_version)
+        request = Request(
+            self.session,
+            'GET', f'/stream/{prefix}/{self.session_id}/pty',
+            params=params,
+        )
         return request.connect_websocket(response_cls=StreamPty)
 
     # only supported in AsyncKernel
@@ -720,6 +776,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
+        prefix = _get_session_api_prefix(self.session.api_version)
         opts = {} if opts is None else opts
         if mode == 'query':
             opts = {}
@@ -733,9 +790,11 @@ class ComputeSession:
         else:
             msg = 'Invalid stream-execution mode: {0}'.format(mode)
             raise BackendClientError(msg)
-        request = Request(self.session,
-                          'GET', '/stream/session/{}/execute'.format(self.session_id),
-                          params=params)
+        request = Request(
+            self.session,
+            'GET', f'/stream/{prefix}/{self.session_id}/execute',
+            params=params,
+        )
 
         async def send_code(ws):
             await ws.send_json({
