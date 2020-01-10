@@ -47,7 +47,7 @@ class WSProxy:
         self.down_task = None
 
     async def run(self):
-        path = "/stream/kernel/{0}/{1}proxy".format(self.session_id, self.protocol)
+        path = "/stream/session/{0}/{1}proxy".format(self.session_id, self.protocol)
         params = {'app': self.app_name}
 
         if len(self.args.keys()) > 0:
@@ -192,8 +192,8 @@ class ProxyRunnerContext:
 
         user_url_template = "{protocol}://{host}:{port}"
         try:
-            kernel = self.api_session.Kernel(self.session_id)
-            data = await kernel.stream_app_info(self.app_name)
+            compute_session = self.api_session.ComputeSession(self.session_id)
+            data = await compute_session.stream_app_info(self.app_name)
             if 'url_template' in data.keys():
                 user_url_template = data['url_template']
         except:
@@ -284,8 +284,8 @@ def apps(session_id, app_name, list_names):
     async def print_arguments():
         apps = []
         async with AsyncSession() as api_session:
-            kernel = api_session.Kernel(session_id)
-            apps = await kernel.stream_app_info()
+            compute_session = api_session.ComputeSession(session_id)
+            apps = await compute_session.stream_app_info()
             if len(app_name) > 0:
                 apps = list(filter(lambda x: x['name'] in app_name))
         if list_names:

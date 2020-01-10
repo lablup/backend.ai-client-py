@@ -21,7 +21,7 @@ def is_legacy_server():
     Legacy mode: <= v4.20181215
     '''
     with Session() as session:
-        ret = session.Kernel.hello()
+        ret = session.ComputeSession.hello()
     bai_version = ret['version']
     legacy = True if bai_version <= 'v4.20181215' else False
     return legacy
@@ -75,7 +75,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         'System',
         'Admin', 'Agent', 'AgentWathcer', 'Auth', 'Domain', 'Group', 'ScalingGroup',
         'Admin', 'Agent', 'AgentWatcher', 'Domain', 'Group', 'ScalingGroup',
-        'Image', 'Kernel', 'KeyPair', 'Manager', 'Resource',
+        'Image', 'ComputeSession', 'KeyPair', 'Manager', 'Resource',
         'KeypairResourcePolicy', 'User', 'SessionTemplate', 'VFolder',
     )
 
@@ -131,7 +131,7 @@ class Session(BaseSession):
 
         self.aiohttp_session = self.worker_thread.execute(_create_aiohttp_session())
 
-        from ai.backend.client.func.base import BaseFunction
+        from .func.base import BaseFunction
         from .func.system import System
         from .func.admin import Admin
         from .func.agent import Agent, AgentWatcher
@@ -221,12 +221,12 @@ class Session(BaseSession):
         bound to this session.
         '''
 
-        self.Kernel = type('Kernel', (BaseFunction, ), {
+        self.ComputeSession = type('ComputeSession', (BaseFunction, ), {
             **ComputeSession.__dict__,
             'session': self,
         })
         '''
-        The :class:`~ai.backend.client.kernel.Kernel` function proxy
+        The :class:`~ai.backend.client.kernel.ComputeSession` function proxy
         bound to this session.
         '''
 
@@ -352,7 +352,7 @@ class AsyncSession(BaseSession):
         connector = aiohttp.TCPConnector(ssl=ssl)
         self.aiohttp_session = aiohttp.ClientSession(connector=connector)
 
-        from ai.backend.client.func.base import BaseFunction
+        from .func.base import BaseFunction
         from .func.system import System
         from .func.admin import Admin
         from .func.agent import Agent, AgentWatcher
@@ -432,12 +432,12 @@ class AsyncSession(BaseSession):
         bound to this session.
         '''
 
-        self.Kernel = type('Kernel', (BaseFunction, ), {
+        self.ComputeSession = type('ComputeSession', (BaseFunction, ), {
             **ComputeSession.__dict__,
             'session': self,
         })
         '''
-        The :class:`~ai.backend.client.kernel.Kernel` function proxy
+        The :class:`~ai.backend.client.kernel.ComputeSession` function proxy
         bound to this session.
         '''
 

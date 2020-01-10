@@ -208,7 +208,7 @@ class ComputeSession:
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(data['sessId'], owner_access_key)  # type: ignore
+            o = cls(data['sessionId'], owner_access_key)  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -332,7 +332,7 @@ class ComputeSession:
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(data['sessId'], owner_access_key)  # type: ignore
+            o = cls(data['sessionId'], owner_access_key)  # type: ignore
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -340,8 +340,8 @@ class ComputeSession:
             o.group = group_name
             return o
 
-    def __init__(self, kernel_id: str, owner_access_key: str = None):
-        self.kernel_id = kernel_id
+    def __init__(self, session_id: str, owner_access_key: str = None):
+        self.session_id = session_id
         self.owner_access_key = owner_access_key
 
     @api_function
@@ -355,7 +355,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'DELETE', '/session/{}'.format(self.kernel_id),
+                       'DELETE', '/session/{}'.format(self.session_id),
                        params=params)
         async with rqst.fetch() as resp:
             if resp.status == 200:
@@ -372,7 +372,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'PATCH', '/session/{}'.format(self.kernel_id),
+                       'PATCH', '/session/{}'.format(self.session_id),
                        params=params)
         async with rqst.fetch():
             pass
@@ -388,7 +388,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'POST', '/session/{}/interrupt'.format(self.kernel_id),
+                       'POST', '/session/{}/interrupt'.format(self.session_id),
                        params=params)
         async with rqst.fetch():
             pass
@@ -414,7 +414,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-            'POST', '/session/{}/complete'.format(self.kernel_id),
+            'POST', '/session/{}/complete'.format(self.session_id),
             params=params)
         rqst.set_json({
             'code': code,
@@ -437,7 +437,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'GET', '/session/{}'.format(self.kernel_id),
+                       'GET', '/session/{}'.format(self.session_id),
                        params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -451,7 +451,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'GET', '/session/{}/logs'.format(self.kernel_id),
+                       'GET', '/session/{}/logs'.format(self.session_id),
                        params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -492,7 +492,7 @@ class ComputeSession:
             assert code is not None, \
                    'The code argument must be a valid string even when empty.'
             rqst = Request(self.session,
-                'POST', '/session/{}'.format(self.kernel_id),
+                'POST', '/session/{}'.format(self.session_id),
                 params=params)
             rqst.set_json({
                 'mode': mode,
@@ -501,7 +501,7 @@ class ComputeSession:
             })
         elif mode == 'batch':
             rqst = Request(self.session,
-                'POST', '/session/{}'.format(self.kernel_id),
+                'POST', '/session/{}'.format(self.session_id),
                 params=params)
             rqst.set_json({
                 'mode': mode,
@@ -516,7 +516,7 @@ class ComputeSession:
             })
         elif mode == 'complete':
             rqst = Request(self.session,
-                'POST', '/session/{}/complete'.format(self.kernel_id),
+                'POST', '/session/{}/complete'.format(self.session_id),
                 params=params)
             rqst.set_json({
                 'code': code,
@@ -583,7 +583,7 @@ class ComputeSession:
                     raise ValueError(msg) from None
 
             rqst = Request(self.session,
-                           'POST', '/session/{}/upload'.format(self.kernel_id),
+                           'POST', '/session/{}/upload'.format(self.session_id),
                            params=params)
             rqst.attach_files(attachments)
             async with rqst.fetch() as resp:
@@ -606,7 +606,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'GET', '/session/{}/download'.format(self.kernel_id),
+                       'GET', '/session/{}/download'.format(self.session_id),
                        params=params)
         rqst.set_json({
             'files': [*map(str, files)],
@@ -655,7 +655,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'GET', '/session/{}/files'.format(self.kernel_id),
+                       'GET', '/session/{}/files'.format(self.session_id),
                        params=params)
         rqst.set_json({
             'path': path,
@@ -670,7 +670,7 @@ class ComputeSession:
             params['owner_access_key'] = self.owner_access_key
 
         api_rqst = Request(self.session,
-                           'GET', '/stream/session/{0}/apps'.format(self.kernel_id),
+                           'GET', '/stream/session/{0}/apps'.format(self.session_id),
                            params=params)
         async with api_rqst.fetch() as resp:
             return await resp.json()
@@ -684,7 +684,7 @@ class ComputeSession:
         :returns: a :class:`StreamEvents` object.
         '''
         params = {
-            'sessId': self.kernel_id,
+            'sessionId': self.session_id,
         }
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -705,7 +705,7 @@ class ComputeSession:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         request = Request(self.session,
-                          'GET', '/stream/session/{}/pty'.format(self.kernel_id),
+                          'GET', '/stream/session/{}/pty'.format(self.session_id),
                           params=params)
         return request.connect_websocket(response_cls=StreamPty)
 
@@ -735,7 +735,7 @@ class ComputeSession:
             msg = 'Invalid stream-execution mode: {0}'.format(mode)
             raise BackendClientError(msg)
         request = Request(self.session,
-                          'GET', '/stream/session/{}/execute'.format(self.kernel_id),
+                          'GET', '/stream/session/{}/execute'.format(self.session_id),
                           params=params)
 
         async def send_code(ws):

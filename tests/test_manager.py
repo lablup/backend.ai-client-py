@@ -10,7 +10,7 @@ def test_status(mocker):
     mock_req_obj = mocker.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(status=200,
                                                        json=mock_json_coro)
-    mocker.patch('ai.backend.client.manager.Request', return_value=mock_req_obj)
+    mocker.patch('ai.backend.client.func.manager.Request', return_value=mock_req_obj)
 
     with Session() as session:
         resp = session.Manager.status()
@@ -22,7 +22,7 @@ def test_status(mocker):
 def test_freeze(mocker):
     mock_req_obj = mocker.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(status=204)
-    mocker.patch('ai.backend.client.manager.Request', return_value=mock_req_obj)
+    mocker.patch('ai.backend.client.func.manager.Request', return_value=mock_req_obj)
 
     with Session() as session:
         session.Manager.freeze()
@@ -32,7 +32,7 @@ def test_freeze(mocker):
 def test_freeze_opt_force_kill(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(status=204)
-    mocker.patch('ai.backend.client.manager.Request', return_value=mock_req_obj)
+    mocker.patch('ai.backend.client.func.manager.Request', return_value=mock_req_obj)
 
     with Session() as session:
         session.Manager.freeze(force_kill=True)
@@ -42,7 +42,7 @@ def test_freeze_opt_force_kill(mocker):
 def test_unfreeze(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(status=204)
-    mocker.patch('ai.backend.client.manager.Request', return_value=mock_req_obj)
+    mocker.patch('ai.backend.client.func.manager.Request', return_value=mock_req_obj)
 
     with Session() as session:
         session.Manager.unfreeze()

@@ -73,12 +73,12 @@ class RangeExprOptionType(click.ParamType):
 range_expr = RangeExprOptionType()
 
 
-async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
+async def exec_loop(stdout, stderr, compute_session, mode, code, *, opts=None,
                     vprint_done=print_done, is_multi=False):
     '''
     Fully streamed asynchronous version of the execute loop.
     '''
-    async with kernel.stream_execute(code, mode=mode, opts=opts) as stream:
+    async with compute_session.stream_execute(code, mode=mode, opts=opts) as stream:
         async for result in stream:
             if result.type == aiohttp.WSMsgType.TEXT:
                 result = json.loads(result.data)
@@ -131,7 +131,7 @@ async def exec_loop(stdout, stderr, kernel, mode, code, *, opts=None,
                 pass
 
 
-def exec_loop_sync(stdout, stderr, kernel, mode, code, *, opts=None,
+def exec_loop_sync(stdout, stderr, compute_session, mode, code, *, opts=None,
                    vprint_done=print_done):
     '''
     Old synchronous polling version of the execute loop.
@@ -139,7 +139,7 @@ def exec_loop_sync(stdout, stderr, kernel, mode, code, *, opts=None,
     opts = opts if opts else {}
     run_id = None  # use server-assigned run ID
     while True:
-        result = kernel.execute(run_id, code, mode=mode, opts=opts)
+        result = compute_session.execute(run_id, code, mode=mode, opts=opts)
         run_id = result['runId']
         opts.clear()  # used only once
         for rec in result['console']:
@@ -187,9 +187,9 @@ def exec_loop_sync(stdout, stderr, kernel, mode, code, *, opts=None,
             code = ''
 
 
-async def exec_terminal(kernel, *,
+async def exec_terminal(compute_session, *,
                         vprint_wait=print_wait, vprint_done=print_done):
-    # async with kernel.stream_pty() as stream: ...
+    # async with compute_session.stream_pty() as stream: ...
     raise NotImplementedError
 
 
@@ -299,7 +299,7 @@ def _prepare_mount_arg(mount):
 @click.option('-c', '--code', metavar='CODE',
               help='The code snippet as a single string')
 @click.option('--terminal', is_flag=True,
-              help='Connect to the terminal-type kernel.')
+              help='Connect to the terminal-type compute_session.')
 # batch-mode options
 @click.option('--clean', metavar='CMD',
               help='Custom shell command for cleaning up the base directory')
@@ -323,7 +323,7 @@ def _prepare_mount_arg(mount):
 @click.option('--tag', type=str, default=None,
               help='User-defined tag string to annotate sessions.')
 @click.option('-q', '--quiet', is_flag=True,
-              help='Hide execution details but show only the kernel outputs.')
+              help='Hide execution details but show only the compute_session outputs.')
 # experiment support
 @click.option('--env-range', metavar='RANGE_EXPR', multiple=True,
               type=range_expr, help='Range expression for environment variable.')
@@ -452,7 +452,7 @@ def run(image, files, session_id,                          # base args
     def _run_legacy(session, idx, session_id, envs,
                     clean_cmd, build_cmd, exec_cmd):
         try:
-            kernel = session.Kernel.get_or_create(
+            compute_session = session.ComputeSession.get_or_create(
                 image,
                 client_token=session_id,
                 type_=type,
@@ -471,26 +471,28 @@ def run(image, files, session_id,                          # base args
         except Exception as e:
             print_error(e)
             sys.exit(1)
-        if kernel.status == 'PENDING':
+        if compute_session.status == 'PENDING':
             print_info('Session ID {0} is enqueued for scheduling.'
                        .format(session_id))
             return
-        elif kernel.status == 'RUNNING':
-            if kernel.created:
-                vprint_done('[{0}] Session {1} is ready (domain={2}, group={3}).'
-                            .format(idx, kernel.kernel_id, kernel.domain, kernel.group))
+        elif compute_session.status == 'RUNNING':
+            if compute_session.created:
+                vprint_done(
+                    '[{0}] Session {1} is ready (domain={2}, group={3}).'
+                    .format(idx, compute_session.session_id,
+                            compute_session.domain, compute_session.group))
             else:
-                vprint_done('[{0}] Reusing session {1}...'.format(idx, kernel.kernel_id))
-        elif kernel.status == 'TERMINATED':
+                vprint_done('[{0}] Reusing session {1}...'.format(idx, compute_session.session_id))
+        elif compute_session.status == 'TERMINATED':
             print_warn('Session ID {0} is already terminated.\n'
-                       'This may be an error in the kernel image.'
+                       'This may be an error in the compute_session image.'
                        .format(session_id))
             return
-        elif kernel.status == 'TIMEOUT':
+        elif compute_session.status == 'TIMEOUT':
             print_info('Session ID {0} is still on the job queue.'
                        .format(session_id))
             return
-        elif kernel.status in ('ERROR', 'CANCELLED'):
+        elif compute_session.status in ('ERROR', 'CANCELLED'):
             print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                        .format(session_id))
             return
@@ -498,7 +500,7 @@ def run(image, files, session_id,                          # base args
         try:
             if files:
                 vprint_wait('[{0}] Uploading source files...'.format(idx))
-                ret = kernel.upload(files, basedir=basedir,
+                ret = compute_session.upload(files, basedir=basedir,
                                     show_progress=True)
                 if ret.status // 100 != 2:
                     print_fail('[{0}] Uploading source files failed!'.format(idx))
@@ -512,14 +514,14 @@ def run(image, files, session_id,                          # base args
                     'exec': exec_cmd,
                 }
                 if not terminal:
-                    exec_loop_sync(sys.stdout, sys.stderr, kernel, 'batch', '',
+                    exec_loop_sync(sys.stdout, sys.stderr, compute_session, 'batch', '',
                                    opts=opts,
                                    vprint_done=vprint_done)
             if terminal:
                 raise NotImplementedError('Terminal access is not supported in '
                                           'the legacy synchronous mode.')
             if code:
-                exec_loop_sync(sys.stdout, sys.stderr, kernel, 'query', code,
+                exec_loop_sync(sys.stdout, sys.stderr, compute_session, 'query', code,
                                vprint_done=vprint_done)
             vprint_done('[{0}] Execution finished.'.format(idx))
         except Exception as e:
@@ -528,7 +530,7 @@ def run(image, files, session_id,                          # base args
         finally:
             if rm:
                 vprint_wait('[{0}] Cleaning up the session...'.format(idx))
-                ret = kernel.destroy()
+                ret = compute_session.destroy()
                 vprint_done('[{0}] Cleaned up the session.'.format(idx))
                 if stats:
                     _stats = ret.get('stats', None) if ret else None
@@ -542,7 +544,7 @@ def run(image, files, session_id,                          # base args
                    clean_cmd, build_cmd, exec_cmd,
                    is_multi=False):
         try:
-            kernel = await session.Kernel.get_or_create(
+            compute_session = await session.ComputeSession.get_or_create(
                 image,
                 client_token=session_id,
                 type_=type,
@@ -562,26 +564,28 @@ def run(image, files, session_id,                          # base args
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
-        if kernel.status == 'PENDING':
+        if compute_session.status == 'PENDING':
             print_info('Session ID {0} is enqueued for scheduling.'
                        .format(session_id))
             return
-        elif kernel.status == 'RUNNING':
-            if kernel.created:
-                vprint_done('[{0}] Session {1} is ready (domain={2}, group={3}).'
-                            .format(idx, kernel.kernel_id, kernel.domain, kernel.group))
+        elif compute_session.status == 'RUNNING':
+            if compute_session.created:
+                vprint_done(
+                    '[{0}] Session {1} is ready (domain={2}, group={3}).'
+                    .format(idx, compute_session.session_id,
+                            compute_session.domain, compute_session.group))
             else:
-                vprint_done('[{0}] Reusing session {1}...'.format(idx, kernel.kernel_id))
-        elif kernel.status == 'TERMINATED':
+                vprint_done('[{0}] Reusing session {1}...'.format(idx, compute_session.session_id))
+        elif compute_session.status == 'TERMINATED':
             print_warn('Session ID {0} is already terminated.\n'
-                       'This may be an error in the kernel image.'
+                       'This may be an error in the compute_session image.'
                        .format(session_id))
             return
-        elif kernel.status == 'TIMEOUT':
+        elif compute_session.status == 'TIMEOUT':
             print_info('Session ID {0} is still on the job queue.'
                        .format(session_id))
             return
-        elif kernel.status in ('ERROR', 'CANCELLED'):
+        elif compute_session.status in ('ERROR', 'CANCELLED'):
             print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                        .format(session_id))
             return
@@ -603,7 +607,7 @@ def run(image, files, session_id,                          # base args
             if files:
                 if not is_multi:
                     vprint_wait('[{0}] Uploading source files...'.format(idx))
-                ret = await kernel.upload(files, basedir=basedir,
+                ret = await compute_session.upload(files, basedir=basedir,
                                           show_progress=not is_multi)
                 if ret.status // 100 != 2:
                     print_fail('[{0}] Uploading source files failed!'.format(idx))
@@ -618,15 +622,15 @@ def run(image, files, session_id,                          # base args
                     'exec': exec_cmd,
                 }
                 if not terminal:
-                    await exec_loop(stdout, stderr, kernel, 'batch', '',
+                    await exec_loop(stdout, stderr, compute_session, 'batch', '',
                                     opts=opts,
                                     vprint_done=indexed_vprint_done,
                                     is_multi=is_multi)
             if terminal:
-                await exec_terminal(kernel)
+                await exec_terminal(compute_session)
                 return
             if code:
-                await exec_loop(stdout, stderr, kernel, 'query', code,
+                await exec_loop(stdout, stderr, compute_session, 'query', code,
                                 vprint_done=indexed_vprint_done,
                                 is_multi=is_multi)
         except BackendError as e:
@@ -641,7 +645,7 @@ def run(image, files, session_id,                          # base args
                 if rm:
                     if not is_multi:
                         vprint_wait('[{0}] Cleaning up the session...'.format(idx))
-                    ret = await kernel.destroy()
+                    ret = await compute_session.destroy()
                     vprint_done('[{0}] Cleaned up the session.'.format(idx))
                     if stats:
                         _stats = ret.get('stats', None) if ret else None
@@ -808,7 +812,7 @@ def start(image, session_id, owner,                                 # base args
     mount, mount_map = _prepare_mount_arg(mount)
     with Session() as session:
         try:
-            kernel = session.Kernel.get_or_create(
+            compute_session = session.ComputeSession.get_or_create(
                 image,
                 client_token=session_id,
                 type_=type,
@@ -831,28 +835,28 @@ def start(image, session_id, owner,                                 # base args
             print_error(e)
             sys.exit(1)
         else:
-            if kernel.status == 'PENDING':
+            if compute_session.status == 'PENDING':
                 print_info('Session ID {0} is enqueued for scheduling.'
                            .format(session_id))
-            elif kernel.status == 'RUNNING':
-                if kernel.created:
+            elif compute_session.status == 'RUNNING':
+                if compute_session.created:
                     print_info('Session ID {0} is created and ready.'
                                .format(session_id))
                 else:
                     print_info('Session ID {0} is already running and ready.'
                                .format(session_id))
-                if kernel.service_ports:
+                if compute_session.service_ports:
                     print_info('This session provides the following app services: ' +
                                ', '.join(sport['name']
-                                         for sport in kernel.service_ports))
-            elif kernel.status == 'TERMINATED':
+                                         for sport in compute_session.service_ports))
+            elif compute_session.status == 'TERMINATED':
                 print_warn('Session ID {0} is already terminated.\n'
-                           'This may be an error in the kernel image.'
+                           'This may be an error in the compute_session image.'
                            .format(session_id))
-            elif kernel.status == 'TIMEOUT':
+            elif compute_session.status == 'TIMEOUT':
                 print_info('Session ID {0} is still on the job queue.'
                            .format(session_id))
-            elif kernel.status in ('ERROR', 'CANCELLED'):
+            elif compute_session.status in ('ERROR', 'CANCELLED'):
                 print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                            .format(session_id))
 
@@ -872,7 +876,7 @@ def start(image, session_id, owner,                                 # base args
               default=undefined,
               help='Either batch or interactive')
 @click.option('-i', '--image', default=undefined,
-              help='Set kernel image to run.')
+              help='Set compute_session image to run.')
 @click.option('-c', '--startup-command', metavar='COMMAND',
               default=undefined,
               help='Set the command to execute for batch-type sessions.')
@@ -969,7 +973,7 @@ def start_template(template_id, session_id, owner,        # base args
                         if len(mount) > 0 or no_mount else (undefined, undefined))
     with Session() as session:
         try:
-            kernel = session.Kernel.create_from_template(
+            compute_session = session.ComputeSession.create_from_template(
                 template_id,
                 image=image,
                 client_token=session_id,
@@ -993,28 +997,28 @@ def start_template(template_id, session_id, owner,        # base args
             print_error(e)
             sys.exit(1)
         else:
-            if kernel.status == 'PENDING':
+            if compute_session.status == 'PENDING':
                 print_info('Session ID {0} is enqueued for scheduling.'
                            .format(session_id))
-            elif kernel.status == 'RUNNING':
-                if kernel.created:
+            elif compute_session.status == 'RUNNING':
+                if compute_session.created:
                     print_info('Session ID {0} is created and ready.'
                                .format(session_id))
                 else:
                     print_info('Session ID {0} is already running and ready.'
                                .format(session_id))
-                if kernel.service_ports:
+                if compute_session.service_ports:
                     print_info('This session provides the following app services: ' +
                                ', '.join(sport['name']
-                                         for sport in kernel.service_ports))
-            elif kernel.status == 'TERMINATED':
+                                         for sport in compute_session.service_ports))
+            elif compute_session.status == 'TERMINATED':
                 print_warn('Session ID {0} is already terminated.\n'
-                           'This may be an error in the kernel image.'
+                           'This may be an error in the compute_session image.'
                            .format(session_id))
-            elif kernel.status == 'TIMEOUT':
+            elif compute_session.status == 'TIMEOUT':
                 print_info('Session ID {0} is still on the job queue.'
                            .format(session_id))
-            elif kernel.status in ('ERROR', 'CANCELLED'):
+            elif compute_session.status in ('ERROR', 'CANCELLED'):
                 print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                            .format(session_id))
 
@@ -1036,8 +1040,8 @@ def terminate(sess_id_or_alias, owner, stats):
         has_failure = False
         for sess in sess_id_or_alias:
             try:
-                kernel = session.Kernel(sess, owner)
-                ret = kernel.destroy()
+                compute_session = session.ComputeSession(sess, owner)
+                ret = compute_session.destroy()
             except BackendAPIError as e:
                 print_error(e)
                 if e.status == 404:
@@ -1088,8 +1092,8 @@ def events(sess_id_or_alias, owner_access_key):
 
     async def _run_events():
         async with AsyncSession() as session:
-            kernel = session.Kernel(sess_id_or_alias, owner_access_key)
-            async with kernel.stream_events() as sse_response:
+            compute_session = session.ComputeSession(sess_id_or_alias, owner_access_key)
+            async with compute_session.stream_events() as sse_response:
                 async for ev in sse_response.fetch_events():
                     print(click.style(ev['event'], fg='cyan', bold=True), json.loads(ev['data']))
 
