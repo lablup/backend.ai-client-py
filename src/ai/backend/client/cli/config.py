@@ -30,7 +30,6 @@ def config():
         click.echo('Negotiated API version: ...')
     else:
         with Session() as sess:
-            click.echo('Negotiated API version: {0}'.format(sess.api_version))
             try:
                 versions = sess.System.get_versions()
             except BackendClientError:
@@ -40,6 +39,7 @@ def config():
                     versions.get('manager', 'pre-19.03'),
                     versions['version'],
                 ))
+            click.echo('Negotiated API version: {0}'.format(sess.api_version))
     nrows = 1
     if config.domain:
         click.echo('Domain name: "{0}"'.format(click.style(config.domain, bold=True)))
