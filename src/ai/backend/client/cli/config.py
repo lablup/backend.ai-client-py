@@ -1,6 +1,7 @@
 import getpass
 import json
 import sys
+import warnings
 
 import click
 
@@ -72,7 +73,7 @@ def config():
     nrows += 1
     if sys.stdout.isatty():
         sys.stdout.flush()
-        with Session() as sess:
+        with warnings.catch_warnings(record=True) as captured_warnings, Session() as sess:
             click.echo('\u001b[{0}A\u001b[2K'.format(nrows + 1), nl=False)
             try:
                 versions = sess.System.get_versions()
@@ -91,6 +92,8 @@ def config():
             ))
             click.echo('\u001b[{0}B'.format(nrows), nl=False)
             sys.stdout.flush()
+        for w in captured_warnings:
+            warnings.showwarning(w.message, w.category, w.filename, w.lineno, w.line)
 
 
 @main.command()

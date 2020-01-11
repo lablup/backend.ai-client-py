@@ -1,7 +1,18 @@
 from unittest import mock
 
+import pytest
+
+from ai.backend.client.config import API_VERSION
 from ai.backend.client.session import Session
 from ai.backend.client.test_utils import AsyncMock, AsyncContextMock
+
+
+@pytest.fixture(scope='module', autouse=True)
+def api_version():
+    mock_nego_func = AsyncMock()
+    mock_nego_func.return_value = API_VERSION
+    with mock.patch('ai.backend.client.session._negotiate_api_version', mock_nego_func):
+        yield
 
 
 def test_status(mocker):

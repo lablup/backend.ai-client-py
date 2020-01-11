@@ -5,6 +5,7 @@ __all__ = (
     'BackendError',
     'BackendAPIError',
     'BackendClientError',
+    'APIVersionWarning',
 )
 
 
@@ -44,9 +45,17 @@ class BackendAPIError(BackendError):
 
 
 class BackendClientError(BackendError):
-    '''
+    """
     Exceptions from the client library, such as argument validation
     errors and connection failures.
-    '''
+    """
+
+    pass
+
+
+class APIVersionWarning(UserWarning):
+    """
+    The warning generated if the server's API version is higher.
+    """
 
     pass

@@ -29,6 +29,7 @@ from ..utils import undefined, ProgressReportingReader
 
 __all__ = (
     'ComputeSession',
+    'get_session_api_prefix',
 )
 
 
@@ -42,7 +43,7 @@ def drop(d, dropval):
     return newd
 
 
-def _get_session_api_prefix(api_version: Tuple[int, str]) -> str:
+def get_session_api_prefix(api_version: Tuple[int, str]) -> str:
     if api_version[0] <= 4:
         return 'kernel'
     return 'session'
@@ -75,10 +76,11 @@ class ComputeSession:
 
     @api_function
     @classmethod
-    async def get_task_logs(cls, task_id: str, *,
-                            chunk_size: int = 8192
-                            ) -> AsyncGenerator[bytes, None]:
-        prefix = _get_session_api_prefix(cls.session.api_version)
+    async def get_task_logs(
+        cls, task_id: str, *,
+        chunk_size: int = 8192
+    ) -> AsyncGenerator[bytes, None]:
+        prefix = get_session_api_prefix(cls.session.api_version)
         rqst = Request(cls.session, 'GET', f'/{prefix}/_/logs', params={
             'taskId': task_id,
         })
@@ -179,7 +181,7 @@ class ComputeSession:
             group_name = cls.session.config.group
 
         mounts.extend(cls.session.config.vfolder_mounts)
-        prefix = _get_session_api_prefix(cls.session.api_version)
+        prefix = get_session_api_prefix(cls.session.api_version)
         rqst = Request(cls.session, 'POST', f'/{prefix}/create')
         params = {
             'tag': tag,
@@ -313,7 +315,7 @@ class ComputeSession:
             group_name = cls.session.config.group
         if cls.session.config.vfolder_mounts:
             mounts.extend(cls.session.config.vfolder_mounts)
-        prefix = _get_session_api_prefix(cls.session.api_version)
+        prefix = get_session_api_prefix(cls.session.api_version)
         rqst = Request(cls.session, 'POST', f'/{prefix}/from-template')
         params = {
             'template_id': template_id,
@@ -365,7 +367,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'DELETE', f'/{prefix}/{self.session_id}',
@@ -385,7 +387,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'PATCH', f'/{prefix}/{self.session_id}',
@@ -404,7 +406,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'POST', f'/{prefix}/{self.session_id}/interrupt',
@@ -433,7 +435,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'POST', f'/{prefix}/{self.session_id}/complete',
@@ -459,7 +461,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'GET', f'/{prefix}/{self.session_id}',
@@ -476,7 +478,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'GET', f'/{prefix}/{self.session_id}/logs',
@@ -517,7 +519,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         if mode in {'query', 'continue', 'input'}:
             assert code is not None, \
                    'The code argument must be a valid string even when empty.'
@@ -593,7 +595,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         base_path = (
             Path.cwd() if basedir is None
             else Path(basedir).resolve()
@@ -646,7 +648,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'GET', f'/{prefix}/{self.session_id}/download',
@@ -698,7 +700,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         rqst = Request(
             self.session,
             'GET', f'/{prefix}/{self.session_id}/files',
@@ -715,7 +717,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         api_rqst = Request(
             self.session,
             'GET', f'/stream/{prefix}/{self.session_id}/apps',
@@ -737,7 +739,7 @@ class ComputeSession:
         }
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         request = Request(
             self.session,
             'GET', f'/stream/{prefix}/_/events',
@@ -756,7 +758,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         request = Request(
             self.session,
             'GET', f'/stream/{prefix}/{self.session_id}/pty',
@@ -776,7 +778,7 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = _get_session_api_prefix(self.session.api_version)
+        prefix = get_session_api_prefix(self.session.api_version)
         opts = {} if opts is None else opts
         if mode == 'query':
             opts = {}

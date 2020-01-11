@@ -1,8 +1,11 @@
 from pathlib import Path
+from unittest import mock
 import secrets
 
+import pytest
 from aioresponses import aioresponses
 
+from ai.backend.client.config import API_VERSION
 from ai.backend.client.session import Session
 from ai.backend.client.test_utils import AsyncMock
 
@@ -13,6 +16,14 @@ def build_url(config, path: str):
     path = '{0}/{1}'.format(base_url, query_path)
     canonical_url = config.endpoint.with_path(path)
     return canonical_url
+
+
+@pytest.fixture(scope='module', autouse=True)
+def api_version():
+    mock_nego_func = AsyncMock()
+    mock_nego_func.return_value = API_VERSION
+    with mock.patch('ai.backend.client.session._negotiate_api_version', mock_nego_func):
+        yield
 
 
 def test_create_vfolder():

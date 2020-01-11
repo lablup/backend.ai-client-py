@@ -3,11 +3,13 @@ import asyncio
 import threading
 from typing import Tuple
 import queue
+import warnings
 
 import aiohttp
 from multidict import CIMultiDict
 
 from .config import APIConfig, get_config, parse_api_version
+from .exceptions import APIVersionWarning
 
 
 __all__ = (
@@ -18,10 +20,11 @@ __all__ = (
 
 
 def is_legacy_server():
-    '''Determine execution mode.
+    """
+    Determine execution mode.
 
     Legacy mode: <= v4.20181215
-    '''
+    """
     with Session() as session:
         ret = session.ComputeSession.hello()
     bai_version = ret['version']
@@ -33,6 +36,7 @@ async def _negotiate_api_version(
     http_session: aiohttp.ClientSession,
     config: APIConfig,
 ) -> Tuple[int, str]:
+    client_version = parse_api_version(config.version)
     try:
         timeout_config = aiohttp.ClientTimeout(
             total=None, connect=None,
@@ -46,10 +50,17 @@ async def _negotiate_api_version(
         async with http_session.get(probe_url, timeout=timeout_config, headers=headers) as resp:
             resp.raise_for_status()
             server_info = await resp.json()
-            return min(parse_api_version(server_info['version']), parse_api_version(config.version))
+            server_version = parse_api_version(server_info['version'])
+            if server_version > client_version:
+                warnings.warn(
+                    'The server API version is higher than the client. '
+                    'Please upgrade the client package.',
+                    category=APIVersionWarning,
+                )
+            return min(server_version, client_version)
     except (asyncio.TimeoutError, aiohttp.ClientError):
         # fallback to the configured API version
-        return parse_api_version(config.version)
+        return client_version
 
 
 class _SyncWorkerThread(threading.Thread):
@@ -91,9 +102,9 @@ class _SyncWorkerThread(threading.Thread):
 
 
 class BaseSession(metaclass=abc.ABCMeta):
-    '''
+    """
     The base abstract class for sessions.
-    '''
+    """
 
     __slots__ = (
         '_config', '_closed', 'aiohttp_session',
@@ -115,33 +126,33 @@ class BaseSession(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def close(self):
-        '''
+        """
         Terminates the session and releases underlying resources.
-        '''
+        """
         raise NotImplementedError
 
     @property
     def closed(self) -> bool:
-        '''
+        """
         Checks if the session is closed.
-        '''
+        """
         return self._closed
 
     @property
     def config(self):
-        '''
+        """
         The configuration used by this session object.
-        '''
+        """
         return self._config
 
 
 class Session(BaseSession):
-    '''
+    """
     An API client session that makes API requests synchronously.
     You may call (almost) all function proxy methods like a plain Python function.
     It provides a context manager interface to ensure closing of the session
     upon errors and scope exits.
-    '''
+    """
 
     __slots__ = BaseSession.__slots__ + (
         '_worker_thread',

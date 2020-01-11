@@ -11,6 +11,7 @@ from ..exceptions import BackendAPIError
 __all__ = (
     'PrintStatus', 'print_pretty', 'print_info', 'print_wait',
     'print_done', 'print_warn', 'print_fail', 'print_error',
+    'show_warning',
 )
 
 
@@ -142,3 +143,10 @@ def print_error(exc: Exception, *, file=None):
     echo('{0}\r'.format(text), nl=False, file=file)
     echo('', file=file)
     file.flush()
+
+
+def show_warning(message, category, filename, lineno, file=None, line=None):
+    echo('{0}: {1}'.format(
+        style(str(category.__name__), fg='yellow', bold=True),
+        style(str(message), fg='yellow'),
+    ), file=file)

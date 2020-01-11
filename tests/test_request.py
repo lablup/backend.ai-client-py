@@ -1,15 +1,25 @@
 import asyncio
 import io
 import json
+from unittest import mock
 
 import aiohttp
 from aioresponses import aioresponses
 import pytest
 
-from ai.backend.client.config import get_config
+from ai.backend.client.config import get_config, API_VERSION
 from ai.backend.client.exceptions import BackendClientError, BackendAPIError
 from ai.backend.client.request import Request, Response, AttachedFile
 from ai.backend.client.session import Session, AsyncSession
+from ai.backend.client.test_utils import AsyncMock
+
+
+@pytest.fixture(scope='module', autouse=True)
+def api_version():
+    mock_nego_func = AsyncMock()
+    mock_nego_func.return_value = API_VERSION
+    with mock.patch('ai.backend.client.session._negotiate_api_version', mock_nego_func):
+        yield
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import warnings
 
 import click
 
@@ -92,6 +93,9 @@ def main(skip_sslcert_validation):
     """
     config = APIConfig(skip_sslcert_validation=skip_sslcert_validation)
     set_config(config)
+
+    from .pretty import show_warning
+    warnings.showwarning = show_warning
 
 
 @click.command(context_settings=dict(ignore_unknown_options=True,

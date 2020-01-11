@@ -15,11 +15,14 @@ __all__ = [
     'get_config',
     'set_config',
     'APIConfig',
+    'API_VERSION',
     'DEFAULT_CHUNK_SIZE',
 ]
 
 _config = None
 _undefined = object()
+
+API_VERSION = (5, '20191215')
 
 DEFAULT_CHUNK_SIZE = 256 * 1024  # 256 KiB
 
@@ -131,7 +134,7 @@ class APIConfig:
     DEFAULTS = {
         'endpoint': 'https://api.backend.ai',
         'endpoint_type': 'api',
-        'version': 'v5.20191215',
+        'version': f'v{API_VERSION[0]}.{API_VERSION[1]}',
         'hash_type': 'sha256',
         'domain': 'default',
         'group': 'default',
