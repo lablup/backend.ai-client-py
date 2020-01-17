@@ -98,3 +98,19 @@ a normal directory.
 By reusing the same vfolder in subsequent sessions, you do not have to
 donwload the result and upload it as the input for next sessions, just
 keeping them in the storage.
+
+
+Creating default files for kernels
+----------------------------------
+
+Backend.AI has a feature called 'dotfile', created to all the kernels
+user spawns. As you can guess, dotfile's path should start with ``.``.
+The following command creates dotfile named ``.bashrc`` with permission `755`.
+This file will be created under ``/home/work`` every time user spawns
+Backend.AI kernel.
+
+.. code-block:: console
+
+  $ backend.ai dotfile create .bashrc
+  export PATH=$PATH:$HOME/go/bin
+
