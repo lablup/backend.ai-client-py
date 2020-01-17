@@ -105,12 +105,11 @@ Creating default files for kernels
 
 Backend.AI has a feature called 'dotfile', created to all the kernels
 user spawns. As you can guess, dotfile's path should start with ``.``.
-The following command creates dotfile named ``.bashrc`` with permission `755`.
-This file will be created under ``/home/work`` every time user spawns
+The following command creates dotfile named ``.aws/config``
+with permission `755`. This file will be created under ``/home/work``
+every time user spawns
 Backend.AI kernel.
 
 .. code-block:: console
 
-  $ backend.ai dotfile create .bashrc
-  export PATH=$PATH:$HOME/go/bin
-
+  $ backend.ai dotfile create .aws/config < ~/.aws/config
