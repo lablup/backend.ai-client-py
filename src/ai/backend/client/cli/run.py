@@ -357,6 +357,8 @@ def _prepare_mount_arg(mount):
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
+@click.option('--preopen',  default=None,
+              help='Pre-open service ports')
 def run(image, files, name,                                # base args
         type, enqueue_only, max_wait, no_reuse,            # job scheduling options
         code, terminal,                                    # query-mode options
@@ -366,7 +368,7 @@ def run(image, files, name,                                # base args
         env_range, build_range, exec_range, max_parallel,  # experiment support
         mount, scaling_group, resources, cluster_size,     # resource spec
         resource_opts,
-        domain, group):                                    # resource grouping
+        domain, group, preopen):                                    # resource grouping
     '''
     Run the given code snippet or files in a session.
     Depending on the session ID you give (default is random),
@@ -420,6 +422,7 @@ def run(image, files, name,                                # base args
     build_template = string.Template(build)
     exec_template = string.Template(exec)
     env_templates = {k: string.Template(v) for k, v in envs.items()}
+    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',').strip()))
     for env_vmap, build_vmap, exec_vmap in vmaps_product:
         interpolated_envs = tuple((k, vt.substitute(env_vmap))
                                   for k, vt in env_templates.items())
@@ -561,7 +564,8 @@ def run(image, files, name,                                # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
-                tag=tag)
+                tag=tag,
+                preopen_ports=preopen_ports)
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
@@ -783,13 +787,15 @@ def run(image, files, name,                                # base args
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
+@click.option('--preopen',  default=None,
+              help='Pre-open service ports')
 def start(image, name, owner,                                 # base args
           type, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
           tag,                                            # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
           resource_opts,
-          domain, group):                                 # resource grouping
+          domain, group, preopen):                                 # resource grouping
     '''
     Prepare and start a single compute session without executing codes.
     You may use the created session to execute codes using the "run" command
@@ -811,6 +817,7 @@ def start(image, name, owner,                                 # base args
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
     mount, mount_map = _prepare_mount_arg(mount)
+    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',').strip()))
     with Session() as session:
         try:
             compute_session = session.ComputeSession.get_or_create(
@@ -831,7 +838,8 @@ def start(image, name, owner,                                 # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
-                tag=tag)
+                tag=tag,
+                preopen_ports=preopen_ports)
         except Exception as e:
             print_error(e)
             sys.exit(1)
