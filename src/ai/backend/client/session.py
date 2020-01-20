@@ -113,6 +113,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         'Agent', 'AgentWatcher', 'ScalingGroup',
         'Image', 'ComputeSession', 'SessionTemplate',
         'Domain', 'Group', 'Auth', 'User', 'KeyPair',
+        'EtcdConfig',
         'Resource', 'KeypairResourcePolicy',
         'VFolder',
     )
@@ -177,6 +178,7 @@ class Session(BaseSession):
         from .func.admin import Admin
         from .func.agent import Agent, AgentWatcher
         from .func.auth import Auth
+        from .func.etcd import EtcdConfig
         from .func.domain import Domain
         from .func.group import Group
         from .func.image import Image
@@ -232,6 +234,15 @@ class Session(BaseSession):
         })
         '''
         The :class:`~ai.backend.client.Auth` function proxy
+        bound to this session.
+        '''
+
+        self.EtcdConfig = type('EtcdConfig', (BaseFunction, ), {
+            **EtcdConfig.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.EtcdConfig` function proxy
         bound to this session.
         '''
 
@@ -400,6 +411,7 @@ class AsyncSession(BaseSession):
         from .func.admin import Admin
         from .func.agent import Agent, AgentWatcher
         from .func.auth import Auth
+        from .func.etcd import EtcdConfig
         from .func.group import Group
         from .func.image import Image
         from .func.session import ComputeSession
@@ -454,6 +466,15 @@ class AsyncSession(BaseSession):
         })
         '''
         The :class:`~ai.backend.client.Auth` function proxy
+        bound to this session.
+        '''
+
+        self.EtcdConfig = type('EtcdConfig', (BaseFunction, ), {
+            **EtcdConfig.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.EtcdConfig` function proxy
         bound to this session.
         '''
 
