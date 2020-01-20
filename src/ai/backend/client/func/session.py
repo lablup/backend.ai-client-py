@@ -104,7 +104,8 @@ class ComputeSession:
                             bootstrap_script: str = None,
                             tag: str = None,
                             scaling_group: str = None,
-                            owner_access_key: str = None) -> 'ComputeSession':
+                            owner_access_key: str = None,
+                            preopen_ports: Sequence[int]) -> 'ComputeSession':
         '''
         Get-or-creates a compute session.
         If *name* is ``None``, it creates a new compute session as long as
@@ -191,6 +192,7 @@ class ComputeSession:
                 'resources': resources,
                 'resource_opts': resource_opts,
                 'scalingGroup': scaling_group,
+                'preopen_ports': preopen_ports,
             },
         }
         if cls.session.api_version >= (5, '20191215'):
