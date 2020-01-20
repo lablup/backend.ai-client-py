@@ -21,7 +21,7 @@ class Dotfile:
                      owner_access_key: str = None,
                      ) -> 'Dotfile':
         rqst = Request(cls.session,
-                       'POST', '/dotfile')
+                       'POST', '/user-config/dotfiles')
         body = {
             'data': data,
             'path': path,
@@ -37,7 +37,7 @@ class Dotfile:
     @classmethod
     async def list_dotfiles(cls) -> 'List[Mapping[str, str]]':
         rqst = Request(cls.session,
-                       'GET', '/dotfile')
+                       'GET', '/user-config/dotfiles')
         async with rqst.fetch() as resp:
             if resp.status == 200:
                 return await resp.json()
@@ -52,7 +52,7 @@ class Dotfile:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'GET', f'/dotfile',
+                       'GET', f'/user-config/dotfiles',
                        params=params)
         async with rqst.fetch() as resp:
             if resp.status == 200:
@@ -68,7 +68,7 @@ class Dotfile:
         if self.owner_access_key:
             body['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'PATCH', f'/dotfile')
+                       'PATCH', f'/user-config/dotfiles')
         rqst.set_json(body)
 
         async with rqst.fetch() as resp:
@@ -80,7 +80,7 @@ class Dotfile:
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(self.session,
-                       'DELETE', f'/dotfile',
+                       'DELETE', f'/user-config/dotfiles',
                        params=params)
 
         async with rqst.fetch() as resp:
