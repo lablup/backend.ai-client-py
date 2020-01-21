@@ -422,7 +422,7 @@ def run(image, files, name,                                # base args
     build_template = string.Template(build)
     exec_template = string.Template(exec)
     env_templates = {k: string.Template(v) for k, v in envs.items()}
-    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',').strip()))
+    preopen_ports = tuple() if preopen is None else tuple(map(int, preopen.split(',').strip()))
     for env_vmap, build_vmap, exec_vmap in vmaps_product:
         interpolated_envs = tuple((k, vt.substitute(env_vmap))
                                   for k, vt in env_templates.items())
@@ -471,7 +471,8 @@ def run(image, files, name,                                # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
-                tag=tag)
+                tag=tag,
+                preopen_ports=preopen_ports,)
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -817,7 +818,7 @@ def start(image, name, owner,                                 # base args
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
     mount, mount_map = _prepare_mount_arg(mount)
-    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',').strip()))
+    preopen_ports = tuple() if preopen is None else tuple(map(int, preopen.split(',').strip()))
     with Session() as session:
         try:
             compute_session = session.ComputeSession.get_or_create(
