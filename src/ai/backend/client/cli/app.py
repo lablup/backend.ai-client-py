@@ -232,7 +232,7 @@ class ProxyRunnerContext:
 @main.command()
 @click.argument('session_name', type=str, metavar='NAME')
 @click.argument('app', type=str)
-@click.option('-p', '--protocol', type=click.Choice(['http', 'tcp']), default='http',
+@click.option('-p', '--protocol', type=click.Choice(['http', 'tcp', 'preopen']), default='http',
               help='The application-level protocol to use.')
 @click.option('-b', '--bind', type=str, default='127.0.0.1:8080', metavar='[HOST:]PORT',
               help='The IP/host address and the port number to bind this proxy.')
