@@ -25,10 +25,9 @@ matrix:
 
 # test stage
 install:
-  - pip install -U --upgrade-strategy=eager pip setuptools
-  - pip install -U --upgrade-strategy=eager -r requirements-ci.txt
+  - pip install -U pip setuptools
+  - pip install -U -r requirements-test.txt
 script:
-  - python -m flake8 ai/backend tests
   - python -m pytest --cov=ai.backend.client -v -m "not integration"
 after_success:
   - codecov
