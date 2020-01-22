@@ -105,7 +105,7 @@ class ComputeSession:
                             tag: str = None,
                             scaling_group: str = None,
                             owner_access_key: str = None,
-                            preopen_ports: Sequence[int]) -> 'ComputeSession':
+                            preopen_ports: Sequence[int] = None) -> 'ComputeSession':
         '''
         Get-or-creates a compute session.
         If *name* is ``None``, it creates a new compute session as long as
