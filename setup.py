@@ -33,13 +33,16 @@ test_requires = [
     'aioresponses==0.6.1',
     'asynctest>=0.13; python_version<"3.8"',
     'codecov',
+]
+lint_requires = [
     'flake8>=3.7.8',
 ]
-ci_requires = [
-] + build_requires + test_requires
+typecheck_requires = [
+    'mypy>=0.760',
+]
 dev_requires = [
     'pytest-sugar>=0.9.1',
-] + build_requires + test_requires
+]
 docs_requires = [
     'sphinx~=2.2',
     'sphinx-intl>=2.0',
@@ -95,7 +98,8 @@ setup(
     extras_require={
         'dev': dev_requires,
         'test': test_requires,
-        'ci': ci_requires,
+        'lint': lint_requires,
+        'typecheck': typecheck_requires,
         'docs': docs_requires,
     },
     data_files=[],
