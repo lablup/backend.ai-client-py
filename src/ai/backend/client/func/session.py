@@ -192,7 +192,7 @@ class ComputeSession:
                 'resources': resources,
                 'resource_opts': resource_opts,
                 'scalingGroup': scaling_group,
-                'preopen_ports': preopen_ports,
+                # 'preopen_ports': preopen_ports,
             },
         }
         if cls.session.api_version >= (5, '20191215'):
