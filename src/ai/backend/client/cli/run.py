@@ -818,11 +818,7 @@ def start(image, name, owner,                                 # base args
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
     mount, mount_map = _prepare_mount_arg(mount)
-    if preopen is None:
-        preopen_ports = []
-    else:
-        preopen_ports = preopen.split(',')
-        preopen_ports = list(map(int, preopen_ports))
+    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
     with Session() as session:
         try:
             compute_session = session.ComputeSession.get_or_create(
