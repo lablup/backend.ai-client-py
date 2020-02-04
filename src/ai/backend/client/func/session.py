@@ -192,12 +192,12 @@ class ComputeSession:
                 'resources': resources,
                 'resource_opts': resource_opts,
                 'scalingGroup': scaling_group,
-                'preopen_ports': preopen_ports,
             },
         }
         if cls.session.api_version >= (5, '20191215'):
             params['config'].update({
                 'mount_map': mount_map,
+                'preopen_ports': preopen_ports,
             })
             params.update({
                 'bootstrap_script': bootstrap_script,
