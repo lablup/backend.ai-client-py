@@ -422,8 +422,7 @@ def run(image, files, name,                                # base args
     build_template = string.Template(build)
     exec_template = string.Template(exec)
     env_templates = {k: string.Template(v) for k, v in envs.items()}
-    preopen_ports = None if preopen is None else list(map(int, preopen.split(',')))
-    print(preopen_ports)
+    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
     for env_vmap, build_vmap, exec_vmap in vmaps_product:
         interpolated_envs = tuple((k, vt.substitute(env_vmap))
                                   for k, vt in env_templates.items())
