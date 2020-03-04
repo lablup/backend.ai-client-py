@@ -74,9 +74,9 @@ def list():
     List all availabe dotfiles by user.
     '''
     fields = [
-        ('Path', 'path'),
-        ('Data', 'data'),
-        ('Permission', 'permission'),
+        ('Path', 'path', None),
+        ('Data', 'data', lambda v: v[:30].splitlines()[0]),
+        ('Permission', 'permission', None),
     ]
     with Session() as session:
         try:
@@ -84,8 +84,14 @@ def list():
             if not resp:
                 print('There is no dotfiles created yet.')
                 return
-            rows = (tuple(vf[key] for _, key in fields) for vf in resp)
-            hdrs = (display_name for display_name, _ in fields)
+            rows = (
+                tuple(
+                    item[key] if transform is None else transform(item[key])
+                    for _, key, transform in fields
+                )
+                for item in resp
+            )
+            hdrs = (display_name for display_name, _, _ in fields)
             print(tabulate(rows, hdrs))
         except Exception as e:
             print_error(e)
