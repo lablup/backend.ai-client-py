@@ -96,7 +96,7 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
         if show_tid:
             fields.insert(
                 2,
-                format_options['id'])
+                format_options['task_id'])
         if detail:
             fields.extend([
                 format_options['tag'],
