@@ -3,7 +3,8 @@ import sys
 import click
 from tabulate import tabulate
 
-from . import AliasGroup, main
+from ai.backend.cli.extensions import AliasGroup
+from . import main
 from .pretty import print_info, print_warn, print_error
 from ..session import Session
 

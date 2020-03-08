@@ -357,6 +357,8 @@ def _prepare_mount_arg(mount):
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
+@click.option('--preopen',  default=None,
+              help='Pre-open service ports')
 def run(image, files, name,                                # base args
         type, enqueue_only, max_wait, no_reuse,            # job scheduling options
         code, terminal,                                    # query-mode options
@@ -366,7 +368,7 @@ def run(image, files, name,                                # base args
         env_range, build_range, exec_range, max_parallel,  # experiment support
         mount, scaling_group, resources, cluster_size,     # resource spec
         resource_opts,
-        domain, group):                                    # resource grouping
+        domain, group, preopen):                                    # resource grouping
     '''
     Run the given code snippet or files in a session.
     Depending on the session ID you give (default is random),
@@ -420,6 +422,7 @@ def run(image, files, name,                                # base args
     build_template = string.Template(build)
     exec_template = string.Template(exec)
     env_templates = {k: string.Template(v) for k, v in envs.items()}
+    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
     for env_vmap, build_vmap, exec_vmap in vmaps_product:
         interpolated_envs = tuple((k, vt.substitute(env_vmap))
                                   for k, vt in env_templates.items())
@@ -561,7 +564,8 @@ def run(image, files, name,                                # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
-                tag=tag)
+                tag=tag,
+                preopen_ports=preopen_ports)
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
@@ -783,13 +787,15 @@ def run(image, files, name,                                # base args
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
+@click.option('--preopen',  default=None,
+              help='Pre-open service ports')
 def start(image, name, owner,                                 # base args
           type, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
           tag,                                            # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
           resource_opts,
-          domain, group):                                 # resource grouping
+          domain, group, preopen):                                 # resource grouping
     '''
     Prepare and start a single compute session without executing codes.
     You may use the created session to execute codes using the "run" command
@@ -811,6 +817,7 @@ def start(image, name, owner,                                 # base args
     resources = _prepare_resource_arg(resources)
     resource_opts = _prepare_resource_arg(resource_opts)
     mount, mount_map = _prepare_mount_arg(mount)
+    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
     with Session() as session:
         try:
             compute_session = session.ComputeSession.get_or_create(
@@ -831,7 +838,8 @@ def start(image, name, owner,                                 # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
-                tag=tag)
+                tag=tag,
+                preopen_ports=preopen_ports)
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -1027,23 +1035,26 @@ def start_template(
 
 
 @main.command(aliases=['rm', 'kill'])
-@click.argument('name', metavar='SESSID', nargs=-1)
+@click.argument('session_names', metavar='SESSID', nargs=-1)
 @click.option('-o', '--owner', '--owner-access-key', metavar='ACCESS_KEY',
               help='Specify the owner of the target session explicitly.')
 @click.option('-s', '--stats', is_flag=True,
               help='Show resource usage statistics after termination')
-def terminate(name, owner, stats):
+def terminate(session_names, owner, stats):
     '''
     Terminate the given session.
 
-    SESSID: session ID or its alias given when creating the session.
+    SESSID: session ID given/generated when creating the session.
     '''
+    if len(session_names) == 0:
+        print_warn('Specify at least one session ID. Check usage with "-h" option.')
+        sys.exit(1)
     print_wait('Terminating the session(s)...')
     with Session() as session:
         has_failure = False
-        for sess in name:
+        for session_name in session_names:
             try:
-                compute_session = session.ComputeSession(sess, owner)
+                compute_session = session.ComputeSession(session_name, owner)
                 ret = compute_session.destroy()
             except BackendAPIError as e:
                 print_error(e)
@@ -1055,16 +1066,52 @@ def terminate(name, owner, stats):
             except Exception as e:
                 print_error(e)
                 has_failure = True
-            if has_failure:
-                sys.exit(1)
         else:
-            print_done('Done.')
+            if not has_failure:
+                print_done('Done.')
             if stats:
                 stats = ret.get('stats', None) if ret else None
                 if stats:
                     print(_format_stats(stats))
                 else:
                     print('Statistics is not available.')
+        if has_failure:
+            sys.exit(1)
+
+
+@main.command()
+@click.argument('session_names', metavar='SESSID', nargs=-1)
+def restart(session_names):
+    '''
+    Restart the given session.
+
+    SESSID: session ID given/generated when creating the session.
+    '''
+    if len(session_names) == 0:
+        print_warn('Specify at least one session ID. Check usage with "-h" option.')
+        sys.exit(1)
+    print_wait('Restarting the session(s)...')
+    with Session() as session:
+        has_failure = False
+        for session_name in session_names:
+            try:
+                compute_session = session.ComputeSession(session_name)
+                compute_session.restart()
+            except BackendAPIError as e:
+                print_error(e)
+                if e.status == 404:
+                    print_info(
+                        'If you are an admin, use "-o" / "--owner" option '
+                        'to terminate other user\'s session.')
+                has_failure = True
+            except Exception as e:
+                print_error(e)
+                has_failure = True
+        else:
+            if not has_failure:
+                print_done('Done.')
+        if has_failure:
+            sys.exit(1)
 
 
 @main.command()

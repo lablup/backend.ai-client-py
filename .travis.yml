@@ -20,22 +20,20 @@ env:
   global:
     - BACKEND_CLIENT_CLOUD_TEST=1  # use beta server for integration tests
 
-matrix:
-  fast_finish: true
-
 # test stage
 install:
-  - pip install -U --upgrade-strategy=eager pip setuptools
-  - pip install -U --upgrade-strategy=eager -r requirements-ci.txt
+  - pip install -U pip setuptools
+  - pip install -U -r requirements/test.txt
 script:
-  - python -m flake8 ai/backend tests
   - python -m pytest --cov=ai.backend.client -v -m "not integration"
 after_success:
   - codecov
 
-# other stages
+# job matrix
 jobs:
+  fast_finish: true
   include:
+    # if the test stage has multiple cases, it will be auto-included.
     - stage: deploy
       python: "3.7"
       install: skip
@@ -45,10 +43,17 @@ jobs:
           tags: true
         provider: pypi
         distributions: sdist bdist_wheel
-        skip_upload_docs: true
-        user: "__token__"
+        upload_docs: false
+        username: "__token__"
         password:
           secure: "pypi-AgEIcHlwaS5vcmcCJDkyM2QzNjkxLTU5MWUtNDc4YS05YWU3LTg0MTUwZjlhZDRjNwACQnsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJiYWNrZW5kLWFpLWNsaWVudCJdfSwgInZlcnNpb24iOiAxfQAABiDYwYfQxE_mRlq1N1eBd6qYKViBiAqtlV0p5QVx4_h8iw"
+  allow_failures:
+    - python: "3.8"
+      os: linux
+  fast_finish: true
+  # exclude the duplicate default test stage
+  exclude:
+    - python: "3.6"
 
 notifications:
   webhooks:

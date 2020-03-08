@@ -7,7 +7,7 @@ from typing import (
     Iterable, Union,
     AsyncGenerator,
     Mapping,
-    Sequence,
+    Sequence, List,
 )
 from pathlib import Path
 
@@ -104,7 +104,8 @@ class ComputeSession:
                             bootstrap_script: str = None,
                             tag: str = None,
                             scaling_group: str = None,
-                            owner_access_key: str = None) -> 'ComputeSession':
+                            owner_access_key: str = None,
+                            preopen_ports: List[int] = None) -> 'ComputeSession':
         '''
         Get-or-creates a compute session.
         If *name* is ``None``, it creates a new compute session as long as
@@ -196,6 +197,7 @@ class ComputeSession:
         if cls.session.api_version >= (5, '20191215'):
             params['config'].update({
                 'mount_map': mount_map,
+                'preopen_ports': preopen_ports,
             })
             params.update({
                 'bootstrap_script': bootstrap_script,

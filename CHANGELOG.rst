@@ -44,6 +44,18 @@ Changes
 * BREAKING CHANGE: Now the client SDK runs on Python 3.6, 3.7, and 3.8 and
   dropped support for Python 3.5.
 
+19.09.5 (2020-03-08)
+--------------------
+
+* NEW: Add ``backend.ai restart`` command and improve error handling in
+  the ``backend.ai terminate`` command.
+
+19.09.4 (2020-02-10)
+--------------------
+
+* NEW: SDK API (``EtcdConfig``) and CLI command (``backend.ai admin etcd``)
+  to allow querying and updating etcd configurations by admins.
+
 19.09.3 (2019-12-03)
 --------------------
 
