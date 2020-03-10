@@ -195,7 +195,7 @@ class Kernel:
         self.owner_access_key = owner_access_key
 
     @api_function
-    async def destroy(self):
+    async def destroy(self, *, forced: bool = False):
         '''
         Destroys the compute session.
         Since the server literally kills the container(s), all ongoing executions are
@@ -204,6 +204,8 @@ class Kernel:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
+        if forced:
+            params['forced'] = 'true'
         rqst = Request(self.session,
                        'DELETE', '/kernel/{}'.format(self.kernel_id),
                        params=params)
