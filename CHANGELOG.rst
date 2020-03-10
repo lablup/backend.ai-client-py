@@ -5,7 +5,7 @@ Changes
 --------------------
 
 * NEW: Add ``-f`` / ``--forced`` option to ``backend.ai terminate`` command
-  and add an optional ``forced`` keyword-argument to SDK API (``Kernel.destroy()``).
+  and add an optional ``forced`` keyword-argument to SDK API (``Kernel.destroy()``). (#89)
 
 19.09.5 (2020-03-08)
 --------------------
