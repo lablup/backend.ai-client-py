@@ -1,7 +1,9 @@
 import asyncio
 import json
+import os
 import shlex
 import signal
+import sys
 from typing import (
     Union, Optional,
     MutableMapping, Dict,
@@ -12,7 +14,7 @@ import aiohttp
 import click
 
 from . import main
-from .pretty import print_info, print_warn, print_error
+from .pretty import print_info, print_warn, print_fail, print_error
 from ..config import DEFAULT_CHUNK_SIZE
 from ..request import Request
 from ..session import AsyncSession
@@ -120,6 +122,7 @@ class ProxyRunnerContext:
         'protocol', 'host', 'port',
         'args', 'envs',
         'api_session', 'local_server',
+        'exit_code',
     )
 
     session_name: str
@@ -131,6 +134,7 @@ class ProxyRunnerContext:
     envs: Dict[str, str]
     api_session: Optional[AsyncSession]
     local_server: Optional[asyncio.AbstractServer]
+    exit_code: int
 
     def __init__(self, host: str, port: int,
                  session_name: str, app_name: str, *,
@@ -145,6 +149,7 @@ class ProxyRunnerContext:
 
         self.api_session = None
         self.local_server = None
+        self.exit_code = 0
 
         self.args, self.envs = {}, {}
         if len(args) > 0:
@@ -187,24 +192,27 @@ class ProxyRunnerContext:
             print_error(e)
 
     async def __aenter__(self) -> None:
+        self.exit_code = 0
         self.api_session = AsyncSession()
         await self.api_session.__aenter__()
-        self.local_server = await asyncio.start_server(
-            self.handle_connection, self.host, self.port)
 
         user_url_template = "{protocol}://{host}:{port}"
-        try:
-            compute_session = self.api_session.ComputeSession(self.session_name)
-            data = await compute_session.stream_app_info(self.app_name)
-            if 'url_template' in data.keys():
-                user_url_template = data['url_template']
-        except:
-            if self.app_name == 'vnc-web':
-                user_url_template = \
-                    "{protocol}://{host}:{port}/vnc.html" \
-                    "?host={host}&port={port}" \
-                    "&password=backendai&autoconnect=true"
+        compute_session = self.api_session.ComputeSession(self.session_name)
+        all_apps = await compute_session.stream_app_info()
+        for app_info in all_apps:
+            if app_info['name'] == self.app_name:
+                print(app_info)
+                if 'url_template' in app_info.keys():
+                    user_url_template = app_info['url_template']
+                break
+        else:
+            print_fail(f'The app "{self.app_name}" is not supported by the session.')
+            self.exit_code = 1
+            os.kill(0, signal.SIGINT)
+            return
 
+        self.local_server = await asyncio.start_server(
+            self.handle_connection, self.host, self.port)
         user_url = user_url_template.format(
             protocol=self.protocol,
             host=self.host,
@@ -220,13 +228,15 @@ class ProxyRunnerContext:
                        'to connect with the CLI app proxy.')
 
     async def __aexit__(self, *exc_info) -> None:
-        print_info("Shutting down....")
-        self.local_server.close()
-        await self.local_server.wait_closed()
+        if self.local_server is not None:
+            print_info("Shutting down....")
+            self.local_server.close()
+            await self.local_server.wait_closed()
         await self.api_session.__aexit__(*exc_info)
         assert self.api_session.closed
-        print_info("The local proxy to \"{}\" has terminated."
-                   .format(self.app_name))
+        if self.local_server is not None:
+            print_info("The local proxy to \"{}\" has terminated."
+                       .format(self.app_name))
 
 
 @main.command()
@@ -266,6 +276,7 @@ def app(session_name, app, protocol, bind, arg, env):
     )
     stop_signals = {signal.SIGINT, signal.SIGTERM}
     asyncio_run_forever(proxy_ctx, stop_signals=stop_signals)
+    sys.exit(proxy_ctx.exit_code)
 
 
 @main.command()
