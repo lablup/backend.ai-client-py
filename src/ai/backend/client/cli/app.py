@@ -237,6 +237,7 @@ class ProxyRunnerContext:
         if self.local_server is not None:
             print_info("The local proxy to \"{}\" has terminated."
                        .format(self.app_name))
+        self.local_server = None
 
 
 @main.command()
