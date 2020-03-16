@@ -4,7 +4,7 @@ import click
 from tabulate import tabulate
 
 from . import admin
-from ..pretty import print_error, print_fail
+from ..pretty import print_done, print_warn, print_error, print_fail
 from ...session import Session
 
 
@@ -18,7 +18,7 @@ def list_scaling_groups(group):
             print_error(e)
             sys.exit(1)
         if len(resp) < 1:
-            print('There is no scaling group available.')
+            print_warn('There is no scaling group available.')
             return
         print(resp)
 
@@ -127,7 +127,7 @@ def add(name, description, inactive,
             print_fail('Scaling group creation has failed: {0}'.format(data['msg']))
             sys.exit(1)
         item = data['scaling_group']
-        print('Scaling group name {0} is created.'.format(item['name']))
+        print_done('Scaling group name {0} is created.'.format(item['name']))
 
 
 @scaling_groups.command()
@@ -168,7 +168,7 @@ def update(name, description, inactive,
         if not data['ok']:
             print_fail('Scaling group update has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Scaling group {0} is updated.'.format(name))
+        print_done('Scaling group {0} is updated.'.format(name))
 
 
 @scaling_groups.command()
@@ -188,7 +188,7 @@ def delete(name):
         if not data['ok']:
             print_fail('Scaling group deletion has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Scaling group is deleted: ' + name + '.')
+        print_done('Scaling group is deleted: ' + name + '.')
 
 
 @scaling_groups.command()
@@ -211,7 +211,7 @@ def associate_scaling_group(scaling_group, domain):
         if not data['ok']:
             print_fail('Associating scaling group with domain failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Scaling group {} is assocatiated with domain {}.'.format(scaling_group, domain))
+        print_done('Scaling group {} is assocatiated with domain {}.'.format(scaling_group, domain))
 
 
 @scaling_groups.command()
@@ -234,4 +234,4 @@ def dissociate_scaling_group(scaling_group, domain):
         if not data['ok']:
             print_fail('Dissociating scaling group from domain failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Scaling group {} is dissociated from domain {}.'.format(scaling_group, domain))
+        print_done('Scaling group {} is dissociated from domain {}.'.format(scaling_group, domain))

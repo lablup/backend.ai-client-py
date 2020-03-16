@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 from . import admin
 from ...session import Session
-from ..pretty import print_error, print_fail
+from ..pretty import print_done, print_warn, print_error, print_fail
 
 
 @admin.command()
@@ -37,7 +37,7 @@ def keypair_resource_policy(name):
             sys.exit(1)
         rows = []
         if info is None:
-            print('No such resource policy.')
+            print_warn('No such resource policy.')
             sys.exit(1)
         for name, key in fields:
             rows.append((name, info[key]))
@@ -72,7 +72,7 @@ def keypair_resource_policies(ctx):
             print_error(e)
             sys.exit(1)
         if len(items) == 0:
-            print('There are no keypair resource policies.')
+            print_warn('There are no keypair resource policies.')
             return
         print(tabulate((item.values() for item in items),
                        headers=(item[0] for item in fields)))
@@ -129,7 +129,7 @@ def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sess
                        .format(data['msg']))
             sys.exit(1)
         item = data['resource_policy']
-        print('Keypair resource policy ' + item['name'] + ' is created.')
+        print_done('Keypair resource policy ' + item['name'] + ' is created.')
 
 
 @keypair_resource_policies.command()
@@ -179,7 +179,7 @@ def update(name, default_for_unspecified, total_resource_slots,
             print_fail('KeyPair Resource Policy creation has failed: {0}'
                        .format(data['msg']))
             sys.exit(1)
-        print('Update succeeded.')
+        print_done('Update succeeded.')
 
 
 @keypair_resource_policies.command()
@@ -203,4 +203,4 @@ def delete(name):
             print_fail('KeyPair Resource Policy deletion has failed: {0}'
                        .format(data['msg']))
             sys.exit(1)
-        print('Resource policy ' + name + ' is deleted.')
+        print_done('Resource policy ' + name + ' is deleted.')

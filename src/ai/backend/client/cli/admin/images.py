@@ -4,7 +4,7 @@ from tabulate import tabulate
 
 from . import admin
 from ...session import Session
-from ..pretty import print_error
+from ..pretty import print_done, print_warn, print_fail, print_error
 
 
 @admin.command()
@@ -29,7 +29,7 @@ def images(operation):
             print_error(e)
             sys.exit(1)
         if len(items) == 0:
-            print('There are no registered images.')
+            print_warn('There are no registered images.')
             return
         print(tabulate((item.values() for item in items),
                        headers=(item[0] for item in fields),
@@ -49,9 +49,9 @@ def rescan_images(registry):
             print_error(e)
             sys.exit(1)
         if result['ok']:
-            print("kernel image metadata updated")
+            print_done("Updated the image metadata from the configured registries.")
         else:
-            print("rescanning failed: {0}".format(result['msg']))
+            print_fail(f"Rescanning has failed: {result['msg']}")
 
 
 @admin.command()
@@ -66,9 +66,9 @@ def alias_image(alias, target):
             print_error(e)
             sys.exit(1)
         if result['ok']:
-            print("alias {0} created for target {1}".format(alias, target))
+            print_done(f"An alias has created: {alias} -> {target}")
         else:
-            print(result['msg'])
+            print_fail(f"Aliasing has failed: {result['msg']}")
 
 
 @admin.command()
@@ -82,6 +82,6 @@ def dealias_image(alias):
             print_error(e)
             sys.exit(1)
         if result['ok']:
-            print("alias {0} removed.".format(alias))
+            print_done(f"The alias has been removed: {alias}")
         else:
-            print(result['msg'])
+            print_fail(f"Dealiasing has failed: {result['msg']}")

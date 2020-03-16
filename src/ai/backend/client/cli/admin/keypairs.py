@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 from . import admin
 from ...session import Session
-from ..pretty import print_error, print_fail
+from ..pretty import print_done, print_warn, print_error, print_fail
 
 
 @admin.command()
@@ -79,8 +79,8 @@ def keypairs(ctx, user_id, is_active):
             print_error(e)
             sys.exit(1)
         if len(items) == 0:
-            print('There are no matching keypairs associated '
-                  'with the user ID {0}'.format(user_id))
+            print_warn('There are no matching keypairs associated '
+                       'with the user ID {0}'.format(user_id))
             return
         print(tabulate((item.values() for item in items),
                        headers=(item[0] for item in fields)))
@@ -151,7 +151,7 @@ def update(access_key, resource_policy, is_admin, is_active,  rate_limit):
         if not data['ok']:
             print_fail('KeyPair update has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Key pair is updated: ' + access_key + '.')
+        print_done('Key pair is updated: ' + access_key + '.')
 
 
 @keypairs.command()
@@ -171,7 +171,7 @@ def delete(access_key):
         if not data['ok']:
             print_fail('KeyPair deletion has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Key pair is deleted: ' + access_key + '.')
+        print_done('Key pair is deleted: ' + access_key + '.')
 
 
 @keypairs.command()
@@ -191,7 +191,7 @@ def activate(access_key):
         if not data['ok']:
             print_fail('KeyPair activation has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Key pair is activated: ' + access_key + '.')
+        print_done('Key pair is activated: ' + access_key + '.')
 
 
 @keypairs.command()
@@ -211,4 +211,4 @@ def deactivate(access_key):
         if not data['ok']:
             print_fail('KeyPair deactivation has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Key pair is deactivated: ' + access_key + '.')
+        print_done('Key pair is deactivated: ' + access_key + '.')
