@@ -7,6 +7,8 @@ Changes
 * NEW: Add ``-f`` / ``--forced`` option to ``backend.ai terminate`` command
   and add an optional ``forced`` keyword-argument to SDK API (``Kernel.destroy()``). (#89)
 
+* IMPROVE: Prettify the console output for admin CLI commands. (#91)
+
 19.09.5 (2020-03-08)
 --------------------
 
