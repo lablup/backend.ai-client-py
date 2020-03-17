@@ -201,7 +201,6 @@ class ProxyRunnerContext:
         all_apps = await compute_session.stream_app_info()
         for app_info in all_apps:
             if app_info['name'] == self.app_name:
-                print(app_info)
                 if 'url_template' in app_info.keys():
                     user_url_template = app_info['url_template']
                 break
