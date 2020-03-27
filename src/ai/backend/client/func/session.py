@@ -321,7 +321,7 @@ class ComputeSession:
         if cls.session.config.vfolder_mounts:
             mounts.extend(cls.session.config.vfolder_mounts)
         prefix = get_naming(cls.session.api_version, 'path')
-        rqst = Request(cls.session, 'POST', f'/{prefix}/from-template')
+        rqst = Request(cls.session, 'POST', f'/{prefix}/_/create-from-template')
         params = {
             'template_id': template_id,
             'tag': tag,
