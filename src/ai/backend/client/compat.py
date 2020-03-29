@@ -87,12 +87,10 @@ def asyncio_run_forever(setup_coro, shutdown_coro, *,
     async def wait_for_stop():
         loop = current_loop()
         future = loop.create_future()
-        for stop_sig in stop_signals:
-            loop.add_signal_handler(stop_sig, future.set_result, stop_sig)
         try:
             recv_sig = await future
-        finally:
-            loop.remove_signal_handler(recv_sig)
+        except (asyncio.CancelledError, KeyboardInterrupt):
+            pass
 
     loop = asyncio.new_event_loop()
     try:
