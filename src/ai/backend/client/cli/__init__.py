@@ -1,17 +1,13 @@
 from pathlib import Path
+import os
+import signal
 import sys
-from typing import (
-    Any,
-    Dict,
-)
 
 import click
+from click.exceptions import ClickException, Abort
 
 from .. import __version__
 from ..config import APIConfig, set_config
-
-
-cli_context: Dict[str, Any] = {}
 
 
 class AliasGroup(click.Group):
@@ -117,7 +113,7 @@ def run_alias():
     sys.argv.insert(1, 'run')
     if help:
         sys.argv.append('--help')
-    main.main(prog_name='backend.ai')
+    run_main()
 
 
 def _attach_command():
@@ -126,3 +122,40 @@ def _attach_command():
 
 
 _attach_command()
+
+
+def run_main():
+    try:
+        _interrupted = False
+        main.main(
+            standalone_mode=False,
+            prog_name='backend.ai',
+        )
+    except Abort as e:
+        # Click wraps unhandled KeyboardInterrupt with a plain
+        # sys.exit(1) call and prints "Aborted!" message
+        # (which would look non-sense to users).
+        # This is *NOT* what we want.
+        #
+        # Instead of relying on Click, mark the 'interrupted'
+        # flag for the global cli_context to perform our own
+        # exit routines when interrupted.
+        if isinstance(e.__context__, KeyboardInterrupt):
+            print('Interrupted!', file=sys.stderr)
+            _interrupted = True
+    except ClickException as e:
+        e.show()
+        sys.exit(e.exit_code)
+    finally:
+        if _interrupted:
+            # Override the exit code when it's interrupted,
+            # referring https://github.com/python/cpython/pull/11862
+            if sys.platform.startswith('win'):
+                # Use STATUS_CONTROL_C_EXIT to notify cmd.exe
+                # for interrupted exit
+                sys.exit(-1073741510)
+            else:
+                # Use the default signal handler to set the exit
+                # code properly for interruption.
+                signal.signal(signal.SIGINT, signal.SIG_DFL)
+                os.kill(0, signal.SIGINT)

@@ -7,8 +7,6 @@ import binascii
 import os
 import signal
 
-from .cli import cli_context
-
 
 def token_bytes(nbytes=None):  # Python 3.6+
     '''
@@ -59,15 +57,10 @@ def _cancel_all_tasks(loop):
 
 def asyncio_run(coro, *, debug=False):
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.set_debug(debug)
     try:
-        asyncio.set_event_loop(loop)
-        loop.set_debug(debug)
         return loop.run_until_complete(coro)
-    except KeyboardInterrupt:
-        # See asyncio_run_forever()
-        if not cli_context.get('running_as_cli', False):
-            raise
-        cli_context['interrupted'] = True
     finally:
         try:
             _cancel_all_tasks(loop)
@@ -100,18 +93,6 @@ def asyncio_run_forever(setup_coro, shutdown_coro, *,
     try:
         loop.run_until_complete(setup_coro)
         loop.run_until_complete(wait_for_stop())
-    except KeyboardInterrupt:
-        # Click wraps unhandled KeyboardInterrupt with a plain
-        # sys.exit(1) call and prints "Aborted!" message
-        # (which would look non-sense to users).
-        # This is *NOT* what we want.
-        #
-        # Instead of relying on Click, mark the 'interrupted'
-        # flag for the global cli_context to perform our own
-        # exit routines when interrupted.
-        if not cli_context.get('running_as_cli', False):
-            raise
-        cli_context['interrupted'] = True
     finally:
         try:
             loop.run_until_complete(shutdown_coro)
