@@ -141,10 +141,8 @@ def run_main():
         # sys.exit(1) call and prints "Aborted!" message
         # (which would look non-sense to users).
         # This is *NOT* what we want.
-        #
-        # Instead of relying on Click, mark the 'interrupted'
-        # flag for the global cli_context to perform our own
-        # exit routines when interrupted.
+        # Instead of relying on Click, mark the _interrupted
+        # flag to perform our own exit routines.
         if isinstance(e.__context__, KeyboardInterrupt):
             print("Interrupted!", end="", file=sys.stderr)
             sys.stderr.flush()
