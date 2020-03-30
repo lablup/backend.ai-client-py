@@ -141,7 +141,8 @@ def run_main():
         # flag for the global cli_context to perform our own
         # exit routines when interrupted.
         if isinstance(e.__context__, KeyboardInterrupt):
-            print('Interrupted!', file=sys.stderr)
+            print('Interrupted!', end='', file=sys.stderr)
+            sys.stderr.flush()
             _interrupted = True
     except ClickException as e:
         e.show()
