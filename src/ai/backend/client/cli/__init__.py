@@ -131,6 +131,11 @@ def run_main():
             standalone_mode=False,
             prog_name='backend.ai',
         )
+    except KeyboardInterrupt:
+        # For interruptions outside the Click's exception handling block.
+        print("Interrupted!", end="", file=sys.stderr)
+        sys.stderr.flush()
+        _interrupted = True
     except Abort as e:
         # Click wraps unhandled KeyboardInterrupt with a plain
         # sys.exit(1) call and prints "Aborted!" message
@@ -141,9 +146,13 @@ def run_main():
         # flag for the global cli_context to perform our own
         # exit routines when interrupted.
         if isinstance(e.__context__, KeyboardInterrupt):
-            print('Interrupted!', end='', file=sys.stderr)
+            print("Interrupted!", end="", file=sys.stderr)
             sys.stderr.flush()
             _interrupted = True
+        else:
+            print("Aborted!", end="", file=sys.stderr)
+            sys.stderr.flush()
+            sys.exit(1)
     except ClickException as e:
         e.show()
         sys.exit(e.exit_code)
