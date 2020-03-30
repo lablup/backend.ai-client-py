@@ -3,6 +3,7 @@ import sys
 
 import click
 
+from .. import __version__
 from ..config import APIConfig, set_config
 
 
@@ -85,7 +86,7 @@ class AliasGroup(click.Group):
 @click.option('--skip-sslcert-validation',
               help='Skip SSL certificate validation for all API requests.',
               is_flag=True)
-@click.version_option()
+@click.version_option(version=__version__)
 def main(skip_sslcert_validation):
     """
     Backend.AI command line interface.
