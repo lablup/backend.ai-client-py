@@ -1,6 +1,12 @@
 Changes
 =======
 
+19.09.7 (2020-03-30)
+--------------------
+
+* FIX: Not-implemented-error in ``backend.ai app`` command on Windows, due
+  to manually set event loop UNIX signal handlers.
+
 19.09.6 (2020-03-16)
 --------------------
 
