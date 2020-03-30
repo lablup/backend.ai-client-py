@@ -1,10 +1,17 @@
 from pathlib import Path
 import sys
+from typing import (
+    Any,
+    Dict,
+)
 
 import click
 
 from .. import __version__
 from ..config import APIConfig, set_config
+
+
+cli_context: Dict[str, Any] = {}
 
 
 class AliasGroup(click.Group):

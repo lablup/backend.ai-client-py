@@ -7,6 +7,8 @@ import binascii
 import os
 import signal
 
+from .cli import cli_context
+
 
 def token_bytes(nbytes=None):  # Python 3.6+
     '''
@@ -55,12 +57,17 @@ def _cancel_all_tasks(loop):
             })
 
 
-def _asyncio_run(coro, *, debug=False):
+def asyncio_run(coro, *, debug=False):
     loop = asyncio.new_event_loop()
     try:
         asyncio.set_event_loop(loop)
         loop.set_debug(debug)
         return loop.run_until_complete(coro)
+    except KeyboardInterrupt:
+        # See asyncio_run_forever()
+        if not cli_context.get('running_as_cli', False):
+            raise
+        cli_context['interrupted'] = True
     finally:
         try:
             _cancel_all_tasks(loop)
@@ -68,13 +75,8 @@ def _asyncio_run(coro, *, debug=False):
                 loop.run_until_complete(loop.shutdown_asyncgens())
         finally:
             loop.stop()
+            loop.close()
             asyncio.set_event_loop(None)
-
-
-if hasattr(asyncio, 'run'):  # Python 3.7+
-    asyncio_run = asyncio.run
-else:
-    asyncio_run = _asyncio_run
 
 
 def asyncio_run_forever(setup_coro, shutdown_coro, *,
@@ -88,16 +90,28 @@ def asyncio_run_forever(setup_coro, shutdown_coro, *,
         loop = current_loop()
         future = loop.create_future()
         try:
-            recv_sig = await future
-        except (asyncio.CancelledError, KeyboardInterrupt):
+            await future
+        except asyncio.CancelledError:
             pass
 
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.set_debug(debug)
     try:
-        asyncio.set_event_loop(loop)
-        loop.set_debug(debug)
         loop.run_until_complete(setup_coro)
         loop.run_until_complete(wait_for_stop())
+    except KeyboardInterrupt:
+        # Click wraps unhandled KeyboardInterrupt with a plain
+        # sys.exit(1) call and prints "Aborted!" message
+        # (which would look non-sense to users).
+        # This is *NOT* what we want.
+        #
+        # Instead of relying on Click, mark the 'interrupted'
+        # flag for the global cli_context to perform our own
+        # exit routines when interrupted.
+        if not cli_context.get('running_as_cli', False):
+            raise
+        cli_context['interrupted'] = True
     finally:
         try:
             loop.run_until_complete(shutdown_coro)
@@ -106,4 +120,5 @@ def asyncio_run_forever(setup_coro, shutdown_coro, *,
                 loop.run_until_complete(loop.shutdown_asyncgens())
         finally:
             loop.stop()
+            loop.close()
             asyncio.set_event_loop(None)
