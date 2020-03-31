@@ -21,8 +21,6 @@ def vfolder():
               help='List all virtual folders (superadmin privilege is required).')
 def list(list_all):
     '''List virtual folders that belongs to the current user.'''
-    import time
-    time.sleep(10)
     fields = [
         ('Name', 'name'),
         ('ID', 'id'),
