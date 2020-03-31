@@ -17,13 +17,13 @@ def runner():
 def test_print_help(runner, help_arg):
     result = runner.invoke(main, [help_arg])
     assert result.exit_code == 0
-    assert re.match(r'Usage: (\w+) \[OPTIONS\] COMMAND \[ARGS\]', result.output)
+    assert re.match(r'Usage: ([.\w]+) \[OPTIONS\] COMMAND \[ARGS\]', result.output)
 
 
 def test_print_help_for_unknown_command(runner):
     result = runner.invoke(main, ['x-non-existent-command'])
     assert result.exit_code == 2
-    assert re.match(r'Usage: (\w+) \[OPTIONS\] COMMAND \[ARGS\]', result.output)
+    assert re.match(r'Usage: ([.\w]+) \[OPTIONS\] COMMAND \[ARGS\]', result.output)
 
 
 def test_config(runner, monkeypatch, example_keypair,
