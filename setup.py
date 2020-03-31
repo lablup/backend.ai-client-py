@@ -98,6 +98,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         'dev': dev_requires,
+        'build': build_requires,
         'test': test_requires,
         'lint': lint_requires,
         'typecheck': typecheck_requires,

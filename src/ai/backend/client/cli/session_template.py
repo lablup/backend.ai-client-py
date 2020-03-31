@@ -3,13 +3,12 @@ import sys
 import click
 from tabulate import tabulate
 
-from ai.backend.cli.extensions import AliasGroup
 from . import main
 from .pretty import print_info, print_warn, print_error
 from ..session import Session
 
 
-@main.group(cls=AliasGroup, aliases=['sesstpl'])
+@main.group(aliases=['sesstpl'])
 def session_template():
     '''Provides task template operations'''
 

@@ -1,4 +1,6 @@
-from . import run_main
+from ai.backend.cli.loader import run_main
+
+from . import main
 
 
-run_main()
+run_main(main)

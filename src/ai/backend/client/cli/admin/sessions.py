@@ -63,6 +63,8 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
     '''
     List and manage compute sessions.
     '''
+    import time
+    time.sleep(10)
     fields = []
     try:
         with Session() as session:
