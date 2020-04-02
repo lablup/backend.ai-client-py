@@ -277,9 +277,10 @@ def app(session_name, app, protocol, bind, arg, env):
             envs=env,
         )
         asyncio_run_forever(proxy_ctx)
+        sys.exit(proxy_ctx.exit_code)
     except Exception as e:
         print_error(e)
-    sys.exit(proxy_ctx.exit_code)
+        sys.exit(1)
 
 
 @main.command()
