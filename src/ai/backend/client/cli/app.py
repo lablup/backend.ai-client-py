@@ -197,34 +197,37 @@ class ProxyRunnerContext:
         await self.api_session.__aenter__()
 
         user_url_template = "{protocol}://{host}:{port}"
-        compute_session = self.api_session.ComputeSession(self.session_name)
-        all_apps = await compute_session.stream_app_info()
-        for app_info in all_apps:
-            if app_info['name'] == self.app_name:
-                if 'url_template' in app_info.keys():
-                    user_url_template = app_info['url_template']
-                break
-        else:
-            print_fail(f'The app "{self.app_name}" is not supported by the session.')
-            self.exit_code = 1
-            os.kill(0, signal.SIGINT)
-            return
+        try:
+            compute_session = self.api_session.ComputeSession(self.session_name)
+            all_apps = await compute_session.stream_app_info()
+            for app_info in all_apps:
+                if app_info['name'] == self.app_name:
+                    if 'url_template' in app_info.keys():
+                        user_url_template = app_info['url_template']
+                    break
+            else:
+                print_fail(f'The app "{self.app_name}" is not supported by the session.')
+                self.exit_code = 1
+                return
 
-        self.local_server = await asyncio.start_server(
-            self.handle_connection, self.host, self.port)
-        user_url = user_url_template.format(
-            protocol=self.protocol,
-            host=self.host,
-            port=self.port,
-        )
-        print_info(
-            "A local proxy to the application \"{0}\" ".format(self.app_name) +
-            "provided by the session \"{0}\" ".format(self.session_name) +
-            "is available at:\n{0}".format(user_url)
-        )
-        if self.host == '0.0.0.0':
-            print_warn('NOTE: Replace "0.0.0.0" with the actual hostname you use '
-                       'to connect with the CLI app proxy.')
+            self.local_server = await asyncio.start_server(
+                self.handle_connection, self.host, self.port)
+            user_url = user_url_template.format(
+                protocol=self.protocol,
+                host=self.host,
+                port=self.port,
+            )
+            print_info(
+                "A local proxy to the application \"{0}\" ".format(self.app_name) +
+                "provided by the session \"{0}\" ".format(self.session_name) +
+                "is available at:\n{0}".format(user_url)
+            )
+            if self.host == '0.0.0.0':
+                print_warn('NOTE: Replace "0.0.0.0" with the actual hostname you use '
+                        'to connect with the CLI app proxy.')
+        except Exception:
+            await self.api_session.__aexit__(*sys.exc_info())
+            raise
 
     async def __aexit__(self, *exc_info) -> None:
         if self.local_server is not None:
@@ -267,14 +270,17 @@ def app(session_name, app, protocol, bind, arg, env):
     elif len(bind_parts) == 2:
         host = bind_parts[0]
         port = int(bind_parts[1])
-    proxy_ctx = ProxyRunnerContext(
-        host, port,
-        session_name, app,
-        protocol=protocol,
-        args=arg,
-        envs=env,
-    )
-    asyncio_run_forever(proxy_ctx)
+    try:
+        proxy_ctx = ProxyRunnerContext(
+            host, port,
+            session_name, app,
+            protocol=protocol,
+            args=arg,
+            envs=env,
+        )
+        asyncio_run_forever(proxy_ctx)
+    except Exception as e:
+        print_error(e)
     sys.exit(proxy_ctx.exit_code)
 
 

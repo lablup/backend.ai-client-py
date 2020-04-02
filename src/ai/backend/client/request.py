@@ -5,6 +5,7 @@ import functools
 import io
 import logging
 from pathlib import Path
+import sys
 from typing import Any, Callable, Mapping, Sequence, Union
 
 import aiohttp
@@ -460,6 +461,7 @@ class FetchContextManager:
                 raw_resp = await self._rqst_ctx.__aenter__()
                 if self.check_status and raw_resp.status // 100 != 2:
                     msg = await raw_resp.text()
+                    await raw_resp.__aexit__(None, None, None)
                     raise BackendAPIError(raw_resp.status, raw_resp.reason, msg)
                 return self.response_cls(self.session, raw_resp,
                                          async_mode=self._async_mode)
@@ -475,6 +477,7 @@ class FetchContextManager:
             except aiohttp.ClientResponseError as e:
                 msg = 'API endpoint response error.\n' \
                       '\u279c {!r}'.format(e)
+                await raw_resp.__aexit__(*sys.exc_info())
                 raise BackendClientError(msg) from e
 
     def __exit__(self, *args):

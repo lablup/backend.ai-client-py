@@ -63,6 +63,46 @@ async def _negotiate_api_version(
         return client_version
 
 
+async def _close_aiohttp_session(session: aiohttp.ClientSession):
+    # This is a hacky workaround for premature closing of SSL transports
+    # on Windows Proactor event loops.
+    # Thanks to Vadim Markovtsev's comment on the aiohttp issue #1925.
+    # (https://github.com/aio-libs/aiohttp/issues/1925#issuecomment-592596034)
+    transports = 0
+    all_is_lost = asyncio.Event()
+    if len(session.connector._conns) == 0:
+        all_is_lost.set()
+    for conn in session.connector._conns.values():
+        for handler, _ in conn:
+            proto = getattr(handler.transport, "_ssl_protocol", None)
+            if proto is None:
+                continue
+            transports += 1
+            orig_lost = proto.connection_lost
+            orig_eof_received = proto.eof_received
+
+            def connection_lost(exc):
+                orig_lost(exc)
+                nonlocal transports
+                transports -= 1
+                if transports == 0:
+                    all_is_lost.set()
+
+            def eof_received():
+                try:
+                    orig_eof_received()
+                except AttributeError:
+                    # It may happen that eof_received() is called after
+                    # _app_protocol and _transport are set to None.
+                    pass
+
+            proto.connection_lost = connection_lost
+            proto.eof_received = eof_received
+    await session.close()
+    if transports > 0:
+        await all_is_lost.wait()
+
+
 class _SyncWorkerThread(threading.Thread):
 
     sentinel = object()
@@ -374,7 +414,7 @@ class Session(BaseSession):
         if self._closed:
             return
         self._closed = True
-        self._worker_thread.work_queue.put(self.aiohttp_session.close())
+        self._worker_thread.work_queue.put(_close_aiohttp_session(self.aiohttp_session))
         self._worker_thread.work_queue.put(self.worker_thread.sentinel)
         self._worker_thread.join()
 
@@ -600,7 +640,7 @@ class AsyncSession(BaseSession):
         if self._closed:
             return
         self._closed = True
-        await self.aiohttp_session.close()
+        await _close_aiohttp_session(self.aiohttp_session)
 
     async def __aenter__(self):
         assert not self.closed, 'Cannot reuse closed session'
