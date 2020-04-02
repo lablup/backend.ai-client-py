@@ -1,6 +1,13 @@
 Changes
 =======
 
+20.03.0b2 (2020-04-xx)
+----------------------
+
+* FIX: Improve exception handling in ``backend.ai app`` command
+  and internally update backend.ai-cli package to work consistently
+  with #93 (#94)
+
 19.12.0b1 (2020-01-11)
 ----------------------
 
