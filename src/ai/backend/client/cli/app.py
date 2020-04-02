@@ -1,8 +1,6 @@
 import asyncio
 import json
-import os
 import shlex
-import signal
 import sys
 from typing import (
     Union, Optional,
