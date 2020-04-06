@@ -1,0 +1,1 @@
+- Add SDK API (`SessionTemplate`) and CLI command set (`backend.ai sesstpl`)

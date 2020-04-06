@@ -1,0 +1,7 @@
+All functional API classes are moved into the `ai.backend.client.func` sub-package.
+- `Kernel` is changed to `Session`.
+- The session ID field name in the response of `Session` objects
+  is now `session_id` instead of `kernel_id`.
+- Except above, this would not introduce big changes in the SDK user
+  codes since they use `AsyncSession` and `Session` in the
+  `ai.backend.client.session` module.
