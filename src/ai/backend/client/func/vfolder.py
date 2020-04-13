@@ -27,13 +27,16 @@ class VFolder:
 
     @api_function
     @classmethod
-    async def create(cls, name: str, host: str = None, unmanaged_path: str = None, group: str = None):
+    async def create(cls, name: str, host: str = None, unmanaged_path: str = None, group: str = None,
+                     usage_mode: str = 'general', permission: str = 'rw'):
         rqst = Request(cls.session, 'POST', '/folders')
         rqst.set_json({
             'name': name,
             'host': host,
             'unmanaged_path': unmanaged_path,
             'group': group,
+            'usage_mode': usage_mode,
+            'permission': permission,
         })
         async with rqst.fetch() as resp:
             return await resp.json()

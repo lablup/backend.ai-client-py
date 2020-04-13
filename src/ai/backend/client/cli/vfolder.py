@@ -26,7 +26,8 @@ def list(list_all):
         ('ID', 'id'),
         ('Owner', 'is_owner'),
         ('Permission', 'permission'),
-        ('Type', 'type'),
+        ('Owership Type', 'ownership_type'),
+        ('Usage Mode', 'usage_mode'),
         ('User', 'user'),
         ('Group', 'group'),
     ]
@@ -77,7 +78,15 @@ def list_allowed_types():
 @click.option('--unmanaged', 'host_path', type=bool, is_flag=True,
               help='Treats HOST as a mount point of unmanaged virtual folder. '
                    'This option can only be used by Admin or Superadmin.')
-def create(name, host, group, host_path):
+@click.option('-m', '--usage-mode', metavar='USAGE_MODE', type=str, default='general',
+              help='Purpose of the folder. Normal folders are usually set to "general". '
+                   'Available options: "general", "data" (provides data to users), '
+                   'and "model" (provides pre-trained models).')
+@click.option('-p', '--permission', metavar='PERMISSION', type=str, default='rw',
+              help='Folder\'s innate permission. '
+                   'Group folders can be shared as read-only by setting this option to "ro".'
+                   'Invited folders override this setting by its own invitation permission.')
+def create(name, host, group, host_path, usage_mode, permission):
     '''Create a new virtual folder.
 
     \b
@@ -87,9 +96,11 @@ def create(name, host, group, host_path):
     with Session() as session:
         try:
             if host_path:
-                result = session.VFolder.create(name=name, unmanaged_path=host, group=group)
+                result = session.VFolder.create(name=name, unmanaged_path=host, group=group,
+                                                usage_mode=usage_mode, permission=permission)
             else:
-                result = session.VFolder.create(name=name, host=host, group=group)
+                result = session.VFolder.create(name=name, host=host, group=group,
+                                                usage_mode=usage_mode, permission=permission)
             print('Virtual folder "{0}" is created.'.format(result['name']))
         except Exception as e:
             print_error(e)
@@ -148,7 +159,9 @@ def info(name):
             print('- Owner:', result['is_owner'])
             print('- Permission:', result['permission'])
             print('- Number of files: {0}'.format(result['numFiles']))
-            print('- Type: {0}'.format(result['type']))
+            print('- Ownership Type: {0}'.format(result['ownership_type']))
+            print('- Permission:', result['permission'])
+            print('- Usage Mode: {0}'.format(result['usage_mode']))
             print('- Group ID: {0}'.format(result['group']))
             print('- User ID: {0}'.format(result['user']))
         except Exception as e:
