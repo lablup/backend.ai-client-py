@@ -155,7 +155,8 @@ class BaseSession(metaclass=abc.ABCMeta):
         'Domain', 'Group', 'Auth', 'User', 'KeyPair',
         'EtcdConfig',
         'Resource', 'KeypairResourcePolicy',
-        'VFolder', 'Dotfile'
+        'VFolder', 'Dotfile',
+        'ServerLog',
     )
 
     aiohttp_session: aiohttp.ClientSession
@@ -232,6 +233,7 @@ class Session(BaseSession):
         from .func.user import User
         from .func.vfolder import VFolder
         from .func.dotfile import Dotfile
+        from .func.server_log import ServerLog
 
         self.System = type('System', (BaseFunction, ), {
             **System.__dict__,
@@ -404,6 +406,15 @@ class Session(BaseSession):
         bound to this session.
         '''
 
+        self.ServerLog = type('ServerLog', (BaseFunction, ), {
+            **ServerLog.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.server_log.ServerLog` function proxy
+        bound to this session.
+        '''
+
     def close(self):
         '''
         Terminates the session.  It schedules the ``close()`` coroutine
@@ -474,6 +485,7 @@ class AsyncSession(BaseSession):
         from .func.user import User
         from .func.vfolder import VFolder
         from .func.dotfile import Dotfile
+        from .func.server_log import ServerLog
 
         self.System = type('System', (BaseFunction, ), {
             **System.__dict__,
@@ -627,12 +639,22 @@ class AsyncSession(BaseSession):
         The :class:`~ai.backend.client.vfolder.VFolder` function proxy
         bound to this session.
         '''
+
         self.Dotfile = type('Dotfile', (BaseFunction, ), {
             **Dotfile.__dict__,
             'session': self,
         })
         '''
         The :class:`~ai.backend.client.dotfile.Dotfile` function proxy
+        bound to this session.
+        '''
+
+        self.ServerLog = type('ServerLog', (BaseFunction, ), {
+            **Dotfile.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.server_log.ServerLog` function proxy
         bound to this session.
         '''
 

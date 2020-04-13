@@ -29,6 +29,7 @@ def _attach_command():
     from . import vfolder       # noqa
     from . import session_template  # noqa
     from . import dotfile  # noqa
+    from . import server_log  # noqa
 
 
 _attach_command()
