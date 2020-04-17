@@ -153,6 +153,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         'Agent', 'AgentWatcher', 'ScalingGroup',
         'Image', 'ComputeSession', 'SessionTemplate',
         'Domain', 'Group', 'Auth', 'User', 'KeyPair',
+        'BackgroundTask',
         'EtcdConfig',
         'Resource', 'KeypairResourcePolicy',
         'VFolder', 'Dotfile'
@@ -218,6 +219,7 @@ class Session(BaseSession):
         from .func.admin import Admin
         from .func.agent import Agent, AgentWatcher
         from .func.auth import Auth
+        from .func.bgtask import BackgroundTask
         from .func.etcd import EtcdConfig
         from .func.domain import Domain
         from .func.group import Group
@@ -275,6 +277,15 @@ class Session(BaseSession):
         })
         '''
         The :class:`~ai.backend.client.Auth` function proxy
+        bound to this session.
+        '''
+
+        self.BackgroundTask = type('BackgroundTask', (BaseFunction, ), {
+            **BackgroundTask.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.BackgroundTask` function proxy
         bound to this session.
         '''
 
@@ -461,6 +472,7 @@ class AsyncSession(BaseSession):
         from .func.admin import Admin
         from .func.agent import Agent, AgentWatcher
         from .func.auth import Auth
+        from .func.bgtask import BackgroundTask
         from .func.etcd import EtcdConfig
         from .func.group import Group
         from .func.image import Image
@@ -517,6 +529,15 @@ class AsyncSession(BaseSession):
         })
         '''
         The :class:`~ai.backend.client.Auth` function proxy
+        bound to this session.
+        '''
+
+        self.BackgroundTask = type('BackgroundTask', (BaseFunction, ), {
+            **BackgroundTask.__dict__,
+            'session': self,
+        })
+        '''
+        The :class:`~ai.backend.client.BackgroundTask` function proxy
         bound to this session.
         '''
 

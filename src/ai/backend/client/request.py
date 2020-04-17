@@ -6,12 +6,17 @@ import io
 import logging
 from pathlib import Path
 import sys
-from typing import Any, Callable, Mapping, Sequence, Union
+from typing import (
+    Any, Callable, Optional, Union,
+    AsyncIterator, Type,
+    Mapping, Sequence,
+)
 
 import aiohttp
 from aiohttp.client import _RequestContextManager, _WSRequestContextManager
 import aiohttp.web
 import appdirs
+import attr
 from dateutil.tz import tzutc
 from multidict import CIMultiDict
 import json as modjson
@@ -437,7 +442,7 @@ class FetchContextManager:
 
     def __init__(self, session: BaseSession,
                  rqst_ctx_builder: Callable[[], _RequestContextManager], *,
-                 response_cls: Response = Response,
+                 response_cls: Type[Response] = Response,
                  check_status: bool = True):
         self.session = session
         self.rqst_ctx_builder = rqst_ctx_builder
@@ -570,7 +575,7 @@ class WebSocketContextManager:
     def __init__(self, session: BaseSession,
                  ws_ctx_builder: Callable[[], _WSRequestContextManager], *,
                  on_enter: Callable = None,
-                 response_cls: WebSocketResponse = WebSocketResponse):
+                 response_cls: Type[Response] = WebSocketResponse):
         self.session = session
         self.ws_ctx_builder = ws_ctx_builder
         self.response_cls = response_cls
@@ -612,10 +617,17 @@ class WebSocketContextManager:
         return ret
 
 
+@attr.s(auto_attribs=True, slots=True, frozen=True)
+class SSEMessage:
+    event: str
+    data: str
+    id: Optional[id] = None
+    retry: Optional[int] = None
+
+
 class SSEResponse(Response):
 
     __slots__ = (
-        '_session', '_raw_response', '_async_mode',
         '_auto_reconnect',
     )
 
@@ -623,7 +635,7 @@ class SSEResponse(Response):
                  underlying_response: aiohttp.ClientResponse):
         super().__init__(session, underlying_response, async_mode=True)
 
-    async def fetch_events(self):
+    async def fetch_events(self) -> AsyncIterator[SSEMessage]:
         msg_lines = []
         while True:
             line = await self._raw_response.content.readline()
@@ -638,10 +650,10 @@ class SSEResponse(Response):
                 # message boundary
                 if len(msg_lines) == 0:
                     continue
-                evdata = {
-                    'event': 'message',
-                    'data': '',
-                }
+                event_type = 'message'
+                event_data = ''
+                event_id = None
+                event_retry = None
                 data_lines = []
                 try:
                     for line in msg_lines:
@@ -650,19 +662,27 @@ class SSEResponse(Response):
                         if hdr == 'data':
                             data_lines.append(text)
                         elif hdr == 'event':
-                            evdata['event'] = text
+                            event_type = text
                         elif hdr == 'id':
-                            evdata['id'] = text
+                            event_id = text
                         elif hdr == 'retry':
-                            evdata['retry'] = int(text)
+                            event_retry = int(text)
                 except (IndexError, ValueError):
                     log.exception('SSEResponse: parsing-error')
                     continue
-                evdata['data'] = '\n'.join(data_lines)
+                event_data = '\n'.join(data_lines)
                 msg_lines.clear()
-                yield evdata
+                yield SSEMessage(
+                    event=event_type,
+                    data=event_data,
+                    id=event_id,
+                    retry=event_retry,
+                )
             else:
                 msg_lines.append(line.decode('utf-8'))
+
+    def __aiter__(self) -> AsyncIterator[SSEMessage]:
+        return self.fetch_events()
 
 
 class SSEContextManager:
@@ -674,7 +694,7 @@ class SSEContextManager:
 
     def __init__(self, session: BaseSession,
                  rqst_ctx_builder: Callable[[], _RequestContextManager], *,
-                 response_cls: SSEResponse = SSEResponse):
+                 response_cls: Type[Response] = SSEResponse):
         self.session = session
         self.rqst_ctx_builder = rqst_ctx_builder
         self.response_cls = response_cls

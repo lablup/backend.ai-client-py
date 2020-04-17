@@ -22,7 +22,8 @@ from ..exceptions import BackendClientError
 from ..request import (
     Request, AttachedFile,
     WebSocketResponse,
-    SSEResponse,
+    SSEContextManager,
+    WebSocketContextManager,
 )
 from ..utils import undefined, ProgressReportingReader
 from ..versioning import get_naming
@@ -43,7 +44,7 @@ def drop(d, dropval):
 
 
 class ComputeSession:
-    '''
+    """
     Provides various interactions with compute sessions in Backend.AI.
 
     The term 'kernel' is now deprecated and we prefer 'compute sessions'.
@@ -55,10 +56,10 @@ class ComputeSession:
     So it is the user's responsibility to distribute uploaded files to multiple
     containers using explicit copies or virtual folders which are commonly mounted to
     all containers belonging to the same compute session.
-    '''
+    """
 
     session = None
-    '''The client session instance that this function class is bound to.'''
+    """The client session instance that this function class is bound to."""
 
     @api_function
     @classmethod
@@ -106,7 +107,7 @@ class ComputeSession:
                             scaling_group: str = None,
                             owner_access_key: str = None,
                             preopen_ports: List[int] = None) -> 'ComputeSession':
-        '''
+        """
         Get-or-creates a compute session.
         If *name* is ``None``, it creates a new compute session as long as
         the server has enough resources and your API key has remaining quota.
@@ -159,7 +160,7 @@ class ComputeSession:
             available to administrators)
 
         :returns: The :class:`ComputeSession` instance.
-        '''
+        """
         if name:
             assert 4 <= len(name) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
@@ -250,7 +251,7 @@ class ComputeSession:
                                    tag: str = undefined,
                                    scaling_group: str = undefined,
                                    owner_access_key: str = undefined) -> 'ComputeSession':
-        '''
+        """
         Get-or-creates a compute session from template.
         All other parameters provided  will be overwritten to template, including
         vfolder mounts (not appended!).
@@ -306,7 +307,7 @@ class ComputeSession:
             available to administrators)
 
         :returns: The :class:`ComputeSession` instance.
-        '''
+        """
         if name:
             assert 4 <= len(name) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
@@ -364,11 +365,11 @@ class ComputeSession:
 
     @api_function
     async def destroy(self, *, forced: bool = False):
-        '''
+        """
         Destroys the compute session.
         Since the server literally kills the container(s), all ongoing executions are
         forcibly interrupted.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -386,11 +387,11 @@ class ComputeSession:
 
     @api_function
     async def restart(self):
-        '''
+        """
         Restarts the compute session.
         The server force-destroys the current running container(s), but keeps their
         temporary scratch directories intact.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -405,11 +406,11 @@ class ComputeSession:
 
     @api_function
     async def interrupt(self):
-        '''
+        """
         Tries to interrupt the current ongoing code execution.
         This may fail without any explicit errors depending on the code being
         executed.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -424,7 +425,7 @@ class ComputeSession:
 
     @api_function
     async def complete(self, code: str, opts: dict = None) -> Iterable[str]:
-        '''
+        """
         Gets the auto-completion candidates from the given code string,
         as if a user has pressed the tab key just after the code in
         IDEs.
@@ -437,7 +438,7 @@ class ComputeSession:
             such as row, col, line and the remainder text.
 
         :returns: An ordered list of strings.
-        '''
+        """
         opts = {} if opts is None else opts
         params = {}
         if self.owner_access_key:
@@ -462,9 +463,9 @@ class ComputeSession:
 
     @api_function
     async def get_info(self):
-        '''
+        """
         Retrieves a brief information about the compute session.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -479,9 +480,9 @@ class ComputeSession:
 
     @api_function
     async def get_logs(self):
-        '''
+        """
         Retrieves the console log of the compute session container.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -499,7 +500,7 @@ class ComputeSession:
                       code: str = None,
                       mode: str = 'query',
                       opts: dict = None):
-        '''
+        """
         Executes a code snippet directly in the compute session or sends a set of
         build/clean/execute commands to the compute session.
 
@@ -521,7 +522,7 @@ class ComputeSession:
             for details.
 
         :returns: :ref:`An execution result object <execution-result-object>`
-        '''
+        """
         opts = opts if opts is not None else {}
         params = {}
         if self.owner_access_key:
@@ -581,7 +582,7 @@ class ComputeSession:
     async def upload(self, files: Sequence[Union[str, Path]],
                      basedir: Union[str, Path] = None,
                      show_progress: bool = False):
-        '''
+        """
         Uploads the given list of files to the compute session.
         You may refer them in the batch-mode execution or from the code
         executed in the server afterwards.
@@ -598,7 +599,7 @@ class ComputeSession:
         :param basedir: The directory prefix where the files reside.
             The default value is the current working directory.
         :param show_progress: Displays a progress bar during uploads.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -643,7 +644,7 @@ class ComputeSession:
     async def download(self, files: Sequence[Union[str, Path]],
                        dest: Union[str, Path] = '.',
                        show_progress: bool = False):
-        '''
+        """
         Downloads the given list of files from the compute session.
 
         :param files: The list of file paths in the compute session.
@@ -651,7 +652,7 @@ class ComputeSession:
             ``/home/work`` in the compute session container.
         :param dest: The destination directory in the client-side.
         :param show_progress: Displays a progress bar during downloads.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -698,12 +699,12 @@ class ComputeSession:
 
     @api_function
     async def list_files(self, path: Union[str, Path] = '.'):
-        '''
+        """
         Gets the list of files in the given path inside the compute session
         container.
 
         :param path: The directory path in the compute session.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -733,35 +734,37 @@ class ComputeSession:
         async with api_rqst.fetch() as resp:
             return await resp.json()
 
-    # only supported in AsyncKernel
-    def stream_events(self) -> SSEResponse:
-        '''
+    # only supported in AsyncAPISession
+    def listen_events(self) -> SSEContextManager:
+        """
         Opens the stream of the kernel lifecycle events.
         Only the master kernel of each session is monitored.
 
         :returns: a :class:`StreamEvents` object.
-        '''
+        """
         params = {
             get_naming(self.session.api_version, 'event_name_arg'): self.name,
         }
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        path = get_naming(self.session.api_version, 'session_events')
         request = Request(
             self.session,
-            'GET', f'/stream/{prefix}/_/events',
+            'GET', path,
             params=params,
         )
         return request.connect_events()
 
-    # only supported in AsyncKernel
-    def stream_pty(self) -> 'StreamPty':
-        '''
+    stream_events = listen_events  # legacy alias
+
+    # only supported in AsyncAPISession
+    def stream_pty(self) -> WebSocketContextManager:
+        """
         Opens a pseudo-terminal of the kernel (if supported) streamed via
         websockets.
 
         :returns: a :class:`StreamPty` object.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -773,15 +776,15 @@ class ComputeSession:
         )
         return request.connect_websocket(response_cls=StreamPty)
 
-    # only supported in AsyncKernel
+    # only supported in AsyncAPISession
     def stream_execute(self, code: str = '', *,
                        mode: str = 'query',
-                       opts: dict = None) -> WebSocketResponse:
-        '''
+                       opts: dict = None) -> WebSocketContextManager:
+        """
         Executes a code snippet in the streaming mode.
         Since the returned websocket represents a run loop, there is no need to
         specify *run_id* explicitly.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
@@ -816,10 +819,10 @@ class ComputeSession:
 
 
 class StreamPty(WebSocketResponse):
-    '''
+    """
     A derivative class of :class:`~ai.backend.client.request.WebSocketResponse` which
     provides additional functions to control the terminal.
-    '''
+    """
 
     __slots__ = ('ws', )
 

@@ -1,18 +1,21 @@
+import json
 import sys
+
 import click
 from tabulate import tabulate
 
 from . import admin
+from ...compat import asyncio_run
 from ...session import Session
 from ..pretty import print_done, print_warn, print_fail, print_error
 
 
 @admin.command()
 @click.option('--operation', is_flag=True, help='Get operational images only')
-def images(operation):
-    '''
+def images(operation: bool) -> None:
+    """
     Show the list of registered images in this cluster.
-    '''
+    """
     fields = [
         ('Name', 'name'),
         ('Registry', 'registry'),
@@ -40,25 +43,37 @@ def images(operation):
 @click.option('-r', '--registry', type=str, default=None,
               help='The name (usually hostname or "lablup") '
                    'of the Docker registry configured.')
-def rescan_images(registry):
-    '''Update the kernel image metadata from all configured docker registries.'''
-    with Session() as session:
-        try:
-            result = session.Image.rescan_images(registry)
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
-        if result['ok']:
-            print_done("Updated the image metadata from the configured registries.")
-        else:
-            print_fail(f"Rescanning has failed: {result['msg']}")
+def rescan_images(registry: str) -> None:
+    """
+    Update the kernel image metadata from all configured docker registries.
+    """
+
+    async def rescan_images_impl(registry: str) -> None:
+        async with Session() as session:
+            try:
+                result = await session.Image.rescan_images(registry)
+            except Exception as e:
+                print_error(e)
+                sys.exit(1)
+            if not result['ok']:
+                print_fail(f"Rescanning has failed: {result['msg']}")
+                sys.exit(1)
+            print_done("Started updating the image metadata from the configured registries.")
+            task_id = result['task_id']
+            bgtask = session.BackgroundTask(task_id)
+            async with bgtask.listen_events() as response:
+                async for ev in response:
+                    print(click.style(ev.event, fg='cyan', bold=True), json.loads(ev.data))
+            print_done("Finished registry scanning.")
+
+    asyncio_run(rescan_images_impl(registry))
 
 
 @admin.command()
 @click.argument('alias', type=str)
 @click.argument('target', type=str)
 def alias_image(alias, target):
-    '''Add an image alias.'''
+    """Add an image alias."""
     with Session() as session:
         try:
             result = session.Image.alias_image(alias, target)
@@ -74,7 +89,7 @@ def alias_image(alias, target):
 @admin.command()
 @click.argument('alias', type=str)
 def dealias_image(alias):
-    '''Remove an image alias.'''
+    """Remove an image alias."""
     with Session() as session:
         try:
             result = session.Image.dealias_image(alias)

@@ -1145,9 +1145,9 @@ def events(name, owner_access_key):
     async def _run_events():
         async with AsyncSession() as session:
             compute_session = session.ComputeSession(name, owner_access_key)
-            async with compute_session.stream_events() as sse_response:
-                async for ev in sse_response.fetch_events():
-                    print(click.style(ev['event'], fg='cyan', bold=True), json.loads(ev['data']))
+            async with compute_session.listen_events() as response:
+                async for ev in response:
+                    print(click.style(ev.event, fg='cyan', bold=True), json.loads(ev.data))
 
     try:
         asyncio_run(_run_events())
