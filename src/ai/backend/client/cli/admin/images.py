@@ -57,7 +57,7 @@ def rescan_images(registry: str) -> None:
                 print_error(e)
                 sys.exit(1)
             if not result['ok']:
-                print_fail(f"Rescanning has failed: {result['msg']}")
+                print_fail(f"Failed to begin registry scanning: {result['msg']}")
                 sys.exit(1)
             print_done("Started updating the image metadata from the configured registries.")
             task_id = result['task_id']
@@ -77,7 +77,6 @@ def rescan_images(registry: str) -> None:
                                 completion_msg_func = \
                                     lambda: print_fail(f"Error occurred: {error_msg}")
                             elif ev.event == 'task_cancelled':
-                                pbar.write(ev.data)
                                 completion_msg_func = \
                                     lambda: print_warn("Registry scanning has been "
                                                        "cancelled in the middle.")
