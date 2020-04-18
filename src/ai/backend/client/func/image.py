@@ -9,23 +9,23 @@ __all__ = (
 
 
 class Image:
-    '''
+    """
     Provides a shortcut of :func:`Admin.query()
     <ai.backend.client.admin.Admin.query>` that fetches the information about
     available images.
-    '''
+    """
 
     session = None
-    '''The client session instance that this function class is bound to.'''
+    """The client session instance that this function class is bound to."""
 
     @api_function
     @classmethod
     async def list(cls,
                    operation: bool = False,
                    fields: Iterable[str] = None) -> Sequence[dict]:
-        '''
+        """
         Fetches the list of registered images in this cluster.
-        '''
+        """
 
         if fields is None:
             fields = (
@@ -56,7 +56,7 @@ class Image:
     async def rescan_images(cls, registry: str):
         q = 'mutation($registry: String) {' \
             '  rescan_images(registry:$registry) {' \
-            '   ok msg' \
+            '   ok msg task_id' \
             '  }' \
             '}'
         variables = {

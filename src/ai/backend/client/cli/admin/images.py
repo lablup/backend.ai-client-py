@@ -3,10 +3,11 @@ import sys
 
 import click
 from tabulate import tabulate
+from tqdm import tqdm
 
 from . import admin
 from ...compat import asyncio_run
-from ...session import Session
+from ...session import Session, AsyncSession
 from ..pretty import print_done, print_warn, print_fail, print_error
 
 
@@ -49,7 +50,7 @@ def rescan_images(registry: str) -> None:
     """
 
     async def rescan_images_impl(registry: str) -> None:
-        async with Session() as session:
+        async with AsyncSession() as session:
             try:
                 result = await session.Image.rescan_images(registry)
             except Exception as e:
@@ -61,10 +62,27 @@ def rescan_images(registry: str) -> None:
             print_done("Started updating the image metadata from the configured registries.")
             task_id = result['task_id']
             bgtask = session.BackgroundTask(task_id)
-            async with bgtask.listen_events() as response:
-                async for ev in response:
-                    print(click.style(ev.event, fg='cyan', bold=True), json.loads(ev.data))
-            print_done("Finished registry scanning.")
+            try:
+                completion_msg_func = lambda: print_done("Finished registry scanning.")
+                with tqdm(unit='image') as pbar:
+                    async with bgtask.listen_events() as response:
+                        async for ev in response:
+                            data = json.loads(ev.data)
+                            if ev.event == 'task_updated':
+                                pbar.total = data['total_progress']
+                                pbar.write(data['message'])
+                                pbar.update(data['current_progress'] - pbar.n)
+                            elif ev.event == 'task_failed':
+                                error_msg = data['message']
+                                completion_msg_func = \
+                                    lambda: print_fail(f"Error occurred: {error_msg}")
+                            elif ev.event == 'task_cancelled':
+                                pbar.write(ev.data)
+                                completion_msg_func = \
+                                    lambda: print_warn("Registry scanning has been "
+                                                       "cancelled in the middle.")
+            finally:
+                completion_msg_func()
 
     asyncio_run(rescan_images_impl(registry))
 

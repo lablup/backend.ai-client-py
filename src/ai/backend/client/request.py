@@ -651,7 +651,6 @@ class SSEResponse(Response):
                 if len(msg_lines) == 0:
                     continue
                 event_type = 'message'
-                event_data = ''
                 event_id = None
                 event_retry = None
                 data_lines = []
@@ -678,6 +677,8 @@ class SSEResponse(Response):
                     id=event_id,
                     retry=event_retry,
                 )
+                if event_type == 'server_close':
+                    break
             else:
                 msg_lines.append(line.decode('utf-8'))
 
