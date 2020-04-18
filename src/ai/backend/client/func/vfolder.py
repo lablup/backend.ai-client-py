@@ -153,6 +153,17 @@ class VFolder:
             return await resp.text()
 
     @api_function
+    async def rename_file(self, target_path: str, new_name: str):
+        rqst = Request(self.session, 'POST',
+                       '/folders/{}/rename_file'.format(self.name))
+        rqst.set_json({
+            'target_path': target_path,
+            'new_name': new_name,
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
     async def delete_files(self,
                            files: Sequence[Union[str, Path]],
                            recursive: bool = False):
