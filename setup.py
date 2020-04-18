@@ -82,7 +82,6 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Operating System :: POSIX',
@@ -94,7 +93,7 @@ setup(
     ],
     package_dir={'': 'src'},
     packages=find_namespace_packages(where='src', include='ai.backend.*'),
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     setup_requires=setup_requires,
     install_requires=install_requires,
     extras_require={

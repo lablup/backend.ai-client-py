@@ -23,7 +23,7 @@ import json as modjson
 
 from .auth import generate_signature
 from .exceptions import BackendClientError, BackendAPIError
-from .session import BaseSession, Session as SyncSession, AsyncSession
+from .session import BaseSession, Session as SyncSession, AsyncSession, api_session
 
 log = logging.getLogger('ai.backend.client.request')
 
@@ -110,8 +110,8 @@ class Request:
         :param str content_type: Explicitly set the content type.  See also
                                  :func:`Request.set_content`.
         '''
-        self.session = session
-        self.config = session.config
+        self.session = api_session.get()
+        self.config = self.session.config
         self.method = method
         if path.startswith('/'):
             path = path[1:]

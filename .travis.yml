@@ -10,7 +10,6 @@ stages:
 
 # build matrix for test stage
 python:
-  - "3.6"
   - "3.7"
   - "3.8"
 os:
@@ -53,7 +52,7 @@ jobs:
   fast_finish: true
   # exclude the duplicate default test stage
   exclude:
-    - python: "3.6"
+    - python: "3.7"
 
 notifications:
   webhooks:

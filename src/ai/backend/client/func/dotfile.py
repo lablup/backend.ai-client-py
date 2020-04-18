@@ -1,7 +1,8 @@
 from typing import List, Mapping
 
-from .base import api_function
+from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 
 __all__ = (
@@ -9,9 +10,8 @@ __all__ = (
 )
 
 
-class Dotfile:
+class Dotfile(BaseFunction):
 
-    session = None
     @api_function
     @classmethod
     async def create(cls,
@@ -20,7 +20,7 @@ class Dotfile:
                      permission: str,
                      owner_access_key: str = None,
                      ) -> 'Dotfile':
-        rqst = Request(cls.session,
+        rqst = Request(api_session.get(),
                        'POST', '/user-config/dotfiles')
         body = {
             'data': data,
@@ -36,7 +36,7 @@ class Dotfile:
     @api_function
     @classmethod
     async def list_dotfiles(cls) -> 'List[Mapping[str, str]]':
-        rqst = Request(cls.session,
+        rqst = Request(api_session.get(),
                        'GET', '/user-config/dotfiles')
         async with rqst.fetch() as resp:
             if resp.status == 200:
@@ -51,7 +51,7 @@ class Dotfile:
         params = {'path': self.path}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
+        rqst = Request(api_session.get(),
                        'GET', f'/user-config/dotfiles',
                        params=params)
         async with rqst.fetch() as resp:
@@ -67,7 +67,7 @@ class Dotfile:
         }
         if self.owner_access_key:
             body['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
+        rqst = Request(api_session.get(),
                        'PATCH', f'/user-config/dotfiles')
         rqst.set_json(body)
 
@@ -79,7 +79,7 @@ class Dotfile:
         params = {'path': self.path}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(self.session,
+        rqst = Request(api_session.get(),
                        'DELETE', f'/user-config/dotfiles',
                        params=params)
 

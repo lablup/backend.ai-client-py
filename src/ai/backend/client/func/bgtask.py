@@ -1,19 +1,18 @@
 from typing import Union
 from uuid import UUID
 
+from .base import BaseFunction
 from ..request import (
     Request,
     SSEContextManager,
 )
+from ..session import api_session
 
 
-class BackgroundTask:
+class BackgroundTask(BaseFunction):
     """
     Provides server-sent events streaming functions.
     """
-
-    session = None
-    '''The client session instance that this function class is bound to.'''
 
     task_id: UUID
 
@@ -31,7 +30,7 @@ class BackgroundTask:
             'task_id': str(self.task_id),
         }
         request = Request(
-            self.session,
+            api_session.get(),
             'GET', '/events/background-task',
             params=params,
         )

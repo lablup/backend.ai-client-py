@@ -1,20 +1,18 @@
 from typing import Iterable, Sequence, Union
 
-from ai.backend.client.func.base import api_function
-from ai.backend.client.request import Request
+from .base import api_function, BaseFunction
+from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'KeyPair',
 )
 
 
-class KeyPair:
-    '''
+class KeyPair(BaseFunction):
+    """
     Provides interactions with keypairs.
-    '''
-
-    session = None
-    '''The client session instance that this function class is bound to.'''
+    """
 
     def __init__(self, access_key: str):
         self.access_key = access_key
@@ -27,10 +25,10 @@ class KeyPair:
                      resource_policy: str = None,
                      rate_limit: int = None,
                      fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Creates a new keypair with the given options.
         You need an admin privilege for this operation.
-        '''
+        """
         if fields is None:
             fields = ('access_key', 'secret_key')
         uid_type = 'Int!' if isinstance(user_id, int) else 'String!'
@@ -49,7 +47,7 @@ class KeyPair:
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -83,7 +81,7 @@ class KeyPair:
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -106,7 +104,7 @@ class KeyPair:
         variables = {
             'access_key': access_key,
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -120,10 +118,10 @@ class KeyPair:
     async def list(cls, user_id: Union[int, str] = None,
                    is_active: bool = None,
                    fields: Iterable[str] = None) -> Sequence[dict]:
-        '''
+        """
         Lists the keypairs.
         You need an admin privilege for this operation.
-        '''
+        """
         if fields is None:
             fields = (
                 'access_key', 'secret_key',
@@ -148,7 +146,7 @@ class KeyPair:
         }
         if user_id is not None:
             variables['email'] = user_id
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -159,13 +157,13 @@ class KeyPair:
 
     @api_function
     async def info(self, fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Returns the keypair's information such as resource limits.
 
         :param fields: Additional per-agent query fields to fetch.
 
         .. versionadded:: 18.12
-        '''
+        """
         if fields is None:
             fields = (
                 'access_key', 'secret_key',
@@ -177,7 +175,7 @@ class KeyPair:
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        rqst = Request(self.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
         })
@@ -188,10 +186,10 @@ class KeyPair:
     @api_function
     @classmethod
     async def activate(cls, access_key: str) -> dict:
-        '''
+        """
         Activates this keypair.
         You need an admin privilege for this operation.
-        '''
+        """
         q = 'mutation($access_key: String!, $input: ModifyKeyPairInput!) {' + \
             '  modify_keypair(access_key: $access_key, props: $input) {' \
             '    ok msg' \
@@ -206,7 +204,7 @@ class KeyPair:
                 'rate_limit': None,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -218,12 +216,12 @@ class KeyPair:
     @api_function
     @classmethod
     async def deactivate(cls, access_key: str) -> dict:
-        '''
+        """
         Deactivates this keypair.
         Deactivated keypairs cannot make any API requests
         unless activated again by an administrator.
         You need an admin privilege for this operation.
-        '''
+        """
         q = 'mutation($access_key: String!, $input: ModifyKeyPairInput!) {' + \
             '  modify_keypair(access_key: $access_key, props: $input) {' \
             '    ok msg' \
@@ -238,7 +236,7 @@ class KeyPair:
                 'rate_limit': None,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,

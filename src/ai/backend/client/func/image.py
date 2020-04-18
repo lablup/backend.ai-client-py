@@ -2,21 +2,20 @@ from typing import Iterable, Sequence
 
 from ai.backend.client.func.base import api_function
 from ai.backend.client.request import Request
+from .base import BaseFunction
+from ..session import api_session
 
 __all__ = (
     'Image',
 )
 
 
-class Image:
+class Image(BaseFunction):
     """
     Provides a shortcut of :func:`Admin.query()
     <ai.backend.client.admin.Admin.query>` that fetches the information about
     available images.
     """
-
-    session = None
-    """The client session instance that this function class is bound to."""
 
     @api_function
     @classmethod
@@ -42,7 +41,7 @@ class Image:
         variables = {
             'is_operation': operation,
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -62,7 +61,7 @@ class Image:
         variables = {
             'registry': registry,
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -83,7 +82,7 @@ class Image:
             'alias': alias,
             'target': target,
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -103,7 +102,7 @@ class Image:
         variables = {
             'alias': alias,
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -115,14 +114,14 @@ class Image:
     @api_function
     @classmethod
     async def get_image_import_form(cls) -> dict:
-        rqst = Request(cls.session, 'GET', '/image/import')
+        rqst = Request(api_session.get(), 'GET', '/image/import')
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     @classmethod
     async def build(cls, **kwargs) -> dict:
-        rqst = Request(cls.session, 'POST', '/image/import')
+        rqst = Request(api_session.get(), 'POST', '/image/import')
         rqst.set_json(kwargs)
         async with rqst.fetch() as resp:
             return await resp.json()

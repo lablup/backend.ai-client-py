@@ -1,16 +1,17 @@
 import textwrap
 from typing import Iterable, Sequence
 
-from ai.backend.client.func.base import api_function
-from ai.backend.client.request import Request
+from .base import api_function, BaseFunction
+from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'Group',
 )
 
 
-class Group:
-    '''
+class Group(BaseFunction):
+    """
     Provides a shortcut of :func:`Group.query()
     <ai.backend.client.admin.Admin.query>` that fetches various group information.
 
@@ -18,34 +19,31 @@ class Group:
 
       All methods in this function class require your API access key to
       have the *admin* privilege.
-    '''
-
-    session = None
-    '''The client session instance that this function class is bound to.'''
+    """
 
     @api_function
     @classmethod
     async def list(cls, domain_name: str,
                    fields: Iterable[str] = None) -> Sequence[dict]:
-        '''
+        """
         Fetches the list of groups.
 
         :param domain_name: Name of domain to list groups.
         :param fields: Additional per-group query fields to fetch.
-        '''
+        """
         if fields is None:
             fields = ('id', 'name', 'description', 'is_active',
                       'created_at', 'domain_name',
                       'total_resource_slots', 'allowed_vfolder_hosts',
                       'integration_id')
-        query = textwrap.dedent('''\
+        query = textwrap.dedent("""\
             query($domain_name: String) {
                 groups(domain_name: $domain_name) {$fields}
             }
-        ''')
+        """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'domain_name': domain_name}
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -57,23 +55,23 @@ class Group:
     @api_function
     @classmethod
     async def detail(cls, gid: str, fields: Iterable[str] = None) -> Sequence[dict]:
-        '''
+        """
         Fetch information of a group with group ID.
 
         :param gid: ID of the group to fetch.
         :param fields: Additional per-group query fields to fetch.
-        '''
+        """
         if fields is None:
             fields = ('id', 'name', 'description', 'is_active', 'created_at', 'domain_name',
                       'total_resource_slots', 'allowed_vfolder_hosts', 'integration_id')
-        query = textwrap.dedent('''\
+        query = textwrap.dedent("""\
             query($gid: String!) {
                 group(id: $gid) {$fields}
             }
-        ''')
+        """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'gid': gid}
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -89,19 +87,19 @@ class Group:
                      allowed_vfolder_hosts: Iterable[str] = None,
                      integration_id: str = None,
                      fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Creates a new group with the given options.
         You need an admin privilege for this operation.
-        '''
+        """
         if fields is None:
             fields = ('id', 'domain_name', 'name',)
-        query = textwrap.dedent('''\
+        query = textwrap.dedent("""\
             mutation($name: String!, $input: GroupInput!) {
                 create_group(name: $name, props: $input) {
                     ok msg group {$fields}
                 }
             }
-        ''')
+        """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {
             'name': name,
@@ -114,7 +112,7 @@ class Group:
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -130,17 +128,17 @@ class Group:
                      allowed_vfolder_hosts: Iterable[str] = None,
                      integration_id: str = None,
                      fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Update existing group.
         You need an admin privilege for this operation.
-        '''
-        query = textwrap.dedent('''\
+        """
+        query = textwrap.dedent("""\
             mutation($gid: String!, $input: ModifyGroupInput!) {
                 modify_group(gid: $gid, props: $input) {
                     ok msg
                 }
             }
-        ''')
+        """)
         variables = {
             'gid': gid,
             'input': {
@@ -152,7 +150,7 @@ class Group:
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -164,18 +162,18 @@ class Group:
     @api_function
     @classmethod
     async def delete(cls, gid: str):
-        '''
+        """
         Deletes an existing group.
-        '''
-        query = textwrap.dedent('''\
+        """
+        query = textwrap.dedent("""\
             mutation($gid: String!) {
                 delete_group(gid: $gid) {
                     ok msg
                 }
             }
-        ''')
+        """)
         variables = {'gid': gid}
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -188,17 +186,17 @@ class Group:
     @classmethod
     async def add_users(cls, gid: str, user_uuids: Iterable[str],
                         fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Add users to a group.
         You need an admin privilege for this operation.
-        '''
-        query = textwrap.dedent('''\
+        """
+        query = textwrap.dedent("""\
             mutation($gid: String!, $input: ModifyGroupInput!) {
                 modify_group(gid: $gid, props: $input) {
                     ok msg
                 }
             }
-        ''')
+        """)
         variables = {
             'gid': gid,
             'input': {
@@ -206,7 +204,7 @@ class Group:
                 'user_uuids': user_uuids,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -219,17 +217,17 @@ class Group:
     @classmethod
     async def remove_users(cls, gid: str, user_uuids: Iterable[str],
                            fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Remove users from a group.
         You need an admin privilege for this operation.
-        '''
-        query = textwrap.dedent('''\
+        """
+        query = textwrap.dedent("""\
             mutation($gid: String!, $input: ModifyGroupInput!) {
                 modify_group(gid: $gid, props: $input) {
                     ok msg
                 }
             }
-        ''')
+        """)
         variables = {
             'gid': gid,
             'input': {
@@ -237,7 +235,7 @@ class Group:
                 'user_uuids': user_uuids,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
