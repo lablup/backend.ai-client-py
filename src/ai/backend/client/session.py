@@ -232,6 +232,13 @@ class BaseSession(metaclass=abc.ABCMeta):
         self.Dotfile = Dotfile
 
     @abc.abstractmethod
+    def open(self) -> Union[None, Awaitable[None]]:
+        """
+        Initializes the session and perform version negotiation.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def close(self) -> Union[None, Awaitable[None]]:
         """
         Terminates the session and releases underlying resources.
@@ -290,6 +297,11 @@ class Session(BaseSession):
 
         self.aiohttp_session = self.worker_thread.execute(_create_aiohttp_session())
 
+    def open(self) -> None:
+        self._context_token = api_session.set(self)
+        self.api_version = self.worker_thread.execute(
+            _negotiate_api_version(self.aiohttp_session, self.config))
+
     def close(self) -> None:
         """
         Terminates the session.  It schedules the ``close()`` coroutine
@@ -303,6 +315,7 @@ class Session(BaseSession):
         self._worker_thread.execute(_close_aiohttp_session(self.aiohttp_session))
         self._worker_thread.work_queue.put(sentinel)
         self._worker_thread.join()
+        api_session.reset(self._context_token)
 
     @property
     def worker_thread(self):
@@ -314,14 +327,11 @@ class Session(BaseSession):
 
     def __enter__(self) -> Session:
         assert not self.closed, 'Cannot reuse closed session'
-        self._context_token = api_session.set(self)
-        self.api_version = self.worker_thread.execute(
-            _negotiate_api_version(self.aiohttp_session, self.config))
+        self.open()
         return self
 
     def __exit__(self, *exc_info) -> Literal[False]:
         self.close()
-        api_session.reset(self._context_token)
         return False  # raise up the inner exception
 
 
@@ -340,22 +350,28 @@ class AsyncSession(BaseSession):
         connector = aiohttp.TCPConnector(ssl=ssl)
         self.aiohttp_session = aiohttp.ClientSession(connector=connector)
 
+    async def _aopen(self) -> None:
+        self._context_token = api_session.set(self)
+        self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
+
+    def open(self) -> Awaitable[None]:
+        return self._aopen()
+
     async def _aclose(self) -> None:
         if self._closed:
             return
         self._closed = True
         await _close_aiohttp_session(self.aiohttp_session)
+        api_session.reset(self._context_token)
 
     def close(self) -> Awaitable[None]:
         return self._aclose()
 
     async def __aenter__(self) -> AsyncSession:
         assert not self.closed, 'Cannot reuse closed session'
-        self._context_token = api_session.set(self)
-        self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
+        await self.open()
         return self
 
     async def __aexit__(self, *exc_info) -> Literal[False]:
         await self.close()
-        api_session.reset(self._context_token)
         return False  # raise up the inner exception

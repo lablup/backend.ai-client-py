@@ -386,14 +386,11 @@ class AsyncResponseMixin:
 
     _session: BaseSession
     _raw_response: aiohttp.ClientResponse
-    _async_mode: bool
 
     async def text(self) -> str:
-        assert self._async_mode
         return await self._raw_response.text()
 
     async def json(self, *, loads=modjson.loads) -> Any:
-        assert self._async_mode
         loads = functools.partial(loads, object_pairs_hook=OrderedDict)
         return await self._raw_response.json(loads=loads)
 
@@ -406,30 +403,31 @@ class AsyncResponseMixin:
 
 class SyncResponseMixin:
 
-    _session: SyncSession
+    _session: BaseSession
     _raw_response: aiohttp.ClientResponse
-    _async_mode: bool
 
     def text(self) -> str:
-        assert not self._async_mode
-        return self._session.worker_thread.execute(
+        sync_session = cast(SyncSession, self._session)
+        return sync_session.worker_thread.execute(
             self._raw_response.text()
         )
 
     def json(self, *, loads=modjson.loads) -> Any:
-        assert not self._async_mode
         loads = functools.partial(loads, object_pairs_hook=OrderedDict)
-        return self._session.worker_thread.execute(
+        sync_session = cast(SyncSession, self._session)
+        return sync_session.worker_thread.execute(
             self._raw_response.json(loads=loads)
         )
 
     def read(self, n: int = -1) -> bytes:
-        return self._session.worker_thread.execute(
+        sync_session = cast(SyncSession, self._session)
+        return sync_session.worker_thread.execute(
             self._raw_response.content.read(n)
         )
 
     def readall(self) -> bytes:
-        return self._session.worker_thread.execute(
+        sync_session = cast(SyncSession, self._session)
+        return sync_session.worker_thread.execute(
             self._raw_response.content.read(-1)
         )
 
@@ -530,17 +528,12 @@ class FetchContextManager:
     ) -> None:
         self.session = session
         self.rqst_ctx_builder = rqst_ctx_builder
-        self.response_cls = response_cls
         self.check_status = check_status
+        self.response_cls = response_cls
         self._async_mode = isinstance(session, AsyncSession)
         self._rqst_ctx = None
 
-    def __enter__(self) -> Response:
-        assert isinstance(self.session, SyncSession)
-        return self.session.worker_thread.execute(self.__aenter__())
-
     async def __aenter__(self) -> Response:
-        assert isinstance(self.session, AsyncSession)
         max_retries = len(self.session.config.endpoints)
         retry_count = 0
         while True:
@@ -569,10 +562,6 @@ class FetchContextManager:
                       '\u279c {!r}'.format(e)
                 await raw_resp.__aexit__(*sys.exc_info())
                 raise BackendClientError(msg) from e
-
-    def __exit__(self, *exc_info) -> Optional[bool]:
-        sync_session = cast(SyncSession, self.session)
-        return sync_session.worker_thread.execute(self.__aexit__(*exc_info))
 
     async def __aexit__(self, *exc_info) -> Optional[bool]:
         assert self._rqst_ctx is not None

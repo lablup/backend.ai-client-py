@@ -6,6 +6,7 @@ import re
 from typing import (
     Union,
     Tuple,
+    AsyncIterator,
 )
 
 import aiohttp
@@ -190,18 +191,15 @@ async def websocket_handler(request):
             reason="Internal Server Error")
 
 
-async def startup_proxy(app):
+async def proxy_context(app: web.Application) -> AsyncIterator[None]:
     app['client_session'] = AsyncSession()
-
-
-async def cleanup_proxy(app):
-    await app['client_session'].close()
+    async with app['client_session']:
+        yield
 
 
 def create_proxy_app():
     app = web.Application()
-    app.on_startup.append(startup_proxy)
-    app.on_cleanup.append(cleanup_proxy)
+    app.cleanup_ctx.append(proxy_context)
 
     app.router.add_route("GET", r'/stream/{path:.*$}', websocket_handler)
     app.router.add_route("GET", r'/wsproxy/{path:.*$}', websocket_handler)
