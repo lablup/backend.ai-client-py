@@ -20,6 +20,7 @@ install_requires = [
     'tabulate~=0.8.6',
     'tqdm~=4.42',
     'yarl~=1.4.2',
+    'typing-extensions~=3.7.4',
 ]
 build_requires = [
     'wheel>=0.34.2',
