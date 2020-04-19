@@ -1,5 +1,9 @@
 from pathlib import Path
-from typing import Sequence, Union
+from typing import (
+    Union,
+    Sequence, List,
+    cast,
+)
 
 import aiohttp
 from aiohttp import hdrs
@@ -110,7 +114,7 @@ class VFolder(BaseFunction):
         files = [Path(file).resolve() for file in files]
         total_size = 0
         for file_path in files:
-            total_size += file_path.stat().st_size
+            total_size += Path(file_path).stat().st_size
         tqdm_obj = tqdm(desc='Uploading files',
                         unit='bytes', unit_scale=True,
                         total=total_size,
@@ -120,7 +124,7 @@ class VFolder(BaseFunction):
             for file_path in files:
                 try:
                     attachments.append(AttachedFile(
-                        str(file_path.relative_to(base_path)),
+                        str(Path(file_path).relative_to(base_path)),
                         ProgressReportingReader(str(file_path),
                                                 tqdm_instance=tqdm_obj),
                         'application/octet-stream',
@@ -178,7 +182,7 @@ class VFolder(BaseFunction):
         rqst.set_json({
             'files': files,
         })
-        file_names = []
+        file_names: List[str] = []
         async with rqst.fetch() as resp:
             if resp.status // 100 != 2:
                 raise BackendAPIError(resp.status, resp.reason,
@@ -193,7 +197,7 @@ class VFolder(BaseFunction):
                 loop = current_loop()
                 acc_bytes = 0
                 while True:
-                    part = await reader.next()
+                    part = cast(aiohttp.BodyPartReader, await reader.next())
                     if part is None:
                         break
                     assert part.headers.get(hdrs.CONTENT_ENCODING, 'identity').lower() in (

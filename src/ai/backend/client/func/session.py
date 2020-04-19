@@ -6,10 +6,11 @@ import secrets
 import tarfile
 import tempfile
 from typing import (
-    Iterable, Union,
-    AsyncGenerator,
-    Mapping,
+    Any, Iterable, Optional, Union,
+    AsyncIterator,
+    Mapping, Dict,
     Sequence, List,
+    cast,
 )
 from pathlib import Path
 
@@ -28,7 +29,8 @@ from ..request import (
     WebSocketContextManager,
 )
 from ..session import api_session
-from ..utils import undefined, ProgressReportingReader
+from ..utils import ProgressReportingReader
+from ..types import Undefined, undefined
 from ..versioning import get_naming
 
 __all__ = (
@@ -36,14 +38,14 @@ __all__ = (
 )
 
 
-def drop(d, dropval):
-    newd = {}
+def drop(d: Mapping[str, Any], value_to_drop: Any) -> Mapping[str, Any]:
+    modified: Dict[str, Any] = {}
     for k, v in d.items():
         if isinstance(v, Mapping) or isinstance(v, dict):
-            newd[k] = drop(v, dropval)
-        elif v != dropval:
-            newd[k] = v
-    return newd
+            modified[k] = drop(v, value_to_drop)
+        elif v != value_to_drop:
+            modified[k] = v
+    return modified
 
 
 class ComputeSession(BaseFunction):
@@ -62,7 +64,7 @@ class ComputeSession(BaseFunction):
     """
 
     name: str
-    owner_access_key: str
+    owner_access_key: Optional[str]
     created: bool
     status: str
     service_ports: List[str]
@@ -81,7 +83,7 @@ class ComputeSession(BaseFunction):
     async def get_task_logs(
         cls, task_id: str, *,
         chunk_size: int = 8192
-    ) -> AsyncGenerator[bytes, None]:
+    ) -> AsyncIterator[bytes]:
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(api_session.get(), 'GET', f'/{prefix}/_/logs', params={
             'taskId': task_id,
@@ -96,13 +98,14 @@ class ComputeSession(BaseFunction):
     @api_function
     @classmethod
     async def get_or_create(
-        cls, image: str, *,
+        cls,
+        image: str, *,
         name: str = None,
         type_: str = 'interactive',
         enqueue_only: bool = False,
         max_wait: int = 0,
         no_reuse: bool = False,
-        mounts: Iterable[str] = None,
+        mounts: List[str] = None,
         mount_map: Mapping[str, str] = None,
         envs: Mapping[str, str] = None,
         startup_command: str = None,
@@ -171,7 +174,7 @@ class ComputeSession(BaseFunction):
 
         :returns: The :class:`ComputeSession` instance.
         """
-        if name:
+        if name is not None:
             assert 4 <= len(name) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
         else:
@@ -193,7 +196,7 @@ class ComputeSession(BaseFunction):
         mounts.extend(api_session.get().config.vfolder_mounts)
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(api_session.get(), 'POST', f'/{prefix}')
-        params = {
+        params: Dict[str, Any] = {
             'tag': tag,
             get_naming(api_session.get().api_version, 'name_arg'): name,
             'config': {
@@ -242,26 +245,27 @@ class ComputeSession(BaseFunction):
     @api_function
     @classmethod
     async def create_from_template(
-        cls, template_id: str, *,
-        name: str = undefined,
-        type_: str = undefined,
-        enqueue_only: bool = undefined,
-        max_wait: int = undefined,
-        no_reuse: bool = undefined,
-        image: str = undefined,
-        mounts: Iterable[str] = undefined,
-        mount_map: Mapping[str, str] = undefined,
-        envs: Mapping[str, str] = undefined,
-        startup_command: str = undefined,
-        resources: Mapping[str, int] = undefined,
-        resource_opts: Mapping[str, int] = undefined,
-        cluster_size: int = undefined,
-        domain_name: str = undefined,
-        group_name: str = undefined,
-        bootstrap_script: str = undefined,
-        tag: str = undefined,
-        scaling_group: str = undefined,
-        owner_access_key: str = undefined,
+        cls,
+        template_id: str, *,
+        name: Union[str, Undefined] = undefined,
+        type_: Union[str, Undefined] = undefined,
+        enqueue_only: Union[bool, Undefined] = undefined,
+        max_wait: Union[int, Undefined] = undefined,
+        no_reuse: Union[bool, Undefined] = undefined,
+        image: Union[str, Undefined] = undefined,
+        mounts: Union[List[str], Undefined] = undefined,
+        mount_map: Union[Mapping[str, str], Undefined] = undefined,
+        envs: Union[Mapping[str, str], Undefined] = undefined,
+        startup_command: Union[str, Undefined] = undefined,
+        resources: Union[Mapping[str, int], Undefined] = undefined,
+        resource_opts: Union[Mapping[str, int], Undefined] = undefined,
+        cluster_size: Union[int, Undefined] = undefined,
+        domain_name: Union[str, Undefined] = undefined,
+        group_name: Union[str, Undefined] = undefined,
+        bootstrap_script: Union[str, Undefined] = undefined,
+        tag: Union[str, Undefined] = undefined,
+        scaling_group: Union[str, Undefined] = undefined,
+        owner_access_key: Union[str, Undefined] = undefined,
     ) -> ComputeSession:
         """
         Get-or-creates a compute session from template.
@@ -320,21 +324,24 @@ class ComputeSession(BaseFunction):
 
         :returns: The :class:`ComputeSession` instance.
         """
-        if name:
+        if name is not undefined:
             assert 4 <= len(name) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
         else:
             name = f'pysdk-{secrets.token_urlsafe(8)}'
 
-        if domain_name is None:
+        if domain_name is undefined:
             # Even if config.domain is None, it can be guessed in the manager by user information.
             domain_name = api_session.get().config.domain
-        if group_name is None:
+        if group_name is undefined:
             group_name = api_session.get().config.group
+        if mounts is undefined:
+            mounts = []
         if api_session.get().config.vfolder_mounts:
             mounts.extend(api_session.get().config.vfolder_mounts)
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(api_session.get(), 'POST', f'/{prefix}/_/create-from-template')
+        params: Dict[str, Any]
         params = {
             'template_id': template_id,
             'tag': tag,
@@ -359,11 +366,11 @@ class ComputeSession(BaseFunction):
                 'scalingGroup': scaling_group,
             },
         }
-        params = drop(params, undefined)
+        params = cast(Dict[str, Any], drop(params, undefined))
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(name, owner_access_key)
+            o = cls(name, owner_access_key if owner_access_key is not undefined else None)
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -383,7 +390,7 @@ class ComputeSession(BaseFunction):
         forcibly interrupted.
         """
         params = {}
-        if self.owner_access_key:
+        if self.owner_access_key is not None:
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         if forced:
@@ -623,7 +630,7 @@ class ComputeSession(BaseFunction):
         files = [Path(file).resolve() for file in files]
         total_size = 0
         for file_path in files:
-            total_size += file_path.stat().st_size
+            total_size += Path(file_path).stat().st_size
         tqdm_obj = tqdm(desc='Uploading files',
                         unit='bytes', unit_scale=True,
                         total=total_size,
@@ -633,7 +640,7 @@ class ComputeSession(BaseFunction):
             for file_path in files:
                 try:
                     attachments.append(AttachedFile(
-                        str(file_path.relative_to(base_path)),
+                        str(Path(file_path).relative_to(base_path)),
                         ProgressReportingReader(str(file_path),
                                                 tqdm_instance=tqdm_obj),
                         'application/octet-stream',
@@ -687,7 +694,7 @@ class ComputeSession(BaseFunction):
             reader = aiohttp.MultipartReader.from_response(resp.raw_response)
             with tqdm_obj as pbar:
                 while True:
-                    part = await reader.next()
+                    part = cast(aiohttp.BodyPartReader, await reader.next())
                     if part is None:
                         break
                     assert part.headers.get(hdrs.CONTENT_ENCODING, 'identity').lower() == 'identity'

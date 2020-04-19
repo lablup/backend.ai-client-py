@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import re
+from typing import (
+    Union,
+    Tuple,
+)
 
 import aiohttp
 from aiohttp import web
@@ -18,6 +24,8 @@ class WebSocketProxy:
         'up_conn', 'down_conn',
         'upstream_buffer', 'upstream_buffer_task',
     )
+
+    upstream_buffer: asyncio.Queue[Tuple[Union[str, bytes], aiohttp.WSMsgType]]
 
     def __init__(self, up_conn: aiohttp.ClientWebSocketResponse,
                  down_conn: web.WebSocketResponse):

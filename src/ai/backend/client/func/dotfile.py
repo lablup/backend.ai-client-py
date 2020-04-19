@@ -29,9 +29,8 @@ class Dotfile(BaseFunction):
         }
         rqst.set_json(body)
         async with rqst.fetch() as resp:
-            if resp.status == 200:
-                await resp.json()
-                return cls(path, owner_access_key=owner_access_key)
+            await resp.json()
+        return cls(path, owner_access_key=owner_access_key)
 
     @api_function
     @classmethod
@@ -39,8 +38,7 @@ class Dotfile(BaseFunction):
         rqst = Request(api_session.get(),
                        'GET', '/user-config/dotfiles')
         async with rqst.fetch() as resp:
-            if resp.status == 200:
-                return await resp.json()
+            return await resp.json()
 
     def __init__(self, path: str, owner_access_key: str = None):
         self.path = path
@@ -55,8 +53,7 @@ class Dotfile(BaseFunction):
                        'GET', f'/user-config/dotfiles',
                        params=params)
         async with rqst.fetch() as resp:
-            if resp.status == 200:
-                return await resp.json()
+            return await resp.json()
 
     @api_function
     async def update(self, data: str, permission: str):

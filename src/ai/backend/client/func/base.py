@@ -28,19 +28,19 @@ def _wrap_method(cls, orig_name, meth):
 
 
 def api_function(meth):
-    '''
+    """
     Mark the wrapped method as the API function method.
-    '''
+    """
     setattr(meth, '_backend_api', True)
     return meth
 
 
 class APIFunctionMeta(type):
-    '''
+    """
     Converts all methods marked with :func:`api_function` into
     session-aware methods that are either plain Python functions
     or coroutines.
-    '''
+    """
     _async = True
 
     def __init__(cls, name, bases, attrs, **kwargs):

@@ -1,8 +1,7 @@
 from typing import Iterable, Sequence
 
-from ai.backend.client.func.base import api_function
-from ai.backend.client.request import Request
-from .base import BaseFunction
+from .base import api_function, BaseFunction
+from ..request import Request
 from ..session import api_session
 
 __all__ = (
@@ -48,7 +47,7 @@ class Image(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['images']
+        return data['images']
 
     @api_function
     @classmethod
@@ -68,7 +67,7 @@ class Image(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['rescan_images']
+        return data['rescan_images']
 
     @api_function
     @classmethod
@@ -89,7 +88,7 @@ class Image(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['alias_image']
+        return data['alias_image']
 
     @api_function
     @classmethod
@@ -109,14 +108,15 @@ class Image(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['dealias_image']
+        return data['dealias_image']
 
     @api_function
     @classmethod
     async def get_image_import_form(cls) -> dict:
         rqst = Request(api_session.get(), 'GET', '/image/import')
         async with rqst.fetch() as resp:
-            return await resp.json()
+            data = await resp.json()
+        return data
 
     @api_function
     @classmethod
@@ -124,4 +124,5 @@ class Image(BaseFunction):
         rqst = Request(api_session.get(), 'POST', '/image/import')
         rqst.set_json(kwargs)
         async with rqst.fetch() as resp:
-            return await resp.json()
+            data = await resp.json()
+        return data

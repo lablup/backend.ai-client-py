@@ -1,4 +1,8 @@
-from typing import Iterable, Sequence, Union
+from typing import (
+    Any, Iterable, Union,
+    Sequence,
+    Dict,
+)
 
 from .base import api_function, BaseFunction
 from ..request import Request
@@ -141,7 +145,7 @@ class KeyPair(BaseFunction):
                 '  }' \
                 '}'
         q = q.replace('$fields', ' '.join(fields))
-        variables = {
+        variables: Dict[str, Any] = {
             'is_active': is_active,
         }
         if user_id is not None:

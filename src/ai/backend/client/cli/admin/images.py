@@ -36,7 +36,7 @@ def images(operation: bool) -> None:
             print_warn('There are no registered images.')
             return
         print(tabulate((item.values() for item in items),
-                       headers=(item[0] for item in fields),
+                       headers=[item[0] for item in fields],
                        floatfmt=',.0f'))
 
 

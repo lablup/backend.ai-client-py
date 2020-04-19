@@ -1,10 +1,16 @@
+from __future__ import annotations
+
 import abc
 import asyncio
-from contextvars import ContextVar, copy_context
+from contextvars import Context, ContextVar, copy_context
 import threading
 from typing import (
     Any,
+    Awaitable,
+    Coroutine,
+    Literal,
     Tuple,
+    Union,
 )
 import queue
 import warnings
@@ -14,6 +20,7 @@ from multidict import CIMultiDict
 
 from .config import APIConfig, get_config, parse_api_version
 from .exceptions import APIVersionWarning
+from .types import Sentinel, sentinel
 
 
 __all__ = (
@@ -24,10 +31,10 @@ __all__ = (
 )
 
 
-api_session: ContextVar['BaseSession'] = ContextVar('api_session', default=None)
+api_session: ContextVar[BaseSession] = ContextVar('api_session')
 
 
-def is_legacy_server():
+def is_legacy_server() -> bool:
     """
     Determine execution mode.
 
@@ -71,41 +78,44 @@ async def _negotiate_api_version(
         return client_version
 
 
-async def _close_aiohttp_session(session: aiohttp.ClientSession):
+async def _close_aiohttp_session(session: aiohttp.ClientSession) -> None:
     # This is a hacky workaround for premature closing of SSL transports
     # on Windows Proactor event loops.
     # Thanks to Vadim Markovtsev's comment on the aiohttp issue #1925.
     # (https://github.com/aio-libs/aiohttp/issues/1925#issuecomment-592596034)
     transports = 0
     all_is_lost = asyncio.Event()
-    if len(session.connector._conns) == 0:
+    if session.connector is None:
         all_is_lost.set()
-    for conn in session.connector._conns.values():
-        for handler, _ in conn:
-            proto = getattr(handler.transport, "_ssl_protocol", None)
-            if proto is None:
-                continue
-            transports += 1
-            orig_lost = proto.connection_lost
-            orig_eof_received = proto.eof_received
+    else:
+        if len(session.connector._conns) == 0:
+            all_is_lost.set()
+        for conn in session.connector._conns.values():
+            for handler, _ in conn:
+                proto = getattr(handler.transport, "_ssl_protocol", None)
+                if proto is None:
+                    continue
+                transports += 1
+                orig_lost = proto.connection_lost
+                orig_eof_received = proto.eof_received
 
-            def connection_lost(exc):
-                orig_lost(exc)
-                nonlocal transports
-                transports -= 1
-                if transports == 0:
-                    all_is_lost.set()
+                def connection_lost(exc):
+                    orig_lost(exc)
+                    nonlocal transports
+                    transports -= 1
+                    if transports == 0:
+                        all_is_lost.set()
 
-            def eof_received():
-                try:
-                    orig_eof_received()
-                except AttributeError:
-                    # It may happen that eof_received() is called after
-                    # _app_protocol and _transport are set to None.
-                    pass
+                def eof_received():
+                    try:
+                        orig_eof_received()
+                    except AttributeError:
+                        # It may happen that eof_received() is called after
+                        # _app_protocol and _transport are set to None.
+                        pass
 
-            proto.connection_lost = connection_lost
-            proto.eof_received = eof_received
+                proto.connection_lost = connection_lost
+                proto.eof_received = eof_received
     await session.close()
     if transports > 0:
         await all_is_lost.wait()
@@ -113,7 +123,8 @@ async def _close_aiohttp_session(session: aiohttp.ClientSession):
 
 class _SyncWorkerThread(threading.Thread):
 
-    sentinel = object()
+    work_queue: queue.Queue[Union[Tuple[Coroutine, Context], Sentinel]]
+    done_queue: queue.Queue[Any]
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -126,7 +137,7 @@ class _SyncWorkerThread(threading.Thread):
         try:
             while True:
                 item = self.work_queue.get()
-                if item is self.sentinel:
+                if item is sentinel:
                     break
                 coro, ctx = item
                 try:
@@ -141,8 +152,8 @@ class _SyncWorkerThread(threading.Thread):
         finally:
             loop.stop()
 
-    def execute(self, coro) -> Any:
-        ctx = copy_context()  # preserve context for another thread
+    def execute(self, coro: Coroutine) -> Any:
+        ctx = copy_context()  # preserve context for the worker thread
         try:
             self.work_queue.put((coro, ctx))
             result = self.done_queue.get()
@@ -160,9 +171,8 @@ class BaseSession(metaclass=abc.ABCMeta):
     """
 
     __slots__ = (
-        '_config', '_closed', 'aiohttp_session',
-        '_context_token',
-        'api_version',
+        '_config', '_closed', '_context_token',
+        'aiohttp_session', 'api_version',
         'System', 'Manager', 'Admin',
         'Agent', 'AgentWatcher', 'ScalingGroup',
         'Image', 'ComputeSession', 'SessionTemplate',
@@ -170,13 +180,13 @@ class BaseSession(metaclass=abc.ABCMeta):
         'BackgroundTask',
         'EtcdConfig',
         'Resource', 'KeypairResourcePolicy',
-        'VFolder', 'Dotfile'
+        'VFolder', 'Dotfile',
     )
 
     aiohttp_session: aiohttp.ClientSession
     api_version: Tuple[int, str]
 
-    def __init__(self, *, config: APIConfig = None):
+    def __init__(self, *, config: APIConfig = None) -> None:
         self._closed = False
         self._config = config if config else get_config()
 
@@ -222,7 +232,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         self.Dotfile = Dotfile
 
     @abc.abstractmethod
-    def close(self):
+    def close(self) -> Union[None, Awaitable[None]]:
         """
         Terminates the session and releases underlying resources.
         """
@@ -236,22 +246,33 @@ class BaseSession(metaclass=abc.ABCMeta):
         return self._closed
 
     @property
-    def config(self):
+    def config(self) -> APIConfig:
         """
         The configuration used by this session object.
         """
         return self._config
 
+    def __enter__(self) -> BaseSession:
+        raise NotImplementedError
+
+    def __exit__(self, *exc_info) -> Literal[False]:
+        return False
+
+    async def __aenter__(self) -> BaseSession:
+        raise NotImplementedError
+
+    async def __aexit__(self, *exc_info) -> Literal[False]:
+        return False
+
 
 class Session(BaseSession):
     """
-    An API client session that makes API requests synchronously.
-    You may call (almost) all function proxy methods like a plain Python function.
-    It provides a context manager interface to ensure closing of the session
-    upon errors and scope exits.
+    A context manager for API client sessions that makes API requests synchronously.
+    You may call simple request-response APIs like a plain Python function,
+    but cannot use streaming APIs based on WebSocket and Server-Sent Events.
     """
 
-    __slots__ = BaseSession.__slots__ + (
+    __slots__ = (
         '_worker_thread',
     )
 
@@ -269,7 +290,7 @@ class Session(BaseSession):
 
         self.aiohttp_session = self.worker_thread.execute(_create_aiohttp_session())
 
-    def close(self):
+    def close(self) -> None:
         """
         Terminates the session.  It schedules the ``close()`` coroutine
         of the underlying aiohttp session and then enqueues a sentinel
@@ -280,7 +301,7 @@ class Session(BaseSession):
             return
         self._closed = True
         self._worker_thread.execute(_close_aiohttp_session(self.aiohttp_session))
-        self._worker_thread.work_queue.put(self.worker_thread.sentinel)
+        self._worker_thread.work_queue.put(sentinel)
         self._worker_thread.join()
 
     @property
@@ -291,51 +312,50 @@ class Session(BaseSession):
         """
         return self._worker_thread
 
-    def __enter__(self):
+    def __enter__(self) -> Session:
         assert not self.closed, 'Cannot reuse closed session'
         self._context_token = api_session.set(self)
         self.api_version = self.worker_thread.execute(
             _negotiate_api_version(self.aiohttp_session, self.config))
         return self
 
-    def __exit__(self, exc_type, exc_obj, exc_tb):
+    def __exit__(self, *exc_info) -> Literal[False]:
         self.close()
         api_session.reset(self._context_token)
-        return False
+        return False  # raise up the inner exception
 
 
 class AsyncSession(BaseSession):
     """
-    An API client session that makes API requests asynchronously using coroutines.
-    You may call all function proxy methods like a coroutine.
-    It provides an async context manager interface to ensure closing of the session
-    upon errors and scope exits.
+    A context manager for API client sessions that makes API requests asynchronously.
+    You may call all APIs as coroutines.
+    WebSocket-based APIs and SSE-based APIs returns special response types.
     """
-
-    __slots__ = BaseSession.__slots__ + ()
 
     def __init__(self, *, config: APIConfig = None):
         super().__init__(config=config)
-
         ssl = None
         if self._config.skip_sslcert_validation:
             ssl = False
         connector = aiohttp.TCPConnector(ssl=ssl)
         self.aiohttp_session = aiohttp.ClientSession(connector=connector)
 
-    async def close(self):
+    async def _aclose(self) -> None:
         if self._closed:
             return
         self._closed = True
         await _close_aiohttp_session(self.aiohttp_session)
 
-    async def __aenter__(self):
+    def close(self) -> Awaitable[None]:
+        return self._aclose()
+
+    async def __aenter__(self) -> AsyncSession:
         assert not self.closed, 'Cannot reuse closed session'
         self._context_token = api_session.set(self)
         self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
         return self
 
-    async def __aexit__(self, exc_type, exc_obj, exc_tb):
+    async def __aexit__(self, *exc_info) -> Literal[False]:
         await self.close()
         api_session.reset(self._context_token)
-        return False
+        return False  # raise up the inner exception

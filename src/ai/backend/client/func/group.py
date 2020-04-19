@@ -50,7 +50,7 @@ class Group(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['groups']
+        return data['groups']
 
     @api_function
     @classmethod
@@ -78,7 +78,7 @@ class Group(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['group']
+        return data['group']
 
     @api_function
     @classmethod
@@ -119,7 +119,7 @@ class Group(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['create_group']
+        return data['create_group']
 
     @api_function
     @classmethod
@@ -157,7 +157,7 @@ class Group(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['modify_group']
+        return data['modify_group']
 
     @api_function
     @classmethod
@@ -180,7 +180,7 @@ class Group(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['delete_group']
+        return data['delete_group']
 
     @api_function
     @classmethod
@@ -211,7 +211,7 @@ class Group(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['modify_group']
+        return data['modify_group']
 
     @api_function
     @classmethod
@@ -242,4 +242,4 @@ class Group(BaseFunction):
         })
         async with rqst.fetch() as resp:
             data = await resp.json()
-            return data['modify_group']
+        return data['modify_group']

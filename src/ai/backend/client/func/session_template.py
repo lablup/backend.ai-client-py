@@ -1,4 +1,4 @@
-from typing import List, Mapping
+from typing import Any, List, Mapping
 
 from .base import api_function, BaseFunction
 from ..request import Request
@@ -34,19 +34,17 @@ class SessionTemplate(BaseFunction):
         }
         rqst.set_json(body)
         async with rqst.fetch() as resp:
-            if resp.status == 200:
-                response = await resp.json()
-                return cls(response['id'], owner_access_key=owner_access_key)
+            response = await resp.json()
+            return cls(response['id'], owner_access_key=owner_access_key)
 
     @api_function
     @classmethod
-    async def list_templates(cls, list_all: bool = False) -> 'List[Mapping[str, str]]':
+    async def list_templates(cls, list_all: bool = False) -> List[Mapping[str, str]]:
         rqst = Request(api_session.get(),
                        'GET', '/template/session')
         rqst.set_json({'all': list_all})
         async with rqst.fetch() as resp:
-            if resp.status == 200:
-                return await resp.json()
+            return await resp.json()
 
     def __init__(self, template_id: str, owner_access_key: str = None):
         self.template_id = template_id
@@ -61,11 +59,11 @@ class SessionTemplate(BaseFunction):
                        'GET', f'/template/session/{self.template_id}',
                        params=params)
         async with rqst.fetch() as resp:
-            if resp.status == 200:
-                return await resp.text()
+            data = await resp.text()
+        return data
 
     @api_function
-    async def put(self, template: str):
+    async def put(self, template: str) -> Any:
         body = {
             'payload': template
         }
@@ -74,18 +72,16 @@ class SessionTemplate(BaseFunction):
         rqst = Request(api_session.get(),
                        'PUT', f'/template/session/{self.template_id}')
         rqst.set_json(body)
-
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
-    async def delete(self):
+    async def delete(self) -> Any:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(api_session.get(),
                        'DELETE', f'/template/session/{self.template_id}',
                        params=params)
-
         async with rqst.fetch() as resp:
             return await resp.json()
