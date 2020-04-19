@@ -8,10 +8,10 @@ from typing import (
     Any,
     Awaitable,
     Coroutine,
-    Literal,
     Tuple,
     Union,
 )
+from typing_extensions import Literal  # for Python 3.7
 import queue
 import warnings
 
