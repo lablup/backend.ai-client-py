@@ -1,5 +1,3 @@
-import asyncio
-
 import aiohttp
 from aiohttp import web
 import pytest
@@ -58,7 +56,6 @@ async def proxy_app_fixture(unused_tcp_port_factory):
         yield app, proxy_port
     finally:
         await runner.cleanup()
-
 
 
 @pytest.mark.xfail(
