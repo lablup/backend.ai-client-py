@@ -171,7 +171,7 @@ class BaseSession(metaclass=abc.ABCMeta):
     """
 
     __slots__ = (
-        '_config', '_closed', '_context_token',
+        '_config', '_closed', '_context_token', '_proxy_mode',
         'aiohttp_session', 'api_version',
         'System', 'Manager', 'Admin',
         'Agent', 'AgentWatcher', 'ScalingGroup',
