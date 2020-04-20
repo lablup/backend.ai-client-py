@@ -268,7 +268,6 @@ def rename_file(name, target_path, new_name):
             session.VFolder(name).rename_file(target_path, new_name)
             print_done('Renamed.')
         except Exception as e:
-            print(e.data)
             print_error(e)
             sys.exit(1)
 
