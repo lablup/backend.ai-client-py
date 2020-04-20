@@ -94,8 +94,11 @@ class Request:
     """
 
     __slots__ = (
-        'config', 'session', 'method', 'path',
-        'date', 'headers', 'params', 'content_type',
+        'config', 'session',
+        'method', 'path',
+        'date', 'headers',
+        'params', 'content_type',
+        'api_version',
         '_content', '_attached_files',
         'reporthook',
     )
@@ -104,6 +107,7 @@ class Request:
     _attached_files: Optional[Sequence[AttachedFile]]
 
     date: Optional[datetime]
+    api_version: str
 
     _allowed_methods = frozenset([
         'GET', 'HEAD', 'POST',
@@ -119,6 +123,7 @@ class Request:
         content_type: str = None,
         params: Mapping[str, str] = None,
         reporthook: Callable = None,
+        override_api_version: str = None,
     ) -> None:
         """
         Initialize an API request.
@@ -142,11 +147,16 @@ class Request:
         self.path = path
         self.params = params
         self.date = None
+        if override_api_version:
+            self.api_version = override_api_version
+        else:
+            self.api_version = f"v{self.session.api_version[0]}.{self.session.api_version[1]}"
         self.headers = CIMultiDict([
             ('User-Agent', self.config.user_agent),
             ('X-BackendAI-Domain', self.config.domain),
-            ('X-BackendAI-Version', self.config.version),
+            ('X-BackendAI-Version', self.api_version),
         ])
+        self._content = b''
         self._attached_files = None
         self.set_content(content, content_type=content_type)
         self.reporthook = reporthook
@@ -218,11 +228,19 @@ class Request:
             secret_key = self.config.secret_key
         if hash_type is None:
             hash_type = self.config.hash_type
+        assert self.date is not None
         if self.config.endpoint_type == 'api':
             hdrs, _ = generate_signature(
-                self.method, self.config.version, self.config.endpoint,
-                self.date, str(rel_url), self.content_type, self._content,
-                access_key, secret_key, hash_type)
+                method=self.method,
+                version=self.api_version,
+                endpoint=self.config.endpoint,
+                date=self.date,
+                rel_url=str(rel_url),
+                content_type=self.content_type,
+                access_key=access_key,
+                secret_key=secret_key,
+                hash_type=hash_type,
+            )
             self.headers.update(hdrs)
         elif self.config.endpoint_type == 'session':
             local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
@@ -234,7 +252,7 @@ class Request:
         else:
             raise ValueError('unsupported endpoint type')
 
-    def _pack_content(self):
+    def _pack_content(self) -> Union[RequestContent, aiohttp.FormData]:
         if self._attached_files is not None:
             data = aiohttp.FormData()
             for f in self._attached_files:
