@@ -162,7 +162,7 @@ class VFolder(BaseFunction):
 
     @api_function
     async def rename_file(self, target_path: str, new_name: str):
-        rqst = Request(self.session, 'POST',
+        rqst = Request(api_session.get(), 'POST',
                        '/folders/{}/rename_file'.format(self.name))
         rqst.set_json({
             'target_path': target_path,
