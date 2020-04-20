@@ -13,7 +13,6 @@ def test_generate_signature(defconfig):
         date=datetime.now(tzutc()),
         rel_url='/path/to/api/',
         content_type='plain/text',
-        content=b'"test data"',
         access_key=defconfig.access_key,
         secret_key=defconfig.secret_key,
         hash_type='md5'
