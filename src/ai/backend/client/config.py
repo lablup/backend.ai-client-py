@@ -5,6 +5,8 @@ import re
 from typing import (
     Any, Callable, Iterable, Union,
     List, Tuple, Sequence,
+    Mapping,
+    cast,
 )
 
 import appdirs
@@ -39,7 +41,7 @@ def parse_api_version(value: str) -> Tuple[int, str]:
 
 def get_env(key: str, default: Any = _undefined, *,
             clean: Callable[[str], Any] = lambda v: v):
-    '''
+    """
     Retrieves a configuration value from the environment variables.
     The given *key* is uppercased and prefixed by ``"BACKEND_"`` and then
     ``"SORNA_"`` if the former does not exist.
@@ -52,7 +54,7 @@ def get_env(key: str, default: Any = _undefined, *,
         The default is returning the value as-is.
 
     :returns: The value processed by the *clean* function.
-    '''
+    """
     key = key.upper()
     v = os.environ.get('BACKEND_' + key)
     if v is None:
@@ -73,7 +75,7 @@ def bool_env(v: str) -> bool:
     raise ValueError('Unrecognized value of boolean environment variable', v)
 
 
-def _clean_urls(v: str) -> List[URL]:
+def _clean_urls(v: Union[URL, str]) -> List[URL]:
     if isinstance(v, URL):
         return [v]
     if isinstance(v, str):
@@ -95,7 +97,7 @@ def _clean_tokens(v):
 
 
 class APIConfig:
-    '''
+    """
     Represents a set of API client configurations.
     The access key and secret key are mandatory -- they must be set in either
     environment variables or as the explicit arguments.
@@ -129,9 +131,9 @@ class APIConfig:
         access key) to be automatically mounted upon any
         :func:`Kernel.get_or_create()
         <ai.backend.client.kernel.Kernel.get_or_create>` calls.
-    '''
+    """
 
-    DEFAULTS = {
+    DEFAULTS: Mapping[str, Any] = {
         'endpoint': 'https://api.backend.ai',
         'endpoint_type': 'api',
         'version': f'v{API_VERSION[0]}.{API_VERSION[1]}',
@@ -141,9 +143,12 @@ class APIConfig:
         'connection_timeout': 10.0,
         'read_timeout': None,
     }
-    '''
+    """
     The default values except the access and secret keys.
-    '''
+    """
+
+    _group: str
+    _hash_type: str
 
     def __init__(self, *,
                  endpoint: Union[URL, str] = None,
@@ -159,17 +164,17 @@ class APIConfig:
                  skip_sslcert_validation: bool = None,
                  connection_timeout: float = None,
                  read_timeout: float = None) -> None:
-        from . import get_user_agent  # noqa; to avoid circular imports
+        from . import get_user_agent
         self._endpoints = (
             _clean_urls(endpoint) if endpoint else
             get_env('ENDPOINT', self.DEFAULTS['endpoint'], clean=_clean_urls))
         random.shuffle(self._endpoints)
-        self._endpoint_type = endpoint_type if endpoint_type \
+        self._endpoint_type = endpoint_type if endpoint_type is not None \
                               else get_env('ENDPOINT_TYPE', self.DEFAULTS['endpoint_type'])
-        self._domain = domain if domain else get_env('DOMAIN', self.DEFAULTS['domain'])
-        self._group = group if group else get_env('GROUP', self.DEFAULTS['group'])
-        self._version = version if version else self.DEFAULTS['version']
-        self._user_agent = user_agent if user_agent else get_user_agent()
+        self._domain = domain if domain is not None else get_env('DOMAIN', self.DEFAULTS['domain'])
+        self._group = group if group is not None else get_env('GROUP', self.DEFAULTS['group'])
+        self._version = version if version is not None else self.DEFAULTS['version']
+        self._user_agent = user_agent if user_agent is not None else get_user_agent()
         if self._endpoint_type == 'api':
             self._access_key = access_key if access_key is not None \
                                else get_env('ACCESS_KEY', '')
@@ -178,8 +183,8 @@ class APIConfig:
         else:
             self._access_key = 'dummy'
             self._secret_key = 'dummy'
-        self._hash_type = hash_type.lower() if hash_type else \
-                          self.DEFAULTS['hash_type']
+        self._hash_type = hash_type.lower() if hash_type is not None else \
+                          cast(str, self.DEFAULTS['hash_type'])
         arg_vfolders = set(vfolder_mounts) if vfolder_mounts else set()
         env_vfolders = set(get_env('VFOLDER_MOUNTS', [], clean=_clean_tokens))
         self._vfolder_mounts = [*(arg_vfolders | env_vfolders)]
@@ -198,16 +203,16 @@ class APIConfig:
 
     @property
     def endpoint(self) -> URL:
-        '''
+        """
         The currently active endpoint URL.
         This may change if there are multiple configured endpoints
         and the current one is not accessible.
-        '''
+        """
         return self._endpoints[0]
 
     @property
     def endpoints(self) -> Sequence[URL]:
-        '''All configured endpoint URLs.'''
+        """All configured endpoint URLs."""
         return self._endpoints
 
     def rotate_endpoints(self):
@@ -217,74 +222,74 @@ class APIConfig:
 
     @property
     def endpoint_type(self) -> str:
-        '''
+        """
         The configured endpoint type.
-        '''
+        """
         return self._endpoint_type
 
     @property
     def domain(self) -> str:
-        '''The configured domain.'''
+        """The configured domain."""
         return self._domain
 
     @property
     def group(self) -> str:
-        '''The configured group.'''
+        """The configured group."""
         return self._group
 
     @property
     def user_agent(self) -> str:
-        '''The configured user agent string.'''
+        """The configured user agent string."""
         return self._user_agent
 
     @property
     def access_key(self) -> str:
-        '''The configured API access key.'''
+        """The configured API access key."""
         return self._access_key
 
     @property
     def secret_key(self) -> str:
-        '''The configured API secret key.'''
+        """The configured API secret key."""
         return self._secret_key
 
     @property
     def version(self) -> str:
-        '''The configured API protocol version.'''
+        """The configured API protocol version."""
         return self._version
 
     @property
     def hash_type(self) -> str:
-        '''The configured hash algorithm for API authentication signatures.'''
+        """The configured hash algorithm for API authentication signatures."""
         return self._hash_type
 
     @property
-    def vfolder_mounts(self) -> Tuple[str, ...]:
-        '''The configured auto-mounted vfolder list.'''
+    def vfolder_mounts(self) -> Sequence[str]:
+        """The configured auto-mounted vfolder list."""
         return self._vfolder_mounts
 
     @property
     def skip_sslcert_validation(self) -> bool:
-        '''Whether to skip SSL certificate validation for the API gateway.'''
+        """Whether to skip SSL certificate validation for the API gateway."""
         return self._skip_sslcert_validation
 
     @property
     def connection_timeout(self) -> float:
-        '''The maximum allowed duration for making TCP connections to the server.'''
+        """The maximum allowed duration for making TCP connections to the server."""
         return self._connection_timeout
 
     @property
     def read_timeout(self) -> float:
-        '''The maximum allowed waiting time for the first byte of the response from the server.'''
+        """The maximum allowed waiting time for the first byte of the response from the server."""
         return self._read_timeout
 
 
 def get_config():
-    '''
+    """
     Returns the configuration for the current process.
     If there is no explicitly set :class:`APIConfig` instance,
     it will generate a new one from the current environment variables
     and defaults.
-    '''
+    """
     global _config
     if _config is None:
         _config = APIConfig()
@@ -292,8 +297,8 @@ def get_config():
 
 
 def set_config(conf: APIConfig):
-    '''
+    """
     Sets the configuration used throughout the current process.
-    '''
+    """
     global _config
     _config = conf

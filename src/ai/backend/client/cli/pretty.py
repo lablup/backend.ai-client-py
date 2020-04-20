@@ -112,7 +112,7 @@ def format_error(exc: Exception):
             for item in matches:
                 yield '- {0} ({1}, {2})\n'.format(item['id'], item['name'], item['status'])
         else:
-            other_details = exc.data.get('data', None)
+            other_details = exc.data.get('msg', None)
             if other_details:
                 yield '\n\u279c Error details: '
                 yield str(other_details)

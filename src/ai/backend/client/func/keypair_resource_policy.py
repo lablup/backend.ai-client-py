@@ -1,19 +1,18 @@
 from typing import Iterable, Sequence
 
-from .base import api_function
+from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'KeypairResourcePolicy'
 )
 
 
-class KeypairResourcePolicy:
+class KeypairResourcePolicy(BaseFunction):
     """
     Provides interactions with keypair resource policy.
     """
-    session = None
-    """The client session instance that this function class is bound to."""
 
     def __init__(self, access_key: str):
         self.access_key = access_key
@@ -56,7 +55,7 @@ class KeypairResourcePolicy:
                 'allowed_vfolder_hosts': allowed_vfolder_hosts,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -99,7 +98,7 @@ class KeypairResourcePolicy:
                 'allowed_vfolder_hosts': allowed_vfolder_hosts,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -124,7 +123,7 @@ class KeypairResourcePolicy:
         variables = {
             'name': name,
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -153,7 +152,7 @@ class KeypairResourcePolicy:
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
         })
@@ -186,7 +185,7 @@ class KeypairResourcePolicy:
         variables = {
             'name': name,
         }
-        rqst = Request(self.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,

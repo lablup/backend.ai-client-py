@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 import json
 import os
 import secrets
 import tarfile
 import tempfile
 from typing import (
-    Iterable, Union,
-    AsyncGenerator,
-    Mapping,
+    Any, Iterable, Optional, Union,
+    AsyncIterator,
+    Mapping, Dict,
     Sequence, List,
+    cast,
 )
 from pathlib import Path
 
@@ -15,16 +18,19 @@ import aiohttp
 from aiohttp import hdrs
 from tqdm import tqdm
 
-from .base import api_function
+from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE
 from ..exceptions import BackendClientError
 from ..request import (
     Request, AttachedFile,
     WebSocketResponse,
-    SSEResponse,
+    SSEContextManager,
+    WebSocketContextManager,
 )
-from ..utils import undefined, ProgressReportingReader
+from ..session import api_session
+from ..utils import ProgressReportingReader
+from ..types import Undefined, undefined
 from ..versioning import get_naming
 
 __all__ = (
@@ -32,18 +38,18 @@ __all__ = (
 )
 
 
-def drop(d, dropval):
-    newd = {}
+def drop(d: Mapping[str, Any], value_to_drop: Any) -> Mapping[str, Any]:
+    modified: Dict[str, Any] = {}
     for k, v in d.items():
         if isinstance(v, Mapping) or isinstance(v, dict):
-            newd[k] = drop(v, dropval)
-        elif v != dropval:
-            newd[k] = v
-    return newd
+            modified[k] = drop(v, value_to_drop)
+        elif v != value_to_drop:
+            modified[k] = v
+    return modified
 
 
-class ComputeSession:
-    '''
+class ComputeSession(BaseFunction):
+    """
     Provides various interactions with compute sessions in Backend.AI.
 
     The term 'kernel' is now deprecated and we prefer 'compute sessions'.
@@ -55,15 +61,20 @@ class ComputeSession:
     So it is the user's responsibility to distribute uploaded files to multiple
     containers using explicit copies or virtual folders which are commonly mounted to
     all containers belonging to the same compute session.
-    '''
+    """
 
-    session = None
-    '''The client session instance that this function class is bound to.'''
+    name: str
+    owner_access_key: Optional[str]
+    created: bool
+    status: str
+    service_ports: List[str]
+    domain: str
+    group: str
 
     @api_function
     @classmethod
     async def hello(cls) -> str:
-        rqst = Request(cls.session, 'GET', '/')
+        rqst = Request(api_session.get(), 'GET', '/')
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -72,9 +83,9 @@ class ComputeSession:
     async def get_task_logs(
         cls, task_id: str, *,
         chunk_size: int = 8192
-    ) -> AsyncGenerator[bytes, None]:
-        prefix = get_naming(cls.session.api_version, 'path')
-        rqst = Request(cls.session, 'GET', f'/{prefix}/_/logs', params={
+    ) -> AsyncIterator[bytes]:
+        prefix = get_naming(api_session.get().api_version, 'path')
+        rqst = Request(api_session.get(), 'GET', f'/{prefix}/_/logs', params={
             'taskId': task_id,
         })
         async with rqst.fetch() as resp:
@@ -86,27 +97,30 @@ class ComputeSession:
 
     @api_function
     @classmethod
-    async def get_or_create(cls, image: str, *,
-                            name: str = None,
-                            type_: str = 'interactive',
-                            enqueue_only: bool = False,
-                            max_wait: int = 0,
-                            no_reuse: bool = False,
-                            mounts: Iterable[str] = None,
-                            mount_map: Mapping[str, str] = None,
-                            envs: Mapping[str, str] = None,
-                            startup_command: str = None,
-                            resources: Mapping[str, int] = None,
-                            resource_opts: Mapping[str, int] = None,
-                            cluster_size: int = 1,
-                            domain_name: str = None,
-                            group_name: str = None,
-                            bootstrap_script: str = None,
-                            tag: str = None,
-                            scaling_group: str = None,
-                            owner_access_key: str = None,
-                            preopen_ports: List[int] = None) -> 'ComputeSession':
-        '''
+    async def get_or_create(
+        cls,
+        image: str, *,
+        name: str = None,
+        type_: str = 'interactive',
+        enqueue_only: bool = False,
+        max_wait: int = 0,
+        no_reuse: bool = False,
+        mounts: List[str] = None,
+        mount_map: Mapping[str, str] = None,
+        envs: Mapping[str, str] = None,
+        startup_command: str = None,
+        resources: Mapping[str, int] = None,
+        resource_opts: Mapping[str, int] = None,
+        cluster_size: int = 1,
+        domain_name: str = None,
+        group_name: str = None,
+        bootstrap_script: str = None,
+        tag: str = None,
+        scaling_group: str = None,
+        owner_access_key: str = None,
+        preopen_ports: List[int] = None,
+    ) -> ComputeSession:
+        """
         Get-or-creates a compute session.
         If *name* is ``None``, it creates a new compute session as long as
         the server has enough resources and your API key has remaining quota.
@@ -159,8 +173,8 @@ class ComputeSession:
             available to administrators)
 
         :returns: The :class:`ComputeSession` instance.
-        '''
-        if name:
+        """
+        if name is not None:
             assert 4 <= len(name) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
         else:
@@ -175,16 +189,16 @@ class ComputeSession:
             resource_opts = {}
         if domain_name is None:
             # Even if config.domain is None, it can be guessed in the manager by user information.
-            domain_name = cls.session.config.domain
+            domain_name = api_session.get().config.domain
         if group_name is None:
-            group_name = cls.session.config.group
+            group_name = api_session.get().config.group
 
-        mounts.extend(cls.session.config.vfolder_mounts)
-        prefix = get_naming(cls.session.api_version, 'path')
-        rqst = Request(cls.session, 'POST', f'/{prefix}')
-        params = {
+        mounts.extend(api_session.get().config.vfolder_mounts)
+        prefix = get_naming(api_session.get().api_version, 'path')
+        rqst = Request(api_session.get(), 'POST', f'/{prefix}')
+        params: Dict[str, Any] = {
             'tag': tag,
-            get_naming(cls.session.api_version, 'name_arg'): name,
+            get_naming(api_session.get().api_version, 'name_arg'): name,
             'config': {
                 'mounts': mounts,
                 'environ': envs,
@@ -194,7 +208,7 @@ class ComputeSession:
                 'scalingGroup': scaling_group,
             },
         }
-        if cls.session.api_version >= (5, '20191215'):
+        if api_session.get().api_version >= (5, '20191215'):
             params['config'].update({
                 'mount_map': mount_map,
                 'preopen_ports': preopen_ports,
@@ -202,7 +216,7 @@ class ComputeSession:
             params.update({
                 'bootstrap_script': bootstrap_script,
             })
-        if cls.session.api_version >= (4, '20190615'):
+        if api_session.get().api_version >= (4, '20190615'):
             params.update({
                 'owner_access_key': owner_access_key,
                 'domain': domain_name,
@@ -213,7 +227,7 @@ class ComputeSession:
                 'reuseIfExists': not no_reuse,
                 'startupCommand': startup_command,
             })
-        if cls.session.api_version > (4, '20181215'):
+        if api_session.get().api_version > (4, '20181215'):
             params['image'] = image
         else:
             params['lang'] = image
@@ -230,27 +244,30 @@ class ComputeSession:
 
     @api_function
     @classmethod
-    async def create_from_template(cls, template_id: str, *,
-                                   name: str = undefined,
-                                   type_: str = undefined,
-                                   enqueue_only: bool = undefined,
-                                   max_wait: int = undefined,
-                                   no_reuse: bool = undefined,
-                                   image: str = undefined,
-                                   mounts: Iterable[str] = undefined,
-                                   mount_map: Mapping[str, str] = undefined,
-                                   envs: Mapping[str, str] = undefined,
-                                   startup_command: str = undefined,
-                                   resources: Mapping[str, int] = undefined,
-                                   resource_opts: Mapping[str, int] = undefined,
-                                   cluster_size: int = undefined,
-                                   domain_name: str = undefined,
-                                   group_name: str = undefined,
-                                   bootstrap_script: str = undefined,
-                                   tag: str = undefined,
-                                   scaling_group: str = undefined,
-                                   owner_access_key: str = undefined) -> 'ComputeSession':
-        '''
+    async def create_from_template(
+        cls,
+        template_id: str, *,
+        name: Union[str, Undefined] = undefined,
+        type_: Union[str, Undefined] = undefined,
+        enqueue_only: Union[bool, Undefined] = undefined,
+        max_wait: Union[int, Undefined] = undefined,
+        no_reuse: Union[bool, Undefined] = undefined,
+        image: Union[str, Undefined] = undefined,
+        mounts: Union[List[str], Undefined] = undefined,
+        mount_map: Union[Mapping[str, str], Undefined] = undefined,
+        envs: Union[Mapping[str, str], Undefined] = undefined,
+        startup_command: Union[str, Undefined] = undefined,
+        resources: Union[Mapping[str, int], Undefined] = undefined,
+        resource_opts: Union[Mapping[str, int], Undefined] = undefined,
+        cluster_size: Union[int, Undefined] = undefined,
+        domain_name: Union[str, Undefined] = undefined,
+        group_name: Union[str, Undefined] = undefined,
+        bootstrap_script: Union[str, Undefined] = undefined,
+        tag: Union[str, Undefined] = undefined,
+        scaling_group: Union[str, Undefined] = undefined,
+        owner_access_key: Union[str, Undefined] = undefined,
+    ) -> ComputeSession:
+        """
         Get-or-creates a compute session from template.
         All other parameters provided  will be overwritten to template, including
         vfolder mounts (not appended!).
@@ -306,29 +323,32 @@ class ComputeSession:
             available to administrators)
 
         :returns: The :class:`ComputeSession` instance.
-        '''
-        if name:
+        """
+        if name is not undefined:
             assert 4 <= len(name) <= 64, \
                    'Client session token should be 4 to 64 characters long.'
         else:
             name = f'pysdk-{secrets.token_urlsafe(8)}'
 
-        if domain_name is None:
+        if domain_name is undefined:
             # Even if config.domain is None, it can be guessed in the manager by user information.
-            domain_name = cls.session.config.domain
-        if group_name is None:
-            group_name = cls.session.config.group
-        if cls.session.config.vfolder_mounts:
-            mounts.extend(cls.session.config.vfolder_mounts)
-        prefix = get_naming(cls.session.api_version, 'path')
-        rqst = Request(cls.session, 'POST', f'/{prefix}/_/create-from-template')
+            domain_name = api_session.get().config.domain
+        if group_name is undefined:
+            group_name = api_session.get().config.group
+        if mounts is undefined:
+            mounts = []
+        if api_session.get().config.vfolder_mounts:
+            mounts.extend(api_session.get().config.vfolder_mounts)
+        prefix = get_naming(api_session.get().api_version, 'path')
+        rqst = Request(api_session.get(), 'POST', f'/{prefix}/_/create-from-template')
+        params: Dict[str, Any]
         params = {
             'template_id': template_id,
             'tag': tag,
             'image': image,
             'domain': domain_name,
             'group': group_name,
-            get_naming(cls.session.api_version, 'name_arg'): name,
+            get_naming(api_session.get().api_version, 'name_arg'): name,
             'bootstrap_script': bootstrap_script,
             'enqueueOnly': enqueue_only,
             'maxWaitSeconds': max_wait,
@@ -346,11 +366,11 @@ class ComputeSession:
                 'scalingGroup': scaling_group,
             },
         }
-        params = drop(params, undefined)
+        params = cast(Dict[str, Any], drop(params, undefined))
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(name, owner_access_key)
+            o = cls(name, owner_access_key if owner_access_key is not undefined else None)
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -364,19 +384,19 @@ class ComputeSession:
 
     @api_function
     async def destroy(self, *, forced: bool = False):
-        '''
+        """
         Destroys the compute session.
         Since the server literally kills the container(s), all ongoing executions are
         forcibly interrupted.
-        '''
+        """
         params = {}
-        if self.owner_access_key:
+        if self.owner_access_key is not None:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         if forced:
             params['forced'] = 'true'
         rqst = Request(
-            self.session,
+            api_session.get(),
             'DELETE', f'/{prefix}/{self.name}',
             params=params,
         )
@@ -386,17 +406,17 @@ class ComputeSession:
 
     @api_function
     async def restart(self):
-        '''
+        """
         Restarts the compute session.
         The server force-destroys the current running container(s), but keeps their
         temporary scratch directories intact.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            self.session,
+            api_session.get(),
             'PATCH', f'/{prefix}/{self.name}',
             params=params,
         )
@@ -405,17 +425,17 @@ class ComputeSession:
 
     @api_function
     async def interrupt(self):
-        '''
+        """
         Tries to interrupt the current ongoing code execution.
         This may fail without any explicit errors depending on the code being
         executed.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            self.session,
+            api_session.get(),
             'POST', f'/{prefix}/{self.name}/interrupt',
             params=params,
         )
@@ -424,7 +444,7 @@ class ComputeSession:
 
     @api_function
     async def complete(self, code: str, opts: dict = None) -> Iterable[str]:
-        '''
+        """
         Gets the auto-completion candidates from the given code string,
         as if a user has pressed the tab key just after the code in
         IDEs.
@@ -437,14 +457,14 @@ class ComputeSession:
             such as row, col, line and the remainder text.
 
         :returns: An ordered list of strings.
-        '''
+        """
         opts = {} if opts is None else opts
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            self.session,
+            api_session.get(),
             'POST', f'/{prefix}/{self.name}/complete',
             params=params,
         )
@@ -462,15 +482,15 @@ class ComputeSession:
 
     @api_function
     async def get_info(self):
-        '''
+        """
         Retrieves a brief information about the compute session.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            self.session,
+            api_session.get(),
             'GET', f'/{prefix}/{self.name}',
             params=params,
         )
@@ -479,15 +499,15 @@ class ComputeSession:
 
     @api_function
     async def get_logs(self):
-        '''
+        """
         Retrieves the console log of the compute session container.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            self.session,
+            api_session.get(),
             'GET', f'/{prefix}/{self.name}/logs',
             params=params,
         )
@@ -499,7 +519,7 @@ class ComputeSession:
                       code: str = None,
                       mode: str = 'query',
                       opts: dict = None):
-        '''
+        """
         Executes a code snippet directly in the compute session or sends a set of
         build/clean/execute commands to the compute session.
 
@@ -521,17 +541,17 @@ class ComputeSession:
             for details.
 
         :returns: :ref:`An execution result object <execution-result-object>`
-        '''
+        """
         opts = opts if opts is not None else {}
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         if mode in {'query', 'continue', 'input'}:
             assert code is not None, \
                    'The code argument must be a valid string even when empty.'
             rqst = Request(
-                self.session,
+                api_session.get(),
                 'POST', f'/{prefix}/{self.name}',
                 params=params,
             )
@@ -542,7 +562,7 @@ class ComputeSession:
             })
         elif mode == 'batch':
             rqst = Request(
-                self.session,
+                api_session.get(),
                 'POST', f'/{prefix}/{self.name}',
                 params=params,
             )
@@ -559,7 +579,7 @@ class ComputeSession:
             })
         elif mode == 'complete':
             rqst = Request(
-                self.session,
+                api_session.get(),
                 'POST', f'/{prefix}/{self.name}',
                 params=params,
             )
@@ -581,7 +601,7 @@ class ComputeSession:
     async def upload(self, files: Sequence[Union[str, Path]],
                      basedir: Union[str, Path] = None,
                      show_progress: bool = False):
-        '''
+        """
         Uploads the given list of files to the compute session.
         You may refer them in the batch-mode execution or from the code
         executed in the server afterwards.
@@ -598,11 +618,11 @@ class ComputeSession:
         :param basedir: The directory prefix where the files reside.
             The default value is the current working directory.
         :param show_progress: Displays a progress bar during uploads.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         base_path = (
             Path.cwd() if basedir is None
             else Path(basedir).resolve()
@@ -610,7 +630,7 @@ class ComputeSession:
         files = [Path(file).resolve() for file in files]
         total_size = 0
         for file_path in files:
-            total_size += file_path.stat().st_size
+            total_size += Path(file_path).stat().st_size
         tqdm_obj = tqdm(desc='Uploading files',
                         unit='bytes', unit_scale=True,
                         total=total_size,
@@ -620,7 +640,7 @@ class ComputeSession:
             for file_path in files:
                 try:
                     attachments.append(AttachedFile(
-                        str(file_path.relative_to(base_path)),
+                        str(Path(file_path).relative_to(base_path)),
                         ProgressReportingReader(str(file_path),
                                                 tqdm_instance=tqdm_obj),
                         'application/octet-stream',
@@ -631,7 +651,7 @@ class ComputeSession:
                     raise ValueError(msg) from None
 
             rqst = Request(
-                self.session,
+                api_session.get(),
                 'POST', f'/{prefix}/{self.name}/upload',
                 params=params,
             )
@@ -643,7 +663,7 @@ class ComputeSession:
     async def download(self, files: Sequence[Union[str, Path]],
                        dest: Union[str, Path] = '.',
                        show_progress: bool = False):
-        '''
+        """
         Downloads the given list of files from the compute session.
 
         :param files: The list of file paths in the compute session.
@@ -651,13 +671,13 @@ class ComputeSession:
             ``/home/work`` in the compute session container.
         :param dest: The destination directory in the client-side.
         :param show_progress: Displays a progress bar during downloads.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            self.session,
+            api_session.get(),
             'GET', f'/{prefix}/{self.name}/download',
             params=params,
         )
@@ -674,7 +694,7 @@ class ComputeSession:
             reader = aiohttp.MultipartReader.from_response(resp.raw_response)
             with tqdm_obj as pbar:
                 while True:
-                    part = await reader.next()
+                    part = cast(aiohttp.BodyPartReader, await reader.next())
                     if part is None:
                         break
                     assert part.headers.get(hdrs.CONTENT_ENCODING, 'identity').lower() == 'identity'
@@ -698,18 +718,18 @@ class ComputeSession:
 
     @api_function
     async def list_files(self, path: Union[str, Path] = '.'):
-        '''
+        """
         Gets the list of files in the given path inside the compute session
         container.
 
         :param path: The directory path in the compute session.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            self.session,
+            api_session.get(),
             'GET', f'/{prefix}/{self.name}/files',
             params=params,
         )
@@ -724,68 +744,70 @@ class ComputeSession:
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         api_rqst = Request(
-            self.session,
+            api_session.get(),
             'GET', f'/stream/{prefix}/{self.name}/apps',
             params=params,
         )
         async with api_rqst.fetch() as resp:
             return await resp.json()
 
-    # only supported in AsyncKernel
-    def stream_events(self) -> SSEResponse:
-        '''
+    # only supported in AsyncAPISession
+    def listen_events(self) -> SSEContextManager:
+        """
         Opens the stream of the kernel lifecycle events.
         Only the master kernel of each session is monitored.
 
         :returns: a :class:`StreamEvents` object.
-        '''
+        """
         params = {
-            get_naming(self.session.api_version, 'event_name_arg'): self.name,
+            get_naming(api_session.get().api_version, 'event_name_arg'): self.name,
         }
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        path = get_naming(api_session.get().api_version, 'session_events')
         request = Request(
-            self.session,
-            'GET', f'/stream/{prefix}/_/events',
+            api_session.get(),
+            'GET', path,
             params=params,
         )
         return request.connect_events()
 
-    # only supported in AsyncKernel
-    def stream_pty(self) -> 'StreamPty':
-        '''
+    stream_events = listen_events  # legacy alias
+
+    # only supported in AsyncAPISession
+    def stream_pty(self) -> WebSocketContextManager:
+        """
         Opens a pseudo-terminal of the kernel (if supported) streamed via
         websockets.
 
         :returns: a :class:`StreamPty` object.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         request = Request(
-            self.session,
+            api_session.get(),
             'GET', f'/stream/{prefix}/{self.name}/pty',
             params=params,
         )
         return request.connect_websocket(response_cls=StreamPty)
 
-    # only supported in AsyncKernel
+    # only supported in AsyncAPISession
     def stream_execute(self, code: str = '', *,
                        mode: str = 'query',
-                       opts: dict = None) -> WebSocketResponse:
-        '''
+                       opts: dict = None) -> WebSocketContextManager:
+        """
         Executes a code snippet in the streaming mode.
         Since the returned websocket represents a run loop, there is no need to
         specify *run_id* explicitly.
-        '''
+        """
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        prefix = get_naming(self.session.api_version, 'path')
+        prefix = get_naming(api_session.get().api_version, 'path')
         opts = {} if opts is None else opts
         if mode == 'query':
             opts = {}
@@ -800,7 +822,7 @@ class ComputeSession:
             msg = 'Invalid stream-execution mode: {0}'.format(mode)
             raise BackendClientError(msg)
         request = Request(
-            self.session,
+            api_session.get(),
             'GET', f'/stream/{prefix}/{self.name}/execute',
             params=params,
         )
@@ -816,10 +838,10 @@ class ComputeSession:
 
 
 class StreamPty(WebSocketResponse):
-    '''
+    """
     A derivative class of :class:`~ai.backend.client.request.WebSocketResponse` which
     provides additional functions to control the terminal.
-    '''
+    """
 
     __slots__ = ('ws', )
 

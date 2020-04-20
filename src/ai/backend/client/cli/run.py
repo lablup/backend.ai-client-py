@@ -22,7 +22,7 @@ from ..config import local_cache_path
 from ..compat import asyncio_run, current_loop
 from ..exceptions import BackendError, BackendAPIError
 from ..session import Session, AsyncSession, is_legacy_server
-from ..utils import undefined
+from ..types import undefined
 from .pretty import (
     print_info, print_wait, print_done, print_error, print_fail, print_warn,
     format_info,
@@ -881,7 +881,7 @@ def start(image, name, owner,                                 # base args
               help='Set the owner of the target session explicitly.')
 # job scheduling options
 @click.option('--type', 'type_', metavar='SESSTYPE',
-              type=click.Choice(['batch', 'interactive', undefined]),
+              type=click.Choice(['batch', 'interactive', undefined]),  # type: ignore
               default=undefined,
               help='Either batch or interactive')
 @click.option('-i', '--image', default=undefined,
@@ -1145,9 +1145,9 @@ def events(name, owner_access_key):
     async def _run_events():
         async with AsyncSession() as session:
             compute_session = session.ComputeSession(name, owner_access_key)
-            async with compute_session.stream_events() as sse_response:
-                async for ev in sse_response.fetch_events():
-                    print(click.style(ev['event'], fg='cyan', bold=True), json.loads(ev['data']))
+            async with compute_session.listen_events() as response:
+                async for ev in response:
+                    print(click.style(ev.event, fg='cyan', bold=True), json.loads(ev.data))
 
     try:
         asyncio_run(_run_events())

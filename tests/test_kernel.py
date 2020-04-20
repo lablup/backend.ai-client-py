@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 
 from ai.backend.client.config import APIConfig
-from ai.backend.client.session import Session
+from ai.backend.client.session import api_session, Session
 from ai.backend.client.versioning import get_naming
 from ai.backend.client.test_utils import AsyncContextMock, AsyncMock
 
@@ -43,12 +43,13 @@ def test_create_with_config(mocker, api_version):
         else:
             assert prefix == 'session'
         assert session.config is myconfig
-        cs = session.ComputeSession.get_or_create('python')
+        session.ComputeSession.get_or_create('python')
         mock_req.assert_called_once_with(session, 'POST', f'/{prefix}')
-        assert str(cs.session.config.endpoint) == 'https://localhost:9999'
-        assert cs.session.config.user_agent == 'BAIClientTest'
-        assert cs.session.config.access_key == '1234'
-        assert cs.session.config.secret_key == 'asdf'
+        current_api_session = api_session.get()
+        assert str(current_api_session.config.endpoint) == 'https://localhost:9999'
+        assert current_api_session.config.user_agent == 'BAIClientTest'
+        assert current_api_session.config.access_key == '1234'
+        assert current_api_session.config.secret_key == 'asdf'
 
 
 def test_create_kernel_url(mocker):

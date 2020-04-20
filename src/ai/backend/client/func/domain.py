@@ -1,16 +1,17 @@
 import textwrap
 from typing import Iterable, Sequence
 
-from .base import api_function
+from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'Domain',
 )
 
 
-class Domain:
-    '''
+class Domain(BaseFunction):
+    """
     Provides a shortcut of :func:`Admin.query()
     <ai.backend.client.admin.Admin.query>` that fetches various domain
     information.
@@ -19,30 +20,27 @@ class Domain:
 
       All methods in this function class require your API access key to
       have the *admin* privilege.
-    '''
-
-    session = None
-    '''The client session instance that this function class is bound to.'''
+    """
 
     @api_function
     @classmethod
     async def list(cls, fields: Iterable[str] = None) -> Sequence[dict]:
-        '''
+        """
         Fetches the list of domains.
 
         :param fields: Additional per-domain query fields to fetch.
-        '''
+        """
         if fields is None:
             fields = ('name', 'description', 'is_active', 'created_at',
                       'total_resource_slots', 'allowed_vfolder_hosts', 'allowed_docker_registries',
                       'integration_id')
-        query = textwrap.dedent('''\
+        query = textwrap.dedent("""\
             query {
                 domains {$fields}
             }
-        ''')
+        """)
         query = query.replace('$fields', ' '.join(fields))
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
         })
@@ -53,24 +51,24 @@ class Domain:
     @api_function
     @classmethod
     async def detail(cls, name: str, fields: Iterable[str] = None) -> Sequence[dict]:
-        '''
+        """
         Fetch information of a domain with name.
 
         :param name: Name of the domain to fetch.
         :param fields: Additional per-domain query fields to fetch.
-        '''
+        """
         if fields is None:
             fields = ('name', 'description', 'is_active', 'created_at',
                       'total_resource_slots', 'allowed_vfolder_hosts', 'allowed_docker_registries',
                       'integration_id',)
-        query = textwrap.dedent('''\
+        query = textwrap.dedent("""\
             query($name: String) {
                 domain(name: $name) {$fields}
             }
-        ''')
+        """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'name': name}
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -87,19 +85,19 @@ class Domain:
                      allowed_docker_registries: Iterable[str] = None,
                      integration_id: str = None,
                      fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Creates a new domain with the given options.
         You need an admin privilege for this operation.
-        '''
+        """
         if fields is None:
             fields = ('name',)
-        query = textwrap.dedent('''\
+        query = textwrap.dedent("""\
             mutation($name: String!, $input: DomainInput!) {
                 create_domain(name: $name, props: $input) {
                     ok msg domain {$fields}
                 }
             }
-        ''')
+        """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {
             'name': name,
@@ -112,7 +110,7 @@ class Domain:
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -129,17 +127,17 @@ class Domain:
                      allowed_docker_registries: Iterable[str] = None,
                      integration_id: str = None,
                      fields: Iterable[str] = None) -> dict:
-        '''
+        """
         Update existing domain.
         You need an admin privilege for this operation.
-        '''
-        query = textwrap.dedent('''\
+        """
+        query = textwrap.dedent("""\
             mutation($name: String!, $input: ModifyDomainInput!) {
                 modify_domain(name: $name, props: $input) {
                     ok msg
                 }
             }
-        ''')
+        """)
         variables = {
             'name': name,
             'input': {
@@ -152,7 +150,7 @@ class Domain:
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -164,18 +162,18 @@ class Domain:
     @api_function
     @classmethod
     async def delete(cls, name: str):
-        '''
+        """
         Deletes an existing domain.
-        '''
-        query = textwrap.dedent('''\
+        """
+        query = textwrap.dedent("""\
             mutation($name: String!) {
                 delete_domain(name: $name) {
                     ok msg
                 }
             }
-        ''')
+        """)
         variables = {'name': name}
-        rqst = Request(cls.session, 'POST', '/admin/graphql')
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,

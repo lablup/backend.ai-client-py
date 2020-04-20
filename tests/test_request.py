@@ -114,16 +114,18 @@ def test_build_correct_url(mock_request_params):
     assert str(rqst._build_url()) == canonical_url
 
 
-def test_fetch_invalid_method(mock_request_params):
+@pytest.mark.asyncio
+async def test_fetch_invalid_method(mock_request_params):
     mock_request_params['method'] = 'STRANGE'
     rqst = Request(**mock_request_params)
 
     with pytest.raises(AssertionError):
-        with rqst.fetch():
+        async with rqst.fetch():
             pass
 
 
-def test_fetch(dummy_endpoint):
+@pytest.mark.asyncio
+async def test_fetch(dummy_endpoint):
     with aioresponses() as m, Session() as session:
         body = b'hello world'
         m.post(
@@ -132,11 +134,11 @@ def test_fetch(dummy_endpoint):
                      'Content-Length': str(len(body))},
         )
         rqst = Request(session, 'POST', 'function')
-        with rqst.fetch() as resp:
+        async with rqst.fetch() as resp:
             assert isinstance(resp, Response)
             assert resp.status == 200
             assert resp.content_type == 'text/plain'
-            assert resp.text() == body.decode()
+            assert await resp.text() == body.decode()
             assert resp.content_length == len(body)
 
     with aioresponses() as m, Session() as session:
@@ -147,16 +149,17 @@ def test_fetch(dummy_endpoint):
                      'Content-Length': str(len(body))},
         )
         rqst = Request(session, 'POST', 'function')
-        with rqst.fetch() as resp:
+        async with rqst.fetch() as resp:
             assert isinstance(resp, Response)
             assert resp.status == 200
             assert resp.content_type == 'application/json'
-            assert resp.text() == body.decode()
-            assert resp.json() == {'a': 1234, 'b': None}
+            assert await resp.text() == body.decode()
+            assert await resp.json() == {'a': 1234, 'b': None}
             assert resp.content_length == len(body)
 
 
-def test_streaming_fetch(dummy_endpoint):
+@pytest.mark.asyncio
+async def test_streaming_fetch(dummy_endpoint):
     # Read content by chunks.
     with aioresponses() as m, Session() as session:
         body = b'hello world'
@@ -166,17 +169,18 @@ def test_streaming_fetch(dummy_endpoint):
                      'Content-Length': str(len(body))},
         )
         rqst = Request(session, 'POST', 'function')
-        with rqst.fetch() as resp:
+        async with rqst.fetch() as resp:
             assert resp.status == 200
             assert resp.content_type == 'text/plain'
-            assert resp.read(3) == b'hel'
-            assert resp.read(2) == b'lo'
-            resp.read()
+            assert await resp.read(3) == b'hel'
+            assert await resp.read(2) == b'lo'
+            await resp.read()
             with pytest.raises(AssertionError):
-                assert resp.text()
+                assert await resp.text()
 
 
-def test_invalid_requests(dummy_endpoint):
+@pytest.mark.asyncio
+async def test_invalid_requests(dummy_endpoint):
     with aioresponses() as m, Session() as session:
         body = json.dumps({
             'type': 'https://api.backend.ai/probs/kernel-not-found',
@@ -189,7 +193,7 @@ def test_invalid_requests(dummy_endpoint):
         )
         rqst = Request(session, 'POST', '/')
         with pytest.raises(BackendAPIError) as e:
-            with rqst.fetch():
+            async with rqst.fetch():
                 pass
             assert e.status == 404
             assert e.data['type'] == \
@@ -242,21 +246,6 @@ async def test_fetch_timeout_async(dummy_endpoint):
             with pytest.raises(asyncio.TimeoutError):
                 async with rqst.fetch():
                     pass
-
-
-def test_response_sync(defconfig, dummy_endpoint):
-    body = b'{"test": 1234}'
-    with aioresponses() as m:
-        m.post(
-            dummy_endpoint + 'function', status=200, body=body,
-            headers={'Content-Type': 'application/json',
-                     'Content-Length': str(len(body))},
-        )
-        with Session(config=defconfig) as session:
-            rqst = Request(session, 'POST', '/function')
-            with rqst.fetch() as resp:
-                assert resp.text() == '{"test": 1234}'
-                assert resp.json() == {'test': 1234}
 
 
 @pytest.mark.asyncio
