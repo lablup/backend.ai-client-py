@@ -194,7 +194,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         self._closed = False
         self._config = config if config else get_config()
         self._proxy_mode = proxy_mode
-        self._api_version = parse_api_version(self._config.version)
+        self.api_version = parse_api_version(self._config.version)
 
         from .func.system import System
         from .func.admin import Admin
