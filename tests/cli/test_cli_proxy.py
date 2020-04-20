@@ -7,7 +7,8 @@ from ai.backend.client.cli.proxy import create_proxy_app
 
 
 @pytest.fixture
-def api_app(event_loop):
+async def api_app_fixture(unused_tcp_port_factory):
+    api_port = unused_tcp_port_factory()
     app = web.Application()
     recv_queue = []
 
@@ -34,55 +35,46 @@ def api_app(event_loop):
     app.router.add_route('GET', r'/stream/echo', echo_ws)
     app.router.add_route('POST', r'/echo', echo_web)
     runner = web.AppRunner(app)
-
-    async def start(port):
-        await runner.setup()
-        site = web.TCPSite(runner, '127.0.0.1', port)
-        await site.start()
-        return app, recv_queue
-
-    async def shutdown():
-        await runner.cleanup()
-
+    await runner.setup()
+    site = web.TCPSite(runner, '127.0.0.1', api_port)
+    await site.start()
     try:
-        yield start
+        yield app, recv_queue, api_port
     finally:
-        event_loop.run_until_complete(shutdown())
+        await runner.cleanup()
 
 
 @pytest.fixture
-def proxy_app(event_loop):
+async def proxy_app_fixture(unused_tcp_port_factory):
     app = create_proxy_app()
     runner = web.AppRunner(app)
-
-    async def start(port):
-        await runner.setup()
-        site = web.TCPSite(runner, '127.0.0.1', port)
-        await site.start()
-        return app
-
-    async def shutdown():
+    proxy_port = unused_tcp_port_factory()
+    await runner.setup()
+    site = web.TCPSite(runner, '127.0.0.1', proxy_port)
+    await site.start()
+    try:
+        yield app, proxy_port
+    finally:
         await runner.cleanup()
 
-    try:
-        yield start
-    finally:
-        event_loop.run_until_complete(shutdown())
 
-
+@pytest.mark.xfail(
+    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working"
+)
 @pytest.mark.asyncio
-async def test_proxy_web(monkeypatch, example_keypair, api_app, proxy_app,
-                         unused_tcp_port_factory):
-    api_port = unused_tcp_port_factory()
+async def test_proxy_web(
+    monkeypatch, example_keypair,
+    api_app_fixture,
+    proxy_app_fixture,
+):
+    api_app, recv_queue, api_port = api_app_fixture
     api_url = 'http://127.0.0.1:{}'.format(api_port)
     monkeypatch.setenv('BACKEND_ACCESS_KEY', example_keypair[0])
     monkeypatch.setenv('BACKEND_SECRET_KEY', example_keypair[1])
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
-    api_app, recv_queue = await api_app(api_port)
+    proxy_app, proxy_port = proxy_app_fixture
     proxy_client = aiohttp.ClientSession()
-    proxy_port = unused_tcp_port_factory()
-    proxy_app = await proxy_app(proxy_port)
     proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
     data = {"test": 1234}
     async with proxy_client.request('POST', proxy_url + '/echo',
@@ -93,9 +85,15 @@ async def test_proxy_web(monkeypatch, example_keypair, api_app, proxy_app,
         assert ret['test'] == 1234
 
 
+@pytest.mark.xfail(
+    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working"
+)
 @pytest.mark.asyncio
-async def test_proxy_web_502(monkeypatch, example_keypair, proxy_app,
-                             unused_tcp_port_factory):
+async def test_proxy_web_502(
+    monkeypatch, example_keypair,
+    proxy_app_fixture,
+    unused_tcp_port_factory,
+):
     api_port = unused_tcp_port_factory()
     api_url = 'http://127.0.0.1:{}'.format(api_port)
     monkeypatch.setenv('BACKEND_ACCESS_KEY', example_keypair[0])
@@ -104,8 +102,7 @@ async def test_proxy_web_502(monkeypatch, example_keypair, proxy_app,
     monkeypatch.setattr(config, '_config', config.APIConfig())
     # Skip creation of api_app; let the proxy use a non-existent server.
     proxy_client = aiohttp.ClientSession()
-    proxy_port = unused_tcp_port_factory()
-    proxy_app = await proxy_app(proxy_port)
+    proxy_app, proxy_port = proxy_app_fixture
     proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
     data = {"test": 1234}
     async with proxy_client.request('POST', proxy_url + '/echo',
@@ -114,19 +111,23 @@ async def test_proxy_web_502(monkeypatch, example_keypair, proxy_app,
         assert resp.reason == 'Bad Gateway'
 
 
+@pytest.mark.xfail(
+    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working"
+)
 @pytest.mark.asyncio
-async def test_proxy_websocket(monkeypatch, example_keypair, api_app, proxy_app,
-                               unused_tcp_port_factory):
-    api_port = unused_tcp_port_factory()
+async def test_proxy_websocket(
+    monkeypatch, example_keypair,
+    api_app_fixture,
+    proxy_app_fixture,
+):
+    api_app, recv_queue, api_port = api_app_fixture
     api_url = 'http://127.0.0.1:{}'.format(api_port)
     monkeypatch.setenv('BACKEND_ACCESS_KEY', example_keypair[0])
     monkeypatch.setenv('BACKEND_SECRET_KEY', example_keypair[1])
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
-    api_app, recv_queue = await api_app(api_port)
     proxy_client = aiohttp.ClientSession()
-    proxy_port = unused_tcp_port_factory()
-    proxy_app = await proxy_app(proxy_port)
+    proxy_app, proxy_port = proxy_app_fixture
     proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
     ws = await proxy_client.ws_connect(proxy_url + '/stream/echo')
     await ws.send_str('test')

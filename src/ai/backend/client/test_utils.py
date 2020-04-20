@@ -1,6 +1,6 @@
-'''
+"""
 A support module to async mocks in Python versiosn prior to 3.8.
-'''
+"""
 
 from unittest import mock
 try:
@@ -8,11 +8,11 @@ try:
     # Python 3.8 also adds magic-mocking async iterators and async context managers.
     from unittest.mock import AsyncMock
 except ImportError:
-    from asynctest import CoroutineMock as AsyncMock  # noqa
+    from asynctest import CoroutineMock as AsyncMock  # type: ignore
 
 
 class AsyncContextMock(mock.Mock):
-    '''
+    """
     Provides a mock that can be used:
 
         async with mock():
@@ -34,7 +34,7 @@ class AsyncContextMock(mock.Mock):
             # resp.status is 200
             result = await resp.json()
             # result is {'hello': 'world'}
-    '''
+    """
 
     async def __aenter__(self):
         return self
@@ -44,12 +44,12 @@ class AsyncContextMock(mock.Mock):
 
 
 class AsyncContextMagicMock(mock.MagicMock):
-    '''
+    """
     Provides a magic mock that can be used:
 
         async with mock():
           ...
-    '''
+    """
 
     async def __aenter__(self):
         return self
@@ -59,7 +59,7 @@ class AsyncContextMagicMock(mock.MagicMock):
 
 
 class AsyncContextCoroutineMock(AsyncMock):
-    '''
+    """
     Provides a mock that can be used:
 
         async with (await mock(...)):
@@ -81,7 +81,7 @@ class AsyncContextCoroutineMock(AsyncMock):
             # resp.status is 200
             result = await resp.json()
             # result is {'hello': 'world'}
-    '''
+    """
 
     async def __aenter__(self):
         return self

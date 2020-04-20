@@ -1,8 +1,15 @@
-'''
+"""
 A compatibility module for backported codes from Python 3.6+ standard library.
-'''
+"""
 
 import asyncio
+
+__all__ = (
+    'current_loop',
+    'all_tasks',
+    'asyncio_run',
+    'asyncio_run_forever',
+)
 
 
 if hasattr(asyncio, 'get_running_loop'):  # Python 3.7+
@@ -60,11 +67,11 @@ else:
 
 
 def asyncio_run_forever(server_context, *, debug=False):
-    '''
+    """
     A proposed-but-not-implemented asyncio.run_forever() API based on
     @vxgmichel's idea.
     See discussions on https://github.com/python/asyncio/pull/465
-    '''
+    """
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.set_debug(debug)

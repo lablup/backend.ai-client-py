@@ -1,7 +1,17 @@
+from __future__ import annotations
+
 import abc
 import asyncio
+from contextvars import Context, ContextVar, copy_context
 import threading
-from typing import Tuple
+from typing import (
+    Any,
+    Awaitable,
+    Coroutine,
+    Tuple,
+    Union,
+)
+from typing_extensions import Literal  # for Python 3.7
 import queue
 import warnings
 
@@ -10,16 +20,21 @@ from multidict import CIMultiDict
 
 from .config import APIConfig, get_config, parse_api_version
 from .exceptions import APIVersionWarning
+from .types import Sentinel, sentinel
 
 
 __all__ = (
     'BaseSession',
     'Session',
     'AsyncSession',
+    'api_session',
 )
 
 
-def is_legacy_server():
+api_session: ContextVar[BaseSession] = ContextVar('api_session')
+
+
+def is_legacy_server() -> bool:
     """
     Determine execution mode.
 
@@ -63,41 +78,44 @@ async def _negotiate_api_version(
         return client_version
 
 
-async def _close_aiohttp_session(session: aiohttp.ClientSession):
+async def _close_aiohttp_session(session: aiohttp.ClientSession) -> None:
     # This is a hacky workaround for premature closing of SSL transports
     # on Windows Proactor event loops.
     # Thanks to Vadim Markovtsev's comment on the aiohttp issue #1925.
     # (https://github.com/aio-libs/aiohttp/issues/1925#issuecomment-592596034)
     transports = 0
     all_is_lost = asyncio.Event()
-    if len(session.connector._conns) == 0:
+    if session.connector is None:
         all_is_lost.set()
-    for conn in session.connector._conns.values():
-        for handler, _ in conn:
-            proto = getattr(handler.transport, "_ssl_protocol", None)
-            if proto is None:
-                continue
-            transports += 1
-            orig_lost = proto.connection_lost
-            orig_eof_received = proto.eof_received
+    else:
+        if len(session.connector._conns) == 0:
+            all_is_lost.set()
+        for conn in session.connector._conns.values():
+            for handler, _ in conn:
+                proto = getattr(handler.transport, "_ssl_protocol", None)
+                if proto is None:
+                    continue
+                transports += 1
+                orig_lost = proto.connection_lost
+                orig_eof_received = proto.eof_received
 
-            def connection_lost(exc):
-                orig_lost(exc)
-                nonlocal transports
-                transports -= 1
-                if transports == 0:
-                    all_is_lost.set()
+                def connection_lost(exc):
+                    orig_lost(exc)
+                    nonlocal transports
+                    transports -= 1
+                    if transports == 0:
+                        all_is_lost.set()
 
-            def eof_received():
-                try:
-                    orig_eof_received()
-                except AttributeError:
-                    # It may happen that eof_received() is called after
-                    # _app_protocol and _transport are set to None.
-                    pass
+                def eof_received():
+                    try:
+                        orig_eof_received()
+                    except AttributeError:
+                        # It may happen that eof_received() is called after
+                        # _app_protocol and _transport are set to None.
+                        pass
 
-            proto.connection_lost = connection_lost
-            proto.eof_received = eof_received
+                proto.connection_lost = connection_lost
+                proto.eof_received = eof_received
     await session.close()
     if transports > 0:
         await all_is_lost.wait()
@@ -105,23 +123,25 @@ async def _close_aiohttp_session(session: aiohttp.ClientSession):
 
 class _SyncWorkerThread(threading.Thread):
 
-    sentinel = object()
+    work_queue: queue.Queue[Union[Tuple[Coroutine, Context], Sentinel]]
+    done_queue: queue.Queue[Any]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.work_queue = queue.Queue()
         self.done_queue = queue.Queue()
 
-    def run(self):
+    def run(self) -> None:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             while True:
-                coro = self.work_queue.get()
-                if coro is self.sentinel:
+                item = self.work_queue.get()
+                if item is sentinel:
                     break
+                coro, ctx = item
                 try:
-                    result = loop.run_until_complete(coro)
+                    result = ctx.run(loop.run_until_complete, coro)
                 except Exception as e:
                     self.done_queue.put_nowait(e)
                 else:
@@ -132,13 +152,17 @@ class _SyncWorkerThread(threading.Thread):
         finally:
             loop.stop()
 
-    def execute(self, coro):
-        self.work_queue.put(coro)
-        result = self.done_queue.get()
-        self.done_queue.task_done()
-        if isinstance(result, Exception):
-            raise result
-        return result
+    def execute(self, coro: Coroutine) -> Any:
+        ctx = copy_context()  # preserve context for the worker thread
+        try:
+            self.work_queue.put((coro, ctx))
+            result = self.done_queue.get()
+            self.done_queue.task_done()
+            if isinstance(result, Exception):
+                raise result
+            return result
+        finally:
+            del ctx
 
 
 class BaseSession(metaclass=abc.ABCMeta):
@@ -147,26 +171,75 @@ class BaseSession(metaclass=abc.ABCMeta):
     """
 
     __slots__ = (
-        '_config', '_closed', 'aiohttp_session',
-        'api_version',
+        '_config', '_closed', '_context_token',
+        'aiohttp_session', 'api_version',
         'System', 'Manager', 'Admin',
         'Agent', 'AgentWatcher', 'ScalingGroup',
         'Image', 'ComputeSession', 'SessionTemplate',
         'Domain', 'Group', 'Auth', 'User', 'KeyPair',
+        'BackgroundTask',
         'EtcdConfig',
         'Resource', 'KeypairResourcePolicy',
-        'VFolder', 'Dotfile'
+        'VFolder', 'Dotfile',
     )
 
     aiohttp_session: aiohttp.ClientSession
     api_version: Tuple[int, str]
 
-    def __init__(self, *, config: APIConfig = None):
+    def __init__(self, *, config: APIConfig = None) -> None:
         self._closed = False
         self._config = config if config else get_config()
 
+        from .func.system import System
+        from .func.admin import Admin
+        from .func.agent import Agent, AgentWatcher
+        from .func.auth import Auth
+        from .func.bgtask import BackgroundTask
+        from .func.domain import Domain
+        from .func.etcd import EtcdConfig
+        from .func.group import Group
+        from .func.image import Image
+        from .func.session import ComputeSession
+        from .func.keypair import KeyPair
+        from .func.manager import Manager
+        from .func.resource import Resource
+        from .func.keypair_resource_policy import KeypairResourcePolicy
+        from .func.scaling_group import ScalingGroup
+        from .func.session_template import SessionTemplate
+        from .func.user import User
+        from .func.vfolder import VFolder
+        from .func.dotfile import Dotfile
+
+        self.System = System
+        self.Admin = Admin
+        self.Agent = Agent
+        self.AgentWatcher = AgentWatcher
+        self.Auth = Auth
+        self.BackgroundTask = BackgroundTask
+        self.EtcdConfig = EtcdConfig
+        self.Domain = Domain
+        self.Group = Group
+        self.Image = Image
+        self.ComputeSession = ComputeSession
+        self.KeyPair = KeyPair
+        self.Manager = Manager
+        self.Resource = Resource
+        self.KeypairResourcePolicy = KeypairResourcePolicy
+        self.User = User
+        self.ScalingGroup = ScalingGroup
+        self.SessionTemplate = SessionTemplate
+        self.VFolder = VFolder
+        self.Dotfile = Dotfile
+
     @abc.abstractmethod
-    def close(self):
+    def open(self) -> Union[None, Awaitable[None]]:
+        """
+        Initializes the session and perform version negotiation.
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def close(self) -> Union[None, Awaitable[None]]:
         """
         Terminates the session and releases underlying resources.
         """
@@ -180,22 +253,33 @@ class BaseSession(metaclass=abc.ABCMeta):
         return self._closed
 
     @property
-    def config(self):
+    def config(self) -> APIConfig:
         """
         The configuration used by this session object.
         """
         return self._config
 
+    def __enter__(self) -> BaseSession:
+        raise NotImplementedError
+
+    def __exit__(self, *exc_info) -> Literal[False]:
+        return False
+
+    async def __aenter__(self) -> BaseSession:
+        raise NotImplementedError
+
+    async def __aexit__(self, *exc_info) -> Literal[False]:
+        return False
+
 
 class Session(BaseSession):
     """
-    An API client session that makes API requests synchronously.
-    You may call (almost) all function proxy methods like a plain Python function.
-    It provides a context manager interface to ensure closing of the session
-    upon errors and scope exits.
+    A context manager for API client sessions that makes API requests synchronously.
+    You may call simple request-response APIs like a plain Python function,
+    but cannot use streaming APIs based on WebSocket and Server-Sent Events.
     """
 
-    __slots__ = BaseSession.__slots__ + (
+    __slots__ = (
         '_worker_thread',
     )
 
@@ -213,440 +297,81 @@ class Session(BaseSession):
 
         self.aiohttp_session = self.worker_thread.execute(_create_aiohttp_session())
 
-        from .func.base import BaseFunction
-        from .func.system import System
-        from .func.admin import Admin
-        from .func.agent import Agent, AgentWatcher
-        from .func.auth import Auth
-        from .func.etcd import EtcdConfig
-        from .func.domain import Domain
-        from .func.group import Group
-        from .func.image import Image
-        from .func.session import ComputeSession
-        from .func.keypair import KeyPair
-        from .func.manager import Manager
-        from .func.resource import Resource
-        from .func.keypair_resource_policy import KeypairResourcePolicy
-        from .func.scaling_group import ScalingGroup
-        from .func.session_template import SessionTemplate
-        from .func.user import User
-        from .func.vfolder import VFolder
-        from .func.dotfile import Dotfile
+    def open(self) -> None:
+        self._context_token = api_session.set(self)
+        self.api_version = self.worker_thread.execute(
+            _negotiate_api_version(self.aiohttp_session, self.config))
 
-        self.System = type('System', (BaseFunction, ), {
-            **System.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.system.System` function proxy
-        bound to this session.
-        '''
-
-        self.Admin = type('Admin', (BaseFunction, ), {
-            **Admin.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.admin.Admin` function proxy
-        bound to this session.
-        '''
-
-        self.Agent = type('Agent', (BaseFunction, ), {
-            **Agent.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.agent.Agent` function proxy
-        bound to this session.
-        '''
-
-        self.AgentWatcher = type('AgentWatcher', (BaseFunction, ), {
-            **AgentWatcher.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.agent.AgentWatcher` function proxy
-        bound to this session.
-        '''
-
-        self.Auth = type('Auth', (BaseFunction, ), {
-            **Auth.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.Auth` function proxy
-        bound to this session.
-        '''
-
-        self.EtcdConfig = type('EtcdConfig', (BaseFunction, ), {
-            **EtcdConfig.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.EtcdConfig` function proxy
-        bound to this session.
-        '''
-
-        self.Domain = type('Domain', (BaseFunction, ), {
-            **Domain.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.agent.Domain` function proxy
-        bound to this session.
-        '''
-
-        self.Group = type('Group', (BaseFunction, ), {
-            **Group.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.agent.Group` function proxy
-        bound to this session.
-        '''
-
-        self.Image = type('Image', (BaseFunction, ), {
-            **Image.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.image.Image` function proxy
-        bound to this session.
-        '''
-
-        self.ComputeSession = type('ComputeSession', (BaseFunction, ), {
-            **ComputeSession.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.kernel.ComputeSession` function proxy
-        bound to this session.
-        '''
-
-        self.KeyPair = type('KeyPair', (BaseFunction, ), {
-            **KeyPair.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.keypair.KeyPair` function proxy
-        bound to this session.
-        '''
-
-        self.Manager = type('Manager', (BaseFunction, ), {
-            **Manager.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.manager.Manager` function proxy
-        bound to this session.
-        '''
-
-        self.Resource = type('Resource', (BaseFunction, ), {
-            **Resource.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.resource.Resource` function proxy
-        bound to this session.
-        '''
-
-        self.KeypairResourcePolicy = type('KeypairResourcePolicy', (BaseFunction, ), {
-            **KeypairResourcePolicy.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.keypair_resource_policy.KeypairResourcePolicy` function proxy
-        bound to this session.
-        '''
-
-        self.User = type('User', (BaseFunction, ), {
-            **User.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.user.User` function proxy
-        bound to this session.
-        '''
-
-        self.ScalingGroup = type('ScalingGroup', (BaseFunction, ), {
-            **ScalingGroup.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.scaling_group.ScalingGroup` function proxy
-        bound to this session.
-        '''
-
-        self.SessionTemplate = type('SessionTemplate', (BaseFunction, ), {
-            **SessionTemplate.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.session_template.SessionTemplate` function proxy
-        bound to this session.
-        '''
-
-        self.VFolder = type('VFolder', (BaseFunction, ), {
-            **VFolder.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.vfolder.VFolder` function proxy
-        bound to this session.
-        '''
-
-        self.Dotfile = type('Dotfile', (BaseFunction, ), {
-            **Dotfile.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.dotfile.Dotfile` function proxy
-        bound to this session.
-        '''
-
-    def close(self):
-        '''
+    def close(self) -> None:
+        """
         Terminates the session.  It schedules the ``close()`` coroutine
         of the underlying aiohttp session and then enqueues a sentinel
         object to indicate termination.  Then it waits until the worker
         thread to self-terminate by joining.
-        '''
+        """
         if self._closed:
             return
         self._closed = True
-        self._worker_thread.work_queue.put(_close_aiohttp_session(self.aiohttp_session))
-        self._worker_thread.work_queue.put(self.worker_thread.sentinel)
+        self._worker_thread.execute(_close_aiohttp_session(self.aiohttp_session))
+        self._worker_thread.work_queue.put(sentinel)
         self._worker_thread.join()
+        api_session.reset(self._context_token)
 
     @property
     def worker_thread(self):
-        '''
+        """
         The thread that internally executes the asynchronous implementations
         of the given API functions.
-        '''
+        """
         return self._worker_thread
 
-    def __enter__(self):
+    def __enter__(self) -> Session:
         assert not self.closed, 'Cannot reuse closed session'
-        self.api_version = self.worker_thread.execute(
-            _negotiate_api_version(self.aiohttp_session, self.config))
+        self.open()
         return self
 
-    def __exit__(self, exc_type, exc_obj, exc_tb):
+    def __exit__(self, *exc_info) -> Literal[False]:
         self.close()
-        return False
+        return False  # raise up the inner exception
 
 
 class AsyncSession(BaseSession):
-    '''
-    An API client session that makes API requests asynchronously using coroutines.
-    You may call all function proxy methods like a coroutine.
-    It provides an async context manager interface to ensure closing of the session
-    upon errors and scope exits.
-    '''
-
-    __slots__ = BaseSession.__slots__ + ()
+    """
+    A context manager for API client sessions that makes API requests asynchronously.
+    You may call all APIs as coroutines.
+    WebSocket-based APIs and SSE-based APIs returns special response types.
+    """
 
     def __init__(self, *, config: APIConfig = None):
         super().__init__(config=config)
-
         ssl = None
         if self._config.skip_sslcert_validation:
             ssl = False
         connector = aiohttp.TCPConnector(ssl=ssl)
         self.aiohttp_session = aiohttp.ClientSession(connector=connector)
 
-        from .func.base import BaseFunction
-        from .func.system import System
-        from .func.admin import Admin
-        from .func.agent import Agent, AgentWatcher
-        from .func.auth import Auth
-        from .func.etcd import EtcdConfig
-        from .func.group import Group
-        from .func.image import Image
-        from .func.session import ComputeSession
-        from .func.keypair import KeyPair
-        from .func.manager import Manager
-        from .func.resource import Resource
-        from .func.keypair_resource_policy import KeypairResourcePolicy
-        from .func.scaling_group import ScalingGroup
-        from .func.session_template import SessionTemplate
-        from .func.user import User
-        from .func.vfolder import VFolder
-        from .func.dotfile import Dotfile
+    async def _aopen(self) -> None:
+        self._context_token = api_session.set(self)
+        self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
 
-        self.System = type('System', (BaseFunction, ), {
-            **System.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.system.System` function proxy
-        bound to this session.
-        '''
+    def open(self) -> Awaitable[None]:
+        return self._aopen()
 
-        self.Admin = type('Admin', (BaseFunction, ), {
-            **Admin.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.admin.Admin` function proxy
-        bound to this session.
-        '''
-
-        self.Agent = type('Agent', (BaseFunction, ), {
-            **Agent.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.agent.Agent` function proxy
-        bound to this session.
-        '''
-
-        self.AgentWatcher = type('AgentWatcher', (BaseFunction, ), {
-            **AgentWatcher.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.agent.AgentWatcher` function proxy
-        bound to this session.
-        '''
-
-        self.Auth = type('Auth', (BaseFunction, ), {
-            **Auth.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.Auth` function proxy
-        bound to this session.
-        '''
-
-        self.EtcdConfig = type('EtcdConfig', (BaseFunction, ), {
-            **EtcdConfig.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.EtcdConfig` function proxy
-        bound to this session.
-        '''
-
-        self.Group = type('Group', (BaseFunction, ), {
-            **Group.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.agent.Group` function proxy
-        bound to this session.
-        '''
-
-        self.Image = type('Image', (BaseFunction, ), {
-            **Image.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.image.Image` function proxy
-        bound to this session.
-        '''
-
-        self.ComputeSession = type('ComputeSession', (BaseFunction, ), {
-            **ComputeSession.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.kernel.ComputeSession` function proxy
-        bound to this session.
-        '''
-
-        self.KeyPair = type('KeyPair', (BaseFunction, ), {
-            **KeyPair.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.keypair.KeyPair` function proxy
-        bound to this session.
-        '''
-
-        self.Manager = type('Manager', (BaseFunction, ), {
-            **Manager.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.manager.Manager` function proxy
-        bound to this session.
-        '''
-
-        self.Resource = type('Resource', (BaseFunction, ), {
-            **Resource.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.resource.Resource` function proxy
-        bound to this session.
-        '''
-
-        self.KeypairResourcePolicy = type('KeypairResourcePolicy', (BaseFunction, ), {
-            **KeypairResourcePolicy.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.keypair_resource_policy.KeypairResourcePolicy` function proxy
-        bound to this session.
-        '''
-
-        self.User = type('User', (BaseFunction, ), {
-            **User.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.user.User` function proxy
-        bound to this session.
-        '''
-
-        self.ScalingGroup = type('ScalingGroup', (BaseFunction, ), {
-            **ScalingGroup.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.scaling_group.ScalingGroup` function proxy
-        bound to this session.
-        '''
-
-        self.SessionTemplate = type('SessionTemplate', (BaseFunction, ), {
-            **SessionTemplate.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.session_template.SessionTemplate` function proxy
-        bound to this session.
-        '''
-
-        self.VFolder = type('VFolder', (BaseFunction, ), {
-            **VFolder.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.vfolder.VFolder` function proxy
-        bound to this session.
-        '''
-        self.Dotfile = type('Dotfile', (BaseFunction, ), {
-            **Dotfile.__dict__,
-            'session': self,
-        })
-        '''
-        The :class:`~ai.backend.client.dotfile.Dotfile` function proxy
-        bound to this session.
-        '''
-
-    async def close(self):
+    async def _aclose(self) -> None:
         if self._closed:
             return
         self._closed = True
         await _close_aiohttp_session(self.aiohttp_session)
+        api_session.reset(self._context_token)
 
-    async def __aenter__(self):
+    def close(self) -> Awaitable[None]:
+        return self._aclose()
+
+    async def __aenter__(self) -> AsyncSession:
         assert not self.closed, 'Cannot reuse closed session'
-        self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
+        await self.open()
         return self
 
-    async def __aexit__(self, exc_type, exc_obj, exc_tb):
+    async def __aexit__(self, *exc_info) -> Literal[False]:
         await self.close()
-        return False
+        return False  # raise up the inner exception
