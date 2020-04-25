@@ -650,7 +650,7 @@ class AsyncSession(BaseSession):
         '''
 
         self.ServerLog = type('ServerLog', (BaseFunction, ), {
-            **Dotfile.__dict__,
+            **ServerLog.__dict__,
             'session': self,
         })
         '''

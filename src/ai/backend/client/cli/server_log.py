@@ -1,10 +1,7 @@
 from datetime import datetime
-import json
-from pathlib import Path
 import sys
 
 import click
-from tabulate import tabulate
 
 from . import main
 from .pretty import print_wait, print_done, print_error, print_fail
@@ -28,13 +25,18 @@ def list(mark_read, page_size, page_number):
     with Session() as session:
         try:
             resp = session.ServerLog.list(mark_read, page_size, page_number)
-            # if not resp:
-            #     print('There is no virtual folders created yet.')
-            #     return
-            # rows = (tuple(vf[key] for _, key in fields) for vf in resp)
-            # hdrs = (display_name for display_name, _ in fields)
-            # print(tabulate(rows, hdrs))
-            print(resp)
+            logs = resp.get('logs')
+            count = resp.get('count', 0)
+            if logs is not None:
+                for log in logs:
+                    log_time = datetime.utcfromtimestamp(log['created_at']).strftime('%Y-%m-%d %H:%M:%S')
+                    print('----')
+                    print(log_time, log['severity'].upper(), log['source'], log['user'])
+                    print(log['request_status'], log['request_url'])
+                    print(log['message'])
+                    print(log['traceback'])
+            else:
+                print('No logs.')
         except Exception as e:
             print_error(e)
             sys.exit(1)

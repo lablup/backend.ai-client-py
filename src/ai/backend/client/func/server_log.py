@@ -29,11 +29,10 @@ class ServerLog:
         :param page_no: Page number to fetch.
         '''
         params = {
-            # 'mark_read': mark_read,
+            'mark_read': str(mark_read),
             'page_size': page_size,
             'page_no': page_no,
         }
-        print('######')
         rqst = Request(cls.session, 'GET', '/logs/error', params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
