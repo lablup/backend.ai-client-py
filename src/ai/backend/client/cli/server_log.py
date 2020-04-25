@@ -4,7 +4,7 @@ import sys
 import click
 
 from . import main
-from .pretty import print_wait, print_done, print_error, print_fail
+from .pretty import print_error
 from ..session import Session
 
 
@@ -28,6 +28,7 @@ def list(mark_read, page_size, page_number):
             logs = resp.get('logs')
             count = resp.get('count', 0)
             if logs is not None:
+                print('Total log count:', count)
                 for log in logs:
                     log_time = datetime.utcfromtimestamp(log['created_at']).strftime('%Y-%m-%d %H:%M:%S')
                     print('----')

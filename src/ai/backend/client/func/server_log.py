@@ -1,5 +1,4 @@
-import textwrap
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from .base import api_function
 from ..request import Request
@@ -20,7 +19,8 @@ class ServerLog:
 
     @api_function
     @classmethod
-    async def list(cls, mark_read: bool = False, page_size: int = 20, page_no: int = 1) -> Sequence[dict]:
+    async def list(cls, mark_read: bool = False,
+                   page_size: int = 20, page_no: int = 1) -> Sequence[dict]:
         '''
         Fetches server (error) logs.
 
