@@ -171,7 +171,7 @@ class BaseSession(metaclass=abc.ABCMeta):
     """
 
     __slots__ = (
-        '_config', '_closed', '_context_token',
+        '_config', '_closed', '_context_token', '_proxy_mode',
         'aiohttp_session', 'api_version',
         'System', 'Manager', 'Admin',
         'Agent', 'AgentWatcher', 'ScalingGroup',
@@ -186,9 +186,15 @@ class BaseSession(metaclass=abc.ABCMeta):
     aiohttp_session: aiohttp.ClientSession
     api_version: Tuple[int, str]
 
-    def __init__(self, *, config: APIConfig = None) -> None:
+    _closed: bool
+    _config: APIConfig
+    _proxy_mode: bool
+
+    def __init__(self, *, config: APIConfig = None, proxy_mode: bool = False) -> None:
         self._closed = False
         self._config = config if config else get_config()
+        self._proxy_mode = proxy_mode
+        self.api_version = parse_api_version(self._config.version)
 
         from .func.system import System
         from .func.admin import Admin
@@ -230,6 +236,13 @@ class BaseSession(metaclass=abc.ABCMeta):
         self.SessionTemplate = SessionTemplate
         self.VFolder = VFolder
         self.Dotfile = Dotfile
+
+    @property
+    def proxy_mode(self) -> bool:
+        """
+        If set True, it skips API version negotiation when opening the session.
+        """
+        return self._proxy_mode
 
     @abc.abstractmethod
     def open(self) -> Union[None, Awaitable[None]]:
@@ -283,8 +296,8 @@ class Session(BaseSession):
         '_worker_thread',
     )
 
-    def __init__(self, *, config: APIConfig = None) -> None:
-        super().__init__(config=config)
+    def __init__(self, *, config: APIConfig = None, proxy_mode: bool = False) -> None:
+        super().__init__(config=config, proxy_mode=proxy_mode)
         self._worker_thread = _SyncWorkerThread()
         self._worker_thread.start()
 
@@ -299,8 +312,9 @@ class Session(BaseSession):
 
     def open(self) -> None:
         self._context_token = api_session.set(self)
-        self.api_version = self.worker_thread.execute(
-            _negotiate_api_version(self.aiohttp_session, self.config))
+        if not self._proxy_mode:
+            self.api_version = self.worker_thread.execute(
+                _negotiate_api_version(self.aiohttp_session, self.config))
 
     def close(self) -> None:
         """
@@ -342,8 +356,8 @@ class AsyncSession(BaseSession):
     WebSocket-based APIs and SSE-based APIs returns special response types.
     """
 
-    def __init__(self, *, config: APIConfig = None):
-        super().__init__(config=config)
+    def __init__(self, *, config: APIConfig = None, proxy_mode: bool = False) -> None:
+        super().__init__(config=config, proxy_mode=proxy_mode)
         ssl = None
         if self._config.skip_sslcert_validation:
             ssl = False
@@ -352,7 +366,8 @@ class AsyncSession(BaseSession):
 
     async def _aopen(self) -> None:
         self._context_token = api_session.set(self)
-        self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
+        if not self._proxy_mode:
+            self.api_version = await _negotiate_api_version(self.aiohttp_session, self.config)
 
     def open(self) -> Awaitable[None]:
         return self._aopen()

@@ -1,8 +1,14 @@
+from datetime import datetime
 import enum
 import hashlib
 import hmac
+from typing import (
+    Mapping,
+    Tuple,
+)
 
 import attr
+from yarl import URL
 
 __all__ = (
     'AuthToken',
@@ -22,20 +28,24 @@ class AuthToken:
     content = attr.ib(default=None)                 # type: str
 
 
-def generate_signature(method, version, endpoint,
-                       date, rel_url, content_type, content,
-                       access_key, secret_key, hash_type):
+def generate_signature(
+    *,
+    method: str,
+    version: str,
+    endpoint: URL,
+    date: datetime,
+    rel_url: str,
+    content_type: str,
+    access_key: str,
+    secret_key: str,
+    hash_type: str,
+) -> Tuple[Mapping[str, str], str]:
     '''
     Generates the API request signature from the given parameters.
     '''
     hash_type = hash_type
-    hostname = endpoint._val.netloc  # FIXME: migrate to public API
-    if version >= 'v4.20181215':
-        content = b''
-    else:
-        if content_type.startswith('multipart/'):
-            content = b''
-    body_hash = hashlib.new(hash_type, content).hexdigest()
+    hostname = endpoint._val.netloc  # type: ignore
+    body_hash = hashlib.new(hash_type, b'').hexdigest()
 
     sign_str = '{}\n{}\n{}\nhost:{}\ncontent-type:{}\nx-backendai-version:{}\n{}'.format(  # noqa
         method.upper(),
