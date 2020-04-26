@@ -1,24 +1,22 @@
-from .base import api_function
+from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 
-class Manager:
-    '''
+class Manager(BaseFunction):
+    """
     Provides controlling of the gateway/manager servers.
 
     .. versionadded:: 18.12
-    '''
-
-    session = None
-    '''The client session instance that this function class is bound to.'''
+    """
 
     @api_function
     @classmethod
     async def status(cls):
-        '''
+        """
         Returns the current status of the configured API server.
-        '''
-        rqst = Request(cls.session, 'GET', '/manager/status')
+        """
+        rqst = Request(api_session.get(), 'GET', '/manager/status')
         rqst.set_json({
             'status': 'running',
         })
@@ -28,7 +26,7 @@ class Manager:
     @api_function
     @classmethod
     async def freeze(cls, force_kill: bool = False):
-        '''
+        """
         Freezes the configured API server.
         Any API clients will no longer be able to create new compute sessions nor
         create and modify vfolders/keypairs/etc.
@@ -39,8 +37,8 @@ class Manager:
             compute sessions forcibly. If not set, clients who have running compute
             session are still able to interact with them though they cannot create
             new compute sessions.
-        '''
-        rqst = Request(cls.session, 'PUT', '/manager/status')
+        """
+        rqst = Request(api_session.get(), 'PUT', '/manager/status')
         rqst.set_json({
             'status': 'frozen',
             'force_kill': force_kill,
@@ -51,10 +49,10 @@ class Manager:
     @api_function
     @classmethod
     async def unfreeze(cls):
-        '''
+        """
         Unfreezes the configured API server so that it resumes to normal operation.
-        '''
-        rqst = Request(cls.session, 'PUT', '/manager/status')
+        """
+        rqst = Request(api_session.get(), 'PUT', '/manager/status')
         rqst.set_json({
             'status': 'running',
         })

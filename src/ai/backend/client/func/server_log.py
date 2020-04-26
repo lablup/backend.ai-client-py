@@ -1,22 +1,19 @@
 from typing import Sequence
 
-from .base import api_function
+from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'ServerLog',
 )
 
 
-class ServerLog:
+class ServerLog(BaseFunction):
     '''
     Provides a shortcut of :func:`Admin.query()
     <ai.backend.client.admin.Admin.query>` that fetches various server logs.
     '''
-
-    session = None
-    '''The client session instance that this function class is bound to.'''
-
     @api_function
     @classmethod
     async def list(cls, mark_read: bool = False,
@@ -33,6 +30,6 @@ class ServerLog:
             'page_size': page_size,
             'page_no': page_no,
         }
-        rqst = Request(cls.session, 'GET', '/logs/error', params=params)
+        rqst = Request(api_session.get(), 'GET', '/logs/error', params=params)
         async with rqst.fetch() as resp:
             return await resp.json()

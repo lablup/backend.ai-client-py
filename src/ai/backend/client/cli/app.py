@@ -128,7 +128,7 @@ class ProxyRunnerContext:
     protocol: str
     host: str
     port: int
-    args: Dict[str, str]
+    args: Dict[str, Union[None, str, List[str]]]
     envs: Dict[str, str]
     api_session: Optional[AsyncSession]
     local_server: Optional[asyncio.AbstractServer]
@@ -150,7 +150,7 @@ class ProxyRunnerContext:
         self.exit_code = 0
 
         self.args, self.envs = {}, {}
-        if len(args) > 0:
+        if args is not None and len(args) > 0:
             for argline in args:
                 tokens = []
                 for token in shlex.shlex(argline,
@@ -168,7 +168,7 @@ class ProxyRunnerContext:
                     self.args[tokens[0]] = tokens[1]
                 else:
                     self.args[tokens[0]] = tokens[1:]
-        if len(envs) > 0:
+        if envs is not None and len(envs) > 0:
             for envline in envs:
                 split = envline.strip().split('=', maxsplit=2)
                 if len(split) == 2:
@@ -178,6 +178,7 @@ class ProxyRunnerContext:
 
     async def handle_connection(self, reader: asyncio.StreamReader,
                                 writer: asyncio.StreamWriter) -> None:
+        assert self.api_session is not None
         p = WSProxy(self.api_session, self.session_name,
                     self.app_name, self.protocol,
                     self.args, self.envs,
@@ -232,6 +233,7 @@ class ProxyRunnerContext:
             print_info("Shutting down....")
             self.local_server.close()
             await self.local_server.wait_closed()
+        assert self.api_session is not None
         await self.api_session.__aexit__(*exc_info)
         assert self.api_session.closed
         if self.local_server is not None:

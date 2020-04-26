@@ -1,4 +1,5 @@
 from setuptools import setup, find_namespace_packages
+from typing import List
 from pathlib import Path
 import re
 
@@ -20,6 +21,7 @@ install_requires = [
     'tabulate~=0.8.6',
     'tqdm~=4.42',
     'yarl~=1.4.2',
+    'typing-extensions~=3.7.4',
 ]
 build_requires = [
     'wheel>=0.34.2',
@@ -30,7 +32,7 @@ test_requires = [
     'pytest~=5.4.1',
     'pytest-cov',
     'pytest-mock',
-    'pytest-asyncio>=0.10.0',
+    'pytest-asyncio>=0.11.0',
     'aioresponses~=0.6.3',
     'asynctest>=0.13; python_version<"3.8"',
     'codecov',
@@ -41,8 +43,8 @@ lint_requires = [
 typecheck_requires = [
     'mypy>=0.770',
 ]
-dev_requires = [
-    'pytest-sugar>=0.9.1',
+dev_requires: List[str] = [
+    # 'pytest-sugar>=0.9.1',
 ]
 docs_requires = [
     'sphinx~=2.4',
@@ -82,7 +84,6 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Operating System :: POSIX',
@@ -94,7 +95,7 @@ setup(
     ],
     package_dir={'': 'src'},
     packages=find_namespace_packages(where='src', include='ai.backend.*'),
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     setup_requires=setup_requires,
     install_requires=install_requires,
     extras_require={

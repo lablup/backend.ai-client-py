@@ -251,6 +251,27 @@ def mkdir(name, path):
             sys.exit(1)
 
 
+@vfolder.command()
+@click.argument('name', type=str)
+@click.argument('target_path', type=str)
+@click.argument('new_name', type=str)
+def rename_file(name, target_path, new_name):
+    '''Rename a file or a directory in a virtual folder.
+
+    \b
+    NAME: Name of a virtual folder.
+    TARGET_PATH: The target path inside a virtual folder (file or directory).
+    NEW_NAME: New name of the target (should not contain slash).
+    '''
+    with Session() as session:
+        try:
+            session.VFolder(name).rename_file(target_path, new_name)
+            print_done('Renamed.')
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
 @vfolder.command(aliases=['delete-file'])
 @click.argument('name', type=str)
 @click.argument('filenames', nargs=-1)

@@ -1,26 +1,27 @@
-from .base import api_function
+from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'Auth',
 )
 
 
-class Auth:
-    '''
+class Auth(BaseFunction):
+    """
     Provides the function interface for login session management and authorization.
-    '''
+    """
 
     @api_function
     @classmethod
     async def login(cls, user_id: str, password: str) -> dict:
-        '''
+        """
         Log-in into the endpoint with the given user ID and password.
         It creates a server-side web session and return
         a dictionary with ``"authenticated"`` boolean field and
         JSON-encoded raw cookie data.
-        '''
-        rqst = Request(cls.session, 'POST', '/server/login')
+        """
+        rqst = Request(api_session.get(), 'POST', '/server/login')
         rqst.set_json({
             'username': user_id,
             'password': password,
@@ -36,11 +37,11 @@ class Auth:
     @api_function
     @classmethod
     async def logout(cls) -> None:
-        '''
+        """
         Log-out from the endpoint.
         It clears the server-side web session.
-        '''
-        rqst = Request(cls.session, 'POST', '/server/logout')
+        """
+        rqst = Request(api_session.get(), 'POST', '/server/logout')
         async with rqst.fetch() as resp:
             resp.raw_response.raise_for_status()
 
@@ -50,7 +51,7 @@ class Auth:
         """
         Update user's password. This API works only for account owner.
         """
-        rqst = Request(cls.session, 'POST', '/auth/update-password')
+        rqst = Request(api_session.get(), 'POST', '/auth/update-password')
         rqst.set_json({
             'old_password': old_password,
             'new_password': new_password,
