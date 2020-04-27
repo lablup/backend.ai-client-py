@@ -121,7 +121,7 @@ class Request:
         path: str = None,
         content: RequestContent = None, *,
         content_type: str = None,
-        params: Mapping[str, str] = None,
+        params: Mapping[str, Union[str, int]] = None,
         reporthook: Callable = None,
         override_api_version: str = None,
     ) -> None:
