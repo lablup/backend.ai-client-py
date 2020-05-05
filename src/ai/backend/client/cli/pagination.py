@@ -8,6 +8,8 @@ from typing import (
     Mapping,
     Sequence,
     Tuple,
+)
+from typing_extensions import (  # for Python 3.7
     TypedDict,
 )
 
