@@ -2,13 +2,13 @@ import sys
 
 import click
 from tabulate import tabulate
-import textwrap
 
 from . import admin
 from ...helper import is_admin
 from ...session import Session, is_legacy_server
 from ...versioning import get_naming, apply_version_aware_fields
 from ..pretty import print_error, print_fail
+from ..pagination import execute_paginated_query, generate_paginated_results, echo_via_pager
 
 
 # Lets say formattable options are:
@@ -124,102 +124,84 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
     if no_match_name is None:
         no_match_name = status.lower()
 
-    def execute_paginated_query(limit, offset):
-        nonlocal fields
-        q = '''
-        query($limit:Int!, $offset:Int!, $ak:String, $status:String) {
-          compute_session_list(
-              limit:$limit, offset:$offset, access_key:$ak, status:$status) {
-            items { $fields }
-            total_count
-          }
-        }'''
-        q = textwrap.dedent(q).strip()
-        q = q.replace('$fields', ' '.join(item[1] for item in fields))
-        v = {
-            'limit': limit,
-            'offset': offset,
-            'status': status,
-            'ak': access_key,
-        }
-        try:
-            resp = session.Admin.query(q, v)
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
-        return resp['compute_session_list']
-
     def round_mem(items):
         for item in items:
             if 'mem_cur_bytes' in item:
                 item['mem_cur_bytes'] = round(item['mem_cur_bytes'] / 2 ** 20, 1)
             if 'mem_max_bytes' in item:
                 item['mem_max_bytes'] = round(item['mem_max_bytes'] / 2 ** 20, 1)
-        return items
+            yield item
 
-    def _generate_paginated_results(interval):
-        nonlocal fields
-        offset = 0
+    def format_items(items, page_size):
         is_first = True
-        total_count = -1
-        while True:
-            limit = (interval if is_first else
-                    min(interval, total_count - offset))
-            try:
-                result = execute_paginated_query(limit, offset)
-            except Exception as e:
-                print_error(e)
-                sys.exit(1)
-            offset += interval
-            total_count = result['total_count']
-            items = result['items']
-            items = round_mem(items)
+        items = round_mem(items)
+        if name_only:
+            for item in items:
+                yield item[name_key]
+        else:
+            output_count = 0
+            buffered_items = []
+            # If we iterate until the end of items, pausing the terminal output
+            # would not have effects for avoiding unnecessary queries for subsequent pages.
+            # Let's buffer the items and split the formatting per page.
+            for item in items:
+                buffered_items.append(item)
+                output_count += 1
+                if output_count == page_size:
+                    table = tabulate(
+                        [item.values() for item in buffered_items],
+                        headers=[] if plain else (item[0] for item in fields),
+                        tablefmt="plain" if plain else None
+                    )
+                    table_rows = table.splitlines()
+                    if is_first:
+                        yield from (row + '\n' for row in table_rows)
+                    else:
+                        # strip the header for continued page outputs
+                        yield from (row + '\n' for row in table_rows[2:])
+                    buffered_items.clear()
+                    is_first = False
+                    output_count = 0
 
-            if name_only:
-                yield '\n'.join([item[name_key] for item in items]) + '\n'
-            else:
-                table = tabulate(
-                    [item.values() for item in items],
-                    headers=[] if plain else (item[0] for item in fields),
-                    tablefmt="plain" if plain else None
-                )
-                if not is_first:
-                    table_rows = table.split('\n')
-                    table = '\n'.join(table_rows[2:])
-                yield table + '\n'
-
-            if is_first:
-                is_first = False
-            if not offset < total_count:
-                break
-
-    with Session() as session:
-        fields = apply_version_aware_fields(session, fields)
-        paginating_interval = 10
-        try:
+    try:
+        with Session() as session:
+            fields = apply_version_aware_fields(session, fields)
+            page_size = 20
             if all:
-                click.echo_via_pager(_generate_paginated_results(paginating_interval))
+                echo_via_pager(format_items(generate_paginated_results(
+                    session,
+                    'compute_session_list',
+                    {
+                        'status': (status, 'String'),
+                        'access_key': (access_key, 'String'),
+                    },
+                    fields,
+                    page_size=page_size,
+                ), page_size))
             else:
-                result = execute_paginated_query(paginating_interval, offset=0)
+                result = execute_paginated_query(
+                    session,
+                    'compute_session_list',
+                    {
+                        'status': (status, 'String'),
+                        'access_key': (access_key, 'String'),
+                    },
+                    fields,
+                    limit=page_size,
+                    offset=0,
+                )
                 total_count = result['total_count']
                 if total_count == 0:
                     print('There are no compute sessions currently {0}.'
                           .format(no_match_name))
                     return
-                items = result['items']
-                items = round_mem(items)
-                if name_only:
-                    for item in items:
-                        print(item[name_key])
-                else:
-                    print(tabulate([item.values() for item in items],
-                                    headers=[] if plain else (item[0] for item in fields),
-                                    tablefmt="plain" if plain else None))
-                if total_count > paginating_interval:
+                for formatted_line in format_items(result['items']):
+                    print(formatted_line)
+                if total_count > page_size:
                     print("More sessions can be displayed by using -a/--all option.")
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
+    except Exception as e:
+        print_error(e)
+        sys.exit(1)
 
 
 @admin.command()
