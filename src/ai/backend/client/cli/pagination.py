@@ -1,4 +1,5 @@
 import shutil
+import sys
 import textwrap
 from typing import (
     cast,
@@ -93,12 +94,13 @@ def echo_via_pager(
         line_count += text.count('\n')
         click.echo(text, nl=False)
         if line_count == terminal_size.lines - 1:
-            click.echo(':', nl=False)
-            # Pause the terminal so that we don't execute next-page queries indefinitely.
-            # Since click.pause() ignores KeyboardInterrupt, we just use click.getchar()
-            # to allow user interruption.
-            k = click.getchar(echo=False)
-            if k in ('q', 'Q'):
-                break
+            if sys.stdin.isatty() and sys.stdout.isatty():
+                click.echo(':', nl=False)
+                # Pause the terminal so that we don't execute next-page queries indefinitely.
+                # Since click.pause() ignores KeyboardInterrupt, we just use click.getchar()
+                # to allow user interruption.
+                k = click.getchar(echo=False)
+                if k in ('q', 'Q'):
+                    break
+                click.echo('\r', nl=False)
             line_count = 0
-            click.echo('\r', nl=False)
