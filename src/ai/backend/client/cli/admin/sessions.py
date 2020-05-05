@@ -195,8 +195,8 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
                     print('There are no compute sessions currently {0}.'
                           .format(no_match_name))
                     return
-                for formatted_line in format_items(result['items']):
-                    print(formatted_line)
+                for formatted_line in format_items(result['items'], page_size):
+                    click.echo(formatted_line, nl=False)
                 if total_count > page_size:
                     print("More sessions can be displayed by using -a/--all option.")
     except Exception as e:
