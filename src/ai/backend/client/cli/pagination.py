@@ -4,7 +4,7 @@ import textwrap
 from typing import (
     cast,
     Any,
-    Generator,
+    Iterable,
     Mapping,
     Sequence,
     Tuple,
@@ -67,7 +67,7 @@ def generate_paginated_results(
     fields: Sequence[str],
     *,
     page_size: int,
-) -> Generator[None, None, Any]:
+) -> Iterable[Any]:
     if page_size > MAX_PAGE_SIZE:
         raise ValueError(f"The page size cannot exceed {MAX_PAGE_SIZE}")
     offset = 0
@@ -90,7 +90,7 @@ def generate_paginated_results(
 
 
 def echo_via_pager(
-    generator,
+    text_generator: Iterable[str],
 ) -> None:
     """
     A variant of ``click.echo_via_pager()`` which implements our own simplified pagination.
@@ -100,7 +100,7 @@ def echo_via_pager(
     # TODO: support PageUp & PageDn by buffering the output
     terminal_size = shutil.get_terminal_size((80, 20))
     line_count = 0
-    for text in generator:
+    for text in text_generator:
         line_count += text.count('\n')
         click.echo(text, nl=False)
         if line_count == terminal_size.lines - 1:

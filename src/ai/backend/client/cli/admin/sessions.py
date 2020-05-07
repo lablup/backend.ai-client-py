@@ -1,12 +1,16 @@
 import shutil
 import sys
+from typing import (
+    Any,
+    Iterable,
+    Dict,
+)
 
 import click
 from tabulate import tabulate
 
 from . import admin
-from ...helper import is_admin
-from ...session import Session, is_legacy_server
+from ...session import Session
 from ...versioning import get_naming, apply_version_aware_fields
 from ..pretty import print_error, print_fail
 from ..pagination import (
@@ -17,14 +21,16 @@ from ..pagination import (
 )
 
 
+SessionItem = Dict[str, Any]
+
+
 # Lets say formattable options are:
 format_options = {
     'name':            ('Session Name',
                         lambda api_session: get_naming(api_session.api_version, 'name_gql_field')),
     'type':            ('Type',
                         lambda api_session: get_naming(api_session.api_version, 'type_gql_field')),
-    'task_id':         ('Task ID', 'id'),
-    'kernel_id':       ('Kernel ID', 'id'),
+    'task_id':         ('Task/Kernel ID', 'id'),
     'status':          ('Status', 'status'),
     'status_info':     ('Status Info', 'status_info'),
     'created_at':      ('Created At', 'created_at'),
@@ -43,6 +49,14 @@ format_options_legacy = {
 }
 
 
+def transform_legacy_mem_fields(item: SessionItem) -> SessionItem:
+    if 'mem_cur_bytes' in item:
+        item['mem_cur_bytes'] = round(item['mem_cur_bytes'] / 2 ** 20, 1)
+    if 'mem_max_bytes' in item:
+        item['mem_max_bytes'] = round(item['mem_max_bytes'] / 2 ** 20, 1)
+    return item
+
+
 @admin.command()
 @click.option('-s', '--status', default=None,
               type=click.Choice([
@@ -57,7 +71,6 @@ format_options_legacy = {
               help='Get sessions for a specific access key '
                    '(only works if you are a super-admin)')
 @click.option('--name-only', is_flag=True, help='Display session names only.')
-@click.option('--show-tid', is_flag=True, help='Display task/kernel IDs.')
 @click.option('--dead', is_flag=True,
               help='Filter only dead sessions. Ignores --status option.')
 @click.option('--running', is_flag=True,
@@ -68,16 +81,17 @@ format_options_legacy = {
 @click.option('-f', '--format', default=None,  help='Display only specified fields.')
 @click.option('--plain', is_flag=True,
               help='Display the session list without decorative line drawings and the header.')
-def sessions(status, access_key, name_only, show_tid, dead, running, all, detail, plain, format):
+def sessions(status, access_key, name_only, dead, running, all, detail, plain, format):
     '''
     List and manage compute sessions.
     '''
     fields = []
     with Session() as session:
+        is_admin = session.KeyPair(session.config.access_key).info()['is_admin']
         try:
             name_key = get_naming(session.api_version, 'name_gql_field')
             fields.append(format_options['name'])
-            if is_admin(session) and not is_legacy_server():
+            if is_admin:
                 fields.append(format_options['owner'])
         except Exception as e:
             print_error(e)
@@ -95,6 +109,7 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
             ]
         else:
             fields.extend([
+                format_options['task_id'],
                 format_options['image'],
                 format_options['type'],
                 format_options['status'],
@@ -102,10 +117,6 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
                 format_options['last_updated'],
                 format_options['result'],
             ])
-            if show_tid:
-                fields.insert(
-                    2,
-                    format_options['task_id'])
             if detail:
                 fields.extend([
                     format_options['tag'],
@@ -136,17 +147,12 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
     if no_match_name is None:
         no_match_name = status.lower()
 
-    def round_mem(items):
-        for item in items:
-            if 'mem_cur_bytes' in item:
-                item['mem_cur_bytes'] = round(item['mem_cur_bytes'] / 2 ** 20, 1)
-            if 'mem_max_bytes' in item:
-                item['mem_max_bytes'] = round(item['mem_max_bytes'] / 2 ** 20, 1)
-            yield item
-
-    def format_items(items, page_size):
+    def format_items(
+        items: Iterable[SessionItem],
+        page_size: int,
+    ) -> Iterable[str]:
         is_first = True
-        items = round_mem(items)
+        items = (transform_legacy_mem_fields(item) for item in items)
         if name_only:
             for item in items:
                 yield item[name_key]
@@ -162,8 +168,8 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
                 if output_count == page_size:
                     table = tabulate(
                         [item.values() for item in buffered_items],
-                        headers=[] if plain else (item[0] for item in fields),
-                        tablefmt="plain" if plain else None
+                        headers=[] if plain else [item[0] for item in fields],
+                        tablefmt='plain' if plain else 'simple'
                     )
                     table_rows = table.splitlines()
                     if is_first:
@@ -214,7 +220,7 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
                 for formatted_line in format_items(result['items'], page_size):
                     click.echo(formatted_line, nl=False)
                 if total_count > page_size:
-                    print("More sessions can be displayed by using -a/--all option.")
+                    print("More compute sessions can be displayed by using -a/--all option.")
     except Exception as e:
         print_error(e)
         sys.exit(1)
@@ -229,40 +235,57 @@ def session(name):
     SESSID: Session id or its alias.
     '''
     fields = [
-        ('Session Name', lambda api_session: get_naming(api_session.api_version, 'name_gql_field')),
-        ('Session Type', lambda api_session: get_naming(api_session.api_version, 'type_gql_field')),
-        ('Role', 'role'),
+        ('Session Name', lambda api_session: get_naming(
+            api_session.api_version, 'name_gql_field',
+        )),
+        ('Session Type', lambda api_session: get_naming(
+            api_session.api_version, 'type_gql_field',
+        )),
         ('Image', 'image'),
         ('Tag', 'tag'),
         ('Created At', 'created_at'),
         ('Terminated At', 'terminated_at'),
-        ('Agent', 'agent'),
         ('Status', 'status'),
         ('Status Info', 'status_info'),
         ('Occupied Resources', 'occupied_slots'),
-        ('CPU Used (ms)', 'cpu_used'),
-        ('Used Memory (MiB)', 'mem_cur_bytes'),
-        ('Max Used Memory (MiB)', 'mem_max_bytes'),
-        ('Number of Queries', 'num_queries'),
-        ('Network RX Bytes', 'net_rx_bytes'),
-        ('Network TX Bytes', 'net_tx_bytes'),
-        ('IO Read Bytes', 'io_read_bytes'),
-        ('IO Write Bytes', 'io_write_bytes'),
-        ('IO Max Scratch Size', 'io_max_scratch_size'),
-        ('IO Current Scratch Size', 'io_cur_scratch_size'),
-        ('CPU Using (%)', 'cpu_using'),
     ]
-    if is_legacy_server():
-        del fields[4]  # tag
+    # fields_legacy = [
+    #     ('CPU Used (ms)', 'cpu_used'),
+    #     ('Used Memory (MiB)', 'mem_cur_bytes'),
+    #     ('Max Used Memory (MiB)', 'mem_max_bytes'),
+    #     ('Number of Queries', 'num_queries'),
+    #     ('Network RX Bytes', 'net_rx_bytes'),
+    #     ('Network TX Bytes', 'net_tx_bytes'),
+    #     ('IO Read Bytes', 'io_read_bytes'),
+    #     ('IO Write Bytes', 'io_write_bytes'),
+    #     ('IO Max Scratch Size', 'io_max_scratch_size'),
+    #     ('IO Current Scratch Size', 'io_cur_scratch_size'),
+    #     ('CPU Using (%)', 'cpu_using'),
+    # ]
     with Session() as session:
+        if session.api_version < (4, '20181215'):
+            del fields[4]  # tag
         fields = apply_version_aware_fields(session, fields)
-        name_key = get_naming(session, 'name_gql_field')
-        q = 'query($name: String!) {' \
-            f'  compute_session({name_key}: $name) {{ $fields }}' \
-            '}'
+        if session.api_version[0] < 5:
+            q = f'query($name: String!) {{' \
+                f'  compute_session(sess_id: $name) {{ $fields }}' \
+                f'}}'
+            v = {'name': name}
+        else:
+            q = 'query($id: UUID!) {' \
+                '  compute_session(id: $id) {' \
+                '    $fields' \
+                '    containers {' \
+                '      id agent occupied_slots status status_changed' \
+                '    }' \
+                '    dependencies {' \
+                '      name id status status_changed' \
+                '    }' \
+                '  }' \
+                '}'
+            v = {'id': name}
         q = q.replace('$fields', ' '.join(item[1] for item in fields))
         name_key = get_naming(session.api_version, 'name_gql_field')
-        v = {name_key: name}
         try:
             resp = session.Admin.query(q, v)
         except Exception as e:
@@ -271,8 +294,14 @@ def session(name):
         if resp['compute_session'][name_key] is None:
             print('There is no such running compute session.')
             return
-        print('Session detail:\n---------------')
+        transform_legacy_mem_fields(resp['compute_session'])
         for i, value in enumerate(resp['compute_session'].values()):
-            if fields[i][1] in ['mem_cur_bytes', 'mem_max_bytes']:
-                value = round(value / 2 ** 20, 1)
-            print(fields[i][0] + ': ' + str(value))
+            if i < len(fields):
+                print(fields[i][0] + ': ' + str(value))
+        containers_summary = "- " + "\n- ".join(map(repr, resp['compute_session']['containers']))
+        if len(resp['compute_session']['dependencies']) == 0:
+            dependencies_summary = "- (There are no dependency tasks)"
+        else:
+            dependencies_summary = "- " + "\n- ".join(map(repr, resp['compute_session']['dependencies']))
+        print(f"Containers:\n{containers_summary}")
+        print(f"Dependencies:\n{dependencies_summary}")

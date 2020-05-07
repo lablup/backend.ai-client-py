@@ -15,7 +15,6 @@ from .admin.sessions import sessions
               ]),
               help='Filter by the given status')
 @click.option('--name-only', is_flag=True, help='Display session names only.')
-@click.option('--show-tid', is_flag=True, help='Display task/kernel IDs.')
 @click.option('--dead', is_flag=True,
               help='Filter only dead sessions. Ignores --status option.')
 @click.option('--running', is_flag=True,
@@ -27,7 +26,7 @@ from .admin.sessions import sessions
 @click.option('--plain', is_flag=True,
               help='Display the session list without decorative line drawings and the header.')
 @click.pass_context
-def ps(ctx, status, name_only, show_tid, dead, running, all, detail, plain, format):
+def ps(ctx, status, name_only, dead, running, all, detail, plain, format):
     '''
     Lists the current running compute sessions for the current keypair.
     This is an alias of the "admin sessions --status=RUNNING" command.
