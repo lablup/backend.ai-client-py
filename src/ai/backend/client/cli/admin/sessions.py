@@ -34,6 +34,9 @@ format_options = {
     'image':           ('Image', 'image'),
     'tag':             ('Tag', 'tag'),
     'occupied_slots':  ('Occupied Resource', 'occupied_slots'),
+}
+
+format_options_legacy = {
     'used_memory':     ('Used Memory (MiB)', 'mem_cur_bytes'),
     'max_used_memory': ('Max Used Memory (MiB)', 'mem_max_bytes'),
     'cpu_using':       ('CPU Using (%)', 'cpu_using'),
@@ -70,48 +73,51 @@ def sessions(status, access_key, name_only, show_tid, dead, running, all, detail
     List and manage compute sessions.
     '''
     fields = []
-    try:
-        with Session() as session:
+    with Session() as session:
+        try:
             name_key = get_naming(session.api_version, 'name_gql_field')
             fields.append(format_options['name'])
             if is_admin(session) and not is_legacy_server():
                 fields.append(format_options['owner'])
-    except Exception as e:
-        print_error(e)
-        sys.exit(1)
-    if name_only:
-        pass
-    elif format is not None:
-        options = format.split(',')
-        for opt in options:
-            if opt not in format_options:
-                print_fail(f'There is no such format option: {opt}')
-                sys.exit(1)
-        fields = [
-            format_options[opt] for opt in options
-        ]
-    else:
-        fields.extend([
-            format_options['image'],
-            format_options['type'],
-            format_options['status'],
-            format_options['status_info'],
-            format_options['last_updated'],
-            format_options['result'],
-        ])
-        if show_tid:
-            fields.insert(
-                2,
-                format_options['task_id'])
-        if detail:
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+        if name_only:
+            pass
+        elif format is not None:
+            options = format.split(',')
+            for opt in options:
+                if opt not in format_options:
+                    print_fail(f'There is no such format option: {opt}')
+                    sys.exit(1)
+            fields = [
+                format_options[opt] for opt in options
+            ]
+        else:
             fields.extend([
-                format_options['tag'],
-                format_options['created_at'],
-                format_options['occupied_slots'],
-                format_options['used_memory'],
-                format_options['max_used_memory'],
-                format_options['cpu_using'],
+                format_options['image'],
+                format_options['type'],
+                format_options['status'],
+                format_options['status_info'],
+                format_options['last_updated'],
+                format_options['result'],
             ])
+            if show_tid:
+                fields.insert(
+                    2,
+                    format_options['task_id'])
+            if detail:
+                fields.extend([
+                    format_options['tag'],
+                    format_options['created_at'],
+                    format_options['occupied_slots'],
+                ])
+                if session.api_version[0] < 5:
+                    fields.extend([
+                        format_options_legacy['used_memory'],
+                        format_options_legacy['max_used_memory'],
+                        format_options_legacy['cpu_using'],
+                    ])
 
     no_match_name = None
     if status is None:

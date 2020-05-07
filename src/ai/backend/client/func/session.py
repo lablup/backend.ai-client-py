@@ -766,7 +766,7 @@ class ComputeSession(BaseFunction):
         }
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        path = get_naming(api_session.get().api_version, 'session_events')
+        path = get_naming(api_session.get().api_version, 'session_events_path')
         request = Request(
             api_session.get(),
             'GET', path,
