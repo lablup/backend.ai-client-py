@@ -65,7 +65,7 @@ class Group(BaseFunction):
             fields = ('id', 'name', 'description', 'is_active', 'created_at', 'domain_name',
                       'total_resource_slots', 'allowed_vfolder_hosts', 'integration_id')
         query = textwrap.dedent("""\
-            query($gid: String!) {
+            query($gid: UUID!) {
                 group(id: $gid) {$fields}
             }
         """)
@@ -133,7 +133,7 @@ class Group(BaseFunction):
         You need an admin privilege for this operation.
         """
         query = textwrap.dedent("""\
-            mutation($gid: String!, $input: ModifyGroupInput!) {
+            mutation($gid: UUID!, $input: ModifyGroupInput!) {
                 modify_group(gid: $gid, props: $input) {
                     ok msg
                 }
@@ -166,7 +166,7 @@ class Group(BaseFunction):
         Deletes an existing group.
         """
         query = textwrap.dedent("""\
-            mutation($gid: String!) {
+            mutation($gid: UUID!) {
                 delete_group(gid: $gid) {
                     ok msg
                 }
@@ -222,7 +222,7 @@ class Group(BaseFunction):
         You need an admin privilege for this operation.
         """
         query = textwrap.dedent("""\
-            mutation($gid: String!, $input: ModifyGroupInput!) {
+            mutation($gid: UUID!, $input: ModifyGroupInput!) {
                 modify_group(gid: $gid, props: $input) {
                     ok msg
                 }

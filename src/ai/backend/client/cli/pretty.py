@@ -112,10 +112,14 @@ def format_error(exc: Exception):
             for item in matches:
                 yield '- {0} ({1}, {2})\n'.format(item['id'], item['name'], item['status'])
         else:
-            other_details = exc.data.get('msg', None)
-            if other_details:
-                yield '\n\u279c Error details: '
-                yield str(other_details)
+            if exc.data['type'].endswith('/graphql-error'):
+                yield '\n\u279c Error details:\n'
+                yield from (err_item['message'] + '\n' for err_item in exc.data.get('data', []))
+            else:
+                other_details = exc.data.get('msg', None)
+                if other_details:
+                    yield '\n\u279c Error details: '
+                    yield str(other_details)
         agent_details = exc.data.get('agent-details', None)
         if agent_details is not None:
             yield '\n\u279c This is an agent-side error. '
