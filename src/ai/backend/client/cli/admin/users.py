@@ -19,13 +19,13 @@ def user(email):
     fields = [
         ('UUID', 'uuid'),
         ('Username', 'username'),
+        ('Role', 'role'),
         ('Email', 'email'),
         ('Name', 'full_name'),
         ('Need Password Change', 'need_password_change'),
         ('Active?', 'is_active'),
         ('Created At', 'created_at'),
         ('Domain Name', 'domain_name'),
-        ('Role', 'role'),
         ('Groups', 'groups { id name }'),
     ]
     with Session() as session:
@@ -51,8 +51,10 @@ def user(email):
 @admin.group(invoke_without_command=True)
 @click.pass_context
 @click.option('--is-active', type=bool, default=None,
-              help='List active or inactive users only.')
-def users(ctx, is_active):
+              help='Filter only active users.')
+@click.option('-g', '--group', type=str, default=None,
+              help='Filter by group ID.')
+def users(ctx, is_active, group):
     '''
     List and manage users.
     (admin privilege required)
@@ -62,25 +64,32 @@ def users(ctx, is_active):
     fields = [
         ('UUID', 'uuid'),
         ('Username', 'username'),
+        ('Role', 'role'),
         ('Email', 'email'),
         ('Name', 'full_name'),
         ('Need Password Change', 'need_password_change'),
         ('Active?', 'is_active'),
         ('Created At', 'created_at'),
         ('Domain Name', 'domain_name'),
-        ('Role', 'role'),
+        ('Groups', 'groups { id name }'),
     ]
     with Session() as session:
         try:
-            resp = session.User.list(is_active=is_active,
-                                     fields=(item[1] for item in fields))
+            resp = session.User.list(
+                is_active=is_active,
+                group=group,
+                fields=(item[1] for item in fields),
+            )
         except Exception as e:
             print_error(e)
             sys.exit(1)
         if len(resp) < 1:
             print('There is no user.')
             return
-        fields = [field for field in fields if field[1] in resp[0]]
+        for item in resp:
+            group_list = [g['name'] for g in item['groups']]
+            item['groups'] = ", ".join(group_list)
+        fields = [field for field in fields]
         print(tabulate((item.values() for item in resp),
                         headers=(item[0] for item in fields)))
 

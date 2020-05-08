@@ -44,7 +44,12 @@ class User(BaseFunction):
 
     @api_function
     @classmethod
-    async def list(cls, is_active: bool = None, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def list(
+        cls,
+        is_active: bool = None,
+        group: str = None,
+        fields: Iterable[str] = None,
+    ) -> Sequence[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
 
@@ -55,12 +60,15 @@ class User(BaseFunction):
             fields = ('uuid', 'username', 'email', 'need_password_change', 'is_active',
                       'created_at', 'domain_name', 'role')
         query = textwrap.dedent("""\
-            query($is_active: Boolean) {
-                users(is_active: $is_active) {$fields}
+            query($is_active: Boolean, $group: UUID) {
+                users(is_active: $is_active, group_id: $group) {$fields}
             }
         """)
         query = query.replace('$fields', ' '.join(fields))
-        variables = {'is_active': is_active}
+        variables = {
+            'is_active': is_active,
+            'group': group,
+        }
         rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,

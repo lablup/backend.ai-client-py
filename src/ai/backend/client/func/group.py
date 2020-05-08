@@ -191,7 +191,7 @@ class Group(BaseFunction):
         You need an admin privilege for this operation.
         """
         query = textwrap.dedent("""\
-            mutation($gid: String!, $input: ModifyGroupInput!) {
+            mutation($gid: UUID!, $input: ModifyGroupInput!) {
                 modify_group(gid: $gid, props: $input) {
                     ok msg
                 }
