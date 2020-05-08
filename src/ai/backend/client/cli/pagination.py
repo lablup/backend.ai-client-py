@@ -1,92 +1,53 @@
 import shutil
 import sys
-import textwrap
 from typing import (
-    cast,
-    Any,
     Iterable,
-    Mapping,
-    Sequence,
-    Tuple,
-)
-from typing_extensions import (  # for Python 3.7
-    Final,
-    TypedDict,
 )
 
 import click
+from tabulate import tabulate
+
+from ..pagination import MAX_PAGE_SIZE
 
 
-MAX_PAGE_SIZE: Final = 100
+def get_preferred_page_size() -> int:
+    return min(MAX_PAGE_SIZE, shutil.get_terminal_size((80, 20)).lines)
 
 
-class PaginatedResult(TypedDict):
-    total_count: int
-    items: Sequence[Any]
-
-
-def execute_paginated_query(
-    session,
-    root_field: str,
-    variables: Mapping[str, Tuple[Any, str]],
-    fields: Sequence[str],
+def tabulate_items(
+    items, page_size, fields,
     *,
-    limit: int,
-    offset: int,
-) -> PaginatedResult:
-    if limit > MAX_PAGE_SIZE:
-        raise ValueError(f"The page size cannot exceed {MAX_PAGE_SIZE}")
-    query = '''
-    query($limit:Int!, $offset:Int!, $var_decls) {
-      $root_field(
-          limit:$limit, offset:$offset, $var_args) {
-        items { $fields }
-        total_count
-      }
-    }'''
-    query = query.replace('$root_field', root_field)
-    query = query.replace('$fields', ' '.join(item[1] for item in fields))
-    query = query.replace(
-        '$var_decls',
-        ', '.join(f'${key}: {value[1]}'
-                  for key, value in variables.items()),
-    )
-    query = query.replace('$var_args', ', '.join(f'{key}:${key}' for key in variables.keys()))
-    query = textwrap.dedent(query).strip()
-    var_values = {key: value[0] for key, value in variables.items()}
-    var_values['limit'] = limit
-    var_values['offset'] = offset
-    resp = session.Admin.query(query, var_values)
-    return cast(PaginatedResult, resp[root_field])
-
-
-def generate_paginated_results(
-    session,
-    root_field: str,
-    variables: Mapping[str, Any],
-    fields: Sequence[str],
-    *,
-    page_size: int,
-) -> Iterable[Any]:
-    if page_size > MAX_PAGE_SIZE:
-        raise ValueError(f"The page size cannot exceed {MAX_PAGE_SIZE}")
-    offset = 0
+    item_formatter,
+    tablefmt: str = 'simple',
+):
     is_first = True
-    total_count = -1
-    while True:
-        limit = (page_size if is_first else
-                 min(page_size, total_count - offset))
-        result = execute_paginated_query(
-            session, root_field, variables, fields,
-            limit=limit, offset=offset,
-        )
-        offset += page_size
-        total_count = result['total_count']
-        items = result['items']
-        yield from items
-        is_first = False
-        if offset >= total_count:
-            break
+    output_count = 0
+    buffered_items = []
+    # If we iterate until the end of items, pausing the terminal output
+    # would not have effects for avoiding unnecessary queries for subsequent pages.
+    # Let's buffer the items and split the formatting per page.
+    for item in items:
+        buffered_items.append(item)
+        output_count += 1
+        item_formatter(item)
+        if output_count == page_size:
+            table = tabulate(
+                [item.values() for item in buffered_items],
+                headers=(
+                    [] if tablefmt == 'plain'
+                    else [item[0] for item in fields]
+                ),
+                tablefmt=tablefmt,
+            )
+            table_rows = table.splitlines()
+            if is_first:
+                yield from (row + '\n' for row in table_rows)
+            else:
+                # strip the header for continued page outputs
+                yield from (row + '\n' for row in table_rows[2:])
+            buffered_items.clear()
+            is_first = False
+            output_count = 0
 
 
 def echo_via_pager(

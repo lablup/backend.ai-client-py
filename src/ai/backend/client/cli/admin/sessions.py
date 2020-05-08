@@ -1,4 +1,3 @@
-import shutil
 import sys
 from typing import (
     Any,
@@ -7,18 +6,17 @@ from typing import (
 )
 
 import click
-from tabulate import tabulate
 
 from . import admin
 from ...session import Session
 from ...versioning import get_naming, apply_version_aware_fields
 from ..pretty import print_error, print_fail
 from ..pagination import (
-    MAX_PAGE_SIZE,
-    execute_paginated_query,
-    generate_paginated_results,
+    get_preferred_page_size,
     echo_via_pager,
+    tabulate_items,
 )
+from ...exceptions import NoItems
 
 
 SessionItem = Dict[str, Any]
@@ -75,13 +73,11 @@ def transform_legacy_mem_fields(item: SessionItem) -> SessionItem:
               help='Filter only dead sessions. Ignores --status option.')
 @click.option('--running', is_flag=True,
               help='Filter only scheduled and running sessions. Ignores --status option.')
-@click.option('-a', '--all', is_flag=True,
-              help='Display all sessions matching the condition using pagination.')
 @click.option('--detail', is_flag=True, help='Show more details using more columns.')
 @click.option('-f', '--format', default=None,  help='Display only specified fields.')
 @click.option('--plain', is_flag=True,
               help='Display the session list without decorative line drawings and the header.')
-def sessions(status, access_key, name_only, dead, running, all, detail, plain, format):
+def sessions(status, access_key, name_only, dead, running, detail, plain, format):
     '''
     List and manage compute sessions.
     '''
@@ -151,76 +147,34 @@ def sessions(status, access_key, name_only, dead, running, all, detail, plain, f
         items: Iterable[SessionItem],
         page_size: int,
     ) -> Iterable[str]:
-        is_first = True
         items = (transform_legacy_mem_fields(item) for item in items)
         if name_only:
             for item in items:
                 yield item[name_key]
         else:
-            output_count = 0
-            buffered_items = []
-            # If we iterate until the end of items, pausing the terminal output
-            # would not have effects for avoiding unnecessary queries for subsequent pages.
-            # Let's buffer the items and split the formatting per page.
-            for item in items:
-                buffered_items.append(item)
-                output_count += 1
-                if output_count == page_size:
-                    table = tabulate(
-                        [item.values() for item in buffered_items],
-                        headers=[] if plain else [item[0] for item in fields],
-                        tablefmt='plain' if plain else 'simple'
-                    )
-                    table_rows = table.splitlines()
-                    if is_first:
-                        yield from (row + '\n' for row in table_rows)
-                    else:
-                        # strip the header for continued page outputs
-                        yield from (row + '\n' for row in table_rows[2:])
-                    buffered_items.clear()
-                    is_first = False
-                    output_count = 0
+            tablefmt = 'plain' if plain else 'simple'
+            yield from tabulate_items(
+                items, page_size, fields,
+                item_formatter=lambda item: None,
+                tablefmt=tablefmt)
 
     try:
         with Session() as session:
             fields = apply_version_aware_fields(session, fields)
             # let the page size be same to the terminal height.
-            page_size = min(MAX_PAGE_SIZE, shutil.get_terminal_size((80, 20)).lines)
-            if all:
-                echo_via_pager(format_items(generate_paginated_results(
-                    session,
-                    'compute_session_list',
-                    {
-                        'status': (status, 'String'),
-                        'access_key': (access_key, 'String'),
-                    },
-                    fields,
+            page_size = get_preferred_page_size()
+            try:
+                items = session.ComputeSession.paginated_list(
+                    status, access_key,
+                    fields=[f[1] for f in fields],
                     page_size=page_size,
-                ), page_size))
-            else:
-                # use a reasonably small page size, considering the heights of
-                # table header and shell prompts.
-                page_size = max(10, page_size - 6)
-                result = execute_paginated_query(
-                    session,
-                    'compute_session_list',
-                    {
-                        'status': (status, 'String'),
-                        'access_key': (access_key, 'String'),
-                    },
-                    fields,
-                    limit=page_size,
-                    offset=0,
                 )
-                total_count = result['total_count']
-                if total_count == 0:
-                    print('There are no compute sessions currently {0}.'
-                          .format(no_match_name))
-                    return
-                for formatted_line in format_items(result['items'], page_size):
-                    click.echo(formatted_line, nl=False)
-                if total_count > page_size:
-                    print("More compute sessions can be displayed by using -a/--all option.")
+                echo_via_pager(
+                    tabulate_items(items, page_size, fields,
+                                   item_formatter=transform_legacy_mem_fields)
+                )
+            except NoItems:
+                print("There are no matching users.")
     except Exception as e:
         print_error(e)
         sys.exit(1)

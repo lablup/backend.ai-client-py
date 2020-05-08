@@ -22,6 +22,7 @@ from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE
 from ..exceptions import BackendClientError
+from ..pagination import generate_paginated_results
 from ..request import (
     Request, AttachedFile,
     WebSocketResponse,
@@ -70,6 +71,43 @@ class ComputeSession(BaseFunction):
     service_ports: List[str]
     domain: str
     group: str
+
+    @api_function
+    @classmethod
+    async def paginated_list(
+        cls,
+        status: str = None,
+        access_key: str = None,
+        *,
+        fields: Sequence[str] = None,
+        page_size: int = 20,
+    ) -> AsyncIterator[dict]:
+        """
+        Fetches the list of users. Domain admins can only get domain users.
+
+        :param is_active: Fetches active or inactive users only if not None.
+        :param fields: Additional per-user query fields to fetch.
+        """
+        if fields is None:
+            fields = [
+                'task_id',
+                'image',
+                'type',
+                'status',
+                'status_info',
+                'last_updated',
+                'result',
+            ]
+        async for item in generate_paginated_results(
+            'compute_session_list',
+            {
+                'status': (status, 'String'),
+                'access_key': (access_key, 'String'),
+            },
+            fields,
+            page_size=page_size,
+        ):
+            yield item
 
     @api_function
     @classmethod

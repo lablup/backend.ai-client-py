@@ -1,10 +1,11 @@
 import textwrap
-from typing import Iterable, Sequence
+from typing import AsyncIterator, Iterable, Sequence
 
 from .base import api_function, BaseFunction
 from ..auth import AuthToken, AuthTokenTypes
 from ..request import Request
 from ..session import api_session
+from ..pagination import generate_paginated_results
 
 __all__ = (
     'User',
@@ -48,7 +49,7 @@ class User(BaseFunction):
         cls,
         is_active: bool = None,
         group: str = None,
-        fields: Iterable[str] = None,
+        fields: Sequence[str] = None,
     ) -> Sequence[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
@@ -77,6 +78,44 @@ class User(BaseFunction):
         async with rqst.fetch() as resp:
             data = await resp.json()
             return data['users']
+
+    @api_function
+    @classmethod
+    async def paginated_list(
+        cls,
+        is_active: bool = None,
+        group: str = None,
+        *,
+        fields: Sequence[str] = None,
+        page_size: int = 20,
+    ) -> AsyncIterator[dict]:
+        """
+        Fetches the list of users. Domain admins can only get domain users.
+
+        :param is_active: Fetches active or inactive users only if not None.
+        :param fields: Additional per-user query fields to fetch.
+        """
+        if fields is None:
+            fields = [
+                'uuid',
+                'role',
+                'username',
+                'email',
+                'is_active',
+                'created_at',
+                'domain_name',
+                'groups',
+            ]
+        async for item in generate_paginated_results(
+            'user_list',
+            {
+                'is_active': (is_active, 'Boolean'),
+                'group_id': (group, 'UUID'),
+            },
+            fields,
+            page_size=page_size,
+        ):
+            yield item
 
     @api_function
     @classmethod

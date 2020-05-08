@@ -1,4 +1,6 @@
 import functools
+import inspect
+
 from ..session import api_session, AsyncSession
 
 __all__ = (
@@ -22,7 +24,10 @@ def _wrap_method(cls, orig_name, meth):
         if isinstance(_api_session, AsyncSession):
             return coro
         else:
-            return _api_session.worker_thread.execute(coro)
+            if inspect.isasyncgen(coro):
+                return _api_session.worker_thread.execute_generator(coro)
+            else:
+                return _api_session.worker_thread.execute(coro)
 
     return _method
 

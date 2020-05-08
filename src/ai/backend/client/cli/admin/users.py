@@ -4,8 +4,14 @@ import click
 from tabulate import tabulate
 
 from . import admin
-from ..pretty import print_error, print_fail
 from ...session import Session
+from ..pretty import print_error, print_fail
+from ..pagination import (
+    get_preferred_page_size,
+    echo_via_pager,
+    tabulate_items,
+)
+from ...exceptions import NoItems
 
 
 @admin.command()
@@ -54,7 +60,7 @@ def user(email):
               help='Filter only active users.')
 @click.option('-g', '--group', type=str, default=None,
               help='Filter by group ID.')
-def users(ctx, is_active, group):
+def users(ctx, is_active, group) -> None:
     '''
     List and manage users.
     (admin privilege required)
@@ -73,25 +79,29 @@ def users(ctx, is_active, group):
         ('Domain Name', 'domain_name'),
         ('Groups', 'groups { id name }'),
     ]
-    with Session() as session:
-        try:
-            resp = session.User.list(
-                is_active=is_active,
-                group=group,
-                fields=(item[1] for item in fields),
-            )
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
-        if len(resp) < 1:
-            print('There is no user.')
-            return
-        for item in resp:
-            group_list = [g['name'] for g in item['groups']]
-            item['groups'] = ", ".join(group_list)
-        fields = [field for field in fields]
-        print(tabulate((item.values() for item in resp),
-                        headers=(item[0] for item in fields)))
+
+    def format_item(item):
+        group_list = [g['name'] for g in item['groups']]
+        item['groups'] = ", ".join(group_list)
+
+    try:
+        with Session() as session:
+            page_size = get_preferred_page_size()
+            try:
+                items = session.User.paginated_list(
+                    is_active, group,
+                    fields=[f[1] for f in fields],
+                    page_size=page_size,
+                )
+                echo_via_pager(
+                    tabulate_items(items, page_size, fields,
+                                   item_formatter=format_item)
+                )
+            except NoItems:
+                print("There are no matching users.")
+    except Exception as e:
+        print_error(e)
+        sys.exit(1)
 
 
 @users.command()

@@ -22,9 +22,10 @@ class Admin(BaseFunction):
 
     @api_function
     @classmethod
-    async def query(cls, query: str,
-                    variables: Optional[Mapping[str, Any]] = None,
-                    ) -> Any:
+    async def query(
+        cls, query: str,
+        variables: Optional[Mapping[str, Any]] = None,
+    ) -> Any:
         """
         Sends the GraphQL query and returns the response.
 
