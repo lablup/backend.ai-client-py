@@ -26,6 +26,7 @@ def user(email):
         ('Created At', 'created_at'),
         ('Domain Name', 'domain_name'),
         ('Role', 'role'),
+        ('Groups', 'groups { id name }'),
     ]
     with Session() as session:
         try:
@@ -39,7 +40,10 @@ def user(email):
             print('There is no such user.')
             sys.exit(1)
         for name, key in fields:
-            if key in resp:
+            if key.startswith('groups '):
+                group_list = [f"{g['name']} ({g['id']})" for g in resp['groups']]
+                rows.append((name, ",\n".join(group_list)))
+            else:
                 rows.append((name, resp[key]))
         print(tabulate(rows, headers=('Field', 'Value')))
 
