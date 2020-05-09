@@ -94,7 +94,7 @@ def users(ctx, is_active, group) -> None:
                     page_size=page_size,
                 )
                 echo_via_pager(
-                    tabulate_items(items, page_size, fields,
+                    tabulate_items(items, fields,
                                    item_formatter=format_item)
                 )
             except NoItems:

@@ -1,7 +1,6 @@
 import sys
 from typing import (
     Any,
-    Iterable,
     Dict,
 )
 
@@ -143,21 +142,6 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
     if no_match_name is None:
         no_match_name = status.lower()
 
-    def format_items(
-        items: Iterable[SessionItem],
-        page_size: int,
-    ) -> Iterable[str]:
-        items = (transform_legacy_mem_fields(item) for item in items)
-        if name_only:
-            for item in items:
-                yield item[name_key]
-        else:
-            tablefmt = 'plain' if plain else 'simple'
-            yield from tabulate_items(
-                items, page_size, fields,
-                item_formatter=lambda item: None,
-                tablefmt=tablefmt)
-
     try:
         with Session() as session:
             fields = apply_version_aware_fields(session, fields)
@@ -169,10 +153,15 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
                     fields=[f[1] for f in fields],
                     page_size=page_size,
                 )
-                echo_via_pager(
-                    tabulate_items(items, page_size, fields,
-                                   item_formatter=transform_legacy_mem_fields)
-                )
+                if name_only:
+                    echo_via_pager(
+                        (f"{item[name_key]}\n" for item in items)
+                    )
+                else:
+                    echo_via_pager(
+                        tabulate_items(items, fields,
+                                       item_formatter=transform_legacy_mem_fields)
+                    )
             except NoItems:
                 print("There are no matching users.")
     except Exception as e:

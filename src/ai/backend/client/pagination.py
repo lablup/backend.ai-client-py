@@ -49,7 +49,11 @@ async def execute_paginated_query(
         ', '.join(f'${key}: {value[1]}'
                   for key, value in variables.items()),
     )
-    query = query.replace('$var_args', ', '.join(f'{key}:${key}' for key in variables.keys()))
+    query = query.replace(
+        '$var_args',
+        ', '.join(f'{key}:${key}'
+                  for key in variables.keys())
+    )
     query = textwrap.dedent(query).strip()
     var_values = {key: value[0] for key, value in variables.items()}
     var_values['limit'] = limit

@@ -20,7 +20,10 @@ def _wrap_method(cls, orig_name, meth):
         coro = func(*args, **kwargs)
         _api_session = api_session.get()
         if _api_session is None:
-            raise RuntimeError("API functions must be called inside the context of a valid API session")
+            raise RuntimeError(
+                "API functions must be called "
+                "inside the context of a valid API session"
+            )
         if isinstance(_api_session, AsyncSession):
             return coro
         else:

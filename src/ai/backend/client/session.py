@@ -137,6 +137,15 @@ class _SyncWorkerThread(threading.Thread):
     done_queue: queue.Queue[Union[Any, Exception]]
     stream_queue: queue.Queue[Union[Any, Exception, Sentinel]]
     stream_block: threading.Event
+    agen_shutdown: bool
+
+    __slots__ = (
+        'work_queue',
+        'done_queue',
+        'stream_queue',
+        'stream_block',
+        'agen_shutdown',
+    )
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -144,6 +153,7 @@ class _SyncWorkerThread(threading.Thread):
         self.done_queue = queue.Queue()
         self.stream_queue = queue.Queue()
         self.stream_block = threading.Event()
+        self.agen_shutdown = False
 
     def run(self) -> None:
         loop = asyncio.new_event_loop()
@@ -184,16 +194,20 @@ class _SyncWorkerThread(threading.Thread):
             del ctx
 
     async def agen_wrapper(self, agen):
+        self.agen_shutdown = False
         try:
             async for item in agen:
                 self.stream_block.clear()
                 self.stream_queue.put(item)
                 # flow-control the generator.
                 self.stream_block.wait()
+                if self.agen_shutdown:
+                    break
         except Exception as e:
             self.stream_queue.put(e)
-        else:
+        finally:
             self.stream_queue.put(sentinel)
+            await agen.aclose()
 
     def execute_generator(self, asyncgen: AsyncIterator[_Item]) -> Iterator[_Item]:
         ctx = copy_context()  # preserve context for the worker thread
@@ -201,15 +215,22 @@ class _SyncWorkerThread(threading.Thread):
             self.work_queue.put((asyncgen, ctx))
             while True:
                 item = self.stream_queue.get()
-                if item is sentinel:
-                    break
-                if isinstance(item, Exception):
-                    raise item
-                yield item
-                self.stream_block.set()
-                self.stream_queue.task_done()
+                try:
+                    if item is sentinel:
+                        break
+                    if isinstance(item, Exception):
+                        raise item
+                    yield item
+                finally:
+                    self.stream_block.set()
+                    self.stream_queue.task_done()
         finally:
             del ctx
+
+    def interrupt_generator(self):
+        self.agen_shutdown = True
+        self.stream_block.set()
+        self.stream_queue.put(sentinel)
 
 
 class BaseSession(metaclass=abc.ABCMeta):
@@ -376,6 +397,7 @@ class Session(BaseSession):
         if self._closed:
             return
         self._closed = True
+        self._worker_thread.interrupt_generator()
         self._worker_thread.execute(_close_aiohttp_session(self.aiohttp_session))
         self._worker_thread.work_queue.put(sentinel)
         self._worker_thread.join()
