@@ -78,11 +78,9 @@ async def generate_paginated_results(
     if page_size > MAX_PAGE_SIZE:
         raise ValueError(f"The page size cannot exceed {MAX_PAGE_SIZE}")
     offset = 0
-    is_first = True
     total_count = -1
     while True:
-        limit = (page_size if is_first else
-                 min(page_size, total_count - offset))
+        limit = page_size
         result = await execute_paginated_query(
             root_field, variables, fields,
             limit=limit, offset=offset,
@@ -93,6 +91,5 @@ async def generate_paginated_results(
             raise NoItems
         for item in result['items']:
             yield item
-        is_first = False
         if offset >= total_count:
             break
