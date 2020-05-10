@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 from . import admin
 from ...session import Session
-from ..pretty import print_done, print_warn, print_error, print_fail
+from ..pretty import print_done, print_error, print_fail
 from ..pagination import (
     get_preferred_page_size,
     echo_via_pager,
