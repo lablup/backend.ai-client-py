@@ -11,6 +11,17 @@ __all__ = (
     'User',
 )
 
+_default_list_fields = (
+    'uuid',
+    'role',
+    'username',
+    'email',
+    'is_active',
+    'created_at',
+    'domain_name',
+    'groups',
+)
+
 
 class User(BaseFunction):
     """
@@ -49,7 +60,7 @@ class User(BaseFunction):
         cls,
         is_active: bool = None,
         group: str = None,
-        fields: Sequence[str] = None,
+        fields: Sequence[str] = _default_list_fields,
     ) -> Sequence[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
@@ -57,9 +68,6 @@ class User(BaseFunction):
         :param is_active: Fetches active or inactive users only if not None.
         :param fields: Additional per-user query fields to fetch.
         """
-        if fields is None:
-            fields = ('uuid', 'username', 'email', 'need_password_change', 'is_active',
-                      'created_at', 'domain_name', 'role')
         query = textwrap.dedent("""\
             query($is_active: Boolean, $group: UUID) {
                 users(is_active: $is_active, group_id: $group) {$fields}
@@ -86,7 +94,7 @@ class User(BaseFunction):
         is_active: bool = None,
         group: str = None,
         *,
-        fields: Sequence[str] = None,
+        fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
     ) -> AsyncIterator[dict]:
         """
@@ -95,17 +103,6 @@ class User(BaseFunction):
         :param is_active: Fetches active or inactive users only if not None.
         :param fields: Additional per-user query fields to fetch.
         """
-        if fields is None:
-            fields = [
-                'uuid',
-                'role',
-                'username',
-                'email',
-                'is_active',
-                'created_at',
-                'domain_name',
-                'groups',
-            ]
         async for item in generate_paginated_results(
             'user_list',
             {

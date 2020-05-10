@@ -6,6 +6,12 @@ from tabulate import tabulate
 from . import admin
 from ...session import Session
 from ..pretty import print_done, print_warn, print_error, print_fail
+from ..pagination import (
+    get_preferred_page_size,
+    echo_via_pager,
+    tabulate_items,
+)
+from ...exceptions import NoItems
 
 
 @admin.command()
@@ -71,19 +77,25 @@ def keypairs(ctx, user_id, is_active):
         user_id = int(user_id)
     except (TypeError, ValueError):
         pass  # string-based user ID for Backend.AI v1.4+
-    with Session() as session:
-        try:
-            items = session.KeyPair.list(user_id, is_active,
-                                         fields=(item[1] for item in fields))
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
-        if len(items) == 0:
-            print_warn('There are no matching keypairs associated '
-                       'with the user ID {0}'.format(user_id))
-            return
-        print(tabulate((item.values() for item in items),
-                       headers=(item[0] for item in fields)))
+    try:
+        with Session() as session:
+            page_size = get_preferred_page_size()
+            try:
+                items = session.KeyPair.paginated_list(
+                    is_active,
+                    fields=[f[1] for f in fields],
+                    page_size=page_size,
+                )
+                echo_via_pager(
+                    tabulate_items(items, fields)
+                )
+            except NoItems:
+                print("There are no matching keypairs.")
+                items = session.KeyPair.list(user_id, is_active,
+                                             fields=(item[1] for item in fields))
+    except Exception as e:
+        print_error(e)
+        sys.exit(1)
 
 
 @keypairs.command()

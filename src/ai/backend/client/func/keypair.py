@@ -1,15 +1,27 @@
 from typing import (
-    Any, Iterable, Union,
-    Sequence,
+    Any,
+    AsyncIterator,
     Dict,
+    Iterable,
+    Sequence,
+    Union,
 )
 
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session
+from ..pagination import generate_paginated_results
 
 __all__ = (
     'KeyPair',
+)
+
+_default_list_fields = (
+    'access_key',
+    'secret_key',
+    'is_active',
+    'is_admin',
+    'created_at',
 )
 
 
@@ -119,18 +131,15 @@ class KeyPair(BaseFunction):
 
     @api_function
     @classmethod
-    async def list(cls, user_id: Union[int, str] = None,
-                   is_active: bool = None,
-                   fields: Iterable[str] = None) -> Sequence[dict]:
+    async def list(
+        cls, user_id: Union[int, str] = None,
+        is_active: bool = None,
+        fields: Sequence[str] = _default_list_fields,
+    ) -> Sequence[dict]:
         """
         Lists the keypairs.
         You need an admin privilege for this operation.
         """
-        if fields is None:
-            fields = (
-                'access_key', 'secret_key',
-                'is_active', 'is_admin',
-            )
         if user_id is None:
             q = 'query($is_active: Boolean) {' \
                 '  keypairs(is_active: $is_active) {' \
@@ -158,6 +167,31 @@ class KeyPair(BaseFunction):
         async with rqst.fetch() as resp:
             data = await resp.json()
             return data['keypairs']
+
+    @api_function
+    @classmethod
+    async def paginated_list(
+        cls,
+        is_active: bool = None,
+        domain_name: str = None,
+        *,
+        fields: Sequence[str] = _default_list_fields,
+        page_size: int = 20,
+    ) -> AsyncIterator[dict]:
+        """
+        Lists the keypairs.
+        You need an admin privilege for this operation.
+        """
+        async for item in generate_paginated_results(
+            'keypair_list',
+            {
+                'is_active': (is_active, 'Boolean'),
+                'domain_name': (domain_name, 'String'),
+            },
+            fields,
+            page_size=page_size,
+        ):
+            yield item
 
     @api_function
     async def info(self, fields: Iterable[str] = None) -> dict:
