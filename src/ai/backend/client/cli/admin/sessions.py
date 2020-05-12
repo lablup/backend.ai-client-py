@@ -210,9 +210,9 @@ def session(name):
             del fields[4]  # tag
         fields = apply_version_aware_fields(session, fields)
         if session.api_version[0] < 5:
-            q = f'query($name: String!) {{' \
-                f'  compute_session(sess_id: $name) {{ $fields }}' \
-                f'}}'
+            q = 'query($name: String!) {{' \
+                '  compute_session(sess_id: $name) {{ $fields }}' \
+                '}}'
             v = {'name': name}
         else:
             q = 'query($id: UUID!) {' \

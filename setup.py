@@ -29,7 +29,7 @@ build_requires = [
     'towncrier>=19.2.0',
 ]
 test_requires = [
-    'pytest~=5.4.1',
+    'pytest~=5.4.2',
     'pytest-cov',
     'pytest-mock',
     'pytest-asyncio>=0.12.0',
@@ -38,7 +38,7 @@ test_requires = [
     'codecov',
 ]
 lint_requires = [
-    'flake8>=3.7.9',
+    'flake8>=3.8.1',
 ]
 typecheck_requires = [
     'mypy>=0.770',
