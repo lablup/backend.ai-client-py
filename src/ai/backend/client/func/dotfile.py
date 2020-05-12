@@ -50,7 +50,7 @@ class Dotfile(BaseFunction):
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(api_session.get(),
-                       'GET', f'/user-config/dotfiles',
+                       'GET', '/user-config/dotfiles',
                        params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -65,7 +65,7 @@ class Dotfile(BaseFunction):
         if self.owner_access_key:
             body['owner_access_key'] = self.owner_access_key
         rqst = Request(api_session.get(),
-                       'PATCH', f'/user-config/dotfiles')
+                       'PATCH', '/user-config/dotfiles')
         rqst.set_json(body)
 
         async with rqst.fetch() as resp:
@@ -77,7 +77,7 @@ class Dotfile(BaseFunction):
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         rqst = Request(api_session.get(),
-                       'DELETE', f'/user-config/dotfiles',
+                       'DELETE', '/user-config/dotfiles',
                        params=params)
 
         async with rqst.fetch() as resp:
