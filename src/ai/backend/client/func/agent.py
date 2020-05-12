@@ -1,13 +1,38 @@
 import textwrap
-from typing import Iterable, Sequence
+from typing import (
+    AsyncIterator,
+    Sequence,
+)
 
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session
+from ..pagination import generate_paginated_results
 
 __all__ = (
     'Agent',
     'AgentWatcher',
+)
+
+_default_list_fields = (
+    'id',
+    'status',
+    'scaling_group',
+    'available_slots',
+    'occupied_slots',
+)
+
+_default_detail_fields = (
+    'id',
+    'status',
+    'scaling_group',
+    'addr',
+    'region',
+    'first_contact',
+    'cpu_cur_pct',
+    'mem_cur_bytes',
+    'available_slots',
+    'occupied_slots',
 )
 
 
@@ -25,60 +50,36 @@ class Agent(BaseFunction):
 
     @api_function
     @classmethod
-    async def list_with_limit(cls,
-                              limit,
-                              offset,
-                              status: str = 'ALIVE',
-                              fields: Iterable[str] = None) -> Sequence[dict]:
+    async def paginated_list(
+        cls,
+        status: str = 'ALIVE',
+        scaling_group: str = None,
+        *,
+        fields: Sequence[str] = _default_list_fields,
+        page_size: int = 20,
+    ) -> AsyncIterator[dict]:
         """
-        Fetches the list of agents with the given status with limit and offset for
-        pagination.
-
-        :param limit: number of agents to get
-        :param offset: offset index of agents to get
-        :param status: An upper-cased string constant representing agent
-            status (one of ``'ALIVE'``, ``'TERMINATED'``, ``'LOST'``,
-            etc.)
-        :param fields: Additional per-agent query fields to fetch.
+        Lists the keypairs.
+        You need an admin privilege for this operation.
         """
-        if fields is None:
-            fields = (
-                'id',
-                'addr',
-                'status',
-                'first_contact',
-                'mem_slots',
-                'cpu_slots',
-                'gpu_slots',
-            )
-        q = 'query($limit: Int!, $offset: Int!, $status: String) {' \
-            '  agent_list(limit: $limit, offset: $offset, status: $status) {' \
-            '   items { $fields }' \
-            '   total_count' \
-            '  }' \
-            '}'
-        q = q.replace('$fields', ' '.join(fields))
-        variables = {
-            'limit': limit,
-            'offset': offset,
-            'status': status,
-        }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['agent_list']
+        async for item in generate_paginated_results(
+            'agent_list',
+            {
+                'status': (status, 'String'),
+                'scaling_group': (scaling_group, 'String'),
+            },
+            fields,
+            page_size=page_size,
+        ):
+            yield item
 
     @api_function
     @classmethod
-    async def detail(cls, agent_id: str, fields: Iterable[str] = None) -> Sequence[dict]:
-        if fields is None:
-            fields = ('id', 'status', 'addr', 'region', 'first_contact',
-                      'cpu_cur_pct', 'mem_cur_bytes',
-                      'available_slots', 'occupied_slots')
+    async def detail(
+        cls,
+        agent_id: str,
+        fields: Sequence[str] = _default_detail_fields,
+    ) -> Sequence[dict]:
         query = textwrap.dedent("""\
             query($agent_id: String!) {
                 agent(agent_id: $agent_id) {$fields}

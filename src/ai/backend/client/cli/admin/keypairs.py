@@ -91,8 +91,6 @@ def keypairs(ctx, user_id, is_active):
                 )
             except NoItems:
                 print("There are no matching keypairs.")
-                items = session.KeyPair.list(user_id, is_active,
-                                             fields=(item[1] for item in fields))
     except Exception as e:
         print_error(e)
         sys.exit(1)
