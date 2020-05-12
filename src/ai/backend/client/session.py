@@ -180,6 +180,7 @@ class _SyncWorkerThread(threading.Thread):
         finally:
             loop.run_until_complete(loop.shutdown_asyncgens())
             loop.stop()
+            loop.close()
 
     def execute(self, coro: Coroutine) -> Any:
         ctx = copy_context()  # preserve context for the worker thread
