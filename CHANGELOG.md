@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+19.09.9 (2020-05-15)
+--------------------
+
+### Fixes
+* Fix GQL handling for non-existent running sessions in `backend.ai admin session <sessionAlias>` command ([#104](https://github.com/lablup/backend.ai-client-py/issues/104))
+
+
 19.09.8 (2020-04-23)
 --------------------
 

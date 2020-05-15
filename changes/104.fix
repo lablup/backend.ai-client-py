@@ -1,1 +1,0 @@
-Fix GQL handling for non-existent running sessions in `backend.ai admin session <sessionAlias>` command
