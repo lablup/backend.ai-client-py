@@ -223,7 +223,7 @@ def session(sess_id_or_alias):
         except Exception as e:
             print_error(e)
             sys.exit(1)
-        if resp['compute_session']['sess_id'] is None:
+        if resp is None:
             print('There is no such running compute session.')
             return
         print('Session detail:\n---------------')
