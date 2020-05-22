@@ -749,7 +749,7 @@ def run(image, files, name,                                # base args
               default='interactive',
               help='Either batch or interactive')
 @click.option('-c', '--startup-command', metavar='COMMAND',
-              default='Set the command to execute for batch-type sessions.')
+              help='Set the command to execute for batch-type sessions.')
 @click.option('--enqueue-only', is_flag=True,
               help='Enqueue the session and return immediately without waiting for its startup.')
 @click.option('--max-wait', metavar='SECONDS', type=int, default=0,
