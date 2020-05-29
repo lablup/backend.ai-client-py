@@ -172,7 +172,8 @@ def info(name):
 @vfolder.command()
 @click.argument('name', type=str)
 @click.argument('filenames', type=Path, nargs=-1)
-def upload(name, filenames):
+@click.option('-b', '--base-dir', type=Path, default=None)
+def upload(name, filenames, base_dir):
     '''
     Upload a file to the virtual folder from the current working directory.
     The files with the same names will be overwirtten.
@@ -181,9 +182,15 @@ def upload(name, filenames):
     NAME: Name of a virtual folder.
     FILENAMES: Paths of the files to be uploaded.
     '''
+    if base_dir is None:
+        base_dir = Path.cwd()
     with Session() as session:
         try:
-            session.VFolder(name).upload(filenames, show_progress=True)
+            session.VFolder(name).upload(
+                filenames,
+                show_progress=True,
+                basedir=base_dir,
+            )
             print_done('Done.')
         except Exception as e:
             print_error(e)

@@ -9,6 +9,12 @@ import secrets
 import string
 import sys
 import traceback
+from typing import (
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 import aiohttp
 import click
@@ -267,12 +273,21 @@ def _prepare_env_arg(env):
     return envs
 
 
-def _prepare_mount_arg(mount):
+def _prepare_mount_arg(
+    mount_args: Optional[Sequence[str]]
+) -> Tuple[Sequence[str], Mapping[str, str]]:
+    """
+    Parse the list of mount arguments into a list of
+    vfolder name and in-container mount path pairs.
+    """
     mounts = set()
     mount_map = {}
-    if mount is not None:
-        for line in mount:
-            sp = line.split('=', 1)
+    if mount_args is not None:
+        for value in mount_args:
+            if '=' in value:
+                sp = value.split('=', maxsplit=1)
+            elif ':' in value:  # docker-like volume mount mapping
+                sp = value.split(':', maxsplit=1)
             mounts.add(sp[0])
             if len(sp) == 2:
                 mount_map[sp[0]] = sp[1]
