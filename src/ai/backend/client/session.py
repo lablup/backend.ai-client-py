@@ -325,13 +325,14 @@ class Session(BaseSession):
 
     def __enter__(self):
         assert not self.closed, 'Cannot reuse closed session'
-        try:
-            payload = self.Manager.get_announcement()
-            if payload['enabled'] and self.config.announcement_handler:
-                self.config.announcement_handler(payload['message'])
-        except BackendAPIError:
-            # The server may be an old one without annoucement API.
-            pass
+        if self.config.announcement_handler:
+            try:
+                payload = self.Manager.get_announcement()
+                if payload['enabled']:
+                    self.config.announcement_handler(payload['message'])
+            except BackendAPIError:
+                # The server may be an old one without annoucement API.
+                pass
         return self
 
     def __exit__(self, exc_type, exc_obj, exc_tb):
@@ -520,13 +521,14 @@ class AsyncSession(BaseSession):
 
     async def __aenter__(self):
         assert not self.closed, 'Cannot reuse closed session'
-        try:
-            payload = await self.Manager.get_announcement()
-            if payload['enabled'] and self.config.announcement_handler:
-                self.config.announcement_handler(payload['message'])
-        except BackendAPIError:
-            # The server may be an old one without annoucement API.
-            pass
+        if self.config.announcement_handler:
+            try:
+                payload = await self.Manager.get_announcement()
+                if payload['enabled']:
+                    self.config.announcement_handler(payload['message'])
+            except BackendAPIError:
+                # The server may be an old one without annoucement API.
+                pass
         return self
 
     async def __aexit__(self, exc_type, exc_obj, exc_tb):
