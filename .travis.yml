@@ -10,6 +10,7 @@ stages:
 
 # build matrix for test stage
 python:
+  - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
