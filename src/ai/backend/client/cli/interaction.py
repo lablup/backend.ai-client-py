@@ -1,7 +1,4 @@
-from typing_extensions import Literal
-
-
-def ask_yn(prompt: str = 'Are you sure?', default: Literal['y', 'n'] = 'y') -> bool:
+def ask_yn(prompt: str = 'Are you sure?', default: str = 'y') -> bool:
     if default == 'y':
         choices = 'Y/n'
     elif default == 'n':
@@ -9,7 +6,7 @@ def ask_yn(prompt: str = 'Are you sure?', default: Literal['y', 'n'] = 'y') -> b
     else:
         raise ValueError("default must be given either 'y' or 'n'.")
     while True:
-        user_reply = input(f"{prompt} [{choices}] ").lower()
+        user_reply = input("{0} [{1}] ".format(prompt, choices)).lower()
         if user_reply == '':
             user_reply = default
         if user_reply in ('y', 'yes', 'n', 'no'):
