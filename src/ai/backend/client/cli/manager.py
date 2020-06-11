@@ -1,11 +1,14 @@
+import json
+from pathlib import Path
 import sys
 import time
 
+import appdirs
 import click
 from tabulate import tabulate
 
 from . import main
-from .pretty import print_wait, print_done
+from .pretty import print_done, print_fail, print_wait
 from ..session import Session
 
 
@@ -96,7 +99,7 @@ def update(message):
     '''
     with Session() as session:
         session.Manager.update_announcement(enabled=True, message=message)
-        print('Posted new announcement.')
+    print_done('Posted new announcement.')
 
 
 @announcement.command()
@@ -104,8 +107,28 @@ def delete():
     '''Delete current announcement.'''
     confirm = input('Are you sure? (y/n) ')
     if confirm.lower() != 'y':
-        print('canceled.')
+        print('cancelled.')
         sys.exit(1)
     with Session() as session:
         session.Manager.update_announcement(enabled=False)
-    print('Deleted announcement.')
+    print_done('Deleted announcement.')
+
+
+@announcement.command()
+def dismiss():
+    '''Do not show the same announcement again.'''
+    confirm = input('Are you sure? (y/n) ')
+    if confirm.lower() != 'y':
+        print('cancelled.')
+        sys.exit(1)
+    try:
+        local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
+        with open(local_state_path / 'announcement.json', 'rb') as f:
+            state = json.load(f)
+        state['dismissed'] = True
+        with open(local_state_path / 'announcement.json', 'w') as f:
+            json.dump(state, f)
+        print_done('Dismissed the last shown announcement.')
+    except (IOError, json.JSONDecodeError):
+        print_fail('No announcements seen yet.')
+        sys.exit(1)
