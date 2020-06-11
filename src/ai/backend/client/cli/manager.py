@@ -67,3 +67,45 @@ def unfreeze():
     with Session() as session:
         session.Manager.unfreeze()
         print('Manager is successfully unfrozen.')
+
+
+@main.group()
+def announcement():
+    '''Global announcement related commands'''
+
+
+@announcement.command()
+def get():
+    '''Get current announcement.'''
+    with Session() as session:
+        result = session.Manager.get_announcement()
+        if result.get('enabled', False):
+            msg = result.get('message')
+            print(msg)
+        else:
+            print('No announcements.')
+
+
+@announcement.command()
+@click.argument('message', type=click.STRING)
+def update(message):
+    '''
+    Post new announcement.
+
+    MESSAGE: Announcement message.
+    '''
+    with Session() as session:
+        session.Manager.update_announcement(enabled=True, message=message)
+        print('Posted new announcement.')
+
+
+@announcement.command()
+def delete():
+    '''Delete current announcement.'''
+    confirm = input('Are you sure? (y/n) ')
+    if confirm.lower() != 'y':
+        print('canceled.')
+        sys.exit(1)
+    with Session() as session:
+        session.Manager.update_announcement(enabled=False)
+    print('Deleted announcement.')

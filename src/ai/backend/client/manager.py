@@ -61,3 +61,30 @@ class Manager:
         })
         async with rqst.fetch() as resp:
             assert resp.status == 204
+
+    @api_function
+    @classmethod
+    async def get_announcement(cls):
+        '''
+        Get current announcement.
+        '''
+        rqst = Request(cls.session, 'GET', '/manager/announcement')
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    @classmethod
+    async def update_announcement(cls, enabled: bool = True, message: str = None):
+        '''
+        Update (create / delete) announcement.
+
+        :param enabled: If set ``False``, delete announcement.
+        :param message: Announcement message. Required if ``enabled`` is True.
+        '''
+        rqst = Request(cls.session, 'POST', '/manager/announcement')
+        rqst.set_json({
+            'enabled': enabled,
+            'message': message,
+        })
+        async with rqst.fetch() as resp:
+            assert resp.status == 204
