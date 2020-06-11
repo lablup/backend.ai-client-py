@@ -52,9 +52,6 @@ jobs:
     - python: "3.8"
       os: linux
   fast_finish: true
-  # exclude the duplicate default test stage
-  exclude:
-    - python: "3.6"
 
 notifications:
   webhooks:
