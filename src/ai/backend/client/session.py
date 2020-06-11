@@ -1,7 +1,6 @@
 import abc
 import asyncio
 import threading
-from typing import Callable
 import queue
 
 import aiohttp
