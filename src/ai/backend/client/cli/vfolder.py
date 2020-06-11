@@ -7,7 +7,8 @@ import click
 from tabulate import tabulate
 
 from . import AliasGroup, main
-from .pretty import print_wait, print_done, print_error, print_fail
+from .interaction import ask_yn
+from .pretty import print_done, print_error, print_fail, print_info, print_wait
 from ..session import Session
 
 
@@ -273,11 +274,13 @@ def rm(name, filenames, recursive):
     '''
     with Session() as session:
         try:
-            if input("> Are you sure? (y/n): ").lower().strip()[:1] == 'y':
-                session.VFolder(name).delete_files(
-                    filenames,
-                    recursive=recursive)
-                print_done('Done.')
+            if not ask_yn():
+                print_info('Cancelled')
+                sys.exit(1)
+            session.VFolder(name).delete_files(
+                filenames,
+                recursive=recursive)
+            print_done('Done.')
         except Exception as e:
             print_error(e)
             sys.exit(1)

@@ -5,7 +5,8 @@ from tabulate import tabulate
 
 from . import admin
 from ...session import Session
-from ..pretty import print_done, print_warn, print_error, print_fail
+from ..interaction import ask_yn
+from ..pretty import print_done, print_error, print_fail, print_info, print_warn
 
 
 @admin.command()
@@ -191,8 +192,8 @@ def delete(name):
     NAME: NAME of a keypair resource policy to delete.
     """
     with Session() as session:
-        if input('Are you sure? (y/n): ').lower().strip()[:1] != 'y':
-            print('Canceled.')
+        if not ask_yn():
+            print_info('Cancelled.')
             sys.exit(1)
         try:
             data = session.KeypairResourcePolicy.delete(name)

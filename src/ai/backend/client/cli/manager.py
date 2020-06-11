@@ -8,7 +8,8 @@ import click
 from tabulate import tabulate
 
 from . import main
-from .pretty import print_done, print_fail, print_wait
+from .interaction import ask_yn
+from .pretty import print_done, print_fail, print_info, print_wait
 from ..session import Session
 
 
@@ -105,9 +106,8 @@ def update(message):
 @announcement.command()
 def delete():
     '''Delete current announcement.'''
-    confirm = input('Are you sure? (y/n) ')
-    if confirm.lower() != 'y':
-        print('cancelled.')
+    if not ask_yn():
+        print_info('Cancelled.')
         sys.exit(1)
     with Session() as session:
         session.Manager.update_announcement(enabled=False)
@@ -117,9 +117,8 @@ def delete():
 @announcement.command()
 def dismiss():
     '''Do not show the same announcement again.'''
-    confirm = input('Are you sure? (y/n) ')
-    if confirm.lower() != 'y':
-        print('cancelled.')
+    if not ask_yn():
+        print_info('Cancelled.')
         sys.exit(1)
     try:
         local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
