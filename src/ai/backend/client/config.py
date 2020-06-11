@@ -3,8 +3,14 @@ from pathlib import Path
 import random
 from yarl import URL
 from typing import (
-    Any, Callable, Iterable, Union,
-    List, Tuple, Sequence,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 
 import appdirs
@@ -129,23 +135,27 @@ class APIConfig:
         'read_timeout': None,
     }
     '''
-    The default values except the access and secret keys.
+    The default values for config parameterse settable via environment variables
+    xcept the access and secret keys.
     '''
 
-    def __init__(self, *,
-                 endpoint: Union[URL, str] = None,
-                 endpoint_type: str = None,
-                 domain: str = None,
-                 group: str = None,
-                 version: str = None,
-                 user_agent: str = None,
-                 access_key: str = None,
-                 secret_key: str = None,
-                 hash_type: str = None,
-                 vfolder_mounts: Iterable[str] = None,
-                 skip_sslcert_validation: bool = None,
-                 connection_timeout: float = None,
-                 read_timeout: float = None) -> None:
+    def __init__(
+        self, *,
+        endpoint: Union[URL, str] = None,
+        endpoint_type: str = None,
+        domain: str = None,
+        group: str = None,
+        version: str = None,
+        user_agent: str = None,
+        access_key: str = None,
+        secret_key: str = None,
+        hash_type: str = None,
+        vfolder_mounts: Iterable[str] = None,
+        skip_sslcert_validation: bool = None,
+        connection_timeout: float = None,
+        read_timeout: float = None,
+        announcement_handler: Callable[[str], None] = None,
+    ) -> None:
         from . import get_user_agent  # noqa; to avoid circular imports
         self._endpoints = (
             _clean_urls(endpoint) if endpoint else
@@ -178,6 +188,7 @@ class APIConfig:
             get_env('CONNECTION_TIMEOUT', self.DEFAULTS['connection_timeout'])
         self._read_timeout = read_timeout if read_timeout else \
             get_env('READ_TIMEOUT', self.DEFAULTS['read_timeout'])
+        self._announcement_handler = announcement_handler
 
     @property
     def is_anonymous(self) -> bool:
@@ -263,6 +274,11 @@ class APIConfig:
     def read_timeout(self) -> float:
         '''The maximum allowed waiting time for the first byte of the response from the server.'''
         return self._read_timeout
+
+    @property
+    def announcement_handler(self) -> Optional[Callable[[str], None]]:
+        '''The announcement handler to display server-set announcements.'''
+        return self._announcement_handler
 
 
 def get_config():

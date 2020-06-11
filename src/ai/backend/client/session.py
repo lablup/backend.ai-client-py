@@ -1,11 +1,13 @@
 import abc
 import asyncio
 import threading
+from typing import Callable
 import queue
 
 import aiohttp
 
 from .config import APIConfig, get_config
+from .exceptions import BackendAPIError
 
 
 __all__ = (
@@ -81,7 +83,10 @@ class BaseSession(metaclass=abc.ABCMeta):
         'VFolder',
     )
 
-    def __init__(self, *, config: APIConfig = None):
+    def __init__(
+        self, *,
+        config: APIConfig = None,
+    ):
         self._closed = False
         self._config = config if config else get_config()
 
@@ -119,7 +124,10 @@ class Session(BaseSession):
         '_worker_thread',
     )
 
-    def __init__(self, *, config: APIConfig = None):
+    def __init__(
+        self, *,
+        config: APIConfig = None,
+    ):
         super().__init__(config=config)
         self._worker_thread = _SyncWorkerThread()
         self._worker_thread.start()
@@ -318,6 +326,13 @@ class Session(BaseSession):
 
     def __enter__(self):
         assert not self.closed, 'Cannot reuse closed session'
+        try:
+            payload = self.Manager.get_announcement()
+            if payload['enabled'] and self.config.announcement_handler:
+                self.config.announcement_handler(payload['message'])
+        except BackendAPIError:
+            # The server may be an old one without annoucement API.
+            pass
         return self
 
     def __exit__(self, exc_type, exc_obj, exc_tb):
@@ -335,7 +350,10 @@ class AsyncSession(BaseSession):
 
     __slots__ = BaseSession.__slots__ + ()
 
-    def __init__(self, *, config: APIConfig = None):
+    def __init__(
+        self, *,
+        config: APIConfig = None,
+    ):
         super().__init__(config=config)
 
         ssl = None
@@ -503,6 +521,13 @@ class AsyncSession(BaseSession):
 
     async def __aenter__(self):
         assert not self.closed, 'Cannot reuse closed session'
+        try:
+            payload = await self.Manager.get_announcement()
+            if payload['enabled'] and self.config.announcement_handler:
+                self.config.announcement_handler(payload['message'])
+        except BackendAPIError:
+            # The server may be an old one without annoucement API.
+            pass
         return self
 
     async def __aexit__(self, exc_type, exc_obj, exc_tb):
