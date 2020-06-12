@@ -84,8 +84,12 @@ class AliasGroup(click.Group):
                     formatter.write_dl(rows)
 
 
-@click.group(cls=AliasGroup,
-             context_settings=dict(help_option_names=['-h', '--help']))
+@click.group(
+    cls=AliasGroup,
+    context_settings={
+        'help_option_names': ['-h', '--help'],
+    },
+)
 @click.option('--skip-sslcert-validation',
               help='Skip SSL certificate validation for all API requests.',
               is_flag=True)
@@ -94,7 +98,11 @@ def main(skip_sslcert_validation):
     """
     Backend.AI command line interface.
     """
-    config = APIConfig(skip_sslcert_validation=skip_sslcert_validation)
+    from .announcement import announce
+    config = APIConfig(
+        skip_sslcert_validation=skip_sslcert_validation,
+        announcement_handler=announce,
+    )
     set_config(config)
 
 
