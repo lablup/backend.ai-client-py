@@ -91,7 +91,7 @@ def get():
 
 
 @announcement.command()
-@click.argument('message', type=click.STRING)
+@click.option('-m', '--message', default=None, type=click.STRING)
 def update(message):
     '''
     Post new announcement.
@@ -99,6 +99,11 @@ def update(message):
     MESSAGE: Announcement message.
     '''
     with Session() as session:
+        if message is None:
+            message = click.edit("<!-- Use Markdown format to edit the announcement message -->")
+        if message is None:
+            print_info('Cancelled')
+            sys.exit(1)
         session.Manager.update_announcement(enabled=True, message=message)
     print_done('Posted new announcement.')
 
