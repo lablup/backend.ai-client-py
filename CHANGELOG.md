@@ -16,6 +16,14 @@ Changes
 
 .. towncrier release notes start
 
+19.09.10 (2020-06-16)
+---------------------
+
+### Features
+* Add `-b`, `--base-dir` option to the `vfolder upload` command ([#106](https://github.com/lablup/backend.ai-client-py/issues/106))
+* Add support for announcements, including automatic display of the message when executing a CLI command if available and a new commandset "announcement" to manage the announcement message for superadmins and to dismiss the last shown message for normal users ([#107](https://github.com/lablup/backend.ai-client-py/issues/107))
+
+
 19.09.9 (2020-05-15)
 --------------------
 

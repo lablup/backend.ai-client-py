@@ -1,1 +1,0 @@
-Add support for announcements, including automatic display of the message when executing a CLI command if available and a new commandset "announcement" to manage the announcement message for superadmins and to dismiss the last shown message for normal users
