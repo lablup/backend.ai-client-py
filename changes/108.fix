@@ -1,0 +1,1 @@
+Fix missing handling of `BackendClientErro` when fetching announcements during opening sessions
