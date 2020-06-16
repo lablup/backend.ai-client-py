@@ -80,17 +80,18 @@ async def test_proxy_web(monkeypatch, example_keypair, api_app, proxy_app,
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
     api_app, recv_queue = await api_app(api_port)
-    proxy_client = aiohttp.ClientSession()
-    proxy_port = unused_tcp_port_factory()
-    proxy_app = await proxy_app(proxy_port)
-    proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
-    data = {"test": 1234}
-    async with proxy_client.request('POST', proxy_url + '/echo',
-                                    json=data) as resp:
-        assert resp.status == 200
-        assert resp.reason == 'Good'
-        ret = await resp.json()
-        assert ret['test'] == 1234
+    proxy_timeout = aiohttp.ClientTimeout(connect=1.0)
+    async with aiohttp.ClientSession(timeout=proxy_timeout) as proxy_client:
+        proxy_port = unused_tcp_port_factory()
+        proxy_app = await proxy_app(proxy_port)
+        proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
+        data = {"test": 1234}
+        async with proxy_client.request('POST', proxy_url + '/echo',
+                                        json=data) as resp:
+            assert resp.status == 200
+            assert resp.reason == 'Good'
+            ret = await resp.json()
+            assert ret['test'] == 1234
 
 
 @pytest.mark.asyncio
@@ -103,15 +104,16 @@ async def test_proxy_web_502(monkeypatch, example_keypair, proxy_app,
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
     # Skip creation of api_app; let the proxy use a non-existent server.
-    proxy_client = aiohttp.ClientSession()
-    proxy_port = unused_tcp_port_factory()
-    proxy_app = await proxy_app(proxy_port)
-    proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
-    data = {"test": 1234}
-    async with proxy_client.request('POST', proxy_url + '/echo',
-                                    json=data) as resp:
-        assert resp.status == 502
-        assert resp.reason == 'Bad Gateway'
+    proxy_timeout = aiohttp.ClientTimeout(connect=1.0)
+    async with aiohttp.ClientSession(timeout=proxy_timeout) as proxy_client:
+        proxy_port = unused_tcp_port_factory()
+        proxy_app = await proxy_app(proxy_port)
+        proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
+        data = {"test": 1234}
+        async with proxy_client.request('POST', proxy_url + '/echo',
+                                        json=data) as resp:
+            assert resp.status == 502
+            assert resp.reason == 'Bad Gateway'
 
 
 @pytest.mark.asyncio
@@ -124,17 +126,18 @@ async def test_proxy_websocket(monkeypatch, example_keypair, api_app, proxy_app,
     monkeypatch.setenv('BACKEND_ENDPOINT', api_url)
     monkeypatch.setattr(config, '_config', config.APIConfig())
     api_app, recv_queue = await api_app(api_port)
-    proxy_client = aiohttp.ClientSession()
-    proxy_port = unused_tcp_port_factory()
-    proxy_app = await proxy_app(proxy_port)
-    proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
-    ws = await proxy_client.ws_connect(proxy_url + '/stream/echo')
-    await ws.send_str('test')
-    assert await ws.receive_str() == 'test'
-    await ws.send_bytes(b'\x00\x00')
-    assert await ws.receive_bytes() == b'\x00\x00'
-    assert recv_queue[0].type == aiohttp.WSMsgType.TEXT
-    assert recv_queue[0].data == 'test'
-    assert recv_queue[1].type == aiohttp.WSMsgType.BINARY
-    assert recv_queue[1].data == b'\x00\x00'
-    await ws.close()
+    proxy_timeout = aiohttp.ClientTimeout(connect=1.0)
+    async with aiohttp.ClientSession(timeout=proxy_timeout) as proxy_client:
+        proxy_port = unused_tcp_port_factory()
+        proxy_app = await proxy_app(proxy_port)
+        proxy_url = 'http://127.0.0.1:{}'.format(proxy_port)
+        ws = await proxy_client.ws_connect(proxy_url + '/stream/echo')
+        await ws.send_str('test')
+        assert await ws.receive_str() == 'test'
+        await ws.send_bytes(b'\x00\x00')
+        assert await ws.receive_bytes() == b'\x00\x00'
+        assert recv_queue[0].type == aiohttp.WSMsgType.TEXT
+        assert recv_queue[0].data == 'test'
+        assert recv_queue[1].type == aiohttp.WSMsgType.BINARY
+        assert recv_queue[1].data == b'\x00\x00'
+        await ws.close()
