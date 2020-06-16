@@ -16,9 +16,6 @@ python:
 os:
   - linux
   # - osx  # Travis CI does not officially support Python on macOS.
-env:
-  global:
-    - BACKEND_CLIENT_CLOUD_TEST=1  # use beta server for integration tests
 
 # test stage
 install:
