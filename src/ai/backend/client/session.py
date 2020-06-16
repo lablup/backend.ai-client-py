@@ -23,7 +23,7 @@ import aiohttp
 from multidict import CIMultiDict
 
 from .config import APIConfig, get_config, parse_api_version
-from .exceptions import APIVersionWarning, BackendAPIError
+from .exceptions import APIVersionWarning, BackendAPIError, BackendClientError
 from .types import Sentinel, sentinel
 
 
@@ -428,7 +428,7 @@ class Session(BaseSession):
                 payload = self.Manager.get_announcement()
                 if payload['enabled']:
                     self.config.announcement_handler(payload['message'])
-            except BackendAPIError:
+            except (BackendClientError, BackendAPIError):
                 # The server may be an old one without annoucement API.
                 pass
         return self
@@ -483,7 +483,7 @@ class AsyncSession(BaseSession):
                 payload = await self.Manager.get_announcement()
                 if payload['enabled']:
                     self.config.announcement_handler(payload['message'])
-            except BackendAPIError:
+            except (BackendClientError, BackendAPIError):
                 # The server may be an old one without annoucement API.
                 pass
         return self
