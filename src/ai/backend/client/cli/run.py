@@ -305,6 +305,8 @@ def _prepare_mount_arg(
               type=click.Choice(['batch', 'interactive']),
               default='interactive',
               help='Either batch or interactive')
+@click.option('--reserve', metavar='RESERVE', type=str, default=None,
+              help='Reserve session to be started at a specific or relative time.')
 @click.option('--enqueue-only', is_flag=True,
               help='Enqueue the session and return immediately without waiting for its startup.')
 @click.option('--max-wait', metavar='SECONDS', type=int, default=0,
@@ -375,7 +377,7 @@ def _prepare_mount_arg(
 @click.option('--preopen',  default=None,
               help='Pre-open service ports')
 def run(image, files, name,                                # base args
-        type, enqueue_only, max_wait, no_reuse,            # job scheduling options
+        type, reserve, enqueue_only, max_wait, no_reuse,   # job scheduling options
         code, terminal,                                    # query-mode options
         clean, build, exec, basedir,                       # batch-mode options
         env,                                               # execution environment
@@ -567,6 +569,7 @@ def run(image, files, name,                                # base args
                 image,
                 name=name,
                 type_=type,
+                reserve=reserve,
                 enqueue_only=enqueue_only,
                 max_wait=max_wait,
                 no_reuse=no_reuse,
@@ -763,6 +766,8 @@ def run(image, files, name,                                # base args
               type=click.Choice(['batch', 'interactive']),
               default='interactive',
               help='Either batch or interactive')
+@click.option('--reserve', metavar='RESERVE', type=str, default=None,
+              help='Reserve session to be started at a specific or relative time.')
 @click.option('-c', '--startup-command', metavar='COMMAND',
               help='Set the command to execute for batch-type sessions.')
 @click.option('--enqueue-only', is_flag=True,
@@ -805,7 +810,7 @@ def run(image, files, name,                                # base args
 @click.option('--preopen',  default=None,
               help='Pre-open service ports')
 def start(image, name, owner,                                 # base args
-          type, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
+          type, reserve, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
           tag,                                            # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
@@ -839,6 +844,7 @@ def start(image, name, owner,                                 # base args
                 image,
                 name=name,
                 type_=type,
+                reserve=reserve,
                 enqueue_only=enqueue_only,
                 max_wait=max_wait,
                 no_reuse=no_reuse,
@@ -899,6 +905,8 @@ def start(image, name, owner,                                 # base args
               type=click.Choice(['batch', 'interactive', undefined]),  # type: ignore
               default=undefined,
               help='Either batch or interactive')
+@click.option('--reserve', metavar='RESERVE', type=str, default=None,
+              help='Reserve session to be started at a specific or relative time.')
 @click.option('-i', '--image', default=undefined,
               help='Set compute_session image to run.')
 @click.option('-c', '--startup-command', metavar='COMMAND',
@@ -956,7 +964,7 @@ def start(image, name, owner,                                 # base args
                    'any resource specified at template,')
 def start_template(
     template_id, name, owner,        # base args
-    type_, image, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
+    type_, reserve, image, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
     env,                                            # execution environment
     tag,                                            # extra options
     mount, scaling_group, resources, cluster_size,  # resource spec
@@ -1004,6 +1012,7 @@ def start_template(
                 image=image,
                 name=name,
                 type_=type_,
+                reserve=reserve,
                 enqueue_only=enqueue_only,
                 max_wait=max_wait,
                 no_reuse=no_reuse,
