@@ -1,1 +1,1 @@
-Add reserve option for creating session.
+Add starts_at option for creating session.
