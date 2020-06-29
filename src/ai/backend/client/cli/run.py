@@ -766,7 +766,7 @@ def run(image, files, name,                                 # base args
               type=click.Choice(['batch', 'interactive']),
               default='interactive',
               help='Either batch or interactive')
-@click.option('--starts_at', metavar='STARTS_AT', type=str, default=None,
+@click.option('--starts-at', metavar='STARTS_AT', type=str, default=None,
               help='Let session to be started at a specific or relative time.')
 @click.option('-c', '--startup-command', metavar='COMMAND',
               help='Set the command to execute for batch-type sessions.')
