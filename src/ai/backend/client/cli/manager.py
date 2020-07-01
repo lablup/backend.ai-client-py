@@ -15,12 +15,12 @@ from ..session import Session
 
 @main.group()
 def manager():
-    '''Provides manager-related operations.'''
+    """Provides manager-related operations."""
 
 
 @manager.command()
 def status():
-    '''Show the manager's current status.'''
+    """Show the manager's current status."""
     try:
         with Session() as session:
             resp = session.Manager.status()
@@ -39,7 +39,7 @@ def status():
 @click.option('--force-kill', is_flag=True,
               help='Kill all running sessions immediately and freeze the manager.')
 def freeze(wait, force_kill):
-    '''Freeze manager.'''
+    """Freeze manager."""
     if wait and force_kill:
         print('You cannot use both --wait and --force-kill options '
               'at the same time.', file=sys.stderr)
@@ -73,7 +73,7 @@ def freeze(wait, force_kill):
 
 @manager.command()
 def unfreeze():
-    '''Unfreeze manager.'''
+    """Unfreeze manager."""
     try:
         with Session() as session:
             session.Manager.unfreeze()
@@ -85,12 +85,12 @@ def unfreeze():
 
 @main.group()
 def announcement():
-    '''Global announcement related commands'''
+    """Global announcement related commands"""
 
 
 @announcement.command()
 def get():
-    '''Get current announcement.'''
+    """Get current announcement."""
     try:
         with Session() as session:
             result = session.Manager.get_announcement()
@@ -107,11 +107,11 @@ def get():
 @announcement.command()
 @click.option('-m', '--message', default=None, type=click.STRING)
 def update(message):
-    '''
+    """
     Post new announcement.
 
     MESSAGE: Announcement message.
-    '''
+    """
     try:
         with Session() as session:
             if message is None:
@@ -130,7 +130,7 @@ def update(message):
 
 @announcement.command()
 def delete():
-    '''Delete current announcement.'''
+    """Delete current announcement."""
     if not ask_yn():
         print_info('Cancelled.')
         sys.exit(1)
@@ -145,7 +145,7 @@ def delete():
 
 @announcement.command()
 def dismiss():
-    '''Do not show the same announcement again.'''
+    """Do not show the same announcement again."""
     if not ask_yn():
         print_info('Cancelled.')
         sys.exit(1)
