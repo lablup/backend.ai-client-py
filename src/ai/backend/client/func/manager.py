@@ -1,3 +1,5 @@
+from typing import Any
+
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session
@@ -43,8 +45,8 @@ class Manager(BaseFunction):
             'status': 'frozen',
             'force_kill': force_kill,
         })
-        async with rqst.fetch() as resp:
-            assert resp.status == 204
+        async with rqst.fetch():
+            pass
 
     @api_function
     @classmethod
@@ -56,8 +58,8 @@ class Manager(BaseFunction):
         rqst.set_json({
             'status': 'running',
         })
-        async with rqst.fetch() as resp:
-            assert resp.status == 204
+        async with rqst.fetch():
+            pass
 
     @api_function
     @classmethod
@@ -83,5 +85,22 @@ class Manager(BaseFunction):
             'enabled': enabled,
             'message': message,
         })
-        async with rqst.fetch() as resp:
-            assert resp.status == 204
+        async with rqst.fetch():
+            pass
+
+    @api_function
+    @classmethod
+    async def scheduler_op(cls, op: str, args: Any):
+        '''
+        Perform a scheduler operation.
+
+        :param op: The name of scheduler operation.
+        :param args: Arguments specific to the given operation.
+        '''
+        rqst = Request(api_session.get(), 'POST', '/manager/scheduler/operation')
+        rqst.set_json({
+            'op': op,
+            'args': args,
+        })
+        async with rqst.fetch():
+            pass
