@@ -136,3 +136,36 @@ def dismiss():
     except (IOError, json.JSONDecodeError):
         print_fail('No announcements seen yet.')
         sys.exit(1)
+
+
+@manager.group()
+def scheduler():
+    """
+    The scheduler operation command group.
+    """
+    pass
+
+
+@scheduler.command()
+@click.argument('agent_ids', nargs=-1)
+def include_agents(agent_ids):
+    """
+    Include agents in scheduling, meaning that the given agents
+    will be considered to be ready for creating new session containers.
+    """
+    with Session() as session:
+        session.Manager.scheduler_op('include-agents', agent_ids)
+    print_done('The given agents now accepts new sessions.')
+
+
+@scheduler.command()
+@click.argument('agent_ids', nargs=-1)
+def exclude_agents(agent_ids):
+    """
+    Exclude agents from scheduling, meaning that the given agents
+    will no longer start new sessions unless they are "included" again,
+    regardless of their restarts and rejoining events.
+    """
+    with Session() as session:
+        session.Manager.scheduler_op('exclude-agents', agent_ids)
+    print_done('The given agents will no longer start new sessions.')
