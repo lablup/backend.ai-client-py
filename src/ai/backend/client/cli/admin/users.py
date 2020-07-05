@@ -29,15 +29,15 @@ def user(email):
         ('Email', 'email'),
         ('Name', 'full_name'),
         ('Need Password Change', 'need_password_change'),
-        ('Active?', 'is_active'),
+        ('Status', 'status'),
+        ('Status Info', 'status_info'),
         ('Created At', 'created_at'),
         ('Domain Name', 'domain_name'),
         ('Groups', 'groups { id name }'),
     ]
     with Session() as session:
         try:
-            resp = session.User.detail(email=email,
-                                       fields=(item[1] for item in fields))
+            resp = session.User.detail(email=email, fields=(item[1] for item in fields))
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -56,11 +56,11 @@ def user(email):
 
 @admin.group(invoke_without_command=True)
 @click.pass_context
-@click.option('--is-active', type=bool, default=None,
-              help='Filter only active users.')
+@click.option('-s', '--status', type=str, default=None,
+              help='Filter users in a specific state (active, inactive, deleted, before-verification).')
 @click.option('-g', '--group', type=str, default=None,
               help='Filter by group ID.')
-def users(ctx, is_active, group) -> None:
+def users(ctx, status, group) -> None:
     '''
     List and manage users.
     (admin privilege required)
@@ -74,7 +74,8 @@ def users(ctx, is_active, group) -> None:
         ('Email', 'email'),
         ('Name', 'full_name'),
         ('Need Password Change', 'need_password_change'),
-        ('Active?', 'is_active'),
+        ('Status', 'status'),
+        ('Status Info', 'status_info'),
         ('Created At', 'created_at'),
         ('Domain Name', 'domain_name'),
         ('Groups', 'groups { id name }'),
@@ -89,7 +90,7 @@ def users(ctx, is_active, group) -> None:
             page_size = get_preferred_page_size()
             try:
                 items = session.User.paginated_list(
-                    is_active, group,
+                    status, group,
                     fields=[f[1] for f in fields],
                     page_size=page_size,
                 )
@@ -112,13 +113,13 @@ def users(ctx, is_active, group) -> None:
 @click.option('-n', '--full-name', type=str, default='', help='Full name.')
 @click.option('-r', '--role', type=str, default='user',
               help='Role of the user. One of (admin, user, monitor).')
-@click.option('-i', '--inactive', is_flag=True,
-              help='New user will be inactive.')
+@click.option('-s', '--status', type=str, default='active',
+              help='Account status. One of (active, inactive, deleted, before-verification).')
 @click.option('--need-password-change', is_flag=True,
               help='Flag indicate that user needs to change password. '
                    'Useful when admin manually create password.')
 @click.option('--description', type=str, default='', help='Description of the user.')
-def add(domain_name, email, password, username, full_name, role, inactive,
+def add(domain_name, email, password, username, full_name, role, status,
         need_password_change, description):
     '''
     Add new user. A user must belong to a domain, so DOMAIN_NAME should be provided.
@@ -133,7 +134,7 @@ def add(domain_name, email, password, username, full_name, role, inactive,
             data = session.User.create(
                 domain_name, email, password,
                 username=username, full_name=full_name, role=role,
-                is_active=not inactive,
+                status=status,
                 need_password_change=need_password_change,
                 description=description,
             )
@@ -155,12 +156,13 @@ def add(domain_name, email, password, username, full_name, role, inactive,
 @click.option('-d', '--domain-name', type=str, help='Domain name.')
 @click.option('-r', '--role', type=str, default='user',
               help='Role of the user. One of (admin, user, monitor).')
-@click.option('--is-active', type=bool, help='Make user active or inactive.')
+@click.option('-s', '--status', type=str,
+              help='Account status. One of (active, inactive, deleted, before-verification).')
 @click.option('--need-password-change', is_flag=True,
               help='Flag indicate that user needs to change password. '
                    'Useful when admin manually create password.')
 @click.option('--description', type=str, default='', help='Description of the user.')
-def update(email, password, username, full_name, domain_name, role, is_active,
+def update(email, password, username, full_name, domain_name, role, status,
            need_password_change, description):
     '''
     Update an existing user.
@@ -173,7 +175,7 @@ def update(email, password, username, full_name, domain_name, role, is_active,
                 email,
                 password=password, username=username, full_name=full_name,
                 domain_name=domain_name,
-                role=role, is_active=is_active, need_password_change=need_password_change,
+                role=role, status=status, need_password_change=need_password_change,
                 description=description,
             )
         except Exception as e:

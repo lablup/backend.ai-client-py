@@ -58,24 +58,26 @@ class User(BaseFunction):
     @classmethod
     async def list(
         cls,
-        is_active: bool = None,
+        status: str = None,
         group: str = None,
         fields: Sequence[str] = _default_list_fields,
     ) -> Sequence[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
 
-        :param is_active: Fetches active or inactive users only if not None.
+        :param status: Fetches users in a specific status
+                       (active, inactive, deleted, before-verification).
+        :param group: Fetch users in a specific group.
         :param fields: Additional per-user query fields to fetch.
         """
         query = textwrap.dedent("""\
-            query($is_active: Boolean, $group: UUID) {
-                users(is_active: $is_active, group_id: $group) {$fields}
+            query($status: String, $group: UUID) {
+                users(status: $status, group_id: $group) {$fields}
             }
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {
-            'is_active': is_active,
+            'status': status,
             'group': group,
         }
         rqst = Request(api_session.get(), 'POST', '/admin/graphql')
@@ -91,7 +93,7 @@ class User(BaseFunction):
     @classmethod
     async def paginated_list(
         cls,
-        is_active: bool = None,
+        status: str = None,
         group: str = None,
         *,
         fields: Sequence[str] = _default_list_fields,
@@ -100,13 +102,15 @@ class User(BaseFunction):
         """
         Fetches the list of users. Domain admins can only get domain users.
 
-        :param is_active: Fetches active or inactive users only if not None.
+        :param status: Fetches users in a specific status
+                       (active, inactive, deleted, before-verification).
+        :param group: Fetch users in a specific group.
         :param fields: Additional per-user query fields to fetch.
         """
         async for item in generate_paginated_results(
             'user_list',
             {
-                'is_active': (is_active, 'Boolean'),
+                'status': (status, 'String'),
                 'group_id': (group, 'UUID'),
             },
             fields,
@@ -125,7 +129,7 @@ class User(BaseFunction):
         :param fields: Additional per-user query fields to fetch.
         """
         if fields is None:
-            fields = ('uuid', 'username', 'email', 'need_password_change', 'is_active',
+            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info'
                       'created_at', 'domain_name', 'role')
         if email is None:
             query = textwrap.dedent("""\
@@ -166,7 +170,7 @@ class User(BaseFunction):
         :param fields: Additional per-user query fields to fetch.
         """
         if fields is None:
-            fields = ('uuid', 'username', 'email', 'need_password_change', 'is_active',
+            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info',
                       'created_at', 'domain_name', 'role')
         if user_uuid is None:
             query = textwrap.dedent("""\
@@ -198,13 +202,16 @@ class User(BaseFunction):
 
     @api_function
     @classmethod
-    async def create(cls, domain_name: str, email: str, password: str,
-                     username: str = None, full_name: str = None,
-                     role: str = 'user', is_active: bool = True,
-                     need_password_change: bool = False,
-                     description: str = '',
-                     group_ids: Iterable[str] = None,
-                     fields: Iterable[str] = None) -> dict:
+    async def create(
+        cls,
+        domain_name: str,
+        email: str, password: str, username: str = None, full_name: str = None,
+        role: str = 'user', status: bool = True,
+        need_password_change: bool = False,
+        description: str = '',
+        group_ids: Iterable[str] = None,
+        fields: Iterable[str] = None
+    ) -> dict:
         """
         Creates a new user with the given options.
         You need an admin privilege for this operation.
@@ -226,7 +233,7 @@ class User(BaseFunction):
                 'username': username,
                 'full_name': full_name,
                 'role': role,
-                'is_active': is_active,
+                'status': status,
                 'need_password_change': need_password_change,
                 'description': description,
                 'domain_name': domain_name,
@@ -244,11 +251,18 @@ class User(BaseFunction):
 
     @api_function
     @classmethod
-    async def update(cls, email: str, password: str = None, username: str = None,
-                     full_name: str = None, domain_name: str = None, role: str = None,
-                     is_active: bool = None, need_password_change: bool = None,
-                     description: str = None, group_ids: Iterable[str] = None,
-                     fields: Iterable[str] = None) -> dict:
+    async def update(
+        cls,
+        email: str,
+        password: str = None, username: str = None,
+        full_name: str = None,
+        domain_name: str = None,
+        role: str = None, status: bool = None,
+        need_password_change: bool = None,
+        description: str = None,
+        group_ids: Iterable[str] = None,
+        fields: Iterable[str] = None
+    ) -> dict:
         """
         Update existing user.
         You need an admin privilege for this operation.
@@ -268,7 +282,7 @@ class User(BaseFunction):
                 'full_name': full_name,
                 'domain_name': domain_name,
                 'role': role,
-                'is_active': is_active,
+                'status': status,
                 'need_password_change': need_password_change,
                 'description': description,
                 'group_ids': group_ids,
