@@ -1,0 +1,1 @@
+Replace `--is-active` (`is_active`) option to `--status` (`status`) to allow using an enumeration of multiple user statuses in the CLI and the functional API.
