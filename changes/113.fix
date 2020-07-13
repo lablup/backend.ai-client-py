@@ -1,0 +1,1 @@
+Change user_id's type from str to UUID in user detail query
