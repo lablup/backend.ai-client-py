@@ -37,7 +37,8 @@ def user(email):
     ]
     with Session() as session:
         try:
-            resp = session.User.detail(email=email, fields=(item[1] for item in fields))
+            # resp = session.User.detail(email=email, fields=(item[1] for item in fields))
+            resp = session.User.detail_by_uuid(user_uuid='8607fd09-8175-4650-9ddc-79b4f7aee7d2', fields=(item[1] for item in fields))
         except Exception as e:
             print_error(e)
             sys.exit(1)
