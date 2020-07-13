@@ -180,7 +180,7 @@ class User(BaseFunction):
             """)
         else:
             query = textwrap.dedent("""\
-                query($user_id: String) {
+                query($user_id: UUID) {
                     user_from_uuid(user_id: $user_id) {$fields}
                 }
             """)
