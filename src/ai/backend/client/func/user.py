@@ -1,5 +1,6 @@
 import textwrap
-from typing import AsyncIterator, Iterable, Sequence
+from typing import AsyncIterator, Iterable, Sequence, Union
+import uuid
 
 from .base import api_function, BaseFunction
 from ..auth import AuthToken, AuthTokenTypes
@@ -161,7 +162,11 @@ class User(BaseFunction):
 
     @api_function
     @classmethod
-    async def detail_by_uuid(cls, user_uuid: str = None, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def detail_by_uuid(
+        cls,
+        user_uuid: Union[str, uuid.UUID] = None,
+        fields: Iterable[str] = None,
+    ) -> Sequence[dict]:
         """
         Fetch information of a user by user's uuid. If user_uuid is not specified,
         requester's information will be returned.
@@ -180,12 +185,12 @@ class User(BaseFunction):
             """)
         else:
             query = textwrap.dedent("""\
-                query($user_id: UUID) {
+                query($user_id: ID) {
                     user_from_uuid(user_id: $user_id) {$fields}
                 }
             """)
         query = query.replace('$fields', ' '.join(fields))
-        variables = {'user_id': user_uuid}
+        variables = {'user_id': str(user_uuid)}
         rqst = Request(api_session.get(), 'POST', '/admin/graphql')
         if user_uuid is None:
             rqst.set_json({
