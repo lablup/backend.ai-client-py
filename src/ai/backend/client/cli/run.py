@@ -332,6 +332,8 @@ def _prepare_mount_arg(
 @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
               help='Environment variable (may appear multiple times)')
 # extra options
+@click.option('--bootstrap-script', metavar='PATH', type=click.File('r'), default=None,
+              help='A user-defined script to execute on startup.')
 @click.option('--rm', is_flag=True,
               help='Terminate the session immediately after running '
                    'the given code or files')
@@ -381,7 +383,7 @@ def run(image, files, name,                                 # base args
         code, terminal,                                     # query-mode options
         clean, build, exec, basedir,                        # batch-mode options
         env,                                                # execution environment
-        rm, stats, tag, quiet,                              # extra options
+        bootstrap_script, rm, stats, tag, quiet,            # extra options
         env_range, build_range, exec_range, max_parallel,   # experiment support
         mount, scaling_group, resources, cluster_size,      # resource spec
         resource_opts,
@@ -582,6 +584,7 @@ def run(image, files, name,                                 # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
+                bootstrap_script=bootstrap_script.read(),
                 tag=tag,
                 preopen_ports=preopen_ports)
         except Exception as e:
@@ -780,6 +783,8 @@ def run(image, files, name,                                 # base args
 @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
               help='Environment variable (may appear multiple times)')
 # extra options
+@click.option('--bootstrap-script', metavar='PATH', type=click.File('r'), default=None,
+              help='A user-defined script to execute on startup.')
 @click.option('--tag', type=str, default=None,
               help='User-defined tag string to annotate sessions.')
 # resource spec
@@ -812,10 +817,10 @@ def run(image, files, name,                                 # base args
 def start(image, name, owner,                                 # base args
           type, starts_at, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
-          tag,                                            # extra options
+          bootstrap_script, tag,                          # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
           resource_opts,
-          domain, group, preopen):                                 # resource grouping
+          domain, group, preopen):                        # resource grouping
     '''
     Prepare and start a single compute session without executing codes.
     You may use the created session to execute codes using the "run" command
@@ -859,6 +864,7 @@ def start(image, name, owner,                                 # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
+                bootstrap_script=bootstrap_script.read(),
                 tag=tag,
                 preopen_ports=preopen_ports)
         except Exception as e:
