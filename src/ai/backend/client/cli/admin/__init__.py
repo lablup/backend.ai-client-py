@@ -11,7 +11,8 @@ def admin():
 def _attach_command():
     from . import (  # noqa
         agents, domains, etcd, groups, images, keypairs, resources, resource_policies,
-        scaling_groups, sessions, users, vfolders
+        scaling_groups, sessions, users, vfolders,
+        license,
     )
 
 
