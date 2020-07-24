@@ -242,17 +242,6 @@ class Request:
                 hash_type=hash_type,
             )
             self.headers.update(hdrs)
-            print(self.method)
-            print(self.api_version)
-            print(self.config.endpoint)
-            print(self.date)
-            print(rel_url)
-            print(self.content_type)
-            print(access_key)
-            print(secret_key)
-            print(hash_type)
-            print("headers, ", self.headers)
-        
         elif self.config.endpoint_type == 'session':
             local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
             try:

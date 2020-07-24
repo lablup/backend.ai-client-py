@@ -17,12 +17,6 @@ from ..request import Request, AttachedFile
 from ..session import api_session
 from ..utils import ProgressReportingReader
 
-from ..auth import generate_signature
-
-from datetime import datetime
-from dateutil.tz import tzutc
-import io
-
 __all__ = (
     'VFolder',
 )
@@ -146,73 +140,9 @@ class VFolder(BaseFunction):
 
             rqst = Request(api_session.get(),
                            'POST', '/folders/{}/upload'.format(self.name))
-            
-            # mycode
-            print("\n\n\nUpload Request object Call")
-            
-            date = datetime.now(tzutc())
-            
-            
-            hdrs, _ = generate_signature(
-                method=rqst.method,
-                version=rqst.api_version,
-                endpoint=rqst.config.endpoint,
-                date=date,
-                rel_url='/folders/{}/upload'.format(self.name),
-                content_type=rqst.content_type,
-                access_key=api_session.get().config.access_key,
-                secret_key=api_session.get().config.secret_key,
-                hash_type=api_session.get().config.hash_type
-            )
-            rqst.headers["Date"] = date.isoformat()
-            rqst.headers.update(hdrs)
-
-            print("Auth: ")
-            print(rqst.method)
-            print(rqst.api_version)
-            print(rqst.config.endpoint)
-            print(date)
-            print('/folders/{}/upload'.format(self.name))
-            print(rqst.content_type)
-            print(api_session.get().config.access_key)
-            print(api_session.get().config.secret_key)
-            print(api_session.get().config.hash_type)
-            print(rqst.headers)
-
-            async def aiorequest(url, data, headers):
-                async with aiohttp.ClientSession() as session:
-                    
-                    async with session.post(str(url), data=data, headers=rqst.headers) as resp:
-                        print(resp.status)
-                        return await resp.text()
-
-            request_url = 'http://127.0.0.1:8081/folders/{}/upload'.format(self.name)
-            data = aiohttp.FormData()
-            print("file_path   ",file_path)
-            data.add_field('src', io.open(file_path),  filename='setup.py', content_type='multipart/form-data')
-            resp = await aiorequest(request_url, data, rqst.headers)
-            print("Final response ", resp)
-
-            # tus client
-            """
-            from tusclient.client import TusClient
-
-            tus_client = TusClient(url)
-            tus_client.set_headers(headers)
-            fs = open('/Users/sergey/Documents/workspace/backend.ai_dev/client-py/src/ai/backend/client/setup.py')
-            uploader = tus_client.async_uploader(file_stream=fs, chunk_size=200)
-            await uploader.upload()
-            """
-            
-            print("\n\nOriginal file uploading function =====")
-            #original code
-            
             rqst.attach_files(attachments)
             async with rqst.fetch() as resp:
                 return await resp.text()
-            
-
-
 
     @api_function
     async def mkdir(self, path: Union[str, Path]):
