@@ -152,13 +152,33 @@ def update(name, new_name, description, is_active, total_resource_slots,
 @click.argument('name', type=str, metavar='NAME')
 def delete(name):
     """
+    Inactive an existing domain.
+
+    NAME: Name of a domain to inactive.
+    """
+    with Session() as session:
+        try:
+            data = session.Domain.delete(name)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+        if not data['ok']:
+            print_fail('Domain inactivation has failed: {0}'.format(data['msg']))
+            sys.exit(1)
+        print('Domain is inactivated: ' + name + '.')
+
+
+@domains.command()
+@click.argument('name', type=str, metavar='NAME')
+def purge(name):
+    """
     Delete an existing domain.
 
     NAME: Name of a domain to delete.
     """
     with Session() as session:
         try:
-            data = session.Domain.delete(name)
+            data = session.Domain.purge(name)
         except Exception as e:
             print_error(e)
             sys.exit(1)

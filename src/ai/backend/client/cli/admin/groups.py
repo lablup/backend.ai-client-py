@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 from . import admin
 from ..interaction import ask_yn
-from ..pretty import print_error, print_fail
+from ..pretty import print_error, print_info, print_fail
 from ...session import Session
 
 
