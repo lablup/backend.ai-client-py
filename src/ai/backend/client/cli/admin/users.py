@@ -5,14 +5,14 @@ from tabulate import tabulate
 
 from . import admin
 from ...session import Session
-from ..pretty import print_error, print_fail
+from ..interaction import ask_yn
+from ..pretty import print_error, print_info, print_fail
 from ..pagination import (
     get_preferred_page_size,
     echo_via_pager,
     tabulate_items,
 )
 from ...exceptions import NoItems
-
 
 @admin.command()
 @click.option('-e', '--email', type=str, default=None,
@@ -191,13 +191,40 @@ def update(email, password, username, full_name, domain_name, role, status,
 @click.argument('email', type=str, metavar='EMAIL')
 def delete(email):
     """
-    Delete an existing user.
+    Inactivate an existing user.
 
-    EMAIL: Email of user to delete.
+    EMAIL: Email of user to inactivate.
     """
     with Session() as session:
         try:
             data = session.User.delete(email)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+        if not data['ok']:
+            print_fail('User inactivation has failed: {0}'.format(data['msg']))
+            sys.exit(1)
+        print('User is inactivated: ' + email + '.')
+
+
+@users.command()
+@click.argument('email', type=str, metavar='EMAIL')
+@click.option('--purge-shared-vfolders', is_flag=True, default=False,
+              help='Delete user\'s all virtual folders. '
+                   'If False, shared folders will not be deleted '
+                   'and migrated the ownership to the requested admin.')
+def purge(email, purge_shared_vfolders):
+    """
+    Delete an existing user. This action cannot be undone.
+
+    NAME: Name of a domain to delete.
+    """
+    with Session() as session:
+        try:
+            if not ask_yn():
+                print_info('Cancelled')
+                sys.exit(1)
+            data = session.User.purge(email, purge_shared_vfolders)
         except Exception as e:
             print_error(e)
             sys.exit(1)

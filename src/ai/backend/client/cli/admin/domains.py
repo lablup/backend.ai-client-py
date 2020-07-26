@@ -4,7 +4,8 @@ import click
 from tabulate import tabulate
 
 from . import admin
-from ..pretty import print_error, print_fail
+from ..interaction import ask_yn
+from ..pretty import print_error, print_info, print_fail
 from ...session import Session
 
 
@@ -178,6 +179,9 @@ def purge(name):
     """
     with Session() as session:
         try:
+            if not ask_yn():
+                print_info('Cancelled')
+                sys.exit(1)
             data = session.Domain.purge(name)
         except Exception as e:
             print_error(e)
