@@ -14,6 +14,7 @@ from ..pagination import (
 )
 from ...exceptions import NoItems
 
+
 @admin.command()
 @click.option('-e', '--email', type=str, default=None,
               help='Email of a user to display.')
