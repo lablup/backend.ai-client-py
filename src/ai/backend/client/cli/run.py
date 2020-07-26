@@ -873,14 +873,14 @@ def start(image, name, owner,                                 # base args
         else:
             if compute_session.status == 'PENDING':
                 print_info('Session ID {0} is enqueued for scheduling.'
-                           .format(name))
+                           .format(compute_session.id))
             elif compute_session.status == 'RUNNING':
                 if compute_session.created:
                     print_info('Session ID {0} is created and ready.'
-                               .format(name))
+                               .format(compute_session.id))
                 else:
                     print_info('Session ID {0} is already running and ready.'
-                               .format(name))
+                               .format(compute_session.id))
                 if compute_session.service_ports:
                     print_info('This session provides the following app services: ' +
                                ', '.join(sport['name']
@@ -888,13 +888,13 @@ def start(image, name, owner,                                 # base args
             elif compute_session.status == 'TERMINATED':
                 print_warn('Session ID {0} is already terminated.\n'
                            'This may be an error in the compute_session image.'
-                           .format(name))
+                           .format(compute_session.id))
             elif compute_session.status == 'TIMEOUT':
                 print_info('Session ID {0} is still on the job queue.'
-                           .format(name))
+                           .format(compute_session.id))
             elif compute_session.status in ('ERROR', 'CANCELLED'):
                 print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
-                           .format(name))
+                           .format(compute_session.id))
 
 
 @main.command()
