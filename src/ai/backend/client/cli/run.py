@@ -288,6 +288,8 @@ def _prepare_mount_arg(
                 sp = value.split('=', maxsplit=1)
             elif ':' in value:  # docker-like volume mount mapping
                 sp = value.split(':', maxsplit=1)
+            else:
+                sp = [value]
             mounts.add(sp[0])
             if len(sp) == 2:
                 mount_map[sp[0]] = sp[1]
