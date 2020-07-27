@@ -1,1 +1,0 @@
-Change the GraphQL argument type of `user_id` from String to ID in the user detail query and explicitly allow passing UUID objects
