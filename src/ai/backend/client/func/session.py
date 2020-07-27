@@ -64,6 +64,7 @@ class ComputeSession(BaseFunction):
     all containers belonging to the same compute session.
     """
 
+    id: str
     name: str
     owner_access_key: Optional[str]
     created: bool
@@ -275,6 +276,7 @@ class ComputeSession(BaseFunction):
         async with rqst.fetch() as resp:
             data = await resp.json()
             o = cls(name, owner_access_key)  # type: ignore
+            o.id = data.get('sessionId', name)
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
