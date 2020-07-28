@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+20.03.1 (2020-07-28)
+--------------------
+
+### Features
+* Add purge command for users, groups, and domains. ([#117](https://github.com/lablup/backend.ai-client-py/issues/117))
+
+
 20.03.0 (2020-07-28)
 --------------------
 
