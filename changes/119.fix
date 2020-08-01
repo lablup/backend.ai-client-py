@@ -1,0 +1,1 @@
+Extends the keypair's `paginated_list` query to accept `user_id` parameter.
