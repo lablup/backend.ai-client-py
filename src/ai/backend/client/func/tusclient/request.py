@@ -97,9 +97,8 @@ class AsyncTusRequest(BaseTusRequest):
         """
         Perform actual request.
         """
-        print("*****")
+        
         chunk = self.file.read(self._content_length)
-        print("*********2")
         self.add_checksum(chunk)
         try:
             async with aiohttp.ClientSession(loop=self.io_loop) as session:
