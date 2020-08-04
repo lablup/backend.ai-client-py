@@ -164,16 +164,16 @@ class Domain:
     @api_function
     @classmethod
     async def delete(cls, name: str):
-        '''
-        Deletes an existing domain.
-        '''
-        query = textwrap.dedent('''\
+        """
+        Inactivates an existing domain.
+        """
+        query = textwrap.dedent("""\
             mutation($name: String!) {
                 delete_domain(name: $name) {
                     ok msg
                 }
             }
-        ''')
+        """)
         variables = {'name': name}
         rqst = Request(cls.session, 'POST', '/admin/graphql')
         rqst.set_json({
@@ -183,3 +183,26 @@ class Domain:
         async with rqst.fetch() as resp:
             data = await resp.json()
             return data['delete_domain']
+
+    @api_function
+    @classmethod
+    async def purge(cls, name: str):
+        """
+        Deletes an existing domain.
+        """
+        query = textwrap.dedent("""\
+            mutation($name: String!) {
+                purge_domain(name: $name) {
+                    ok msg
+                }
+            }
+        """)
+        variables = {'name': name}
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst.set_json({
+            'query': query,
+            'variables': variables,
+        })
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            return data['purge_domain']
