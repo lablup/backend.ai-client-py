@@ -198,7 +198,7 @@ class Group:
             }
         """)
         variables = {'gid': gid}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request(cls.session, 'POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
