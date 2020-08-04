@@ -189,7 +189,6 @@ def upload(name, filenames, base_dir):
         try:
             session.VFolder(name).upload(
                 filenames,
-                show_progress=False,
                 basedir=base_dir,
             )
             print_done('Done.')
