@@ -187,7 +187,7 @@ def upload(name, filenames, base_dir):
         base_dir = Path.cwd()
     with Session() as session:
         try:
-            session.VFolder(name).tus(
+            session.VFolder(name).upload(
                 filenames,
                 show_progress=False,
                 basedir=base_dir,
