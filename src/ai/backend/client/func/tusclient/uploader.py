@@ -113,11 +113,11 @@ class AsyncUploader(BaseUploader):
         self.stop_at = stop_at or self.get_file_size()
         no_chunks = self.get_file_size() // self.chunk_size
         print("File size: ", self.get_file_size(), "bytes; Total number of chunks: ", no_chunks)
+
         with tqdm(total=no_chunks) as pbar:
             while self.offset < self.stop_at:
                 await self.upload_chunk()
                 pbar.update(1)
-                await asyncio.sleep(1)
 
     async def upload_chunk(self):
         """

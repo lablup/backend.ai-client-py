@@ -17,9 +17,8 @@ from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE
 from ..exceptions import BackendAPIError
-from ..request import Request, AttachedFile
+from ..request import Request
 from ..session import api_session
-from ..utils import ProgressReportingReader
 
 from .tusclient import client
 
@@ -117,43 +116,7 @@ class VFolder(BaseFunction):
 
     @api_function
     async def upload(self, files: Sequence[Union[str, Path]],
-                     basedir: Union[str, Path] = None,
-                     show_progress: bool = False):
-        base_path = (Path.cwd() if basedir is None
-                     else Path(basedir).resolve())
-        files = [Path(file).resolve() for file in files]
-        total_size = 0
-        for file_path in files:
-            total_size += Path(file_path).stat().st_size
-        tqdm_obj = tqdm(desc='Uploading files',
-                        unit='bytes', unit_scale=True,
-                        total=total_size,
-                        disable=not show_progress)
-        with tqdm_obj:
-            attachments = []
-            for file_path in files:
-                try:
-                    attachments.append(AttachedFile(
-                        str(Path(file_path).relative_to(base_path)),
-                        ProgressReportingReader(str(file_path),
-                                                tqdm_instance=tqdm_obj),
-                        'application/octet-stream',
-                    ))
-                except ValueError:
-                    msg = 'File "{0}" is outside of the base directory "{1}".' \
-                          .format(file_path, base_path)
-                    raise ValueError(msg) from None
-
-            rqst = Request(api_session.get(),
-                           'POST', '/folders/{}/upload'.format(self.name))
-            rqst.attach_files(attachments)
-            async with rqst.fetch() as resp:
-                return await resp.text()
-
-    @api_function
-    async def tus(self, files: Sequence[Union[str, Path]],
-                  basedir: Union[str, Path] = None,
-                  show_progress: bool = False):
+                     basedir: Union[str, Path] = None):
 
         base_file_path = (Path.cwd() if basedir is None
                           else Path(basedir).resolve())
@@ -193,7 +156,7 @@ class VFolder(BaseFunction):
             tus_client = client.TusClient(str(session_create_url),
                                           str(session_upload_url),
                                           rqst.headers, params)
-            input_file = open(str(Path(file_path).relative_to(base_file_path)))
+            input_file = open(str(Path(file_path).relative_to(base_file_path)), "rb")
             uploader = tus_client.async_uploader(file_stream=input_file)
             await uploader.upload()
 
