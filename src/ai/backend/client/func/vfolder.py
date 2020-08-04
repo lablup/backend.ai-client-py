@@ -157,6 +157,7 @@ class VFolder(BaseFunction):
                                           str(session_upload_url),
                                           rqst.headers, params)
             input_file = open(str(Path(file_path).relative_to(base_file_path)), "rb")
+            print(file_path, base_file_path, str(Path(file_path).relative_to(base_file_path)))
             uploader = tus_client.async_uploader(file_stream=input_file)
             await uploader.upload()
 
