@@ -59,13 +59,10 @@ The type alias for the set of allowed types for request content.
 AttachedFile = namedtuple('AttachedFile', 'filename stream content_type')
 """
 A struct that represents an attached file to the API request.
-
 :param str filename: The name of file to store. It may include paths
                      and the server will create parent directories
                      if required.
-
 :param Any stream: A file-like object that allows stream-reading bytes.
-
 :param str content_type: The content type for the stream.  For arbitrary
                          binary data, use "application/octet-stream".
 """
@@ -127,15 +124,11 @@ class Request:
     ) -> None:
         """
         Initialize an API request.
-
         :param BaseSession session: The session where this request is executed on.
-
         :param str path: The query path. When performing requests, the version number
                          prefix will be automatically perpended if required.
-
         :param RequestContent content: The API query body which will be encoded as
                                        JSON.
-
         :param str content_type: Explicitly set the content type.  See also
                                  :func:`Request.set_content`.
         """
@@ -285,25 +278,18 @@ class Request:
     def fetch(self, **kwargs) -> FetchContextManager:
         """
         Sends the request to the server and reads the response.
-
         You may use this method either with plain synchronous Session or
         AsyncSession.  Both the followings patterns are valid:
-
         .. code-block:: python3
-
           from ai.backend.client.request import Request
           from ai.backend.client.session import Session
-
           with Session() as sess:
             rqst = Request(sess, 'GET', ...)
             with rqst.fetch() as resp:
               print(resp.text())
-
         .. code-block:: python3
-
           from ai.backend.client.request import Request
           from ai.backend.client.session import AsyncSession
-
           async with AsyncSession() as sess:
             rqst = Request(sess, 'GET', ...)
             async with rqst.fetch() as resp:
@@ -339,9 +325,7 @@ class Request:
     def connect_websocket(self, **kwargs) -> WebSocketContextManager:
         """
         Creates a WebSocket connection.
-
         .. warning::
-
           This method only works with
           :class:`~ai.backend.client.session.AsyncSession`.
         """
@@ -368,9 +352,7 @@ class Request:
     def connect_events(self, **kwargs) -> SSEContextManager:
         """
         Creates a Server-Sent Events connection.
-
         .. warning::
-
           This method only works with
           :class:`~ai.backend.client.session.AsyncSession`.
         """
@@ -454,9 +436,7 @@ class BaseResponse:
     """
     Represents the Backend.AI API response.
     Also serves as a high-level wrapper of :class:`aiohttp.ClientResponse`.
-
     The response objects are meant to be created by the SDK, not the callers.
-
     :func:`text`, :func:`json` methods return the resolved content directly with
     plain synchronous Session while they return the coroutines with AsyncSession.
     """
@@ -523,7 +503,6 @@ class Response(AsyncResponseMixin, BaseResponse):
 class FetchContextManager:
     """
     The context manager returned by :func:`Request.fetch`.
-
     It provides both synchronous and asynchronous context manager interfaces.
     """
 

@@ -306,7 +306,7 @@ class User(BaseFunction):
     @classmethod
     async def delete(cls, email: str):
         """
-        Deletes an existing user.
+        Inactivates an existing user.
         """
         query = textwrap.dedent("""\
             mutation($email: String!) {
@@ -324,3 +324,35 @@ class User(BaseFunction):
         async with rqst.fetch() as resp:
             data = await resp.json()
             return data['delete_user']
+
+    @api_function
+    @classmethod
+    async def purge(cls, email: str, purge_shared_vfolders=False):
+        """
+        Deletes an existing user.
+
+        User's virtual folders are also deleted, except the ones shared with other users.
+        Shared virtual folder's ownership will be transferred to the requested admin.
+        To delete shared folders as well, set ``purge_shared_vfolders`` to ``True``.
+        """
+        query = textwrap.dedent("""\
+            mutation($email: String!, $input: PurgeUserInput!) {
+                purge_user(email: $email, props: $input) {
+                    ok msg
+                }
+            }
+        """)
+        variables = {
+            'email': email,
+            'input': {
+                'purge_shared_vfolders': purge_shared_vfolders,
+            },
+        }
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst.set_json({
+            'query': query,
+            'variables': variables,
+        })
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+            return data['purge_user']

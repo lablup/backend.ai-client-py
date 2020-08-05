@@ -7,12 +7,13 @@ from typing import (
 from datetime import datetime
 from dateutil.tz import tzutc
 
-
 import aiohttp
 from aiohttp import hdrs
 from tqdm import tqdm
 
 from yarl import URL
+from aiotusclient import client
+
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE
@@ -20,7 +21,6 @@ from ..exceptions import BackendAPIError
 from ..request import Request
 from ..session import api_session
 
-from .tusclient import client
 
 __all__ = (
     'VFolder',
@@ -118,8 +118,7 @@ class VFolder(BaseFunction):
     async def upload(self, files: Sequence[Union[str, Path]],
                      basedir: Union[str, Path] = None):
 
-        base_file_path = (Path.cwd() if basedir is None
-                          else Path(basedir).resolve())
+        base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
 
         files = [Path(file).resolve() for file in files]
         total_size = 0
@@ -135,29 +134,30 @@ class VFolder(BaseFunction):
 
         for file_path in files:
             file_size = Path(file_path).stat().st_size
-            params: Mapping = {'path': "{}".format(Path(file_path).name), 'size': int(file_size)}
+            params: Mapping = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
+                               'size': int(file_size)}
             rqst = Request(api_session.get(),
                            'POST',
                            '/folders/{}/create_upload_session'
                            .format(self.name), params=params)
 
-            rqst.content_type = "text/plain"
+            rqst.content_type = "application/octet-stream"
             date = datetime.now(tzutc())
             rqst.date = date
-            rqst._sign(URL("/folders/{}/create_upload_session?path={}&size={}"
-                       .format(self.name,
-                               params['path'],
-                               params['size'])))
-            rqst.headers["Date"] = date.isoformat()
-            rqst.headers["content-type"] = "text/plain"
 
-            params = {'path': "{}".format(Path(file_path).name),
+            rqst._sign(URL("/folders/{}/create_upload_session?path={}&size={}"
+                           .format(self.name, params['path'], params['size'])))
+            rqst.headers["Date"] = date.isoformat()
+            rqst.headers["content-type"] = "application/octet-stream"
+
+            params = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
                       'size': int(file_size)}
+
             tus_client = client.TusClient(str(session_create_url),
                                           str(session_upload_url),
                                           rqst.headers, params)
-            input_file = open(str(Path(file_path).relative_to(base_file_path)), "rb")
-            print(file_path, base_file_path, str(Path(file_path).relative_to(base_file_path)))
+
+            input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
             uploader = tus_client.async_uploader(file_stream=input_file)
             await uploader.upload()
 
