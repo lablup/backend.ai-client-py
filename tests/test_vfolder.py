@@ -116,7 +116,6 @@ def test_vfolder_upload(tmp_path: Path):
         """
         resp = session.VFolder(vfolder_name).upload([mock_file],
                                                     basedir=tmp_path)
-
         assert resp == ''
 
 
