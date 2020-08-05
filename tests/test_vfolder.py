@@ -1,12 +1,12 @@
 from pathlib import Path
 from unittest import mock
-import secrets
+
 
 import pytest
 from aioresponses import aioresponses
 
 from ai.backend.client.config import API_VERSION
-from ai.backend.client.session import Session, AsyncSession
+from ai.backend.client.session import Session
 from ai.backend.client.test_utils import AsyncMock
 
 
@@ -104,20 +104,19 @@ def test_vfolder_get_info():
 
 
 def test_vfolder_upload(tmp_path: Path):
-    with Session() as session, aioresponses() as m:
+    with Session() as session:
         tmp_path = Path().cwd()
-        mock_file = 'test_request.py'
-        #mock_file.write_bytes(secrets.token_bytes(32))
+        mock_file = 'test_request.py'  # example.bin
+        #  mock_file.write_bytes(secrets.token_bytes(32))
         vfolder_name = 'mydata1'
         """
         m.post(build_url(session.config,
                          '/folders/{}/upload'.format(vfolder_name)),
                status=201)
         """
-        print("temp path ", tmp_path, mock_file, Path.cwd())
-
         resp = session.VFolder(vfolder_name).upload([mock_file],
                                                     basedir=tmp_path)
+        
         assert resp == ''
 
 

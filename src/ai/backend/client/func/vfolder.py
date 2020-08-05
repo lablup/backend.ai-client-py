@@ -159,7 +159,7 @@ class VFolder(BaseFunction):
 
             input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
             uploader = tus_client.async_uploader(file_stream=input_file)
-            await uploader.upload()
+            return await uploader.upload()
 
     @api_function
     async def mkdir(self, path: Union[str, Path]):
