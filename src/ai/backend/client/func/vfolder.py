@@ -120,7 +120,11 @@ class VFolder(BaseFunction):
 
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
 
-        files = [Path(file).resolve() for file in files]
+        if basedir:
+            files = [basedir / Path(file) for file in files]
+        else:
+            files = [Path(file).resolve() for file in files]
+
         total_size = 0
         for file_path in files:
             total_size += Path(file_path).stat().st_size
@@ -134,6 +138,7 @@ class VFolder(BaseFunction):
 
         for file_path in files:
             file_size = Path(file_path).stat().st_size
+
             params: Mapping = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
                                'size': int(file_size)}
             rqst = Request(api_session.get(),
@@ -157,7 +162,10 @@ class VFolder(BaseFunction):
                                           str(session_upload_url),
                                           rqst.headers, params)
 
-            input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
+            if basedir:
+                input_file = open(base_path / file_path, "rb")
+            else:
+                input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
             uploader = tus_client.async_uploader(file_stream=input_file)
             return await uploader.upload()
 
