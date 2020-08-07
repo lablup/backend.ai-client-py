@@ -39,4 +39,4 @@ env_*.sh
 
 .vscode/
 .mypy_cache/
-src/ai/backend/.DS_Store
+.DS_Store
