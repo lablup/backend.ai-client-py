@@ -252,8 +252,7 @@ class ComputeSession(BaseFunction):
             params['config'].update({
                 'mount_map': mount_map,
                 'preopen_ports': preopen_ports,
-            })
-            params.update({
+                'starts_at': starts_at,
                 'bootstrap_script': bootstrap_script,
             })
         if api_session.get().api_version >= (4, '20190615'):
@@ -262,7 +261,6 @@ class ComputeSession(BaseFunction):
                 'domain': domain_name,
                 'group': group_name,
                 'type': type_,
-                'starts_at': starts_at,
                 'enqueueOnly': enqueue_only,
                 'maxWaitSeconds': max_wait,
                 'reuseIfExists': not no_reuse,

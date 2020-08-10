@@ -115,6 +115,13 @@ def format_error(exc: Exception):
             existing_session_id = exc.data['data'].get('existingSessionId', None)
             if existing_session_id is not None:
                 yield f"\n- Existing session ID: {existing_session_id}"
+        elif exc.data['type'].endswith('/invalid-api-params'):
+            per_field_errors = exc.data.get('data', {})
+            if isinstance(per_field_errors, dict):
+                for k, v in per_field_errors.items():
+                    yield f"\n- \"{k}\": {v}"
+            else:
+                yield f"\n- {per_field_errors}"
         else:
             if exc.data['type'].endswith('/graphql-error'):
                 yield "\n\u279c Error details:\n"
