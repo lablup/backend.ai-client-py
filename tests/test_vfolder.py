@@ -104,16 +104,10 @@ def test_vfolder_get_info():
 
 
 def test_vfolder_upload(tmp_path: Path):
+    vfolder_name = 'fake-vfolder-name'
     with Session() as session:
         tmp_path = Path().cwd()
-        mock_file = 'test_request.py'  # example.bin
-        #  mock_file.write_bytes(secrets.token_bytes(32))
-        vfolder_name = 'mydata1'
-        """
-        m.post(build_url(session.config,
-                         '/folders/{}/upload'.format(vfolder_name)),
-               status=201)
-        """
+        mock_file = 'test_request.py'
         resp = session.VFolder(vfolder_name).upload([mock_file],
                                                     basedir=tmp_path)
         assert resp == ''
