@@ -261,6 +261,6 @@ def session(id_or_name):
         if len(dependencies) == 0:
             dependencies_summary = "- (There are no dependency tasks)"
         else:
-            dependencies_summary = "- " + "\n- ".join(map(repr, dependencies))
+            dependencies_summary = "- " + "\n- ".join(map(lambda item: repr(dict(item)), dependencies))
         print(f"Containers:\n{containers_summary}")
         print(f"Dependencies:\n{dependencies_summary}")
