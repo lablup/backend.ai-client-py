@@ -1,1 +1,1 @@
-Fix various API v4/v5 compatibility issues when using CLI commands
+Fix various API v4/v5 compatibility issues when using CLI commands and make output of "admin session" more readable
