@@ -250,7 +250,7 @@ def session(id_or_name):
         if session_.api_version < (4, '20181215'):
             del fields[4]  # tag
         fields = apply_version_aware_fields(session_, fields)
-        field_formatters = defaultdict(lambda: lambda value: str(value))
+        field_formatters = defaultdict(lambda: str)
         field_formatters['last_stat'] = format_stats
         field_formatters['containers'] = functools.partial(format_containers, indent='  ')
         field_formatters['dependencies'] = functools.partial(format_dependencies, indent='  ')
