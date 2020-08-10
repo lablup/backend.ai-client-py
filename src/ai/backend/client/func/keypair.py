@@ -175,6 +175,7 @@ class KeyPair(BaseFunction):
         is_active: bool = None,
         domain_name: str = None,
         *,
+        user_id: str = None,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
     ) -> AsyncIterator[dict]:
@@ -182,12 +183,15 @@ class KeyPair(BaseFunction):
         Lists the keypairs.
         You need an admin privilege for this operation.
         """
+        variables = {
+            'is_active': (is_active, 'Boolean'),
+            'domain_name': (domain_name, 'String'),
+        }
+        if user_id is not None:
+            variables['email'] = (user_id, 'String')
         async for item in generate_paginated_results(
             'keypair_list',
-            {
-                'is_active': (is_active, 'Boolean'),
-                'domain_name': (domain_name, 'String'),
-            },
+            variables,
             fields,
             page_size=page_size,
         ):
