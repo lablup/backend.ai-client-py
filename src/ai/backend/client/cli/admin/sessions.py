@@ -252,10 +252,15 @@ def session(id_or_name):
         for i, value in enumerate(resp['compute_session'].values()):
             if i < len(fields):
                 print(fields[i][0] + ': ' + str(value))
-        containers_summary = "- " + "\n- ".join(map(repr, resp['compute_session']['containers']))
-        if len(resp['compute_session']['dependencies']) == 0:
+        containers = resp['compute_session'].get('containers', {})
+        if len(containers) == 0:
+            containers_summary = "- (There are no sub-containers belonging to the session)"
+        else:
+            containers_summary = "- " + "\n- ".join(map(lambda item: repr(dict(item)), containers))
+        dependencies = resp['compute_session'].get('dependencies', {})
+        if len(dependencies) == 0:
             dependencies_summary = "- (There are no dependency tasks)"
         else:
-            dependencies_summary = "- " + "\n- ".join(map(repr, resp['compute_session']['dependencies']))
+            dependencies_summary = "- " + "\n- ".join(map(repr, dependencies))
         print(f"Containers:\n{containers_summary}")
         print(f"Dependencies:\n{dependencies_summary}")
