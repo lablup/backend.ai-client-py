@@ -3,6 +3,7 @@ from typing import (
     Any,
     Dict,
 )
+import uuid
 
 import click
 
@@ -170,12 +171,10 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
 
 
 @admin.command()
-@click.argument('name', metavar='NAME')
-def session(name):
+@click.argument('id_or_name', metavar='ID_OR_NAME')
+def session(id_or_name):
     '''
     Show detailed information for a running compute session.
-
-    SESSID: Session id or its alias.
     '''
     fields = [
         ('Session Name', lambda api_session: get_naming(
@@ -210,11 +209,16 @@ def session(name):
             del fields[4]  # tag
         fields = apply_version_aware_fields(session, fields)
         if session.api_version[0] < 5:
-            q = 'query($name: String!) {{' \
-                '  compute_session(sess_id: $name) {{ $fields }}' \
-                '}}'
-            v = {'name': name}
+            # In API v4 or older, we can only query a currently running session
+            # using its user-defined alias name.
+            q = 'query($name: String!) {' \
+                '  compute_session(sess_id: $name) { $fields }' \
+                '}'
+            v = {'name': id_or_name}
         else:
+            # In API v5 or later, we can query any compute session both in the history
+            # and currently running using its UUID.
+            # NOTE: Partial ID/alias matching is supported in the REST API only.
             q = 'query($id: UUID!) {' \
                 '  compute_session(id: $id) {' \
                 '    $fields' \
@@ -226,17 +230,24 @@ def session(name):
                 '    }' \
                 '  }' \
                 '}'
-            v = {'id': name}
+            try:
+                uuid.UUID(id_or_name)
+            except ValueError:
+                print_fail("In API v5 or later, the session ID must be given in the UUID format.")
+                sys.exit(1)
+            v = {'id': id_or_name}
         q = q.replace('$fields', ' '.join(item[1] for item in fields))
-        name_key = get_naming(session.api_version, 'name_gql_field')
         try:
             resp = session.Admin.query(q, v)
         except Exception as e:
             print_error(e)
             sys.exit(1)
-        if resp['compute_session'][name_key] is None:
-            print('There is no such running compute session.')
-            return
+        if resp['compute_session'] is None:
+            if session.api_version[0] < 5:
+                print_fail('There is no such running compute session.')
+            else:
+                print_fail('There is no such compute session.')
+            sys.exit(1)
         transform_legacy_mem_fields(resp['compute_session'])
         for i, value in enumerate(resp['compute_session'].values()):
             if i < len(fields):
