@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+20.03.3 (2020-08-10)
+--------------------
+
+### Fixes
+* Extends the keypair's `paginated_list` query to accept `user_id` parameter. ([#119](https://github.com/lablup/backend.ai-client-py/issues/119))
+
+
 20.03.2 (2020-08-10)
 --------------------
 
