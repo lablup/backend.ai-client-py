@@ -16,6 +16,11 @@ Changes
 
 .. towncrier release notes start
 
+20.03.4 (2020-08-13)
+--------------------
+
+* Hotfix release to fix a mistake from [#121](https://github.com/lablup/backend.ai-client-py/issues/121)
+
 20.03.3 (2020-08-10)
 --------------------
 
