@@ -1,8 +1,16 @@
+from collections import defaultdict
+import functools
+import json
 import sys
+import textwrap
 from typing import (
     Any,
     Dict,
+    Mapping,
+    Optional,
+    Sequence,
 )
+import uuid
 
 import click
 
@@ -169,13 +177,46 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
         sys.exit(1)
 
 
+def format_stats(raw_stats: Optional[str], indent='') -> str:
+    if raw_stats is None:
+        return "(unavailable)"
+    stats = json.loads(raw_stats)
+    text = "\n".join(f"- {k + ': ':18s}{v}" for k, v in stats.items())
+    return "\n" + textwrap.indent(text, indent)
+
+
+def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str:
+    if len(containers) == 0:
+        text = "- (There are no sub-containers belonging to the session)"
+    else:
+        text = ""
+        for cinfo in containers:
+            text += "\n".join((
+                f"+ {cinfo['id']}",
+                *(f"  - {k + ': ':18s}{v}" for k, v in cinfo.items() if k not in ('id', 'last_stat')),
+                f"  + last_stat: {format_stats(cinfo['last_stat'], indent='    ')}",
+            ))
+    return "\n" + textwrap.indent(text, indent)
+
+
+def format_dependencies(dependencies: Sequence[Mapping[str, Any]], indent='') -> str:
+    if len(dependencies) == 0:
+        text = "- (There are no dependency tasks)"
+    else:
+        text = ""
+        for dinfo in dependencies:
+            text += "\n".join(
+                (f"+ {dinfo['name']} ({dinfo['id']})",
+                *(f"  - {k + ': ':18s}{v}" for k, v in dinfo.items() if k not in ('name', 'id'))),
+            )
+    return "\n" + textwrap.indent(text, indent)
+
+
 @admin.command()
-@click.argument('name', metavar='NAME')
-def session(name):
+@click.argument('id_or_name', metavar='ID_OR_NAME')
+def session(id_or_name):
     '''
     Show detailed information for a running compute session.
-
-    SESSID: Session id or its alias.
     '''
     fields = [
         ('Session Name', lambda api_session: get_naming(
@@ -205,46 +246,60 @@ def session(name):
     #     ('IO Current Scratch Size', 'io_cur_scratch_size'),
     #     ('CPU Using (%)', 'cpu_using'),
     # ]
-    with Session() as session:
-        if session.api_version < (4, '20181215'):
+    with Session() as session_:
+        if session_.api_version < (4, '20181215'):
             del fields[4]  # tag
-        fields = apply_version_aware_fields(session, fields)
-        if session.api_version[0] < 5:
-            q = 'query($name: String!) {{' \
-                '  compute_session(sess_id: $name) {{ $fields }}' \
-                '}}'
-            v = {'name': name}
+        fields = apply_version_aware_fields(session_, fields)
+        field_formatters = defaultdict(lambda: str)
+        field_formatters['last_stat'] = format_stats
+        field_formatters['containers'] = functools.partial(format_containers, indent='  ')
+        field_formatters['dependencies'] = functools.partial(format_dependencies, indent='  ')
+        if session_.api_version[0] < 5:
+            # In API v4 or older, we can only query a currently running session
+            # using its user-defined alias name.
+            fields.append(('Last Stats', 'last_stat'))
+            q = 'query($name: String!) {' \
+                '  compute_session(sess_id: $name) { $fields }' \
+                '}'
+            v = {'name': id_or_name}
         else:
+            # In API v5 or later, we can query any compute session both in the history
+            # and currently running using its UUID.
+            # NOTE: Partial ID/alias matching is supported in the REST API only.
+            fields.append((
+                'Containers',
+                'containers {'
+                ' id role agent status status_info status_changed occupied_slots last_stat '
+                '}',
+            ))
+            fields.append((
+                'Dependencies',
+                'dependencies { name id status status_info status_changed }',
+            ))
             q = 'query($id: UUID!) {' \
                 '  compute_session(id: $id) {' \
                 '    $fields' \
-                '    containers {' \
-                '      id agent occupied_slots status status_changed' \
-                '    }' \
-                '    dependencies {' \
-                '      name id status status_changed' \
-                '    }' \
                 '  }' \
                 '}'
-            v = {'id': name}
+            try:
+                uuid.UUID(id_or_name)
+            except ValueError:
+                print_fail("In API v5 or later, the session ID must be given in the UUID format.")
+                sys.exit(1)
+            v = {'id': id_or_name}
         q = q.replace('$fields', ' '.join(item[1] for item in fields))
-        name_key = get_naming(session.api_version, 'name_gql_field')
         try:
-            resp = session.Admin.query(q, v)
+            resp = session_.Admin.query(q, v)
         except Exception as e:
             print_error(e)
             sys.exit(1)
-        if resp['compute_session'][name_key] is None:
-            print('There is no such running compute session.')
-            return
+        if resp['compute_session'] is None:
+            if session_.api_version[0] < 5:
+                print_fail('There is no such running compute session.')
+            else:
+                print_fail('There is no such compute session.')
+            sys.exit(1)
         transform_legacy_mem_fields(resp['compute_session'])
-        for i, value in enumerate(resp['compute_session'].values()):
-            if i < len(fields):
-                print(fields[i][0] + ': ' + str(value))
-        containers_summary = "- " + "\n- ".join(map(repr, resp['compute_session']['containers']))
-        if len(resp['compute_session']['dependencies']) == 0:
-            dependencies_summary = "- (There are no dependency tasks)"
-        else:
-            dependencies_summary = "- " + "\n- ".join(map(repr, resp['compute_session']['dependencies']))
-        print(f"Containers:\n{containers_summary}")
-        print(f"Dependencies:\n{dependencies_summary}")
+        for i, (key, value) in enumerate(resp['compute_session'].items()):
+            fmt = field_formatters[key]
+            print(f"{fields[i][0] + ': ':20s}{fmt(value)}")

@@ -21,7 +21,6 @@ from ..exceptions import BackendAPIError
 from ..request import Request
 from ..session import api_session
 
-
 __all__ = (
     'VFolder',
 )

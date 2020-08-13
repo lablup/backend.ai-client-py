@@ -108,13 +108,25 @@ def format_error(exc: Exception):
         if exc.data['type'].endswith('/too-many-sessions-matched'):
             matches = exc.data['data'].get('matches', [])
             if matches:
-                yield '\nCandidates (up to 10 recent entries):\n'
+                yield "\nCandidates (up to 10 recent entries):\n"
             for item in matches:
-                yield '- {0} ({1}, {2})\n'.format(item['id'], item['name'], item['status'])
+                yield f"- {item['id']} ({item['name']}, {item['status']})\n"
+        elif exc.data['type'].endswith('/session-already-exists'):
+            existing_session_id = exc.data['data'].get('existingSessionId', None)
+            if existing_session_id is not None:
+                yield f"\n- Existing session ID: {existing_session_id}"
+        elif exc.data['type'].endswith('/invalid-api-params'):
+            per_field_errors = exc.data.get('data', {})
+            if isinstance(per_field_errors, dict):
+                for k, v in per_field_errors.items():
+                    yield f"\n- \"{k}\": {v}"
+            else:
+                yield f"\n- {per_field_errors}"
         else:
             if exc.data['type'].endswith('/graphql-error'):
-                yield '\n\u279c Error details:\n'
-                yield from (err_item['message'] + '\n' for err_item in exc.data.get('data', []))
+                yield "\n\u279c Error details:\n"
+                yield from (f"{err_item['message']}\n"
+                            for err_item in exc.data.get('data', []))
             else:
                 other_details = exc.data.get('msg', None)
                 if other_details:
@@ -122,8 +134,8 @@ def format_error(exc: Exception):
                     yield str(other_details)
         agent_details = exc.data.get('agent-details', None)
         if agent_details is not None:
-            yield '\n\u279c This is an agent-side error. '
-            yield 'Check the agent status or ask the administrator for help.'
+            yield "\n\u279c This is an agent-side error. "
+            yield "Check the agent status or ask the administrator for help."
             agent_exc = agent_details.get('exception', None)
             if agent_exc is not None:
                 yield '\n\u279c ' + str(agent_exc)
@@ -132,14 +144,13 @@ def format_error(exc: Exception):
                 yield '\n\u279c ' + str(desc)
         content = exc.data.get('content', None)
         if content:
-            yield '\n' + content
+            yield "\n" + content
     else:
         args = exc.args if exc.args else ['']
-        yield '{0}: {1}\n'.format(exc.__class__.__name__,
-                                  str(args[0]))
-        yield '{}'.format('\n'.join(map(str, args[1:])))
-        yield ('*** Traceback ***\n' +
-               ''.join(traceback.format_tb(exc.__traceback__)).strip())
+        yield f"{exc.__class__.__name__}: {args[0]}\n"
+        yield "\n".join(map(str, args[1:]))
+        yield ("*** Traceback ***\n" +
+               "".join(traceback.format_tb(exc.__traceback__)).strip())
 
 
 def print_error(exc: Exception, *, file=None):

@@ -163,7 +163,7 @@ class Group(BaseFunction):
     @classmethod
     async def delete(cls, gid: str):
         """
-        Deletes an existing group.
+        Inactivates the existing group. Does not actually delete it for safety.
         """
         query = textwrap.dedent("""\
             mutation($gid: UUID!) {
@@ -181,6 +181,29 @@ class Group(BaseFunction):
         async with rqst.fetch() as resp:
             data = await resp.json()
         return data['delete_group']
+
+    @api_function
+    @classmethod
+    async def purge(cls, gid: str):
+        """
+        Delete the existing group. This action cannot be undone.
+        """
+        query = textwrap.dedent("""\
+            mutation($gid: UUID!) {
+                purge_group(gid: $gid) {
+                    ok msg
+                }
+            }
+        """)
+        variables = {'gid': gid}
+        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst.set_json({
+            'query': query,
+            'variables': variables,
+        })
+        async with rqst.fetch() as resp:
+            data = await resp.json()
+        return data['purge_group']
 
     @api_function
     @classmethod

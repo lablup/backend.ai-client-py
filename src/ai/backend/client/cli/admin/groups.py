@@ -4,7 +4,8 @@ import click
 from tabulate import tabulate
 
 from . import admin
-from ..pretty import print_error, print_fail
+from ..interaction import ask_yn
+from ..pretty import print_error, print_info, print_fail
 from ...session import Session
 
 
@@ -157,13 +158,36 @@ def update(gid, name, description, is_active, total_resource_slots,
 @click.argument('gid', type=str, metavar='GROUP_ID')
 def delete(gid):
     """
-    Delete an existing group.
+    Inactivates the existing group. Does not actually delete it for safety.
 
-    GROUP_ID: Group ID to delete.
+    GROUP_ID: Group ID to inactivate.
     """
     with Session() as session:
         try:
             data = session.Group.delete(gid)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+        if not data['ok']:
+            print_fail('Group inactivation has failed: {0}'.format(data['msg']))
+            sys.exit(1)
+        print('Group is inactivated: ' + gid + '.')
+
+
+@groups.command()
+@click.argument('gid', type=str, metavar='GROUP_ID')
+def purge(gid):
+    """
+    Delete the existing group. This action cannot be undone.
+
+    GROUP_ID: Group ID to inactivate.
+    """
+    with Session() as session:
+        try:
+            if not ask_yn():
+                print_info('Cancelled')
+                sys.exit(1)
+            data = session.Group.purge(gid)
         except Exception as e:
             print_error(e)
             sys.exit(1)
