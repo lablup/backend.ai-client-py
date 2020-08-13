@@ -252,6 +252,8 @@ class ComputeSession(BaseFunction):
             params['config'].update({
                 'mount_map': mount_map,
                 'preopen_ports': preopen_ports,
+            })
+            params.update({
                 'starts_at': starts_at,
                 'bootstrap_script': bootstrap_script,
             })
