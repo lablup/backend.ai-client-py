@@ -126,7 +126,7 @@ class VFolder(BaseFunction):
 
         total_size = 0
 
-        for file_path in files:            
+        for file_path in files:
             total_size += Path(file_path).stat().st_size
 
         session = api_session.get()
