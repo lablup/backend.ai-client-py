@@ -117,16 +117,17 @@ class VFolder(BaseFunction):
     @api_function
     async def upload(self, files: Sequence[Union[str, Path]],
                      basedir: Union[str, Path] = None):
-
+        
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
-
+        
         if basedir:
             files = [basedir / Path(file) for file in files]
         else:
             files = [Path(file).resolve() for file in files]
 
         total_size = 0
-        for file_path in files:
+        
+        for file_path in files:            
             total_size += Path(file_path).stat().st_size
 
         session = api_session.get()
@@ -161,11 +162,12 @@ class VFolder(BaseFunction):
             tus_client = client.TusClient(str(session_create_url),
                                           str(session_upload_url),
                                           rqst.headers, params)
-
+            
             if basedir:
                 input_file = open(base_path / file_path, "rb")
             else:
                 input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
+            print(base_path / file_path)
             uploader = tus_client.async_uploader(file_stream=input_file)
             return await uploader.upload()
 
