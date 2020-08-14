@@ -18,6 +18,9 @@ from ai.backend.client.session import Session
 from ai.backend.client.test_utils import AsyncMock
 from ai.backend.client.request import Request
 
+import aiohttp
+import asyncio
+
 
 def build_url(config, path: str):
     base_url = config.endpoint.path.rstrip('/')
@@ -119,16 +122,17 @@ def test_vfolder_upload(tmp_path: Path):
         mock_file = tmp_path / 'test_request.py'
         vfolder_name = 'fake-vfolder-name'
 
-        basedir = None
-        base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
-
-        if basedir:
-            mock_file = basedir / Path(mock_file)
-        else:
-            mock_file = Path(mock_file).resolve()
+        base_path = Path.cwd()
+        mock_file = base_path / Path(mock_file)
 
         file_size = Path(mock_file).stat().st_size
         file_path = base_path / mock_file
+
+        config = session.config
+        base_url = config.endpoint
+
+        session_create_url = base_url / 'folders/{}/create_upload_session' \
+                                        .format(vfolder_name)
 
         params: Mapping = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
                             'size': int(file_size)}
@@ -151,9 +155,33 @@ def test_vfolder_upload(tmp_path: Path):
 
         session.VFolder(vfolder_name).delete()
         session.VFolder.create(vfolder_name)
-        resp = session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
+        jwt_token_from_api = session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
 
-        assert resp == 1
+        loop = asyncio.get_event_loop()
+
+        try:
+            jwt_token = loop.run_until_complete(get_jwt_token(session_create_url, rqst.headers, params))
+        finally:
+            loop.close()
+
+        header_1, payload_1, _ = jwt_token_from_api.split(".")
+        header_2, payload_2, _ = jwt_token.split(".")
+
+        if ((header_1 == header_2) & (payload_1[0:10] == payload_2[0:10]) &
+           (payload_1[-10:] == payload_2[-10:])):
+            assert True
+        else:
+            assert False
+
+
+async def get_jwt_token(session_create_url, headers, params):
+    async with aiohttp.ClientSession() as sess:
+        params['size'] = int(params['size'])
+        headers['method'] = 'POST'
+        async with sess.post(session_create_url, headers=headers, params=params) as resp:
+            jwt_token = await resp.json()
+            jwt_token = jwt_token['token']
+            return jwt_token
 
 
 def test_vfolder_delete_files():
