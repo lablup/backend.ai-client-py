@@ -1,6 +1,14 @@
 from pathlib import Path
 from unittest import mock
 
+from typing import (
+    Mapping
+)
+
+
+from datetime import datetime
+from dateutil.tz import tzutc
+from yarl import URL
 
 import pytest
 from aioresponses import aioresponses
@@ -8,6 +16,7 @@ from aioresponses import aioresponses
 from ai.backend.client.config import API_VERSION
 from ai.backend.client.session import Session
 from ai.backend.client.test_utils import AsyncMock
+from ai.backend.client.request import Request
 
 
 def build_url(config, path: str):
@@ -104,19 +113,48 @@ def test_vfolder_get_info():
 
 
 def test_vfolder_upload(tmp_path: Path):
-    assert True
-    """
-    vfolder_name = 'fake-vfolder-name'
-    with Session() as session:
-        # temp disable test. Due to Tus server can't find the folder
-        tmp_path = Path().cwd()
-        mock_file = 'test_request.py'
-        resp = session.VFolder(vfolder_name).upload([mock_file],
-                                                    basedir=tmp_path)
-        print("tmp_path ", tmp_path)
+    tmp_path = Path.cwd()
 
-        assert resp == ''
-    """
+    with Session() as session:
+        mock_file = tmp_path / 'test_request.py'
+        vfolder_name = 'fake-vfolder-name'
+
+        basedir = None
+        base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
+
+        if basedir:
+            mock_file = basedir / Path(mock_file)
+        else:
+            mock_file = Path(mock_file).resolve()
+
+        file_size = Path(mock_file).stat().st_size
+        file_path = base_path / mock_file
+
+        params: Mapping = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
+                            'size': int(file_size)}
+        rqst = Request(session,
+                       'POST',
+                       '/folders/{}/create_upload_session'
+                       .format(vfolder_name), params=params)
+
+        rqst.content_type = "application/octet-stream"
+        date = datetime.now(tzutc())
+        rqst.date = date
+
+        rqst._sign(URL("/folders/{}/create_upload_session?path={}&size={}"
+                        .format(vfolder_name, params['path'], params['size'])))
+        rqst.headers["Date"] = date.isoformat()
+        rqst.headers["content-type"] = "application/octet-stream"
+
+        params = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
+                  'size': int(file_size)}
+
+        session.VFolder(vfolder_name).delete()
+        session.VFolder.create(vfolder_name)
+        resp = session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
+        
+
+        assert resp == 1
 
 
 def test_vfolder_delete_files():
