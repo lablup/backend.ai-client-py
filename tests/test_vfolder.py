@@ -152,7 +152,6 @@ def test_vfolder_upload(tmp_path: Path):
         session.VFolder(vfolder_name).delete()
         session.VFolder.create(vfolder_name)
         resp = session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
-        
 
         assert resp == 1
 
