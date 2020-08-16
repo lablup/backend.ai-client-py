@@ -153,7 +153,7 @@ def test_vfolder_upload(tmp_path: Path):
         params = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
                   'size': int(file_size)}
 
-        session.VFolder(vfolder_name).delete()
+        
         session.VFolder.create(vfolder_name)
         jwt_token_from_api = session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
 
@@ -163,10 +163,11 @@ def test_vfolder_upload(tmp_path: Path):
             jwt_token = loop.run_until_complete(get_jwt_token(session_create_url, rqst.headers, params))
         finally:
             loop.close()
-
+        session.VFolder(vfolder_name).delete()
+        
         header_1, payload_1, _ = jwt_token_from_api.split(".")
         header_2, payload_2, _ = jwt_token.split(".")
-
+    
         if ((header_1 == header_2) & (payload_1[0:10] == payload_2[0:10]) &
            (payload_1[-10:] == payload_2[-10:])):
             assert True
