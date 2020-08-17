@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from typing import (
     Sequence, List,
@@ -9,6 +10,7 @@ from dateutil.tz import tzutc
 
 import aiohttp
 from aiohttp import hdrs
+import janus
 from tqdm import tqdm
 
 from yarl import URL
@@ -16,7 +18,7 @@ from aiotusclient import client
 
 from .base import api_function, BaseFunction
 from ..compat import current_loop
-from ..config import DEFAULT_CHUNK_SIZE
+from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
 from ..exceptions import BackendAPIError
 from ..request import Request
 from ..session import api_session
@@ -114,20 +116,79 @@ class VFolder(BaseFunction):
             return await resp.text()
 
     @api_function
-    async def upload(self, files: Sequence[Union[str, Path]],
-                     basedir: Union[str, Path] = None):
-
+    async def download(
+        self,
+        relative_paths: Sequence[Union[str, Path]],
+        *,
+        basedir: Union[str, Path] = None,
+        show_progress: bool = False,
+    ) -> None:
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
+        for relpath in relative_paths:
+            file_path = base_path / relpath
+            rqst = Request(api_session.get(), 'POST',
+                           '/folders/{}/request-download'.format(self.name))
+            rqst.set_json({
+                'path': str(relpath),
+            })
+            async with rqst.fetch() as resp:
+                download_info = await resp.json()
+                download_url = URL(download_info['url']).with_query({
+                    'token': download_info['token'],
+                })
 
+            def _write_file(file_path: Path, q: janus._SyncQueueProxy[bytes]):
+                with open(file_path, 'wb') as f:
+                    while True:
+                        chunk = q.get()
+                        if not chunk:
+                            return
+                        f.write(chunk)
+                        q.task_done()
+
+            print(f"Downloading {file_path} ...")
+            async with aiohttp.ClientSession() as client:
+                # TODO: ranged requests to continue interrupted downloads with automatic retries
+                async with client.get(download_url, ssl=False) as raw_resp:
+                    size = int(raw_resp.headers['Content-Length'])
+                    if file_path.exists():
+                        raise RuntimeError('The target file already exists', file_path.name)
+                    q: janus.Queue[bytes] = janus.Queue(MAX_INFLIGHT_CHUNKS)
+                    try:
+                        with tqdm(
+                            total=size,
+                            unit='bytes',
+                            unit_scale=True,
+                            unit_divisor=1024,
+                            disable=not show_progress,
+                        ) as pbar:
+                            loop = current_loop()
+                            writer_fut = loop.run_in_executor(None, _write_file, file_path, q.sync_q)
+                            await asyncio.sleep(0)
+                            while True:
+                                chunk = await raw_resp.content.read(DEFAULT_CHUNK_SIZE)
+                                pbar.update(len(chunk))
+                                if not chunk:
+                                    break
+                                await q.async_q.put(chunk)
+                    finally:
+                        await q.async_q.put(b'')
+                        await writer_fut
+                        q.close()
+                        await q.wait_closed()
+
+    @api_function
+    async def upload(
+        self,
+        files: Sequence[Union[str, Path]],
+        *,
+        basedir: Union[str, Path] = None,
+    ) -> None:
+        base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
         if basedir:
             files = [basedir / Path(file) for file in files]
         else:
             files = [Path(file).resolve() for file in files]
-
-        total_size = 0
-        for file_path in files:
-            total_size += Path(file_path).stat().st_size
-
         for file_path in files:
             file_size = Path(file_path).stat().st_size
             rqst = Request(api_session.get(), 'POST',
@@ -146,7 +207,7 @@ class VFolder(BaseFunction):
                 input_file = open(base_path / file_path, "rb")
             else:
                 input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
-            print(base_path / file_path)
+            print(f"Uploading {base_path / file_path} ...")
             uploader = tus_client.async_uploader(
                 file_stream=input_file,
                 url=upload_url,
@@ -159,16 +220,6 @@ class VFolder(BaseFunction):
                        '/folders/{}/mkdir'.format(self.name))
         rqst.set_json({
             'path': path,
-        })
-        async with rqst.fetch() as resp:
-            return await resp.text()
-
-    @api_function
-    async def request_download(self, filename: Union[str, Path]):
-        rqst = Request(api_session.get(), 'POST',
-                       '/folders/{}/request_download'.format(self.name))
-        rqst.set_json({
-            'file': filename
         })
         async with rqst.fetch() as resp:
             return await resp.text()
@@ -196,50 +247,6 @@ class VFolder(BaseFunction):
         })
         async with rqst.fetch() as resp:
             return await resp.text()
-
-    @api_function
-    async def download(self, files: Sequence[Union[str, Path]],
-                       show_progress: bool = False):
-
-        rqst = Request(api_session.get(), 'GET',
-                       '/folders/{}/download'.format(self.name))
-        rqst.set_json({
-            'files': files,
-        })
-        file_names: List[str] = []
-        async with rqst.fetch() as resp:
-            if resp.status // 100 != 2:
-                raise BackendAPIError(resp.status, resp.reason,
-                                      await resp.text())
-            total_bytes = int(resp.headers['X-TOTAL-PAYLOADS-LENGTH'])
-            tqdm_obj = tqdm(desc='Downloading files',
-                            unit='bytes', unit_scale=True,
-                            total=total_bytes,
-                            disable=not show_progress)
-            reader = aiohttp.MultipartReader.from_response(resp.raw_response)
-            with tqdm_obj as pbar:
-                loop = current_loop()
-                acc_bytes = 0
-                while True:
-                    part = cast(aiohttp.BodyPartReader, await reader.next())
-                    if part is None:
-                        break
-                    assert part.headers.get(hdrs.CONTENT_ENCODING, 'identity').lower() in (
-                        'identity',
-                    )
-                    assert part.headers.get(hdrs.CONTENT_TRANSFER_ENCODING, 'binary').lower() in (
-                        'binary', '8bit', '7bit',
-                    )
-                    with open(part.filename, 'wb') as fp:
-                        while True:
-                            chunk = await part.read_chunk(DEFAULT_CHUNK_SIZE)
-                            if not chunk:
-                                break
-                            await loop.run_in_executor(None, lambda: fp.write(chunk))
-                            acc_bytes += len(chunk)
-                            pbar.update(len(chunk))
-                pbar.update(total_bytes - acc_bytes)
-        return {'file_names': file_names}
 
     @api_function
     async def list_files(self, path: Union[str, Path] = '.'):

@@ -33,6 +33,7 @@ _undefined = object()
 API_VERSION = (6, '20200815')
 
 DEFAULT_CHUNK_SIZE = 256 * 1024  # 256 KiB
+MAX_INFLIGHT_CHUNKS = 8
 
 local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
 local_cache_path = Path(appdirs.user_cache_dir('backend.ai', 'Lablup'))
