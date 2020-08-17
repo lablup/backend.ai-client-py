@@ -1,6 +1,7 @@
 import sys
 
 import click
+import humanize
 from tabulate import tabulate
 
 from . import admin
@@ -54,6 +55,26 @@ def list_hosts():
             resp = session.VFolder.list_all_hosts()
             print("Default vfolder host: {}".format(resp['default']))
             print("Mounted hosts: {}".format(', '.join(resp['allowed'])))
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolders.command()
+@click.argument('volume_name')
+def perf_metric(volume_name):
+    '''
+    Show the performance statistics of a volume (vfolder host).
+    (superadmin privilege required)
+    '''
+    with Session() as session:
+        try:
+            resp = session.VFolder.get_performance_metric(volume_name)
+            print(tabulate(
+                [(k, humanize.naturalsize(v, binary=True) if 'bytes' in k else f"{v:.2f}")
+                 for k, v in resp['metric'].items()],
+                headers=('Key', 'Value'),
+            ))
         except Exception as e:
             print_error(e)
             sys.exit(1)

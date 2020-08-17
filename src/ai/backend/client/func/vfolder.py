@@ -296,6 +296,16 @@ class VFolder(BaseFunction):
 
     @api_function
     @classmethod
+    async def get_performance_metric(cls, volume_name: str):
+        rqst = Request(api_session.get(), 'GET', '/folders/_/perf-metric')
+        rqst.set_json({
+            'volume': volume_name,
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    @classmethod
     async def list_mounts(cls):
         rqst = Request(api_session.get(), 'GET', '/folders/_/mounts')
         async with rqst.fetch() as resp:
