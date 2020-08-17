@@ -125,49 +125,32 @@ class VFolder(BaseFunction):
             files = [Path(file).resolve() for file in files]
 
         total_size = 0
-
         for file_path in files:
             total_size += Path(file_path).stat().st_size
 
-        session = api_session.get()
-        config = session.config
-        base_url = config.endpoint
-        session_create_url = base_url / 'folders/{}/create_upload_session' \
-                                        .format(self.name)
-        session_upload_url = base_url / "folders/_/tus/upload/"
-
         for file_path in files:
             file_size = Path(file_path).stat().st_size
-
-            params: Mapping = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
-                               'size': int(file_size)}
-            rqst = Request(api_session.get(),
-                           'POST',
-                           '/folders/{}/create_upload_session'
-                           .format(self.name), params=params)
-
-            rqst.content_type = "application/octet-stream"
-            date = datetime.now(tzutc())
-            rqst.date = date
-
-            rqst._sign(URL("/folders/{}/create_upload_session?path={}&size={}"
-                           .format(self.name, params['path'], params['size'])))
-            rqst.headers["Date"] = date.isoformat()
-            rqst.headers["content-type"] = "application/octet-stream"
-
-            params = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
-                      'size': int(file_size)}
-
-            tus_client = client.TusClient(str(session_create_url),
-                                          str(session_upload_url),
-                                          rqst.headers, params)
-
+            rqst = Request(api_session.get(), 'POST',
+                           '/folders/{}/request-upload'.format(self.name))
+            rqst.set_json({
+                'path': "{}".format(str(Path(file_path).relative_to(base_path))),
+                'size': int(file_size),
+            })
+            async with rqst.fetch() as resp:
+                upload_info = await resp.json()
+                upload_url = URL(upload_info['url']).with_query({
+                    'token': upload_info['token'],
+                })
+            tus_client = client.TusClient()
             if basedir:
                 input_file = open(base_path / file_path, "rb")
             else:
                 input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
             print(base_path / file_path)
-            uploader = tus_client.async_uploader(file_stream=input_file)
+            uploader = tus_client.async_uploader(
+                file_stream=input_file,
+                url=upload_url,
+            )
             return await uploader.upload()
 
     @api_function
