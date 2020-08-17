@@ -206,6 +206,8 @@ class VFolder(BaseFunction):
             uploader = tus_client.async_uploader(
                 file_stream=input_file,
                 url=upload_url,
+                upload_checksum=False,
+                chunk_size=DEFAULT_CHUNK_SIZE,
             )
             return await uploader.upload()
 
