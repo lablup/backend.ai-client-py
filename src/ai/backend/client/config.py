@@ -30,7 +30,7 @@ __all__ = [
 _config = None
 _undefined = object()
 
-API_VERSION = (5, '20191215')
+API_VERSION = (6, '20200815')
 
 DEFAULT_CHUNK_SIZE = 256 * 1024  # 256 KiB
 
