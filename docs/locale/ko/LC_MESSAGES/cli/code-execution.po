@@ -42,12 +42,11 @@ msgid ""
 "specified in ``--exec`` option and environment variables specified as "
 "``-e`` / ``--env`` options."
 msgstr ""
-"``run`` 명령어(command)는 :ref:`simple-execution` 에 설명되어 있는 단일 세션 실행뿐만 아니라 여러"
-" 세션의 동시(concurrent) 실행 기능을 제공하고, 이 때 ``--exec`` 옵션으로 입력되는 인수와 ``-e`` / "
-"``--env`` 옵션으로 입력되는 환경 변수(environmnet variable)가 사용됩니다."
+"``run`` 명령어는 :ref:`simple-execution` 에 설명되어 있는 단일 세션 실행뿐만 아니라 여러"
+" 세션의 동시 실행 기능을 제공하고, 이 때 ``--exec`` 옵션으로 입력되는 인수와 ``-e`` / "
+"``--env`` 옵션으로 입력되는 환경 변수가 사용됩니다."
 
 #: ../../cli/code-execution.rst:19 f9759b8e45894830946a2e74f3fe17ce
-#, fuzzy
 msgid ""
 "To define variables interpolated in the ``--exec`` option, use ``--exec-"
 "range``. To define variables interpolated in the ``--env`` options, use "
@@ -86,7 +85,7 @@ msgstr "``case:CASE1,CASE2,...,CASEN``"
 
 #: ../../cli/code-execution.rst:46 a611958faf454da8a4a53370c573756c
 msgid "A list of discrete values. The values may be either string or numbers."
-msgstr "문자열(string) 또는 숫자(number)로 구성된 배열"
+msgstr "문자열 또는 숫자로 구성된 배열"
 
 #: ../../cli/code-execution.rst:48 675f299a3cde48f3a8edd7dae0779ae9
 msgid "``linspace:START,STOP,POINTS``"
@@ -128,8 +127,8 @@ msgid ""
 "spawned sessions at the same time, some of sessions may be queued and the"
 " command may take a long time to finish."
 msgstr ""
-"생성된 세션을 실행하기 위한 사용자 혹은 클러스터의 자원(resource capacity)이 부족하면 일부 세션은 큐(queue) "
-"되어 커맨드가 실행되는 데에 오랜 시간이 걸릴 수 있습니다."
+"생성된 세션을 실행하기 위한 사용자 혹은 클러스터의 자원이 부족하면 일부 세션은 큐에 추가되어 "
+"커맨드가 실행되는 데에 오랜 시간이 걸릴 수 있습니다."
 
 #: ../../cli/code-execution.rst:70 be5e280524574004bd788e8f548d0efc
 msgid ""
