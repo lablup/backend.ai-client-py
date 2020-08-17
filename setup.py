@@ -15,12 +15,13 @@ install_requires = [
     'click~=7.1.1',
     'colorama~=0.4.3',
     'humanize~=1.0.0',
+    'janus~=0.5.0',
     'multidict~=4.7.4',
     'python-dateutil~=2.8.1',
     'PyYAML~=5.3.1',
     'tabulate~=0.8.6',
-    'tqdm~=4.42',
-    'yarl~=1.4.2',
+    'tqdm~=4.48',
+    'yarl~=1.5.1',
     'typing-extensions~=3.7.4',
 ]
 build_requires = [
