@@ -1,15 +1,11 @@
 import asyncio
 from pathlib import Path
 from typing import (
-    Sequence, List,
-    cast, Mapping, Union
+    Sequence,
+    Union
 )
 
-from datetime import datetime
-from dateutil.tz import tzutc
-
 import aiohttp
-from aiohttp import hdrs
 import janus
 from tqdm import tqdm
 
@@ -19,7 +15,6 @@ from aiotusclient import client
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
-from ..exceptions import BackendAPIError
 from ..request import Request
 from ..session import api_session
 
