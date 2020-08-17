@@ -288,6 +288,8 @@ def _prepare_mount_arg(
                 sp = value.split('=', maxsplit=1)
             elif ':' in value:  # docker-like volume mount mapping
                 sp = value.split(':', maxsplit=1)
+            else:
+                sp = [value]
             mounts.add(sp[0])
             if len(sp) == 2:
                 mount_map[sp[0]] = sp[1]
@@ -332,6 +334,8 @@ def _prepare_mount_arg(
 @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
               help='Environment variable (may appear multiple times)')
 # extra options
+@click.option('--bootstrap-script', metavar='PATH', type=click.File('r'), default=None,
+              help='A user-defined script to execute on startup.')
 @click.option('--rm', is_flag=True,
               help='Terminate the session immediately after running '
                    'the given code or files')
@@ -381,7 +385,7 @@ def run(image, files, name,                                 # base args
         code, terminal,                                     # query-mode options
         clean, build, exec, basedir,                        # batch-mode options
         env,                                                # execution environment
-        rm, stats, tag, quiet,                              # extra options
+        bootstrap_script, rm, stats, tag, quiet,            # extra options
         env_range, build_range, exec_range, max_parallel,   # experiment support
         mount, scaling_group, resources, cluster_size,      # resource spec
         resource_opts,
@@ -582,6 +586,7 @@ def run(image, files, name,                                 # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
+                bootstrap_script=bootstrap_script.read() if bootstrap_script is not None else None,
                 tag=tag,
                 preopen_ports=preopen_ports)
         except Exception as e:
@@ -780,6 +785,8 @@ def run(image, files, name,                                 # base args
 @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
               help='Environment variable (may appear multiple times)')
 # extra options
+@click.option('--bootstrap-script', metavar='PATH', type=click.File('r'), default=None,
+              help='A user-defined script to execute on startup.')
 @click.option('--tag', type=str, default=None,
               help='User-defined tag string to annotate sessions.')
 # resource spec
@@ -812,10 +819,10 @@ def run(image, files, name,                                 # base args
 def start(image, name, owner,                                 # base args
           type, starts_at, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
-          tag,                                            # extra options
+          bootstrap_script, tag,                          # extra options
           mount, scaling_group, resources, cluster_size,  # resource spec
           resource_opts,
-          domain, group, preopen):                                 # resource grouping
+          domain, group, preopen):                        # resource grouping
     '''
     Prepare and start a single compute session without executing codes.
     You may use the created session to execute codes using the "run" command
@@ -859,6 +866,7 @@ def start(image, name, owner,                                 # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
+                bootstrap_script=bootstrap_script.read() if bootstrap_script is not None else None,
                 tag=tag,
                 preopen_ports=preopen_ports)
         except Exception as e:
@@ -867,14 +875,14 @@ def start(image, name, owner,                                 # base args
         else:
             if compute_session.status == 'PENDING':
                 print_info('Session ID {0} is enqueued for scheduling.'
-                           .format(name))
+                           .format(compute_session.id))
             elif compute_session.status == 'RUNNING':
                 if compute_session.created:
                     print_info('Session ID {0} is created and ready.'
-                               .format(name))
+                               .format(compute_session.id))
                 else:
                     print_info('Session ID {0} is already running and ready.'
-                               .format(name))
+                               .format(compute_session.id))
                 if compute_session.service_ports:
                     print_info('This session provides the following app services: ' +
                                ', '.join(sport['name']
@@ -882,13 +890,13 @@ def start(image, name, owner,                                 # base args
             elif compute_session.status == 'TERMINATED':
                 print_warn('Session ID {0} is already terminated.\n'
                            'This may be an error in the compute_session image.'
-                           .format(name))
+                           .format(compute_session.id))
             elif compute_session.status == 'TIMEOUT':
                 print_info('Session ID {0} is still on the job queue.'
-                           .format(name))
+                           .format(compute_session.id))
             elif compute_session.status in ('ERROR', 'CANCELLED'):
                 print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
-                           .format(name))
+                           .format(compute_session.id))
 
 
 @main.command()

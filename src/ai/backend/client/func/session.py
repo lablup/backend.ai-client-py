@@ -64,6 +64,7 @@ class ComputeSession(BaseFunction):
     all containers belonging to the same compute session.
     """
 
+    id: str
     name: str
     owner_access_key: Optional[str]
     created: bool
@@ -253,6 +254,7 @@ class ComputeSession(BaseFunction):
                 'preopen_ports': preopen_ports,
             })
             params.update({
+                'starts_at': starts_at,
                 'bootstrap_script': bootstrap_script,
             })
         if api_session.get().api_version >= (4, '20190615'):
@@ -261,7 +263,6 @@ class ComputeSession(BaseFunction):
                 'domain': domain_name,
                 'group': group_name,
                 'type': type_,
-                'starts_at': starts_at,
                 'enqueueOnly': enqueue_only,
                 'maxWaitSeconds': max_wait,
                 'reuseIfExists': not no_reuse,
@@ -275,6 +276,7 @@ class ComputeSession(BaseFunction):
         async with rqst.fetch() as resp:
             data = await resp.json()
             o = cls(name, owner_access_key)  # type: ignore
+            o.id = data.get('sessionId', name)
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])

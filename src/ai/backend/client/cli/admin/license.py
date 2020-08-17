@@ -1,0 +1,31 @@
+import asyncio
+import sys
+
+from tabulate import tabulate
+
+from ...session import AsyncSession, api_session
+from ...request import Request
+from ..pretty import print_done, print_error, print_warn
+from . import admin
+
+
+@admin.command()
+def show_license():
+    '''
+    Show the license information (enterprise editions only).
+    '''
+    async def _show_license():
+        async with AsyncSession():
+            rqst = Request(api_session.get(), 'GET', '/license')
+            async with rqst.fetch() as resp:
+                data = await resp.json()
+            if data['status'] == 'valid':
+                print_done('Your Backend.AI lincese is valid.')
+                print(tabulate([(k, v) for k, v in data['certificate'].items()]))
+            else:
+                print_warn('Your Backend.AI lincese is valid.')
+    try:
+        asyncio.run(_show_license())
+    except Exception as e:
+        print_error(e)
+        sys.exit(1)
