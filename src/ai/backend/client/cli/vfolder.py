@@ -200,7 +200,8 @@ def upload(name, filenames, base_dir):
 @vfolder.command()
 @click.argument('name', type=str)
 @click.argument('filenames', type=Path, nargs=-1)
-def download(name, filenames):
+@click.option('-b', '--base-dir', type=Path, default=None)
+def download(name, filenames, base_dir):
     '''
     Download a file from the virtual folder to the current working directory.
     The files with the same names will be overwirtten.
@@ -211,7 +212,7 @@ def download(name, filenames):
     '''
     with Session() as session:
         try:
-            session.VFolder(name).download(filenames, show_progress=True)
+            session.VFolder(name).download(filenames, basedir=base_dir, show_progress=True)
             print_done('Done.')
         except Exception as e:
             print_error(e)
