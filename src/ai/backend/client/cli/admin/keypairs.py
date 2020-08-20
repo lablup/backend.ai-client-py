@@ -84,7 +84,6 @@ def keypairs(ctx, user_id, is_active):
     except (TypeError, ValueError):
         pass  # string-based user ID for Backend.AI v1.4+
 
-
     def format_item(item):
         full_name = item['user_info'].get('full_name', '')
         item['user_info'] = full_name
