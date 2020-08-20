@@ -20,7 +20,8 @@ def keypair():
     Show the server-side information of the currently configured access key.
     '''
     fields = [
-        ('User ID', 'user_id'),
+        ('Email', 'user_id'),
+        ('Full Name', 'user_info { full_name }'),
         ('Access Key', 'access_key'),
         ('Secret Key', 'secret_key'),
         ('Active?', 'is_active'),
@@ -41,7 +42,11 @@ def keypair():
             sys.exit(1)
         rows = []
         for name, key in fields:
-            rows.append((name, info[key]))
+            if key.startswith('user_info '):
+                full_name = info['user_info'].get('full_name', '')
+                rows.append((name, full_name))
+            else:
+                rows.append((name, info[key]))
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
@@ -61,7 +66,8 @@ def keypairs(ctx, user_id, is_active):
     if ctx.invoked_subcommand is not None:
         return
     fields = [
-        ('User ID', 'user_id'),
+        ('Email', 'user_id'),
+        ('Full Name', 'user_info { full_name }'),
         ('Access Key', 'access_key'),
         ('Secret Key', 'secret_key'),
         ('Active?', 'is_active'),
@@ -77,6 +83,12 @@ def keypairs(ctx, user_id, is_active):
         user_id = int(user_id)
     except (TypeError, ValueError):
         pass  # string-based user ID for Backend.AI v1.4+
+
+
+    def format_item(item):
+        full_name = item['user_info'].get('full_name', '')
+        item['user_info'] = full_name
+
     try:
         with Session() as session:
             page_size = get_preferred_page_size()
@@ -87,7 +99,7 @@ def keypairs(ctx, user_id, is_active):
                     page_size=page_size,
                 )
                 echo_via_pager(
-                    tabulate_items(items, fields)
+                    tabulate_items(items, fields, item_formatter=format_item)
                 )
             except NoItems:
                 print("There are no matching keypairs.")
