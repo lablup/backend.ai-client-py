@@ -141,7 +141,8 @@ class VFolder(BaseFunction):
                         f.write(chunk)
                         q.task_done()
 
-            print(f"Downloading {file_path} ...")
+            if show_progress:
+                print(f"Downloading to {file_path} ...")
             async with aiohttp.ClientSession() as client:
                 # TODO: ranged requests to continue interrupted downloads with automatic retries
                 async with client.get(download_url, ssl=False) as raw_resp:
@@ -298,10 +299,10 @@ class VFolder(BaseFunction):
 
     @api_function
     @classmethod
-    async def get_performance_metric(cls, volume_name: str):
+    async def get_performance_metric(cls, folder_host: str):
         rqst = Request(api_session.get(), 'GET', '/folders/_/perf-metric')
         rqst.set_json({
-            'volume': volume_name,
+            'folder_host': folder_host,
         })
         async with rqst.fetch() as resp:
             return await resp.json()
