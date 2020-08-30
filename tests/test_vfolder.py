@@ -1,25 +1,14 @@
 from pathlib import Path
 from unittest import mock
 
-from typing import (
-    Mapping
-)
-
-
-from datetime import datetime
-from dateutil.tz import tzutc
-from yarl import URL
-
 import pytest
 from aioresponses import aioresponses
 
 from ai.backend.client.config import API_VERSION
-from ai.backend.client.session import Session
+from ai.backend.client.session import Session, AsyncSession
 from ai.backend.client.test_utils import AsyncMock
-from ai.backend.client.request import Request
-
-import aiohttp
-import asyncio
+from ai.backend.client.request import Request, Response
+import secrets
 
 
 def build_url(config, path: str):
@@ -115,71 +104,53 @@ def test_vfolder_get_info():
         assert resp == payload
 
 
-def test_vfolder_upload(tmp_path: Path):
-    tmp_path = Path.cwd()
+@pytest.mark.asyncio
+async def test_create_upload_session(tmp_path):
+    with aioresponses() as m:
 
-    with Session() as session:
-        mock_file = tmp_path / 'test_request.py'
-        vfolder_name = 'fake-vfolder-name'
+        async with AsyncSession() as session:
+            mock_file = tmp_path / 'example.bin'
+            mock_file.write_bytes(secrets.token_bytes(32))
 
-        base_path = Path.cwd()
-        mock_file = base_path / Path(mock_file)
+            vfolder_name = 'fake-vfolder-name'
 
-        file_size = Path(mock_file).stat().st_size
-        file_path = base_path / mock_file
+            file_size = '1024'
+            payload = {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
+            eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'}
 
-        config = session.config
-        base_url = config.endpoint
+            m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
+                headers={'path': "{}".format(str(Path(tmp_path / 'example.bin'))),
+                         'size': file_size},
+                payload=payload)
 
-        session_create_url = base_url / 'folders/{}/create_upload_session' \
-                                        .format(vfolder_name)
+            rqst = Request(session, 'POST', '/folders/{}/request-upload'.format(vfolder_name))
+            rqst.set_json({
+                'path': "{}".format(str(Path(mock_file))),
+                'size': str(file_size),
+            })
 
-        params: Mapping = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
-                            'size': int(file_size)}
-        rqst = Request(session,
-                       'POST',
-                       '/folders/{}/create_upload_session'
-                       .format(vfolder_name), params=params)
-
-        rqst.content_type = "application/octet-stream"
-        date = datetime.now(tzutc())
-        rqst.date = date
-
-        rqst._sign(URL("/folders/{}/create_upload_session?path={}&size={}"
-                        .format(vfolder_name, params['path'], params['size'])))
-        rqst.headers["Date"] = date.isoformat()
-        rqst.headers["content-type"] = "application/octet-stream"
-
-        params = {'path': "{}".format(str(Path(file_path).relative_to(base_path))),
-                  'size': int(file_size)}
-
-        session.VFolder.create(vfolder_name)
-        jwt_token_from_api = session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
-
-        loop = asyncio.get_event_loop()
-
-        try:
-            jwt_token = loop.run_until_complete(get_jwt_token(session_create_url, rqst.headers, params))
-        finally:
-            loop.close()
-        session.VFolder(vfolder_name).delete()
-        header_1, payload_1, _ = jwt_token_from_api.split(".")
-        header_2, payload_2, _ = jwt_token.split(".")
-        if ((header_1 == header_2) & (payload_1[0:10] == payload_2[0:10]) &
-           (payload_1[-10:] == payload_2[-10:])):
-            assert True
-        else:
-            assert False
+            async with rqst.fetch() as resp:
+                res = await resp.json()
+                assert isinstance(resp, Response)
+                assert resp.status == 200
+                assert resp.content_type == 'application/json'
+                assert res == payload
+                assert 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' in res['token']
 
 
-async def get_jwt_token(session_create_url, headers, params):
-    async with aiohttp.ClientSession() as sess:
-        params['size'] = int(params['size'])
-        headers['method'] = 'POST'
-        async with sess.post(session_create_url, headers=headers, params=params) as resp:
-            jwt_token = await resp.json()
-            jwt_token = jwt_token['token']
-            return jwt_token
+@pytest.mark.asyncio
+async def test_vfolder_upload(tmp_path: Path):
+    with aioresponses() as m:
+        async with AsyncSession() as session:
+            mock_file = tmp_path / 'example.bin'
+            mock_file.write_bytes(secrets.token_bytes(32))
+
+            vfolder_name = 'fake-vfolder-name'
+            m.post(build_url(session.config, '/folders/{}/upload'.format(vfolder_name)),
+                   status=201)
+            resp = await session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
+            assert resp == ""
 
 
 def test_vfolder_delete_files():
