@@ -38,6 +38,7 @@ class VFolder(BaseFunction):
         group: str = None,
         usage_mode: str = 'general',
         permission: str = 'rw',
+        clone_allowed: bool = False
     ):
         rqst = Request(api_session.get(), 'POST', '/folders')
         rqst.set_json({
@@ -46,7 +47,7 @@ class VFolder(BaseFunction):
             'unmanaged_path': unmanaged_path,
             'group': group,
             'usage_mode': usage_mode,
-            'permission': permission,
+            'permission': permission
         })
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -335,6 +336,19 @@ class VFolder(BaseFunction):
         rqst.set_json({
             'name': name,
             'edit_fstab': edit_fstab,
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    async def clone(self, target_name: str, target_host: str, usage_mode: str = 'general',
+                    permission: str = 'rw'):
+        rqst = Request(api_session.get(), 'POST', '/folders/{}/clone'.format(self.name))
+        rqst.set_json({
+            'target_name': target_name,
+            'target_host': target_host,
+            'usage_mode': usage_mode,
+            'permission': permission
         })
         async with rqst.fetch() as resp:
             return await resp.json()

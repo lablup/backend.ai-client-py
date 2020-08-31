@@ -87,7 +87,9 @@ def list_allowed_types():
               help='Folder\'s innate permission. '
                    'Group folders can be shared as read-only by setting this option to "ro".'
                    'Invited folders override this setting by its own invitation permission.')
-def create(name, host, group, host_path, usage_mode, permission):
+@click.option('--allow-clone', 'allow_clone', type=bool, is_flag=True,
+              help='Allows the virtual folder to be cloned by users.')
+def create(name, host, group, host_path, usage_mode, permission, allow_clone):
     '''Create a new virtual folder.
 
     \b
@@ -98,10 +100,12 @@ def create(name, host, group, host_path, usage_mode, permission):
         try:
             if host_path:
                 result = session.VFolder.create(name=name, unmanaged_path=host, group=group,
-                                                usage_mode=usage_mode, permission=permission)
+                                                usage_mode=usage_mode, permission=permission,
+                                                clone_allowed=allow_clone)
             else:
                 result = session.VFolder.create(name=name, host=host, group=group,
-                                                usage_mode=usage_mode, permission=permission)
+                                                usage_mode=usage_mode, permission=permission,
+                                                clone_allowed=allow_clone)
             print('Virtual folder "{0}" is created.'.format(result['name']))
         except Exception as e:
             print_error(e)
@@ -160,7 +164,7 @@ def info(name):
             print('- Owner:', result['is_owner'])
             print('- Permission:', result['permission'])
             print('- Number of files: {0}'.format(result['numFiles']))
-            print('- Ownership Type: {0}'.format(result['ownership_type']))
+            print('- Ownership Type: {0}'.format(result['type']))
             print('- Permission:', result['permission'])
             print('- Usage Mode: {0}'.format(result['usage_mode']))
             print('- Group ID: {0}'.format(result['group']))
@@ -438,6 +442,36 @@ def invitations():
                         break
                     elif action.lower() == 'c':
                         break
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolder.command()
+@click.argument('name', type=str)
+@click.argument('target_name', type=str)
+@click.argument('target_host', type=str)
+@click.option('-m', '--usage-mode', metavar='USAGE_MODE', type=str, default='general',
+              help='Purpose of the folder. Normal folders are usually set to "general". '
+                   'Available options: "general", "data" (provides data to users), '
+                   'and "model" (provides pre-trained models).')
+@click.option('-p', '--permission', metavar='PERMISSION', type=str, default='rw',
+              help='Folder\'s innate permission. '
+                   'Group folders can be shared as read-only by setting this option to "ro".'
+                   'Invited folders override this setting by its own invitation permission.')
+def clone(name, target_name, target_host, usage_mode, permission):
+    '''Create an empty directory in the virtual folder.
+
+    \b
+    NAME: Name of the virtual folder to clone from.
+    TARGET NAME: Name of the virtual folder to clone to.
+    TARGET HOST: Name of a virtual folder host to which the virtual folder will be cloned.
+    '''
+    with Session() as session:
+        try:
+            session.VFolder(name).clone(target_name, target_host, usage_mode=usage_mode,
+                                        permission=permission)
+            print_done('Done.')
         except Exception as e:
             print_error(e)
             sys.exit(1)
