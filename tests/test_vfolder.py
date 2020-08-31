@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest import mock
 
+import secrets
 import pytest
 from aioresponses import aioresponses
 
@@ -8,7 +9,6 @@ from ai.backend.client.config import API_VERSION
 from ai.backend.client.session import Session, AsyncSession
 from ai.backend.client.test_utils import AsyncMock
 from ai.backend.client.request import Request, Response
-import secrets
 
 
 def build_url(config, path: str):
@@ -105,7 +105,7 @@ def test_vfolder_get_info():
 
 
 @pytest.mark.asyncio
-async def test_create_upload_session(tmp_path):
+async def test_upload_jwt_generation(tmp_path):
     with aioresponses() as m:
 
         async with AsyncSession() as session:
@@ -120,9 +120,23 @@ async def test_create_upload_session(tmp_path):
             5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'}
 
             m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
-                headers={'path': "{}".format(str(Path(tmp_path / 'example.bin'))),
-                         'size': file_size},
-                payload=payload)
+                   headers={'path': "{}".format(str(Path(tmp_path / 'example.bin'))),
+                            'size': file_size,
+                            'Host': '127.0.0.1:8081',
+                            'User-Agent':
+                            'Backend.AI Client for Python 20.09.0a1.dev0',
+                            'X-BackendAI-Domain': 'default',
+                            'X-BackendAI-Version': 'v6.20200815',
+                            'Date': '2020-08-31T07:33:25.897405+00:00',
+                            'Content-Type': 'application/json',
+                            'Authorization': 'BackendAI signMethod=HMAC-SHA256,\
+                            credential=AKIAIOSFODNN7EXAMPLE: \
+                            8b984a9b85a1e6ba0b7368a1dc41232a \
+                            fee0981b471c190ab6dca95601365354',
+                            'Accept': '*/*',
+                            'Accept-Encoding': 'gzip, deflate',
+                            'Content-Length': '1024'},
+                   payload=payload, status=200)
 
             rqst = Request(session, 'POST', '/folders/{}/request-upload'.format(vfolder_name))
             rqst.set_json({
@@ -139,18 +153,29 @@ async def test_create_upload_session(tmp_path):
                 assert 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' in res['token']
 
 
-@pytest.mark.asyncio
 async def test_vfolder_upload(tmp_path: Path):
-    with aioresponses() as m:
-        async with AsyncSession() as session:
-            mock_file = tmp_path / 'example.bin'
-            mock_file.write_bytes(secrets.token_bytes(32))
+    with Session as session, aioresponses() as m:
 
-            vfolder_name = 'fake-vfolder-name'
-            m.post(build_url(session.config, '/folders/{}/upload'.format(vfolder_name)),
-                   status=201)
-            resp = await session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
-            assert resp == ""
+        mock_file = tmp_path / 'example.bin'
+        mock_file.write_bytes(secrets.token_bytes(1024))
+
+        vfolder_name = 'fake-vfolder-name'
+        m.post(build_url(session.config, '/folders/{}/upload'.format(vfolder_name)),
+               status=201)
+        m.post(build_url(session.config, '/folder/file/upload'), params={'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
+            eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'}, status=200)
+
+        m.patch(build_url(session.config, '/folder/file/upload'), params={'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
+            eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'}, status=204)
+
+        m.head(build_url(session.config, '/folder/file/upload'), params={'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
+            eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'}, status=200)
+
+        resp = session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
+        assert resp == ""
 
 
 def test_vfolder_delete_files():
@@ -164,19 +189,47 @@ def test_vfolder_delete_files():
         assert resp == '{}'
 
 
-def test_vfolder_download(mocker):
+async def test_vfolder_download(mocker):
     mock_reader = AsyncMock()
     mock_from_response = mocker.patch(
         'ai.backend.client.func.vfolder.aiohttp.MultipartReader.from_response',
         return_value=mock_reader)
     mock_reader.next = AsyncMock()
     mock_reader.next.return_value = None
+
     with Session() as session, aioresponses() as m:
         vfolder_name = 'fake-vfolder-name'
+        # client to manager
         m.get(build_url(session.config,
-                        '/folders/{}/download'.format(vfolder_name)),
+                        'session/{}/download'.format(vfolder_name)),
               status=200,
-              headers={'X-TOTAL-PAYLOADS-LENGTH': '0'}, body='')
+              headers={
+                       'Host': 'local',
+                       'User-Agent': 'Backend.AI Client for Python 20.09.0a1.dev0',
+                       'X-BackendAI-Domain': 'default',
+                       'X-BackendAI-Version': 'v6.20200815',
+                       'Date': '2020-08-31T00:00:00.000000+00:00',
+                       'Content-Type': 'application/json',
+                       'Authorization': 'BackendAI signMethod=HMAC-SHA256, \
+                       credential=AKIAIOSFODNN7EXAMPLE: \
+                       26ff062d498962fbfb1879f8bc448d3e5757fdd7ea4df0ba56b81e0334237304',
+                       'Accept': '*/*',
+                       'Accept-Encoding': 'gzip, deflate',
+                       'Content-Length': '21'},
+              body='')
+
+        # manager to storage-proxy
+        m.post(build_url(session.config,
+               '/folder/{}/download'.format(vfolder_name)),
+               status=200,
+               headers={"X-TOTAL-PAYLOADS-LENGTH": 0})
+
+        m.get(build_url(session.config, '/folder/{}/download'.format(vfolder_name)),
+              status=200,
+              params={'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
+            eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'})
+
         session.VFolder(vfolder_name).download(['fake-file1'])
         assert mock_from_response.called == 1
         assert mock_reader.next.called == 1
