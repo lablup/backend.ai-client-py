@@ -460,7 +460,7 @@ def leave(name):
                 print('You cannot leave a virtual folder you own. Consider using delete instead.')
                 return
             session.VFolder.leave(vfolder_info['id'])
-            print('Left the shared virtual folder.')
+            print('Left the shared virtual folder "{}".'.format(vfolder_info['name']))
 
         except Exception as e:
             print_error(e)
