@@ -1,5 +1,4 @@
 from pathlib import Path
-import uuid
 from typing import (
     Union,
     Sequence, List,
@@ -317,13 +316,7 @@ class VFolder(BaseFunction):
             return await resp.json()
 
     @api_function
-    @classmethod
-    async def leave(cls, vfolder_id):
-        rqst = Request(api_session.get(), 'POST', '/folders/_/shared')
-        rqst.set_json({
-            'vfolder': vfolder_id,
-            'user': str(uuid.UUID(int=0)),
-            'perm': None
-        })
+    async def leave(self):
+        rqst = Request(api_session.get(), 'POST', '/folders/{}/leave'.format(self.name))
         async with rqst.fetch() as resp:
             return await resp.json()
