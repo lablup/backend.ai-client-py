@@ -341,8 +341,8 @@ class VFolder(BaseFunction):
             return await resp.json()
 
     @api_function
-    async def clone(self, target_name: str, target_host: str, usage_mode: str = 'general',
-                    permission: str = 'rw'):
+    async def clone(self, target_name: str, target_host: str = None,
+                    usage_mode: str = 'general', permission: str = 'rw'):
         rqst = Request(api_session.get(), 'POST', '/folders/{}/clone'.format(self.name))
         rqst.set_json({
             'target_name': target_name,

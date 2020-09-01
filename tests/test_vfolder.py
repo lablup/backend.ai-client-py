@@ -262,3 +262,19 @@ def test_vfolder_delete_invitation():
                  status=200, payload=payload)
         resp = session.VFolder.delete_invitation('inv-id')
         assert resp == payload
+
+
+def test_vfolder_clone():
+    with Session() as session, aioresponses() as m:
+        source_vfolder_name = 'fake-source-vfolder-name'
+        target_vfolder_name = 'fake-target-vfolder-name'
+        payload = {
+            'target_name': target_vfolder_name,
+            'target_host': 'local',
+            'permission': 'rw',
+            'usage_mode': 'general'
+        }
+        m.post(build_url(session.config, '/folders/{}/clone'.format(source_vfolder_name)),
+               status=201, payload=payload)
+        resp = session.VFolder(source_vfolder_name).clone(target_vfolder_name)
+        assert resp == payload

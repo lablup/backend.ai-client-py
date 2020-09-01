@@ -469,9 +469,9 @@ def clone(name, target_name, target_host, usage_mode, permission):
     '''
     with Session() as session:
         try:
-            session.VFolder(name).clone(target_name, target_host, usage_mode=usage_mode,
-                                        permission=permission)
-            print_done('Done.')
+            session.VFolder(name).clone(target_name, target_host=target_host,
+                                        usage_mode=usage_mode, permission=permission)
+            print_done('Virtual folder {} is cloned from {}.'.format(target_name, name))
         except Exception as e:
             print_error(e)
             sys.exit(1)
