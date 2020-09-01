@@ -116,6 +116,7 @@ class VFolder(BaseFunction):
         relative_paths: Sequence[Union[str, Path]],
         *,
         basedir: Union[str, Path] = None,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
         show_progress: bool = False,
     ) -> None:
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
@@ -162,7 +163,7 @@ class VFolder(BaseFunction):
                             writer_fut = loop.run_in_executor(None, _write_file, file_path, q.sync_q)
                             await asyncio.sleep(0)
                             while True:
-                                chunk = await raw_resp.content.read(DEFAULT_CHUNK_SIZE)
+                                chunk = await raw_resp.content.read(chunk_size)
                                 pbar.update(len(chunk))
                                 if not chunk:
                                     break
@@ -179,6 +180,8 @@ class VFolder(BaseFunction):
         files: Sequence[Union[str, Path]],
         *,
         basedir: Union[str, Path] = None,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        show_progress: bool = False,
     ) -> None:
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
         if basedir:
@@ -204,11 +207,12 @@ class VFolder(BaseFunction):
             else:
                 input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
             print(f"Uploading {base_path / file_path} ...")
+            # TODO: refactor out the progress bar
             uploader = tus_client.async_uploader(
                 file_stream=input_file,
                 url=upload_url,
                 upload_checksum=False,
-                chunk_size=DEFAULT_CHUNK_SIZE,
+                chunk_size=chunk_size,
             )
             return await uploader.upload()
 
