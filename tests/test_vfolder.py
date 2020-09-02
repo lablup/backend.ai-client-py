@@ -147,19 +147,49 @@ async def test_vfolder_upload(tmp_path: Path):
         async with AsyncSession() as session:
             vfolder_name = 'fake-vfolder-name'
             print(session.config)
+            storage_path = str(build_url(session.config, 'folder/{}/upload'
+                                .format(vfolder_name))).replace('8081', '6021')
+            storage_path2 = str(build_url(session.config, '/upload')).replace('8081', '6021')
+
             payload = {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
             eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
-            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'}
-
-            m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
-                   payload=payload, status=200)
-
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8', 'url': storage_path}
+            storage_payload = {'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9. \
+                eyJvcCI6InVwbG9hZCIsInZvbHVtZSI6InZvbHVtZTEiLCJ2ZmlkIjoiO \
+                DBiYWYyYjgtNTY3My00MmVkLTgyZWEtYj \
+                NmNzNmOWQwNjAzIiwicmVscGF0aCI6InNldHVwLmNmZyIsInNpemUiOjU \
+                yNywic2Vzc2lvbiI6ImE3YzZiY2I1MWRlY2I3NzJjZjRkMDI3YjA5 \
+                MGI5NGM5IiwiZXhwIjoxNTk5MTIzMzYxfQ. \
+                D13UMFrz-2qq9c0k4MGpjVOMn5Z9-fyR5tRRIkvtvqk'}
+            # 1. Client to Manager throught Request
             m.post(build_url(session.config, "/folders/{}/request-upload?path='{}'&size={}".format(
-                             vfolder_name, mock_file, 1024)))
-            # Note: aioresponses ignores the query parameters
-            m.post(build_url(session.config, '/folder/file/upload'),  status=200)
-            m.patch(build_url(session.config, '/folder/file/upload'), status=204)
-            m.head(build_url(session.config, '/folder/file/upload'),  status=200)
+                             vfolder_name, mock_file, 1024)), payload=payload['token'], status=200)
+
+            # 2. Manager to storage proxy
+            m.post(storage_path + "?volume= \
+                   volume1&vfid=80baf2b8-5673-42ed-82ea-b3f73f9d0603&relpath={}&size={}"
+                   .format('example.bin', '1024'),
+                   payload=payload,
+                   status=200)
+
+            # 3. Client to Manager through TusClient. Upload url
+
+            tus_payload = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Tus-Resumable, \
+            Upload-Length, Upload-Metadata, Upload-Offset, Content-Type',
+            'Access-Control-Expose-Headers': 'Tus-Resumable, Upload-Length, Upload-Metadata, \
+            Upload-Offset, Content-Type',
+            'Access-Control-Allow-Methods': '*', 'Cache-Control': 'no-store',
+            'Tus-Resumable': '1.0.0',
+            'Upload-Offset': '527', 'Upload-Length': '527',
+            'Content-Length': '0', 'Content-Type': 'application/octet-stream',
+            'Date': 'Wed, 02 Sep 2020 12:54:17 GMT', 'Server': 'Python/3.8 aiohttp/3.6.2'}
+
+            m.patch(storage_path2 + "?token={}".format(storage_payload['token']), payload=tus_payload,
+                    headers=tus_payload, status=204)
+
+            m.patch(build_url(session.config, "/folders/{}/request-upload?path='{}'&size={}".format(
+                             vfolder_name, mock_file, 1024)), status=200)
+
             resp = await session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
 
             assert resp == ""
@@ -184,17 +214,47 @@ async def test_vfolder_download(mocker):
         return_value=mock_reader)
     mock_reader.next = AsyncMock()
     mock_reader.next.return_value = None
+    mock_file = 'fake-file1'
     with aioresponses() as m:
 
         async with AsyncSession() as session:
             vfolder_name = 'fake-vfolder-name'
             # client to manager
             # manager to storage-proxy
-            m.post(build_url(session.config, '/folder/{}/download'.format(vfolder_name)),
-               status=200)
+            storage_path = str(build_url(session.config, 'folder/{}/download'
+                                .format(vfolder_name))).replace('8081', '6021')
+            storage_path2 = str(build_url(session.config, '/download')).replace('8081', '6021')
 
-            m.get(build_url(session.config, '/folder/{}/download'.format(vfolder_name)),
-              status=200)
+            payload = {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
+            eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8', 'url': storage_path}
+
+            storage_payload = {'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9. \
+                eyJvcCI6InVwbG9hZCIsInZvbHVtZSI6InZvbHVtZTEiLCJ2ZmlkIjoiO \
+                DBiYWYyYjgtNTY3My00MmVkLTgyZWEtYj \
+                NmNzNmOWQwNjAzIiwicmVscGF0aCI6InNldHVwLmNmZyIsInNpemUiOjU \
+                yNywic2Vzc2lvbiI6ImE3YzZiY2I1MWRlY2I3NzJjZjRkMDI3YjA5 \
+                MGI5NGM5IiwiZXhwIjoxNTk5MTIzMzYxfQ. \
+                D13UMFrz-2qq9c0k4MGpjVOMn5Z9-fyR5tRRIkvtvqk'}
+
+            # 1. Client to Manager throught Request
+            m.post(build_url(session.config, "/folders/{}/request-download?path='{}'".format(
+                             vfolder_name, mock_file)), payload=payload['token'], status=200)
+
+            # 2. Manager to storage proxy
+            """
+            m.post(storage_path + "?volume= \
+                   volume1&vfid=80baf2b8-5673-42ed-82ea-b3f73f9d0603&relpath={}"
+                   .format('fake-file1'),
+                   payload=payload,
+                   status=200)
+            """
+            # 3. Client to Manager through TusClient. Upload url
+
+            m.get(storage_path2 + "?token={}".format(storage_payload['token']))
+
+            m.get(build_url(session.config, "/folders/{}/request-downlaod?path='{}'".format(
+                             vfolder_name, mock_file)), status=200)
 
             await session.VFolder(vfolder_name).download(['fake-file1'])
             assert mock_from_response.called == 1
