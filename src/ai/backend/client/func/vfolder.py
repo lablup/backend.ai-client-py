@@ -47,7 +47,8 @@ class VFolder(BaseFunction):
             'unmanaged_path': unmanaged_path,
             'group': group,
             'usage_mode': usage_mode,
-            'permission': permission
+            'permission': permission,
+            'clone_allowed': clone_allowed
         })
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -349,6 +350,15 @@ class VFolder(BaseFunction):
             'target_host': target_host,
             'usage_mode': usage_mode,
             'permission': permission
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    async def update(self, name: str, clone_allowed: bool = None):
+        rqst = Request(api_session.get(), 'POST', '/folders/{}/update'.format(self.name))
+        rqst.set_json({
+            'clone_allowed': clone_allowed
         })
         async with rqst.fetch() as resp:
             return await resp.json()

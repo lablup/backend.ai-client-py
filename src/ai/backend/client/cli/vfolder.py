@@ -460,7 +460,7 @@ def invitations():
                    'Group folders can be shared as read-only by setting this option to "ro".'
                    'Invited folders override this setting by its own invitation permission.')
 def clone(name, target_name, target_host, usage_mode, permission):
-    '''Create an empty directory in the virtual folder.
+    '''Clone a virtual folder.
 
     \b
     NAME: Name of the virtual folder to clone from.
@@ -471,7 +471,24 @@ def clone(name, target_name, target_host, usage_mode, permission):
         try:
             session.VFolder(name).clone(target_name, target_host=target_host,
                                         usage_mode=usage_mode, permission=permission)
-            print_done('Virtual folder {} is cloned from {}.'.format(target_name, name))
+            print_done('Cloned.')
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolder.command()
+@click.argument('name', type=str)
+@click.option('--clone_allowed', type=bool, help='Whether a virtual folder can be cloned.')
+def update(name, clone_allowed):
+    ''' Update an existing virtual folder.
+
+    NAME: Name of the virtual folder to update.
+    '''
+    with Session() as session:
+        try:
+            session.VFolder(name).update(name, clone_allowed=clone_allowed)
+            print('Updated.')
         except Exception as e:
             print_error(e)
             sys.exit(1)
