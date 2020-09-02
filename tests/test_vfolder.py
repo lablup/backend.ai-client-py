@@ -149,16 +149,13 @@ async def test_vfolder_upload(tmp_path: Path):
             print(session.config)
             payload = {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
             eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
-            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8', 'path': 'example.bin',
-            'size': 1024}
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8'}
 
             m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
                    payload=payload, status=200)
 
-            m.post(build_url(session.config,
-            "/folders/{}/request-upload?path='{}'&size={}&url='http://127.0.0.1:6021/upload'"
-            .format(vfolder_name,
-            mock_file, 1024)))
+            m.post(build_url(session.config, "/folders/{}/request-upload?path='{}'&size={}".format(
+                             vfolder_name, mock_file, 1024)))
             # Note: aioresponses ignores the query parameters
             m.post(build_url(session.config, '/folder/file/upload'),  status=200)
             m.patch(build_url(session.config, '/folder/file/upload'), status=204)
