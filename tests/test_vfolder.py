@@ -138,7 +138,7 @@ async def test_upload_jwt_generation(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_vfolder_upload(tmp_path: Path):  
+async def test_vfolder_upload(tmp_path: Path):
     mock_file = tmp_path / 'example.bin'
     mock_file.write_bytes(secrets.token_bytes(1024))
 
@@ -147,22 +147,25 @@ async def test_vfolder_upload(tmp_path: Path):
         async with AsyncSession() as session:
             vfolder_name = 'fake-vfolder-name'
             print(session.config)
-            payload = {'token':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
+            payload = {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
             eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
-            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8','path': 'example.bin', 'size':1024, 'url':'localhost:6021/upload'}
+            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8', 'path': 'example.bin',
+            'size': 1024}
 
             m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
-            
                    payload=payload, status=200)
 
-            m.post(build_url(session.config, "/folders/{}/request-upload?path='{}'&size={}&url='http://127.0.0.1:6021/upload'".format(vfolder_name, mock_file, 1024)))
+            m.post(build_url(session.config,
+            "/folders/{}/request-upload?path='{}'&size={}&url='http://127.0.0.1:6021/upload'"
+            .format(vfolder_name,
+            mock_file, 1024)))
             # Note: aioresponses ignores the query parameters
             m.post(build_url(session.config, '/folder/file/upload'),  status=200)
             m.patch(build_url(session.config, '/folder/file/upload'), status=204)
             m.head(build_url(session.config, '/folder/file/upload'),  status=200)
             resp = await session.VFolder(vfolder_name).upload([mock_file], basedir=tmp_path)
 
-            assert True
+            assert resp == ""
 
 
 def test_vfolder_delete_files():
@@ -190,17 +193,15 @@ async def test_vfolder_download(mocker):
             vfolder_name = 'fake-vfolder-name'
             # client to manager
             # manager to storage-proxy
-            m.post(build_url(session.config,
-               '/folder/{}/download'.format(vfolder_name)),
+            m.post(build_url(session.config, '/folder/{}/download'.format(vfolder_name)),
                status=200)
 
             m.get(build_url(session.config, '/folder/{}/download'.format(vfolder_name)),
               status=200)
 
-            resp = await session.VFolder(vfolder_name).download(['fake-file1'])
-            #assert mock_from_response.called == 1
-            #assert mock_reader.next.called == 1
-            assert 1
+            await session.VFolder(vfolder_name).download(['fake-file1'])
+            assert mock_from_response.called == 1
+            assert mock_reader.next.called == 1
 
 
 def test_vfolder_list_files():
