@@ -822,7 +822,7 @@ class ComputeSession(BaseFunction):
         prefix = get_naming(api_session.get().api_version, 'path')
         api_rqst = Request(
             api_session.get(),
-            'GET', f'/stream/{prefix}/{self.name}/apps',
+            'GET', f'/stream/{prefix}/{self.id}/apps',
             params=params,
         )
         async with api_rqst.fetch() as resp:
@@ -865,7 +865,7 @@ class ComputeSession(BaseFunction):
         prefix = get_naming(api_session.get().api_version, 'path')
         request = Request(
             api_session.get(),
-            'GET', f'/stream/{prefix}/{self.name}/pty',
+            'GET', f'/stream/{prefix}/{self.id}/pty',
             params=params,
         )
         return request.connect_websocket(response_cls=StreamPty)
@@ -898,7 +898,7 @@ class ComputeSession(BaseFunction):
             raise BackendClientError(msg)
         request = Request(
             api_session.get(),
-            'GET', f'/stream/{prefix}/{self.name}/execute',
+            'GET', f'/stream/{prefix}/{self.id}/execute',
             params=params,
         )
 
