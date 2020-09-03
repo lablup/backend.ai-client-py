@@ -146,7 +146,7 @@ async def test_vfolder_upload(tmp_path: Path):
 
         async with AsyncSession() as session:
             vfolder_name = 'fake-vfolder-name'
-            print(session.config)
+
             storage_path = str(build_url(session.config, 'folder/{}/upload'
                                 .format(vfolder_name))).replace('8081', '6021')
             storage_path2 = str(build_url(session.config, '/upload')).replace('8081', '6021')
@@ -161,11 +161,18 @@ async def test_vfolder_upload(tmp_path: Path):
                 yNywic2Vzc2lvbiI6ImE3YzZiY2I1MWRlY2I3NzJjZjRkMDI3YjA5 \
                 MGI5NGM5IiwiZXhwIjoxNTk5MTIzMzYxfQ. \
                 D13UMFrz-2qq9c0k4MGpjVOMn5Z9-fyR5tRRIkvtvqk'}
+            """
+            # 0. This works and passes test when reqeusting jwt in test_upload_jwt_generation().
+            # but here it freezes the client
+            m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
+                   payload=payload, status=200)
+            """
+
             # 1. Client to Manager throught Request
             m.post(build_url(session.config, "/folders/{}/request-upload?path='{}'&size={}".format(
                              vfolder_name, mock_file, 1024)), payload=payload['token'], status=200)
 
-            # 2. Manager to storage proxy
+            # 2. Response from storage to manager
             m.post(storage_path + "?volume= \
                    volume1&vfid=80baf2b8-5673-42ed-82ea-b3f73f9d0603&relpath={}&size={}"
                    .format('example.bin', '1024'),
@@ -184,6 +191,7 @@ async def test_vfolder_upload(tmp_path: Path):
             'Content-Length': '0', 'Content-Type': 'application/octet-stream',
             'Date': 'Wed, 02 Sep 2020 12:54:17 GMT', 'Server': 'Python/3.8 aiohttp/3.6.2'}
 
+            # file upload on storage
             m.patch(storage_path2 + "?token={}".format(storage_payload['token']), payload=tus_payload,
                     headers=tus_payload, status=204)
 
