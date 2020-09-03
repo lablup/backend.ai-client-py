@@ -6,10 +6,16 @@ import secrets
 import tarfile
 import tempfile
 from typing import (
-    Any, Iterable, Optional, Union,
+    Any,
     AsyncIterator,
-    Mapping, Dict,
-    Sequence, List,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
     cast,
 )
 from pathlib import Path
@@ -152,6 +158,7 @@ class ComputeSession(BaseFunction):
         resources: Mapping[str, int] = None,
         resource_opts: Mapping[str, int] = None,
         cluster_size: int = 1,
+        cluster_mode: Literal['single-node', 'multi-node'] = 'single-node',
         domain_name: str = None,
         group_name: str = None,
         bootstrap_script: str = None,
@@ -208,6 +215,13 @@ class ComputeSession(BaseFunction):
         :param resources: The resource specification. (TODO: details)
         :param cluster_size: The number of containers in this compute session.
             Must be at least 1.
+
+            .. versionadded:: 19.09.0
+            .. versionchanged:: 20.09.0
+        :param cluster_mode: Set the clustering mode whether to use distributed
+            nodes or a single node to spawn multiple containers for the new session.
+
+            .. versionadded:: 20.09.0
         :param tag: An optional string to annotate extra information.
         :param owner: An optional access key that owns the created session. (Only
             available to administrators)
@@ -242,12 +256,16 @@ class ComputeSession(BaseFunction):
             'config': {
                 'mounts': mounts,
                 'environ': envs,
-                'clusterSize': cluster_size,
                 'resources': resources,
                 'resource_opts': resource_opts,
                 'scalingGroup': scaling_group,
             },
         }
+        if api_session.get().api_version >= (6, '20200815'):
+            params['clusterSize'] = cluster_size
+            params['clusterMode'] = cluster_mode
+        else:
+            params['config']['clusterSize'] = cluster_size
         if api_session.get().api_version >= (5, '20191215'):
             params['config'].update({
                 'mount_map': mount_map,
@@ -273,6 +291,7 @@ class ComputeSession(BaseFunction):
         else:
             params['lang'] = image
         rqst.set_json(params)
+        print(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
             o = cls(name, owner_access_key)  # type: ignore
@@ -303,6 +322,7 @@ class ComputeSession(BaseFunction):
         resources: Union[Mapping[str, int], Undefined] = undefined,
         resource_opts: Union[Mapping[str, int], Undefined] = undefined,
         cluster_size: Union[int, Undefined] = undefined,
+        cluster_mode: Union[Literal['single-node', 'multi-node'], Undefined] = undefined,
         domain_name: Union[str, Undefined] = undefined,
         group_name: Union[str, Undefined] = undefined,
         bootstrap_script: Union[str, Undefined] = undefined,
@@ -361,6 +381,13 @@ class ComputeSession(BaseFunction):
         :param resources: The resource specification. (TODO: details)
         :param cluster_size: The number of containers in this compute session.
             Must be at least 1.
+
+            .. versionadded:: 19.09.0
+            .. versionchanged:: 20.09.0
+        :param cluster_mode: Set the clustering mode whether to use distributed
+            nodes or a single node to spawn multiple containers for the new session.
+
+            .. versionadded:: 20.09.0
         :param tag: An optional string to annotate extra information.
         :param owner: An optional access key that owns the created session. (Only
             available to administrators)
@@ -404,12 +431,16 @@ class ComputeSession(BaseFunction):
                 'mounts': mounts,
                 'mount_map': mount_map,
                 'environ': envs,
-                'clusterSize': cluster_size,
                 'resources': resources,
                 'resource_opts': resource_opts,
                 'scalingGroup': scaling_group,
             },
         }
+        if api_session.get().api_version >= (6, '20200815'):
+            params['clusterSize'] = cluster_size
+            params['clusterMode'] = cluster_mode
+        else:
+            params['config']['clusterSize'] = cluster_size
         params = cast(Dict[str, Any], drop(params, undefined))
         rqst.set_json(params)
         async with rqst.fetch() as resp:
