@@ -78,7 +78,7 @@ class WebSocketProxy:
             print_fail('unexpected error: {}'.format(e))
         finally:
             await self.close_upstream()
-            print_info("websocket proxy termianted")
+            print_info("websocket proxy terminated")
 
     async def consume_upstream_buffer(self):
         try:
