@@ -452,13 +452,11 @@ def invitations():
 @click.argument('target_name', type=str)
 @click.argument('target_host', type=str)
 @click.option('-m', '--usage-mode', metavar='USAGE_MODE', type=str, default='general',
-              help='Purpose of the folder. Normal folders are usually set to "general". '
-                   'Available options: "general", "data" (provides data to users), '
-                   'and "model" (provides pre-trained models).')
+              help='Purpose of the cloned virtual folder. '
+                   'Default value is \'general\'.')
 @click.option('-p', '--permission', metavar='PERMISSION', type=str, default='rw',
-              help='Folder\'s innate permission. '
-                   'Group folders can be shared as read-only by setting this option to "ro".'
-                   'Invited folders override this setting by its own invitation permission.')
+              help='Cloned virtual folder\'s permission. '
+                   'Default value is \'rw\'.')
 def clone(name, target_name, target_host, usage_mode, permission):
     '''Clone a virtual folder.
 
@@ -479,15 +477,20 @@ def clone(name, target_name, target_host, usage_mode, permission):
 
 @vfolder.command()
 @click.argument('name', type=str)
-@click.option('--clone_allowed', type=bool, help='Whether a virtual folder can be cloned.')
-def update(name, clone_allowed):
+@click.option('-p', '--permission', metavar='PERMISSION', type=str,
+              help='Folder\'s innate permission.')
+@click.option('--clone-allowed', type=bool,
+              help='Whether a virtual folder can be cloned. '
+                   'Available options: True and False.')
+def update_options(name, permission, clone_allowed):
     ''' Update an existing virtual folder.
 
     NAME: Name of the virtual folder to update.
     '''
     with Session() as session:
         try:
-            session.VFolder(name).update(name, clone_allowed=clone_allowed)
+            session.VFolder(name).update_options(name, permission=permission,
+                                                 clone_allowed=clone_allowed)
             print('Updated.')
         except Exception as e:
             print_error(e)

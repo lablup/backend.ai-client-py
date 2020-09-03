@@ -355,10 +355,12 @@ class VFolder(BaseFunction):
             return await resp.json()
 
     @api_function
-    async def update(self, name: str, clone_allowed: bool = None):
-        rqst = Request(api_session.get(), 'POST', '/folders/{}/update'.format(self.name))
+    async def update_options(self, name: str, permission: str = None,
+                             clone_allowed: bool = None):
+        rqst = Request(api_session.get(), 'POST', '/folders/{}/update-options'.format(self.name))
         rqst.set_json({
-            'clone_allowed': clone_allowed
+            'clone_allowed': clone_allowed,
+            'permission': permission
         })
         async with rqst.fetch() as resp:
-            return await resp.json()
+            return await resp.text()
