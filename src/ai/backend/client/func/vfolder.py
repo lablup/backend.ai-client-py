@@ -314,3 +314,9 @@ class VFolder(BaseFunction):
         })
         async with rqst.fetch() as resp:
             return await resp.json()
+
+    @api_function
+    async def leave(self):
+        rqst = Request(api_session.get(), 'POST', '/folders/{}/leave'.format(self.name))
+        async with rqst.fetch() as resp:
+            return await resp.json()

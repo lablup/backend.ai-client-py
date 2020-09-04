@@ -160,9 +160,9 @@ def info(name):
             print('- Owner:', result['is_owner'])
             print('- Permission:', result['permission'])
             print('- Number of files: {0}'.format(result['numFiles']))
-            print('- Ownership Type: {0}'.format(result['ownership_type']))
+            print('- Ownership Type: {0}'.format(result['type']))
             print('- Permission:', result['permission'])
-            print('- Usage Mode: {0}'.format(result['usage_mode']))
+            print('- Usage Mode: {0}'.format(result.get('usage_mode', '')))
             print('- Group ID: {0}'.format(result['group']))
             print('- User ID: {0}'.format(result['user']))
         except Exception as e:
@@ -438,6 +438,30 @@ def invitations():
                         break
                     elif action.lower() == 'c':
                         break
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolder.command()
+@click.argument('name', type=str)
+def leave(name):
+    '''Leave the shared virutal folder.
+
+    NAME: Name of a virtual folder
+    '''
+    with Session() as session:
+        try:
+            vfolder_info = session.VFolder(name).info()
+            if vfolder_info['type'] == 'group':
+                print('You cannot leave a group virtual folder.')
+                return
+            if vfolder_info['is_owner']:
+                print('You cannot leave a virtual folder you own. Consider using delete instead.')
+                return
+            session.VFolder(name).leave()
+            print('Left the shared virtual folder "{}".'.format(name))
+
         except Exception as e:
             print_error(e)
             sys.exit(1)
