@@ -342,6 +342,12 @@ class VFolder(BaseFunction):
             return await resp.json()
 
     @api_function
+    async def leave(self):
+        rqst = Request(api_session.get(), 'POST', '/folders/{}/leave'.format(self.name))
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
     async def clone(self, target_name: str, target_host: str = None,
                     usage_mode: str = 'general', permission: str = 'rw'):
         rqst = Request(api_session.get(), 'POST', '/folders/{}/clone'.format(self.name))
