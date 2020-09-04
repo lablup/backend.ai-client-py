@@ -4,7 +4,9 @@ coverage:
       default:
         threshold: 5%
         paths: src
+        informational: true
     patch:
       default:
         threshold: 5%
         paths: src
+        informational: true
