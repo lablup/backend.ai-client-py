@@ -169,6 +169,7 @@ def info(name):
             print('- Usage Mode: {0}'.format(result.get('usage_mode', '')))
             print('- Group ID: {0}'.format(result['group']))
             print('- User ID: {0}'.format(result['user']))
+            print('- Clone Allowed: {0}'.format(result['clone_allowed']))
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -491,6 +492,11 @@ def clone(name, target_name, target_host, usage_mode, permission):
     '''
     with Session() as session:
         try:
+            vfolder_info = session.VFolder(name).info()
+            if not vfolder_info['clone_allowed']:
+                print('Clone is not allowed for this virtual folder. '
+                      'Please update the \'clone_allowed\' option.')
+                return
             session.VFolder(name).clone(target_name, target_host=target_host,
                                         usage_mode=usage_mode, permission=permission)
             print_done('Cloned.')
@@ -513,6 +519,10 @@ def update_options(name, permission, clone_allowed):
     '''
     with Session() as session:
         try:
+            vfolder_info = session.VFolder(name).info()
+            if not vfolder_info['is_owner']:
+                print('You cannot update virtual folder that you do not onw.')
+                return
             session.VFolder(name).update_options(name, permission=permission,
                                                  clone_allowed=clone_allowed)
             print('Updated.')
