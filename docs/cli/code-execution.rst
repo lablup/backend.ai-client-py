@@ -17,7 +17,7 @@ command specified in ``--exec`` option and environment variables specified
 as ``-e`` / ``--env`` options.
 
 To define variables interpolated in the ``--exec`` option, use ``--exec-range``.
-To define variables interpolated in the ``--env`` options, use ``--env-rage``.
+To define variables interpolated in the ``--env`` options, use ``--env-range``.
 
 Here is an example with environment variable ranges that expands into 4
 concurrent sessions.
