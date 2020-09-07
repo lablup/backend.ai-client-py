@@ -39,3 +39,4 @@ env_*.sh
 
 .vscode/
 .mypy_cache/
+.DS_Store

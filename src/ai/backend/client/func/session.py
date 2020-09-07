@@ -38,7 +38,7 @@ from ..request import (
 from ..session import api_session
 from ..utils import ProgressReportingReader
 from ..types import Undefined, undefined
-from ..versioning import get_naming
+from ..versioning import get_naming, get_id_or_name
 
 __all__ = (
     'ComputeSession',
@@ -820,9 +820,10 @@ class ComputeSession(BaseFunction):
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
+        id_or_name = get_id_or_name(api_session.get().api_version, self)
         api_rqst = Request(
             api_session.get(),
-            'GET', f'/stream/{prefix}/{self.id}/apps',
+            'GET', f'/stream/{prefix}/{id_or_name}/apps',
             params=params,
         )
         async with api_rqst.fetch() as resp:
@@ -863,9 +864,10 @@ class ComputeSession(BaseFunction):
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
+        id_or_name = get_id_or_name(api_session.get().api_version, self)
         request = Request(
             api_session.get(),
-            'GET', f'/stream/{prefix}/{self.id}/pty',
+            'GET', f'/stream/{prefix}/{id_or_name}/pty',
             params=params,
         )
         return request.connect_websocket(response_cls=StreamPty)
@@ -883,6 +885,7 @@ class ComputeSession(BaseFunction):
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
+        id_or_name = get_id_or_name(api_session.get().api_version, self)
         opts = {} if opts is None else opts
         if mode == 'query':
             opts = {}
@@ -898,7 +901,7 @@ class ComputeSession(BaseFunction):
             raise BackendClientError(msg)
         request = Request(
             api_session.get(),
-            'GET', f'/stream/{prefix}/{self.id}/execute',
+            'GET', f'/stream/{prefix}/{id_or_name}/execute',
             params=params,
         )
 
