@@ -420,10 +420,6 @@ def run(image, files, name,                                 # base args
     resource_opts = _prepare_resource_arg(resource_opts)
     mount, mount_map = _prepare_mount_arg(mount)
 
-    if not (1 <= cluster_size < 4):
-        print('Invalid cluster size.', file=sys.stderr)
-        sys.exit(1)
-
     if env_range is None: env_range = []      # noqa
     if build_range is None: build_range = []  # noqa
     if exec_range is None: exec_range = []    # noqa
