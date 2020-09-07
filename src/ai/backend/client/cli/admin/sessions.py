@@ -35,10 +35,12 @@ format_options = {
                         lambda api_session: get_naming(api_session.api_version, 'name_gql_field')),
     'type':            ('Type',
                         lambda api_session: get_naming(api_session.api_version, 'type_gql_field')),
-    'task_id':         ('Task/Kernel ID', 'id'),
+    'kernel_id':       ('Kernel/Task ID', 'id'),
+    'session_id':      ('Session ID', 'session_id'),
     'status':          ('Status', 'status'),
     'status_info':     ('Status Info', 'status_info'),
     'created_at':      ('Created At', 'created_at'),
+    'terminated_at':   ('Terminated At', 'terminated_at'),
     'last_updated':    ('Last updated', 'status_changed'),
     'result':          ('Result', 'result'),
     'owner':           ('Owner', 'access_key'),
@@ -111,8 +113,10 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
                 format_options[opt] for opt in options
             ]
         else:
+            if session.api_version[0] >= 6:
+                fields.append(format_options['session_id'])
             fields.extend([
-                format_options['task_id'],
+                format_options['kernel_id'],
                 format_options['image'],
                 format_options['type'],
                 format_options['status'],
@@ -218,37 +222,27 @@ def session(id_or_name):
     '''
     Show detailed information for a running compute session.
     '''
-    fields = [
-        ('Session Name', lambda api_session: get_naming(
-            api_session.api_version, 'name_gql_field',
-        )),
-        ('Session Type', lambda api_session: get_naming(
-            api_session.api_version, 'type_gql_field',
-        )),
-        ('Image', 'image'),
-        ('Tag', 'tag'),
-        ('Created At', 'created_at'),
-        ('Terminated At', 'terminated_at'),
-        ('Status', 'status'),
-        ('Status Info', 'status_info'),
-        ('Occupied Resources', 'occupied_slots'),
-    ]
-    # fields_legacy = [
-    #     ('CPU Used (ms)', 'cpu_used'),
-    #     ('Used Memory (MiB)', 'mem_cur_bytes'),
-    #     ('Max Used Memory (MiB)', 'mem_max_bytes'),
-    #     ('Number of Queries', 'num_queries'),
-    #     ('Network RX Bytes', 'net_rx_bytes'),
-    #     ('Network TX Bytes', 'net_tx_bytes'),
-    #     ('IO Read Bytes', 'io_read_bytes'),
-    #     ('IO Write Bytes', 'io_write_bytes'),
-    #     ('IO Max Scratch Size', 'io_max_scratch_size'),
-    #     ('IO Current Scratch Size', 'io_cur_scratch_size'),
-    #     ('CPU Using (%)', 'cpu_using'),
-    # ]
     with Session() as session_:
-        if session_.api_version < (4, '20181215'):
-            del fields[4]  # tag
+        fields = [
+            ('Session Name', lambda api_session: get_naming(
+                api_session.api_version, 'name_gql_field',
+            )),
+        ]
+        if session.api_version[0] >= 6:
+            fields.append(format_options['session_id'])
+            fields.append(format_options['kernel_id'])
+        fields.extend([
+            format_options['image'],
+        ])
+        if session_.api_version >= (4, '20181215'):
+            fields.append(format_options['tag'])
+        fields.extend([
+            format_options['created_at'],
+            format_options['terminated_at'],
+            format_options['status'],
+            format_options['status_info'],
+            format_options['occupied_slots'],
+        ])
         fields = apply_version_aware_fields(session_, fields)
         field_formatters = defaultdict(lambda: str)
         field_formatters['last_stat'] = format_stats
