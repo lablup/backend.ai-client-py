@@ -104,7 +104,6 @@ def test_vfolder_get_info():
         assert resp == payload
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_upload_jwt_generation(tmp_path):
     with aioresponses() as m:
@@ -123,12 +122,6 @@ async def test_upload_jwt_generation(tmp_path):
             m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
                    payload=payload, status=200)
 
-            """
-            Since requests send paramers url should contain params inorder to get JWT token
-            m.post(build_url(session.config, '/folders/{}/request-upload?path={}&size={}' \
-            .format(vfolder_name, str(Path(mock_file)), str(file_size))),
-                   payload=payload, status=200)
-            """
             rqst = Request(session, 'POST', '/folders/{}/request-upload'.format(vfolder_name))
             rqst.set_json({
                 'path': "{}".format(str(Path(mock_file))),
