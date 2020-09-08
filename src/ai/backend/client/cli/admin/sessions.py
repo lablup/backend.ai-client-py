@@ -31,22 +31,23 @@ SessionItem = Dict[str, Any]
 
 # Lets say formattable options are:
 format_options = {
-    'name':            ('Session Name',
-                        lambda api_session: get_naming(api_session.api_version, 'name_gql_field')),
-    'type':            ('Type',
-                        lambda api_session: get_naming(api_session.api_version, 'type_gql_field')),
-    'kernel_id':       ('Kernel/Task ID', 'id'),
-    'session_id':      ('Session ID', 'session_id'),
-    'status':          ('Status', 'status'),
-    'status_info':     ('Status Info', 'status_info'),
-    'created_at':      ('Created At', 'created_at'),
-    'terminated_at':   ('Terminated At', 'terminated_at'),
-    'last_updated':    ('Last updated', 'status_changed'),
-    'result':          ('Result', 'result'),
-    'owner':           ('Owner', 'access_key'),
-    'image':           ('Image', 'image'),
-    'tag':             ('Tag', 'tag'),
-    'occupied_slots':  ('Occupied Resource', 'occupied_slots'),
+    'name':             ('Session Name',
+                         lambda api_session: get_naming(api_session.api_version, 'name_gql_field')),
+    'type':             ('Type',
+                         lambda api_session: get_naming(api_session.api_version, 'type_gql_field')),
+    'kernel_id':        ('Kernel/Task ID', 'id'),
+    'session_id':       ('Session ID', 'session_id'),
+    'status':           ('Status', 'status'),
+    'status_info':      ('Status Info', 'status_info'),
+    'created_at':       ('Created At', 'created_at'),
+    'terminated_at':    ('Terminated At', 'terminated_at'),
+    'last_updated':     ('Last updated', 'status_changed'),
+    'result':           ('Result', 'result'),
+    'owner':            ('Owner', 'access_key'),
+    'image':            ('Image', 'image'),
+    'tag':              ('Tag', 'tag'),
+    'occupied_slots':   ('Occupied Resource', 'occupied_slots'),
+    'cluster_hostname': ('Hostname', 'cluster_hostname'),
 }
 
 format_options_legacy = {
@@ -228,7 +229,7 @@ def session(id_or_name):
                 api_session.api_version, 'name_gql_field',
             )),
         ]
-        if session.api_version[0] >= 6:
+        if session_.api_version[0] >= 6:
             fields.append(format_options['session_id'])
             fields.append(format_options['kernel_id'])
         fields.extend([
@@ -260,12 +261,21 @@ def session(id_or_name):
             # In API v5 or later, we can query any compute session both in the history
             # and currently running using its UUID.
             # NOTE: Partial ID/alias matching is supported in the REST API only.
-            fields.append((
-                'Containers',
-                'containers {'
-                ' id role agent status status_info status_changed occupied_slots last_stat '
-                '}',
-            ))
+            if session_.api_version[0] >= 6:
+                fields.append((
+                    'Containers',
+                    'containers {'
+                    ' id cluster_role cluster_idx cluster_hostname '
+                    ' agent status status_info status_changed occupied_slots last_stat '
+                    '}',
+                ))
+            else:
+                fields.append((
+                    'Containers',
+                    'containers {'
+                    ' id role agent status status_info status_changed occupied_slots last_stat '
+                    '}',
+                ))
             fields.append((
                 'Dependencies',
                 'dependencies { name id status status_info status_changed }',
