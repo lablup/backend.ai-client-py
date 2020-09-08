@@ -16,7 +16,7 @@ def show_license():
     '''
     async def _show_license():
         async with AsyncSession():
-            rqst = Request(api_session.get(), 'GET', '/license')
+            rqst = Request('GET', '/license')
             async with rqst.fetch() as resp:
                 data = await resp.json()
             if data['status'] == 'valid':

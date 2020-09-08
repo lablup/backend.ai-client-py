@@ -17,14 +17,14 @@ class System(BaseFunction):
     @api_function
     @classmethod
     async def get_versions(cls) -> Mapping[str, str]:
-        rqst = Request(api_session.get(), 'GET', '/')
+        rqst = Request('GET', '/')
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     @classmethod
     async def get_manager_version(cls) -> str:
-        rqst = Request(api_session.get(), 'GET', '/')
+        rqst = Request('GET', '/')
         async with rqst.fetch() as resp:
             ret = await resp.json()
             return ret['manager']
@@ -32,7 +32,7 @@ class System(BaseFunction):
     @api_function
     @classmethod
     async def get_api_version(cls) -> str:
-        rqst = Request(api_session.get(), 'GET', '/')
+        rqst = Request('GET', '/')
         async with rqst.fetch() as resp:
             ret = await resp.json()
             return ret['version']

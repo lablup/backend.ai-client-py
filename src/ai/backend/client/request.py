@@ -116,7 +116,6 @@ class Request:
 
     def __init__(
         self,
-        session: BaseSession,
         method: str = 'GET',
         path: str = None,
         content: RequestContent = None, *,
@@ -295,7 +294,7 @@ class Request:
           from ai.backend.client.session import Session
 
           with Session() as sess:
-            rqst = Request(sess, 'GET', ...)
+            rqst = Request('GET', ...)
             with rqst.fetch() as resp:
               print(resp.text())
 
@@ -305,7 +304,7 @@ class Request:
           from ai.backend.client.session import AsyncSession
 
           async with AsyncSession() as sess:
-            rqst = Request(sess, 'GET', ...)
+            rqst = Request('GET', ...)
             async with rqst.fetch() as resp:
               print(await resp.text())
         """

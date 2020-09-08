@@ -40,7 +40,7 @@ class Admin(BaseFunction):
             'query': query,
             'variables': variables if variables else {},
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json(gql_query)
         async with rqst.fetch() as resp:
             return await resp.json()

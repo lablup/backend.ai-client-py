@@ -31,7 +31,6 @@ def session(defconfig):
 @pytest.fixture
 def mock_request_params(session):
     yield {
-        'session': session,
         'method': 'GET',
         'path': '/function/item/',
         'params': {'app': '999'},
@@ -43,7 +42,6 @@ def mock_request_params(session):
 def test_request_initialization(mock_request_params):
     rqst = Request(**mock_request_params)
 
-    assert rqst.session == mock_request_params['session']
     assert rqst.method == mock_request_params['method']
     assert rqst.params == mock_request_params['params']
     assert rqst.path == mock_request_params['path'].lstrip('/')
@@ -133,7 +131,7 @@ async def test_fetch(dummy_endpoint):
             headers={'Content-Type': 'text/plain; charset=utf-8',
                      'Content-Length': str(len(body))},
         )
-        rqst = Request(session, 'POST', 'function')
+        rqst = Request('POST', 'function')
         async with rqst.fetch() as resp:
             assert isinstance(resp, Response)
             assert resp.status == 200
@@ -148,7 +146,7 @@ async def test_fetch(dummy_endpoint):
             headers={'Content-Type': 'application/json; charset=utf-8',
                      'Content-Length': str(len(body))},
         )
-        rqst = Request(session, 'POST', 'function')
+        rqst = Request('POST', 'function')
         async with rqst.fetch() as resp:
             assert isinstance(resp, Response)
             assert resp.status == 200
@@ -168,7 +166,7 @@ async def test_streaming_fetch(dummy_endpoint):
             headers={'Content-Type': 'text/plain; charset=utf-8',
                      'Content-Length': str(len(body))},
         )
-        rqst = Request(session, 'POST', 'function')
+        rqst = Request('POST', 'function')
         async with rqst.fetch() as resp:
             assert resp.status == 200
             assert resp.content_type == 'text/plain'
@@ -191,7 +189,7 @@ async def test_invalid_requests(dummy_endpoint):
             headers={'Content-Type': 'application/problem+json; charset=utf-8',
                      'Content-Length': str(len(body))},
         )
-        rqst = Request(session, 'POST', '/')
+        rqst = Request('POST', '/')
         with pytest.raises(BackendAPIError) as e:
             async with rqst.fetch():
                 pass
@@ -204,7 +202,7 @@ async def test_invalid_requests(dummy_endpoint):
 @pytest.mark.asyncio
 async def test_fetch_invalid_method_async():
     async with AsyncSession() as session:
-        rqst = Request(session, 'STRANGE', '/')
+        rqst = Request('STRANGE', '/')
         with pytest.raises(AssertionError):
             async with rqst.fetch():
                 pass
@@ -216,7 +214,7 @@ async def test_fetch_client_error_async(dummy_endpoint):
         async with AsyncSession() as session:
             m.post(dummy_endpoint,
                    exception=aiohttp.ClientConnectionError())
-            rqst = Request(session, 'POST', '/')
+            rqst = Request('POST', '/')
             with pytest.raises(BackendClientError):
                 async with rqst.fetch():
                     pass
@@ -230,7 +228,7 @@ async def test_fetch_cancellation_async(dummy_endpoint):
         async with AsyncSession() as session:
             m.post(dummy_endpoint,
                    exception=asyncio.CancelledError())
-            rqst = Request(session, 'POST', '/')
+            rqst = Request('POST', '/')
             with pytest.raises(asyncio.CancelledError):
                 async with rqst.fetch():
                     pass
@@ -242,7 +240,7 @@ async def test_fetch_timeout_async(dummy_endpoint):
         async with AsyncSession() as session:
             m.post(dummy_endpoint,
                    exception=asyncio.TimeoutError())
-            rqst = Request(session, 'POST', '/')
+            rqst = Request('POST', '/')
             with pytest.raises(asyncio.TimeoutError):
                 async with rqst.fetch():
                     pass
@@ -258,7 +256,7 @@ async def test_response_async(defconfig, dummy_endpoint):
                      'Content-Length': str(len(body))},
         )
         async with AsyncSession(config=defconfig) as session:
-            rqst = Request(session, 'POST', '/function')
+            rqst = Request('POST', '/function')
             async with rqst.fetch() as resp:
                 assert await resp.text() == '{"test": 5678}'
                 assert await resp.json() == {'test': 5678}

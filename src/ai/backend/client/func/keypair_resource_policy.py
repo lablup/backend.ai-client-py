@@ -55,7 +55,7 @@ class KeypairResourcePolicy(BaseFunction):
                 'allowed_vfolder_hosts': allowed_vfolder_hosts,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -98,7 +98,7 @@ class KeypairResourcePolicy(BaseFunction):
                 'allowed_vfolder_hosts': allowed_vfolder_hosts,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -123,7 +123,7 @@ class KeypairResourcePolicy(BaseFunction):
         variables = {
             'name': name,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -152,7 +152,7 @@ class KeypairResourcePolicy(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
         })
@@ -185,7 +185,7 @@ class KeypairResourcePolicy(BaseFunction):
         variables = {
             'name': name,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,

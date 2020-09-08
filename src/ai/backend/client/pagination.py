@@ -58,7 +58,7 @@ async def execute_paginated_query(
     var_values = {key: value[0] for key, value in variables.items()}
     var_values['limit'] = limit
     var_values['offset'] = offset
-    rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+    rqst = Request('POST', '/admin/graphql')
     rqst.set_json({
         'query': query,
         'variables': var_values,

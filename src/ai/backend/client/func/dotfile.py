@@ -20,8 +20,7 @@ class Dotfile(BaseFunction):
                      permission: str,
                      owner_access_key: str = None,
                      ) -> 'Dotfile':
-        rqst = Request(api_session.get(),
-                       'POST', '/user-config/dotfiles')
+        rqst = Request('POST', '/user-config/dotfiles')
         body = {
             'data': data,
             'path': path,
@@ -35,8 +34,7 @@ class Dotfile(BaseFunction):
     @api_function
     @classmethod
     async def list_dotfiles(cls) -> 'List[Mapping[str, str]]':
-        rqst = Request(api_session.get(),
-                       'GET', '/user-config/dotfiles')
+        rqst = Request('GET', '/user-config/dotfiles')
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -49,8 +47,7 @@ class Dotfile(BaseFunction):
         params = {'path': self.path}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(api_session.get(),
-                       'GET', '/user-config/dotfiles',
+        rqst = Request('GET', '/user-config/dotfiles',
                        params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -64,8 +61,7 @@ class Dotfile(BaseFunction):
         }
         if self.owner_access_key:
             body['owner_access_key'] = self.owner_access_key
-        rqst = Request(api_session.get(),
-                       'PATCH', '/user-config/dotfiles')
+        rqst = Request('PATCH', '/user-config/dotfiles')
         rqst.set_json(body)
 
         async with rqst.fetch() as resp:
@@ -76,8 +72,7 @@ class Dotfile(BaseFunction):
         params = {'path': self.path}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(api_session.get(),
-                       'DELETE', '/user-config/dotfiles',
+        rqst = Request('DELETE', '/user-config/dotfiles',
                        params=params)
 
         async with rqst.fetch() as resp:
