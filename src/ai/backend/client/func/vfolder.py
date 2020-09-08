@@ -39,7 +39,7 @@ class VFolder(BaseFunction):
         usage_mode: str = 'general',
         permission: str = 'rw',
     ):
-        rqst = Request(api_session.get(), 'POST', '/folders')
+        rqst = Request('POST', '/folders')
         rqst.set_json({
             'name': name,
             'host': host,
@@ -54,7 +54,7 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def delete_by_id(cls, oid):
-        rqst = Request(api_session.get(), 'DELETE', '/folders')
+        rqst = Request('DELETE', '/folders')
         rqst.set_json({'id': oid})
         async with rqst.fetch():
             return {}
@@ -62,7 +62,7 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def list(cls, list_all=False):
-        rqst = Request(api_session.get(), 'GET', '/folders')
+        rqst = Request('GET', '/folders')
         rqst.set_json({'all': list_all})
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -70,39 +70,39 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def list_hosts(cls):
-        rqst = Request(api_session.get(), 'GET', '/folders/_/hosts')
+        rqst = Request('GET', '/folders/_/hosts')
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     @classmethod
     async def list_all_hosts(cls):
-        rqst = Request(api_session.get(), 'GET', '/folders/_/all_hosts')
+        rqst = Request('GET', '/folders/_/all_hosts')
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     @classmethod
     async def list_allowed_types(cls):
-        rqst = Request(api_session.get(), 'GET', '/folders/_/allowed_types')
+        rqst = Request('GET', '/folders/_/allowed_types')
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     async def info(self):
-        rqst = Request(api_session.get(), 'GET', '/folders/{0}'.format(self.name))
+        rqst = Request('GET', '/folders/{0}'.format(self.name))
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     async def delete(self):
-        rqst = Request(api_session.get(), 'DELETE', '/folders/{0}'.format(self.name))
+        rqst = Request('DELETE', '/folders/{0}'.format(self.name))
         async with rqst.fetch():
             return {}
 
     @api_function
     async def rename(self, new_name):
-        rqst = Request(api_session.get(), 'POST', '/folders/{0}/rename'.format(self.name))
+        rqst = Request('POST', '/folders/{0}/rename'.format(self.name))
         rqst.set_json({
             'new_name': new_name,
         })
@@ -122,7 +122,7 @@ class VFolder(BaseFunction):
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
         for relpath in relative_paths:
             file_path = base_path / relpath
-            rqst = Request(api_session.get(), 'POST',
+            rqst = Request('POST',
                            '/folders/{}/request-download'.format(self.name))
             rqst.set_json({
                 'path': str(relpath),
@@ -190,7 +190,7 @@ class VFolder(BaseFunction):
             files = [Path(file).resolve() for file in files]
         for file_path in files:
             file_size = Path(file_path).stat().st_size
-            rqst = Request(api_session.get(), 'POST',
+            rqst = Request('POST',
                            '/folders/{}/request-upload'.format(self.name))
             rqst.set_json({
                 'path': "{}".format(str(Path(file_path).relative_to(base_path))),
@@ -218,7 +218,7 @@ class VFolder(BaseFunction):
 
     @api_function
     async def mkdir(self, path: Union[str, Path]):
-        rqst = Request(api_session.get(), 'POST',
+        rqst = Request('POST',
                        '/folders/{}/mkdir'.format(self.name))
         rqst.set_json({
             'path': path,
@@ -228,7 +228,7 @@ class VFolder(BaseFunction):
 
     @api_function
     async def rename_file(self, target_path: str, new_name: str):
-        rqst = Request(api_session.get(), 'POST',
+        rqst = Request('POST',
                        '/folders/{}/rename_file'.format(self.name))
         rqst.set_json({
             'target_path': target_path,
@@ -241,7 +241,7 @@ class VFolder(BaseFunction):
     async def delete_files(self,
                            files: Sequence[Union[str, Path]],
                            recursive: bool = False):
-        rqst = Request(api_session.get(), 'DELETE',
+        rqst = Request('DELETE',
                        '/folders/{}/delete_files'.format(self.name))
         rqst.set_json({
             'files': files,
@@ -252,7 +252,7 @@ class VFolder(BaseFunction):
 
     @api_function
     async def list_files(self, path: Union[str, Path] = '.'):
-        rqst = Request(api_session.get(), 'GET', '/folders/{}/files'.format(self.name))
+        rqst = Request('GET', '/folders/{}/files'.format(self.name))
         rqst.set_json({
             'path': path,
         })
@@ -261,7 +261,7 @@ class VFolder(BaseFunction):
 
     @api_function
     async def invite(self, perm: str, emails: Sequence[str]):
-        rqst = Request(api_session.get(), 'POST', '/folders/{}/invite'.format(self.name))
+        rqst = Request('POST', '/folders/{}/invite'.format(self.name))
         rqst.set_json({
             'perm': perm, 'user_ids': emails,
         })
@@ -271,14 +271,14 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def invitations(cls):
-        rqst = Request(api_session.get(), 'GET', '/folders/invitations/list')
+        rqst = Request('GET', '/folders/invitations/list')
         async with rqst.fetch() as resp:
             return await resp.json()
 
     @api_function
     @classmethod
     async def accept_invitation(cls, inv_id: str):
-        rqst = Request(api_session.get(), 'POST', '/folders/invitations/accept')
+        rqst = Request('POST', '/folders/invitations/accept')
         rqst.set_json({'inv_id': inv_id})
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -286,7 +286,7 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def delete_invitation(cls, inv_id: str):
-        rqst = Request(api_session.get(), 'DELETE', '/folders/invitations/delete')
+        rqst = Request('DELETE', '/folders/invitations/delete')
         rqst.set_json({'inv_id': inv_id})
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -294,7 +294,7 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def get_fstab_contents(cls, agent_id=None):
-        rqst = Request(api_session.get(), 'GET', '/folders/_/fstab')
+        rqst = Request('GET', '/folders/_/fstab')
         rqst.set_json({
             'agent_id': agent_id,
         })
@@ -304,7 +304,7 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def get_performance_metric(cls, folder_host: str):
-        rqst = Request(api_session.get(), 'GET', '/folders/_/perf-metric')
+        rqst = Request('GET', '/folders/_/perf-metric')
         rqst.set_json({
             'folder_host': folder_host,
         })
@@ -314,7 +314,7 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def list_mounts(cls):
-        rqst = Request(api_session.get(), 'GET', '/folders/_/mounts')
+        rqst = Request('GET', '/folders/_/mounts')
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -322,7 +322,7 @@ class VFolder(BaseFunction):
     @classmethod
     async def mount_host(cls, name: str, fs_location: str, options=None,
                          edit_fstab: bool = False):
-        rqst = Request(api_session.get(), 'POST', '/folders/_/mounts')
+        rqst = Request('POST', '/folders/_/mounts')
         rqst.set_json({
             'name': name,
             'fs_location': fs_location,
@@ -335,7 +335,7 @@ class VFolder(BaseFunction):
     @api_function
     @classmethod
     async def umount_host(cls, name: str, edit_fstab: bool = False):
-        rqst = Request(api_session.get(), 'DELETE', '/folders/_/mounts')
+        rqst = Request('DELETE', '/folders/_/mounts')
         rqst.set_json({
             'name': name,
             'edit_fstab': edit_fstab,
@@ -345,6 +345,6 @@ class VFolder(BaseFunction):
 
     @api_function
     async def leave(self):
-        rqst = Request(api_session.get(), 'POST', '/folders/{}/leave'.format(self.name))
+        rqst = Request('POST', '/folders/{}/leave'.format(self.name))
         async with rqst.fetch() as resp:
             return await resp.json()

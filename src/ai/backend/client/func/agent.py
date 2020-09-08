@@ -87,7 +87,7 @@ class Agent(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'agent_id': agent_id}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -114,7 +114,7 @@ class AgentWatcher(BaseFunction):
         """
         Get agent and watcher status.
         """
-        rqst = Request(api_session.get(), 'GET', '/resource/watcher')
+        rqst = Request('GET', '/resource/watcher')
         rqst.set_json({'agent_id': agent_id})
         async with rqst.fetch() as resp:
             data = await resp.json()
@@ -129,7 +129,7 @@ class AgentWatcher(BaseFunction):
         """
         Start agent.
         """
-        rqst = Request(api_session.get(), 'POST', '/resource/watcher/agent/start')
+        rqst = Request('POST', '/resource/watcher/agent/start')
         rqst.set_json({'agent_id': agent_id})
         async with rqst.fetch() as resp:
             data = await resp.json()
@@ -144,7 +144,7 @@ class AgentWatcher(BaseFunction):
         """
         Stop agent.
         """
-        rqst = Request(api_session.get(), 'POST', '/resource/watcher/agent/stop')
+        rqst = Request('POST', '/resource/watcher/agent/stop')
         rqst.set_json({'agent_id': agent_id})
         async with rqst.fetch() as resp:
             data = await resp.json()
@@ -159,7 +159,7 @@ class AgentWatcher(BaseFunction):
         """
         Restart agent.
         """
-        rqst = Request(api_session.get(), 'POST', '/resource/watcher/agent/restart')
+        rqst = Request('POST', '/resource/watcher/agent/restart')
         rqst.set_json({'agent_id': agent_id})
         async with rqst.fetch() as resp:
             data = await resp.json()

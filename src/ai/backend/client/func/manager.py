@@ -18,7 +18,7 @@ class Manager(BaseFunction):
         """
         Returns the current status of the configured API server.
         """
-        rqst = Request(api_session.get(), 'GET', '/manager/status')
+        rqst = Request('GET', '/manager/status')
         rqst.set_json({
             'status': 'running',
         })
@@ -40,7 +40,7 @@ class Manager(BaseFunction):
             session are still able to interact with them though they cannot create
             new compute sessions.
         """
-        rqst = Request(api_session.get(), 'PUT', '/manager/status')
+        rqst = Request('PUT', '/manager/status')
         rqst.set_json({
             'status': 'frozen',
             'force_kill': force_kill,
@@ -54,7 +54,7 @@ class Manager(BaseFunction):
         """
         Unfreezes the configured API server so that it resumes to normal operation.
         """
-        rqst = Request(api_session.get(), 'PUT', '/manager/status')
+        rqst = Request('PUT', '/manager/status')
         rqst.set_json({
             'status': 'running',
         })
@@ -67,7 +67,7 @@ class Manager(BaseFunction):
         '''
         Get current announcement.
         '''
-        rqst = Request(api_session.get(), 'GET', '/manager/announcement')
+        rqst = Request('GET', '/manager/announcement')
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -80,7 +80,7 @@ class Manager(BaseFunction):
         :param enabled: If set ``False``, delete announcement.
         :param message: Announcement message. Required if ``enabled`` is True.
         '''
-        rqst = Request(api_session.get(), 'POST', '/manager/announcement')
+        rqst = Request('POST', '/manager/announcement')
         rqst.set_json({
             'enabled': enabled,
             'message': message,
@@ -97,7 +97,7 @@ class Manager(BaseFunction):
         :param op: The name of scheduler operation.
         :param args: Arguments specific to the given operation.
         '''
-        rqst = Request(api_session.get(), 'POST', '/manager/scheduler/operation')
+        rqst = Request('POST', '/manager/scheduler/operation')
         rqst.set_json({
             'op': op,
             'args': args,

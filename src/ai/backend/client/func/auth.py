@@ -21,7 +21,7 @@ class Auth(BaseFunction):
         a dictionary with ``"authenticated"`` boolean field and
         JSON-encoded raw cookie data.
         """
-        rqst = Request(api_session.get(), 'POST', '/server/login')
+        rqst = Request('POST', '/server/login')
         rqst.set_json({
             'username': user_id,
             'password': password,
@@ -41,7 +41,7 @@ class Auth(BaseFunction):
         Log-out from the endpoint.
         It clears the server-side web session.
         """
-        rqst = Request(api_session.get(), 'POST', '/server/logout')
+        rqst = Request('POST', '/server/logout')
         async with rqst.fetch() as resp:
             resp.raw_response.raise_for_status()
 
@@ -51,7 +51,7 @@ class Auth(BaseFunction):
         """
         Update user's password. This API works only for account owner.
         """
-        rqst = Request(api_session.get(), 'POST', '/auth/update-password')
+        rqst = Request('POST', '/auth/update-password')
         rqst.set_json({
             'old_password': old_password,
             'new_password': new_password,

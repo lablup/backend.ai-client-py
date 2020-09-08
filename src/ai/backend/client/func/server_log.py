@@ -39,6 +39,6 @@ class ServerLog(BaseFunction):
             'page_size': page_size,
             'page_no': page_no,
         }
-        rqst = Request(api_session.get(), 'GET', '/logs/error', params=params)
+        rqst = Request('GET', '/logs/error', params=params)
         async with rqst.fetch() as resp:
             return await resp.json()

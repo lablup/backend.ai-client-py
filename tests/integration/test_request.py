@@ -9,19 +9,19 @@ pytestmark = pytest.mark.integration
 
 def test_connection():
     with Session() as sess:
-        request = Request(sess, 'GET', '/')
+        request = Request('GET', '/')
         with request.fetch() as resp:
             assert 'version' in resp.json()
 
 
 def test_not_found():
     with Session() as sess:
-        request = Request(sess, 'GET', '/invalid-url-wow')
+        request = Request('GET', '/invalid-url-wow')
         with pytest.raises(BackendAPIError) as e:
             with request.fetch():
                 pass
         assert e.value.status == 404
-        request = Request(sess, 'GET', '/auth/uh-oh')
+        request = Request('GET', '/auth/uh-oh')
         with pytest.raises(BackendAPIError) as e:
             with request.fetch():
                 pass
@@ -31,6 +31,6 @@ def test_not_found():
 @pytest.mark.asyncio
 async def test_async_connection():
     async with AsyncSession() as sess:
-        request = Request(sess, 'GET', '/')
+        request = Request('GET', '/')
         async with request.fetch() as resp:
             assert 'version' in await resp.json()

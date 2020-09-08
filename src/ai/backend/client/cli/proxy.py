@@ -114,7 +114,7 @@ async def web_handler(request):
         # We treat all requests and responses as streaming universally
         # to be a transparent proxy.
         api_rqst = Request(
-            session, request.method, path, request.content,
+            request.method, path, request.content,
             params=request.query)
         if 'Content-Type' in request.headers:
             api_rqst.content_type = request.content_type                        # set for signing
@@ -161,7 +161,7 @@ async def websocket_handler(request):
     path = re.sub(r'^/?v(\d+)/', '/', request.path)
     try:
         api_rqst = Request(
-            session, request.method, path, request.content,
+            request.method, path, request.content,
             params=request.query,
             content_type=request.content_type)
         async with api_rqst.connect_websocket() as up_conn:

@@ -30,7 +30,7 @@ class ScalingGroup(BaseFunction):
         List available scaling groups for the current user,
         considering the user, the user's domain, and the designated user group.
         """
-        rqst = Request(api_session.get(), 'GET', '/scaling-groups',
+        rqst = Request('GET', '/scaling-groups',
                        params={'group': group})
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -56,7 +56,7 @@ class ScalingGroup(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'is_active': None}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables
@@ -86,7 +86,7 @@ class ScalingGroup(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'name': name}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -125,7 +125,7 @@ class ScalingGroup(BaseFunction):
                 'scheduler_opts': json.dumps(scheduler_opts),
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -164,7 +164,7 @@ class ScalingGroup(BaseFunction):
                 'scheduler_opts': json.dumps(scheduler_opts),
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -187,7 +187,7 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'name': name}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -214,7 +214,7 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'domain': domain}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -241,7 +241,7 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'domain': domain}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -266,7 +266,7 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'domain': domain}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -293,7 +293,7 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'user_group': group_id}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -320,7 +320,7 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'user_group': group_id}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -345,7 +345,7 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'group_id': group_id}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
