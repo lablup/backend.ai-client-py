@@ -16,6 +16,16 @@ Changes
 
 .. towncrier release notes start
 
+20.03.5 (2020-09-09)
+--------------------
+
+### Features
+* Display users' full name when querying keypair(s). ([#122](https://github.com/lablup/backend.ai-client-py/issues/122))
+
+### Fixes
+* Use session IDs when invoking stream APIs to prevent conflicts in partial matches of prefix-overlapping session names ([#126](https://github.com/lablup/backend.ai-client-py/issues/126))
+
+
 20.03.4 (2020-08-13)
 --------------------
 
