@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import secrets
 import tarfile
 import tempfile
@@ -18,7 +19,7 @@ from typing import (
     cast,
 )
 from typing_extensions import Literal  # for Python 3.7
-from pathlib import Path
+from uuid import UUID
 
 import aiohttp
 from aiohttp import hdrs
@@ -70,8 +71,8 @@ class ComputeSession(BaseFunction):
     all containers belonging to the same compute session.
     """
 
-    id: str
-    name: str
+    id: Optional[UUID]
+    name: Optional[str]
     owner_access_key: Optional[str]
     created: bool
     status: str
@@ -291,11 +292,11 @@ class ComputeSession(BaseFunction):
         else:
             params['lang'] = image
         rqst.set_json(params)
-        print(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
             o = cls(name, owner_access_key)  # type: ignore
-            o.id = data.get('sessionId', name)
+            if api_session.get().api_version[0] >= 5:
+                o.id = UUID(data['sessionId'])
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -446,6 +447,8 @@ class ComputeSession(BaseFunction):
         async with rqst.fetch() as resp:
             data = await resp.json()
             o = cls(name, owner_access_key if owner_access_key is not undefined else None)
+            if api_session.get().api_version[0] >= 5:
+                o.id = UUID(data['sessionId'])
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -453,9 +456,32 @@ class ComputeSession(BaseFunction):
             o.group = group_name
             return o
 
-    def __init__(self, name: str, owner_access_key: str = None):
+    def __init__(self, name: str, owner_access_key: str = None) -> None:
+        self.id = None
         self.name = name
         self.owner_access_key = owner_access_key
+
+    @classmethod
+    def from_session_id(cls, session_id: UUID) -> ComputeSession:
+        o = cls(None, None)  # type: ignore
+        o.id = session_id
+        o.name = None
+        o.owner_access_key = None
+        return o
+
+    def get_session_identity_params(self) -> Mapping[str, str]:
+        if self.id:
+            identity_params = {
+                'sessionId': str(self.id),
+            }
+        else:
+            assert self.name is not None
+            identity_params = {
+                'sessionName': self.name,
+            }
+            if self.owner_access_key:
+                identity_params['owner_access_key'] = self.owner_access_key
+        return identity_params
 
     @api_function
     async def destroy(self, *, forced: bool = False):
@@ -830,24 +856,35 @@ class ComputeSession(BaseFunction):
             return await resp.json()
 
     # only supported in AsyncAPISession
-    def listen_events(self) -> SSEContextManager:
+    def listen_events(self, scope: Literal['*', 'session', 'kernel'] = '*') -> SSEContextManager:
         """
         Opens the stream of the kernel lifecycle events.
         Only the master kernel of each session is monitored.
 
         :returns: a :class:`StreamEvents` object.
         """
-        params = {
-            get_naming(api_session.get().api_version, 'event_name_arg'): self.name,
-        }
-        if self.owner_access_key:
-            params['owner_access_key'] = self.owner_access_key
-        path = get_naming(api_session.get().api_version, 'session_events_path')
-        request = Request(
-            api_session.get(),
-            'GET', path,
-            params=params,
-        )
+        if api_session.get().api_version[0] >= 6:
+            request = Request(
+                api_session.get(),
+                'GET', '/events/session',
+                params={
+                    **self.get_session_identity_params(),
+                    'scope': scope,
+                }
+            )
+        else:
+            assert self.name is not None
+            params = {
+                get_naming(api_session.get().api_version, 'event_name_arg'): self.name,
+            }
+            if self.owner_access_key:
+                params['owner_access_key'] = self.owner_access_key
+            path = get_naming(api_session.get().api_version, 'session_events_path')
+            request = Request(
+                api_session.get(),
+                'GET', path,
+                params=params,
+            )
         return request.connect_events()
 
     stream_events = listen_events  # legacy alias

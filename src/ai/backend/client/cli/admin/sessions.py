@@ -43,6 +43,7 @@ format_options = {
     'terminated_at':    ('Terminated At', 'terminated_at'),
     'last_updated':     ('Last updated', 'status_changed'),
     'result':           ('Result', 'result'),
+    'group':            ('Project/Group', 'group_name'),
     'owner':            ('Owner', 'access_key'),
     'image':            ('Image', 'image'),
     'tag':              ('Tag', 'tag'),
@@ -117,6 +118,7 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
             if session.api_version[0] >= 6:
                 fields.append(format_options['session_id'])
             fields.extend([
+                format_options['group'],
                 format_options['kernel_id'],
                 format_options['image'],
                 format_options['type'],

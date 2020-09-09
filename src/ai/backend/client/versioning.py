@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import (
     Callable,
-    Union,
     Sequence,
     Tuple,
+    Union,
     TYPE_CHECKING,
 )
+
 if TYPE_CHECKING:
     from .func.session import ComputeSession
 
@@ -30,7 +31,10 @@ def get_naming(api_version: Tuple[int, str], key: str) -> str:
 def get_id_or_name(api_version: Tuple[int, str], obj: ComputeSession) -> str:
     if api_version[0] <= 4:
         return obj.name
-    return obj.id
+    if obj.id:
+        return str(obj.id)
+    else:
+        return obj.name
 
 
 def apply_version_aware_fields(

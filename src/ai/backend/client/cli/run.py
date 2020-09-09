@@ -15,6 +15,7 @@ from typing import (
     Sequence,
     Tuple,
 )
+import uuid
 
 import aiohttp
 import click
@@ -40,22 +41,22 @@ tabulate_mod.PRESERVE_WHITESPACE = True
 
 
 def drange(start: Decimal, stop: Decimal, num: int):
-    '''
+    """
     A simplified version of numpy.linspace with default options
-    '''
+    """
     delta = stop - start
     step = delta / (num - 1)
     yield from (start + step * Decimal(tick) for tick in range(0, num))
 
 
 class RangeExprOptionType(click.ParamType):
-    '''
+    """
     Accepts a range expression which generates a range of values for a variable.
 
     Linear space range: "linspace:1,2,10" (start, stop, num) as in numpy.linspace
     Pythonic range: "range:1,10,2" (start, stop[, step]) as in Python's range
     Case range: "case:a,b,c" (comma-separated strings)
-    '''
+    """
 
     name = 'Range Expression'
 
@@ -82,9 +83,9 @@ range_expr = RangeExprOptionType()
 
 async def exec_loop(stdout, stderr, compute_session, mode, code, *, opts=None,
                     vprint_done=print_done, is_multi=False):
-    '''
+    """
     Fully streamed asynchronous version of the execute loop.
-    '''
+    """
     async with compute_session.stream_execute(code, mode=mode, opts=opts) as stream:
         async for result in stream:
             if result.type == aiohttp.WSMsgType.TEXT:
@@ -140,9 +141,9 @@ async def exec_loop(stdout, stderr, compute_session, mode, code, *, opts=None,
 
 def exec_loop_sync(stdout, stderr, compute_session, mode, code, *, opts=None,
                    vprint_done=print_done):
-    '''
+    """
     Old synchronous polling version of the execute loop.
-    '''
+    """
     opts = opts if opts else {}
     run_id = None  # use server-assigned run ID
     while True:
@@ -390,7 +391,7 @@ def run(image, files, name,                                 # base args
         mount, scaling_group, resources, cluster_size,      # resource spec
         resource_opts,
         domain, group, preopen):                            # resource grouping
-    '''
+    """
     Run the given code snippet or files in a session.
     Depending on the session ID you give (default is random),
     it may reuse an existing session or create a new one.
@@ -399,7 +400,7 @@ def run(image, files, name,                                 # base args
     IMAGE: The name (and version/platform tags appended after a colon) of session
           runtime or programming language.')
     FILES: The code file(s). Can be added multiple times.
-    '''
+    """
     if quiet:
         vprint_info = vprint_wait = vprint_done = _noop
     else:
@@ -819,7 +820,7 @@ def start(image, name, owner,                                 # base args
           mount, scaling_group, resources, cluster_size,  # resource spec
           resource_opts,
           domain, group, preopen):                        # resource grouping
-    '''
+    """
     Prepare and start a single compute session without executing codes.
     You may use the created session to execute codes using the "run" command
     or connect to an application service provided by the session using the "app"
@@ -829,7 +830,7 @@ def start(image, name, owner,                                 # base args
     \b
     IMAGE: The name (and version/platform tags appended after a colon) of session
            runtime or programming language.
-    '''
+    """
     if name is None:
         name = f'pysdk-{secrets.token_hex(5)}'
     else:
@@ -976,7 +977,7 @@ def start_template(
     domain, group,                                  # resource grouping
     no_mount, no_env, no_resource,
 ):
-    '''
+    """
     Prepare and start a single compute session without executing codes.
     You may use the created session to execute codes using the "run" command
     or connect to an application service provided by the session using the "app"
@@ -986,7 +987,7 @@ def start_template(
     \b
     IMAGE: The name (and version/platform tags appended after a colon) of session
            runtime or programming language.
-    '''
+    """
     if name is undefined:
         name = f'pysdk-{secrets.token_hex(5)}'
     else:
@@ -1071,11 +1072,11 @@ def start_template(
 @click.option('-s', '--stats', is_flag=True,
               help='Show resource usage statistics after termination')
 def terminate(session_names, forced, owner, stats):
-    '''
+    """
     Terminate the given session.
 
     SESSID: session ID given/generated when creating the session.
-    '''
+    """
     if len(session_names) == 0:
         print_warn('Specify at least one session ID. Check usage with "-h" option.')
         sys.exit(1)
@@ -1110,13 +1111,13 @@ def terminate(session_names, forced, owner, stats):
 
 
 @main.command()
-@click.argument('session_names', metavar='SESSID', nargs=-1)
+@click.argument('session_names', metavar='SESSION_NAME', nargs=-1)
 def restart(session_names):
-    '''
+    """
     Restart the given session.
 
     SESSID: session ID given/generated when creating the session.
-    '''
+    """
     if len(session_names) == 0:
         print_warn('Specify at least one session ID. Check usage with "-h" option.')
         sys.exit(1)
@@ -1150,30 +1151,36 @@ def restart(session_names):
               help='Specify the owner of the target session explicitly.')
 @click.pass_context
 def info(ctx, session_name, owner_access_key):
-    '''
+    """
     Show detailed information for a running compute session.
     This is an alias of the "admin session <sess_id>" command.
 
     SESSID: session ID or its alias given when creating the session.
-    '''
+    """
     ctx.forward(cli_admin_session)
 
 
 @main.command()
-@click.argument('name', metavar='SESSID')
+@click.argument('session_name_or_id', metavar='SESSION_ID_OR_NAME')
 @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
               help='Specify the owner of the target session explicitly.')
-def events(name, owner_access_key):
-    '''
+@click.option('--scope', type=click.Choice(['*', 'session', 'kernel']), default='*',
+              help='Filter the events by kernel-specific ones or session-specific ones.')
+def events(session_name_or_id, owner_access_key, scope):
+    """
     Monitor the lifecycle events of a compute session.
 
     SESSID: session ID or its alias given when creating the session.
-    '''
+    """
 
     async def _run_events():
         async with AsyncSession() as session:
-            compute_session = session.ComputeSession(name, owner_access_key)
-            async with compute_session.listen_events() as response:
+            try:
+                session_id = uuid.UUID(session_name_or_id)
+                compute_session = session.ComputeSession.from_session_id(session_id)
+            except ValueError:
+                compute_session = session.ComputeSession(session_name_or_id, owner_access_key)
+            async with compute_session.listen_events(scope=scope) as response:
                 async for ev in response:
                     print(click.style(ev.event, fg='cyan', bold=True), json.loads(ev.data))
 
