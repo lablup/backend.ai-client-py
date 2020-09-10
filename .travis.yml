@@ -12,6 +12,7 @@ stages:
 python:
   - "3.7"
   - "3.8"
+  - "3.9-dev"
 os:
   - linux
   # - osx  # Travis CI does not officially support Python on macOS.
@@ -28,6 +29,8 @@ after_success:
 # job matrix
 jobs:
   fast_finish: true
+  allow_failures:
+    - python: "3.9-dev"
   include:
     # if the test stage has multiple cases, it will be auto-included.
     - stage: deploy
