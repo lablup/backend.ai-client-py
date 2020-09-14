@@ -117,13 +117,9 @@ async def test_tus_upload(tmp_path: Path):
             assert False
 
 
-@pytest.mark.skip(reason="postponed test implementation")
 @pytest.mark.asyncio
 async def test_vfolder_download(mocker):
     mock_reader = AsyncMock()
-    mock_from_response = mocker.patch(
-        'ai.backend.client.func.vfolder.aiohttp.MultipartReader.from_response',
-        return_value=mock_reader)
     mock_reader.next = AsyncMock()
     mock_reader.next.return_value = None
     mock_file = 'fake-file1'
@@ -133,41 +129,29 @@ async def test_vfolder_download(mocker):
             vfolder_name = 'fake-vfolder-name'
             # client to manager
             # manager to storage-proxy
-            storage_path = str(build_url(session.config, 'folder/{}/download'
-                                .format(vfolder_name))).replace('8081', '6021')
-            storage_path2 = str(build_url(session.config, '/download')).replace('8081', '6021')
+            storage_path = str(build_url(session.config, '/download'.replace('8081', '6021')))
 
-            payload = {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. \
-            eyJwYXRoIjoiaHR0cDoxMjcuMC4wLjEvZm9sZGVycy9mYWtlLXZmb2xkZXItbmFtZS9yZXF1ZXN0LXVwbG9hZCIsInNpemUiOjEwMjR9.\
-            5IXk0xdrr6aPzVjud4cdfcXWch7Bq-m7SlFhnUv8XL8', 'url': storage_path}
-
-            storage_payload = {'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9. \
-                eyJvcCI6InVwbG9hZCIsInZvbHVtZSI6InZvbHVtZTEiLCJ2ZmlkIjoiO \
-                DBiYWYyYjgtNTY3My00MmVkLTgyZWEtYj \
-                NmNzNmOWQwNjAzIiwicmVscGF0aCI6InNldHVwLmNmZyIsInNpemUiOjU \
-                yNywic2Vzc2lvbiI6ImE3YzZiY2I1MWRlY2I3NzJjZjRkMDI3YjA5 \
-                MGI5NGM5IiwiZXhwIjoxNTk5MTIzMzYxfQ. \
-                D13UMFrz-2qq9c0k4MGpjVOMn5Z9-fyR5tRRIkvtvqk'}
+            payload = {'token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.\
+            eyJvcCI6ImRvd25sb2FkIiwidm9sdW1lIjoidm9sdW1lMSIsInZmaWQiOiI4ZGFlNjk5Mi1kMjIzLTQwM2MtYTUyZC1iYWRlNGYwMGFhMzIiLCJyZWxwYXRoIjoic2V0dXAuY2ZnIiwiZXhwIjoxNjAwMTM0MzI5fQ.\
+            -cirX1fTBVqDAuW6IPzwpHjtopnSdio_BeuD2DACsbQ', 'url': storage_path}
 
             # 1. Client to Manager throught Request
-            m.post(build_url(session.config, "/folders/{}/request-download?path='{}'".format(
-                             vfolder_name, mock_file)), payload=payload['token'], status=200)
+            m.post(build_url(session.config, "/folders/{}/request-download".format(
+                             vfolder_name)),
+                             payload=payload,
+                             status=200,
+                             headers={'User-Agent': 'Backend.AI Client for Python 20.09.0a1.dev0',
+                                      'X-BackendAI-Domain': 'default',
+                                      'X-BackendAI-Version': 'v6.20200815',
+                                      'Date': '2020-09-14T01:45:29.117351+00:00',
+                                      'Content-Type': 'application/json',
+                                      'Authorization': 'BackendAI signMethod=HMAC-SHA256,\
+                                       credential=AKIAIOSFODNN7EXAMPLE:\
+                                       623674bb421ff0c96a9fe78a4a8c6a\
+                                       45fc5c0a370257800310cd9c7826819b3c'})
 
-            # 2. Manager to storage proxy
-            """
-            m.post(storage_path + "?volume= \
-                   volume1&vfid=80baf2b8-5673-42ed-82ea-b3f73f9d0603&relpath={}"
-                   .format('fake-file1'),
-                   payload=payload,
-                   status=200)
-            """
-            # 3. Client to Manager through TusClient. Upload url
-
-            m.get(storage_path2 + "?token={}".format(storage_payload['token']))
-
-            m.get(build_url(session.config, "/folders/{}/request-download?path='{}'".format(
-                             vfolder_name, mock_file)), status=200)
-
-            await session.VFolder(vfolder_name).download(['fake-file1'])
-            assert mock_from_response.called == 1
-            assert mock_reader.next.called == 1
+            # 2. Client to Manager through TusClient. Upload url
+            m.get(storage_path + "?token={}".format(payload['token']),
+                  headers={'Content-Length': '527'}, status=200)
+            await session.VFolder(vfolder_name).download([mock_file])
+            assert Path("fake-file1").exists() == 1
