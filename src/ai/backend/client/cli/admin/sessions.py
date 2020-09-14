@@ -202,7 +202,7 @@ def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str
                 f"+ {cinfo['id']}",
                 *(f"  - {k + ': ':18s}{v}" for k, v in cinfo.items() if k not in ('id', 'last_stat')),
                 f"  + last_stat: {format_stats(cinfo['last_stat'], indent='    ')}",
-            ))
+            )) + "\n"
     return "\n" + textwrap.indent(text, indent)
 
 
