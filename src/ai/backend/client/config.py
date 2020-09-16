@@ -25,14 +25,16 @@ __all__ = [
     'APIConfig',
     'API_VERSION',
     'DEFAULT_CHUNK_SIZE',
+    'MAX_INFLIGHT_CHUNKS',
 ]
 
 _config = None
 _undefined = object()
 
-API_VERSION = (5, '20191215')
+API_VERSION = (6, '20200815')
 
-DEFAULT_CHUNK_SIZE = 256 * 1024  # 256 KiB
+DEFAULT_CHUNK_SIZE = 16 * (2**20)  # 16 MiB
+MAX_INFLIGHT_CHUNKS = 4
 
 local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
 local_cache_path = Path(appdirs.user_cache_dir('backend.ai', 'Lablup'))

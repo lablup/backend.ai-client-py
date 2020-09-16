@@ -4,11 +4,14 @@ from pathlib import Path
 import sys
 
 import click
+import humanize
 from tabulate import tabulate
 
 from . import main
 from .interaction import ask_yn
 from .pretty import print_done, print_error, print_fail, print_info, print_wait
+from .utils import ByteSizeParamType
+from ..config import DEFAULT_CHUNK_SIZE
 from ..session import Session
 
 
@@ -160,9 +163,9 @@ def info(name):
             print('- Owner:', result['is_owner'])
             print('- Permission:', result['permission'])
             print('- Number of files: {0}'.format(result['numFiles']))
-            print('- Ownership Type: {0}'.format(result['ownership_type']))
+            print('- Ownership Type: {0}'.format(result['type']))
             print('- Permission:', result['permission'])
-            print('- Usage Mode: {0}'.format(result['usage_mode']))
+            print('- Usage Mode: {0}'.format(result.get('usage_mode', '')))
             print('- Group ID: {0}'.format(result['group']))
             print('- User ID: {0}'.format(result['user']))
         except Exception as e:
@@ -170,27 +173,33 @@ def info(name):
             sys.exit(1)
 
 
-@vfolder.command()
+@vfolder.command(context_settings={'show_default': True})  # bug: pallets/click#1565 (fixed in 8.0)
 @click.argument('name', type=str)
 @click.argument('filenames', type=Path, nargs=-1)
-@click.option('-b', '--base-dir', type=Path, default=None)
-def upload(name, filenames, base_dir):
+@click.option('-b', '--base-dir', type=Path, default=None,
+              help='Set the parent directory from where the file is uploaded.  '
+                   '[default: current working directry]')
+@click.option('--chunk-size', type=ByteSizeParamType(),
+              default=humanize.naturalsize(DEFAULT_CHUNK_SIZE, binary=True, gnu=True),
+              help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
+                   'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
+                   'and networks (e.g., 40 GbE) for the maximum throughput.')
+def upload(name, filenames, base_dir, chunk_size):
     '''
-    Upload a file to the virtual folder from the current working directory.
+    TUS Upload a file to the virtual folder from the current working directory.
     The files with the same names will be overwirtten.
 
     \b
     NAME: Name of a virtual folder.
     FILENAMES: Paths of the files to be uploaded.
     '''
-    if base_dir is None:
-        base_dir = Path.cwd()
     with Session() as session:
         try:
             session.VFolder(name).upload(
                 filenames,
-                show_progress=True,
                 basedir=base_dir,
+                chunk_size=chunk_size,
+                show_progress=True,
             )
             print_done('Done.')
         except Exception as e:
@@ -198,10 +207,18 @@ def upload(name, filenames, base_dir):
             sys.exit(1)
 
 
-@vfolder.command()
+@vfolder.command(context_settings={'show_default': True})  # bug: pallets/click#1565 (fixed in 8.0)
 @click.argument('name', type=str)
 @click.argument('filenames', type=Path, nargs=-1)
-def download(name, filenames):
+@click.option('-b', '--base-dir', type=Path, default=None,
+              help='Set the parent directory from where the file is uploaded.  '
+                   '[default: current working directry]')
+@click.option('--chunk-size', type=ByteSizeParamType(),
+              default=humanize.naturalsize(DEFAULT_CHUNK_SIZE, binary=True, gnu=True),
+              help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
+                   'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
+                   'and networks (e.g., 40 GbE) for the maximum throughput.')
+def download(name, filenames, base_dir, chunk_size):
     '''
     Download a file from the virtual folder to the current working directory.
     The files with the same names will be overwirtten.
@@ -212,7 +229,12 @@ def download(name, filenames):
     '''
     with Session() as session:
         try:
-            session.VFolder(name).download(filenames, show_progress=True)
+            session.VFolder(name).download(
+                filenames,
+                basedir=base_dir,
+                chunk_size=chunk_size,
+                show_progress=True,
+            )
             print_done('Done.')
         except Exception as e:
             print_error(e)
@@ -438,6 +460,30 @@ def invitations():
                         break
                     elif action.lower() == 'c':
                         break
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolder.command()
+@click.argument('name', type=str)
+def leave(name):
+    '''Leave the shared virutal folder.
+
+    NAME: Name of a virtual folder
+    '''
+    with Session() as session:
+        try:
+            vfolder_info = session.VFolder(name).info()
+            if vfolder_info['type'] == 'group':
+                print('You cannot leave a group virtual folder.')
+                return
+            if vfolder_info['is_owner']:
+                print('You cannot leave a virtual folder you own. Consider using delete instead.')
+                return
+            session.VFolder(name).leave()
+            print('Left the shared virtual folder "{}".'.format(name))
+
         except Exception as e:
             print_error(e)
             sys.exit(1)
