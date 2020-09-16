@@ -10,7 +10,7 @@ from tabulate import tabulate
 from . import main
 from .interaction import ask_yn
 from .pretty import print_done, print_error, print_fail, print_info, print_wait
-from .utils import ByteSizeParamType
+from .utils import ByteSizeParamType, ByteSizeParamCheckType
 from ..config import DEFAULT_CHUNK_SIZE
 from ..session import Session
 
@@ -90,7 +90,7 @@ def list_allowed_types():
               help='Folder\'s innate permission. '
                    'Group folders can be shared as read-only by setting this option to "ro".'
                    'Invited folders override this setting by its own invitation permission.')
-@click.option('-q', '--quota', metavar='QUOTA', type=str, default=None,
+@click.option('-q', '--quota', metavar='QUOTA', type=ByteSizeParamCheckType(), default=None,
               help='Quota of the virtual folder. '
                    '(Use \'m\' for megabytes, \'g\' for gigabytes, and etc.) '
                    'Default is maximum amount possible.')
@@ -104,13 +104,23 @@ def create(name, host, group, host_path, usage_mode, permission, quota):
     with Session() as session:
         try:
             if host_path:
-                result = session.VFolder.create(name=name, unmanaged_path=host, group=group,
-                                                usage_mode=usage_mode, permission=permission,
-                                                quota=quota)
+                result = session.VFolder.create(
+                    name=name,
+                    unmanaged_path=host,
+                    group=group,
+                    usage_mode=usage_mode,
+                    permission=permission,
+                    quota=quota
+                )
             else:
-                result = session.VFolder.create(name=name, host=host, group=group,
-                                                usage_mode=usage_mode, permission=permission,
-                                                quota=quota)
+                result = session.VFolder.create(
+                    name=name,
+                    host=host,
+                    group=group,
+                    usage_mode=usage_mode,
+                    permission=permission,
+                    quota=quota
+                )
             print('Virtual folder "{0}" is created.'.format(result['name']))
         except Exception as e:
             print_error(e)
