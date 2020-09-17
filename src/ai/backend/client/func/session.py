@@ -465,8 +465,6 @@ class ComputeSession(BaseFunction):
     def from_session_id(cls, session_id: UUID) -> ComputeSession:
         o = cls(None, None)  # type: ignore
         o.id = session_id
-        o.name = None
-        o.owner_access_key = None
         return o
 
     def get_session_identity_params(self) -> Mapping[str, str]:
