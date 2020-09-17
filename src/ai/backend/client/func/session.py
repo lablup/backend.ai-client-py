@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import secrets
 import tarfile
 import tempfile
@@ -12,7 +13,7 @@ from typing import (
     Sequence, List,
     cast,
 )
-from pathlib import Path
+from uuid import UUID
 
 import aiohttp
 from aiohttp import hdrs
@@ -64,7 +65,7 @@ class ComputeSession(BaseFunction):
     all containers belonging to the same compute session.
     """
 
-    id: str
+    id: Optional[UUID]
     name: str
     owner_access_key: Optional[str]
     created: bool
@@ -414,7 +415,10 @@ class ComputeSession(BaseFunction):
         rqst.set_json(params)
         async with rqst.fetch() as resp:
             data = await resp.json()
-            o = cls(name, owner_access_key if owner_access_key is not undefined else None)
+            o = cls(
+                name,
+                owner_access_key if owner_access_key is not undefined else None,
+            )
             o.created = data.get('created', True)     # True is for legacy
             o.status = data.get('status', 'RUNNING')
             o.service_ports = data.get('servicePorts', [])
@@ -423,8 +427,15 @@ class ComputeSession(BaseFunction):
             return o
 
     def __init__(self, name: str, owner_access_key: str = None):
+        self.id = None
         self.name = name
         self.owner_access_key = owner_access_key
+
+    @classmethod
+    def from_session_id(cls, session_id: UUID) -> ComputeSession:
+        o = cls(None, None)  # type: ignore
+        o.id = session_id
+        return o
 
     @api_function
     async def destroy(self, *, forced: bool = False):
