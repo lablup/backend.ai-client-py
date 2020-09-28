@@ -89,12 +89,12 @@ def test_destroy_kernel_url(mocker):
                             return_value=mock_req_obj)
     with Session() as session:
         prefix = get_naming(session.api_version, 'path')
-        session_id = secrets.token_hex(12)
-        cs = session.ComputeSession(session_id)
+        session_name = secrets.token_hex(12)
+        cs = session.ComputeSession(session_name)
         cs.destroy()
         mock_req.assert_called_once_with(
             session,
-            'DELETE', f'/{prefix}/{session_id}',
+            'DELETE', f'/{prefix}/{session_name}',
             params={})
         mock_req_obj.fetch.assert_called_once_with()
 
@@ -106,12 +106,12 @@ def test_restart_kernel_url(mocker):
                             return_value=mock_req_obj)
     with Session() as session:
         prefix = get_naming(session.api_version, 'path')
-        session_id = secrets.token_hex(12)
-        cs = session.ComputeSession(session_id)
+        session_name = secrets.token_hex(12)
+        cs = session.ComputeSession(session_name)
         cs.restart()
         mock_req.assert_called_once_with(
             session,
-            'PATCH', f'/{prefix}/{session_id}',
+            'PATCH', f'/{prefix}/{session_name}',
             params={})
         mock_req_obj.fetch.assert_called_once_with()
 
@@ -126,12 +126,12 @@ def test_get_kernel_info_url(mocker):
                             return_value=mock_req_obj)
     with Session() as session:
         prefix = get_naming(session.api_version, 'path')
-        session_id = secrets.token_hex(12)
-        cs = session.ComputeSession(session_id)
+        session_name = secrets.token_hex(12)
+        cs = session.ComputeSession(session_name)
         cs.get_info()
         mock_req.assert_called_once_with(
             session,
-            'GET', f'/{prefix}/{session_id}',
+            'GET', f'/{prefix}/{session_name}',
             params={})
         mock_req_obj.fetch.assert_called_once_with()
         mock_req_obj.fetch.return_value.json.assert_called_once_with()
@@ -147,12 +147,12 @@ def test_execute_code_url(mocker):
                             return_value=mock_req_obj)
     with Session() as session:
         prefix = get_naming(session.api_version, 'path')
-        session_id = secrets.token_hex(12)
-        cs = session.ComputeSession(session_id)
+        session_name = secrets.token_hex(12)
+        cs = session.ComputeSession(session_name)
         run_id = secrets.token_hex(8)
         cs.execute(run_id, 'hello')
         mock_req.assert_called_once_with(
-            session, 'POST', f'/{prefix}/{session_id}',
+            session, 'POST', f'/{prefix}/{session_name}',
             params={}
         )
         mock_req_obj.fetch.assert_called_once_with()
