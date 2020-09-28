@@ -1,5 +1,6 @@
 import secrets
 from unittest import mock
+import uuid
 
 import pytest
 
@@ -11,6 +12,7 @@ from ai.backend.client.test_utils import AsyncContextMock, AsyncMock
 simulated_api_versions = [
     (4, '20190615'),
     (5, '20191215'),
+    (6, '20200815'),
 ]
 
 
@@ -26,7 +28,14 @@ def api_version(request):
 async def test_create_kernel_url(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(
-        status=201, json=AsyncMock())
+        status=201,
+        json=AsyncMock(
+            return_value={
+                'sessionId': str(uuid.uuid4()),
+                'created': True,
+            },
+        )
+    )
     mock_req_cls = mocker.patch('ai.backend.client.func.session.Request',
                                 return_value=mock_req_obj)
     async with AsyncSession() as session:
@@ -42,28 +51,28 @@ async def test_create_kernel_url(mocker):
 async def test_destroy_kernel_url(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(status=204)
-    session_id = secrets.token_hex(12)
+    session_name = secrets.token_hex(12)
     mock_req_cls = mocker.patch('ai.backend.client.func.session.Request',
                                 return_value=mock_req_obj)
     async with AsyncSession() as session:
         prefix = get_naming(session.api_version, 'path')
-        await session.ComputeSession(session_id).destroy()
+        await session.ComputeSession(session_name).destroy()
         mock_req_cls.assert_called_once_with(
-            session, 'DELETE', f'/{prefix}/{session_id}', params={})
+            session, 'DELETE', f'/{prefix}/{session_name}', params={})
 
 
 @pytest.mark.asyncio
 async def test_restart_kernel_url(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(status=204)
-    session_id = secrets.token_hex(12)
+    session_name = secrets.token_hex(12)
     mock_req_cls = mocker.patch('ai.backend.client.func.session.Request',
                                 return_value=mock_req_obj)
     async with AsyncSession() as session:
         prefix = get_naming(session.api_version, 'path')
-        await session.ComputeSession(session_id).restart()
+        await session.ComputeSession(session_name).restart()
         mock_req_cls.assert_called_once_with(
-            session, 'PATCH', f'/{prefix}/{session_id}', params={})
+            session, 'PATCH', f'/{prefix}/{session_name}', params={})
 
 
 @pytest.mark.asyncio
@@ -73,14 +82,14 @@ async def test_get_kernel_info_url(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(
         status=200, json=mock_json_coro)
-    session_id = secrets.token_hex(12)
+    session_name = secrets.token_hex(12)
     mock_req_cls = mocker.patch('ai.backend.client.func.session.Request',
                                 return_value=mock_req_obj)
     async with AsyncSession() as session:
         prefix = get_naming(session.api_version, 'path')
-        await session.ComputeSession(session_id).get_info()
+        await session.ComputeSession(session_name).get_info()
         mock_req_cls.assert_called_once_with(
-            session, 'GET', f'/{prefix}/{session_id}', params={})
+            session, 'GET', f'/{prefix}/{session_name}', params={})
 
 
 @pytest.mark.asyncio
@@ -90,13 +99,13 @@ async def test_execute_code_url(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(
         status=200, json=mock_json_coro)
-    session_id = secrets.token_hex(12)
+    session_name = secrets.token_hex(12)
     run_id = secrets.token_hex(8)
     mock_req_cls = mocker.patch('ai.backend.client.func.session.Request',
                                 return_value=mock_req_obj)
     async with AsyncSession() as session:
         prefix = get_naming(session.api_version, 'path')
-        await session.ComputeSession(session_id).execute(run_id, 'hello')
+        await session.ComputeSession(session_name).execute(run_id, 'hello')
         mock_req_cls.assert_called_once_with(
-            session, 'POST', f'/{prefix}/{session_id}',
+            session, 'POST', f'/{prefix}/{session_name}',
             params={})
