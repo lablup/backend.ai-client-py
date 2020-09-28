@@ -1,5 +1,6 @@
 import secrets
 from unittest import mock
+import uuid
 
 import pytest
 
@@ -12,6 +13,7 @@ from ai.backend.client.test_utils import AsyncContextMock, AsyncMock
 simulated_api_versions = [
     (4, '20190615'),
     (5, '20191215'),
+    (6, '20200815'),
 ]
 
 
@@ -26,7 +28,14 @@ def api_version(request):
 def test_create_with_config(mocker, api_version):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(
-        status=201, json=AsyncMock())
+        status=201,
+        json=AsyncMock(
+            return_value={
+                'sessionId': str(uuid.uuid4()),
+                'created': True,
+            },
+        ),
+    )
     mock_req = mocker.patch('ai.backend.client.func.session.Request',
                             return_value=mock_req_obj)
     myconfig = APIConfig(
@@ -55,7 +64,14 @@ def test_create_with_config(mocker, api_version):
 def test_create_kernel_url(mocker):
     mock_req_obj = mock.Mock()
     mock_req_obj.fetch.return_value = AsyncContextMock(
-        status=201, json=AsyncMock())
+        status=201,
+        json=AsyncMock(
+            return_value={
+                'sessionId': str(uuid.uuid4()),
+                'created': True,
+            },
+        ),
+    )
     mock_req = mocker.patch('ai.backend.client.func.session.Request',
                             return_value=mock_req_obj)
     with Session() as session:
