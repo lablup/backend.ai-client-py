@@ -30,10 +30,12 @@ def get_naming(api_version: Tuple[int, str], key: str) -> str:
 
 def get_id_or_name(api_version: Tuple[int, str], obj: ComputeSession) -> str:
     if api_version[0] <= 4:
+        assert obj.name is not None
         return obj.name
     if obj.id:
         return str(obj.id)
     else:
+        assert obj.name is not None
         return obj.name
 
 
