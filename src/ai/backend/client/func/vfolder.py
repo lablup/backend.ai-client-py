@@ -37,6 +37,7 @@ class VFolder(BaseFunction):
         group: str = None,
         usage_mode: str = 'general',
         permission: str = 'rw',
+        clone_allowed: bool = False
     ):
         rqst = Request('POST', '/folders')
         rqst.set_json({
@@ -46,6 +47,7 @@ class VFolder(BaseFunction):
             'group': group,
             'usage_mode': usage_mode,
             'permission': permission,
+            'clone_allowed': clone_allowed
         })
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -347,3 +349,27 @@ class VFolder(BaseFunction):
         rqst = Request('POST', '/folders/{}/leave'.format(self.name))
         async with rqst.fetch() as resp:
             return await resp.json()
+
+    @api_function
+    async def clone(self, target_name: str, target_host: str = None,
+                    usage_mode: str = 'general', permission: str = 'rw'):
+        rqst = Request('POST', '/folders/{}/clone'.format(self.name))
+        rqst.set_json({
+            'target_name': target_name,
+            'target_host': target_host,
+            'usage_mode': usage_mode,
+            'permission': permission
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    async def update_options(self, name: str, permission: str = None,
+                             clone_allowed: bool = None):
+        rqst = Request('POST', '/folders/{}/update-options'.format(self.name))
+        rqst.set_json({
+            'clone_allowed': clone_allowed,
+            'permission': permission
+        })
+        async with rqst.fetch() as resp:
+            return await resp.text()
