@@ -353,7 +353,7 @@ class VFolder(BaseFunction):
     @api_function
     async def clone(self, target_name: str, target_host: str = None,
                     usage_mode: str = 'general', permission: str = 'rw'):
-        rqst = Request(api_session.get(), 'POST', '/folders/{}/clone'.format(self.name))
+        rqst = Request('POST', '/folders/{}/clone'.format(self.name))
         rqst.set_json({
             'target_name': target_name,
             'target_host': target_host,
@@ -366,7 +366,7 @@ class VFolder(BaseFunction):
     @api_function
     async def update_options(self, name: str, permission: str = None,
                              clone_allowed: bool = None):
-        rqst = Request(api_session.get(), 'POST', '/folders/{}/update-options'.format(self.name))
+        rqst = Request('POST', '/folders/{}/update-options'.format(self.name))
         rqst.set_json({
             'clone_allowed': clone_allowed,
             'permission': permission
