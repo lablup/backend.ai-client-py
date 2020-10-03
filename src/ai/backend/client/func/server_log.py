@@ -6,7 +6,6 @@ from typing import (
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 
 __all__ = (
     'ServerLog',
@@ -39,6 +38,6 @@ class ServerLog(BaseFunction):
             'page_size': page_size,
             'page_no': page_no,
         }
-        rqst = Request(api_session.get(), 'GET', '/logs/error', params=params)
+        rqst = Request('GET', '/logs/error', params=params)
         async with rqst.fetch() as resp:
             return await resp.json()

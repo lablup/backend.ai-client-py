@@ -3,7 +3,6 @@ from typing import Iterable, Sequence
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 
 __all__ = (
     'Domain',
@@ -40,7 +39,7 @@ class Domain(BaseFunction):
             }
         """)
         query = query.replace('$fields', ' '.join(fields))
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
         })
@@ -68,7 +67,7 @@ class Domain(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'name': name}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -110,7 +109,7 @@ class Domain(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -150,7 +149,7 @@ class Domain(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -173,7 +172,7 @@ class Domain(BaseFunction):
             }
         """)
         variables = {'name': name}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -196,7 +195,7 @@ class Domain(BaseFunction):
             }
         """)
         variables = {'name': name}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
