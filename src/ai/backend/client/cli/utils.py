@@ -25,3 +25,15 @@ class ByteSizeParamType(click.ParamType):
         size = float(m.group(1))
         unit = m.group(2).lower()
         return int(size * self._scales.get(unit, 1))
+
+
+class ByteSizeParamCheckType(ByteSizeParamType):
+    name = "byte-check"
+
+    def convert(self, value, param, ctx):
+        if not isinstance(value, str):
+            self.fail(f"expected string, got {value!r} of type {type(value).__name__}", param, ctx)
+        m = self._rx_digits.search(value)
+        if m is None:
+            self.fail(f"{value!r} is not a valid byte-size expression", param, ctx)
+        return value
