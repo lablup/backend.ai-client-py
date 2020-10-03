@@ -2,7 +2,6 @@ from typing import Any
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 
 
 class Manager(BaseFunction):

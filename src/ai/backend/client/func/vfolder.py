@@ -16,7 +16,6 @@ from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
 from ..request import Request
-from ..session import api_session
 
 __all__ = (
     'VFolder',

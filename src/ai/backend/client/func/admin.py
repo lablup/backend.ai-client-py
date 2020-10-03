@@ -2,7 +2,6 @@ from typing import Any, Mapping, Optional
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 
 __all__ = (
     'Admin',

@@ -8,14 +8,14 @@ pytestmark = pytest.mark.integration
 
 
 def test_connection():
-    with Session() as sess:
+    with Session():
         request = Request('GET', '/')
         with request.fetch() as resp:
             assert 'version' in resp.json()
 
 
 def test_not_found():
-    with Session() as sess:
+    with Session():
         request = Request('GET', '/invalid-url-wow')
         with pytest.raises(BackendAPIError) as e:
             with request.fetch():
@@ -30,7 +30,7 @@ def test_not_found():
 
 @pytest.mark.asyncio
 async def test_async_connection():
-    async with AsyncSession() as sess:
+    async with AsyncSession():
         request = Request('GET', '/')
         async with request.fetch() as resp:
             assert 'version' in await resp.json()

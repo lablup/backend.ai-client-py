@@ -12,7 +12,7 @@ pytestmark = pytest.mark.integration
 
 def test_auth():
     random_msg = uuid.uuid4().hex
-    with Session() as sess:
+    with Session():
         request = Request('GET', '/auth')
         request.set_json({
             'echo': random_msg,
@@ -26,7 +26,7 @@ def test_auth():
 
 def test_auth_missing_signature(monkeypatch):
     random_msg = uuid.uuid4().hex
-    with Session() as sess:
+    with Session():
         rqst = Request('GET', '/auth')
         rqst.set_json({'echo': random_msg})
         # let it bypass actual signing
@@ -40,7 +40,7 @@ def test_auth_missing_signature(monkeypatch):
 
 
 def test_auth_malformed():
-    with Session() as sess:
+    with Session():
         request = Request('GET', '/auth')
         request.set_content(
             b'<this is not json>',
@@ -53,7 +53,7 @@ def test_auth_malformed():
 
 
 def test_auth_missing_body():
-    with Session() as sess:
+    with Session():
         request = Request('GET', '/auth')
         with pytest.raises(BackendAPIError) as e:
             with request.fetch():
@@ -64,7 +64,7 @@ def test_auth_missing_body():
 @pytest.mark.asyncio
 async def test_async_auth():
     random_msg = uuid.uuid4().hex
-    async with AsyncSession() as sess:
+    async with AsyncSession():
         request = Request('GET', '/auth')
         request.set_json({
             'echo': random_msg,

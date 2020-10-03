@@ -13,7 +13,6 @@ from typing_extensions import (  # for Python 3.7
 )
 
 from .exceptions import NoItems
-from .session import api_session
 from .request import Request
 
 MAX_PAGE_SIZE: Final = 100

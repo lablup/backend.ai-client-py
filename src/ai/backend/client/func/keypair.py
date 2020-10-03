@@ -9,7 +9,6 @@ from typing import (
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 from ..pagination import generate_paginated_results
 
 __all__ = (

@@ -6,7 +6,6 @@ from ..request import (
     Request,
     SSEContextManager,
 )
-from ..session import api_session
 
 
 class BackgroundTask(BaseFunction):

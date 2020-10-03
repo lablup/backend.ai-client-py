@@ -124,7 +124,7 @@ async def test_fetch_invalid_method(mock_request_params):
 
 @pytest.mark.asyncio
 async def test_fetch(dummy_endpoint):
-    with aioresponses() as m, Session() as session:
+    with aioresponses() as m, Session():
         body = b'hello world'
         m.post(
             dummy_endpoint + 'function', status=200, body=body,
@@ -139,7 +139,7 @@ async def test_fetch(dummy_endpoint):
             assert await resp.text() == body.decode()
             assert resp.content_length == len(body)
 
-    with aioresponses() as m, Session() as session:
+    with aioresponses() as m, Session():
         body = b'{"a": 1234, "b": null}'
         m.post(
             dummy_endpoint + 'function', status=200, body=body,
@@ -159,7 +159,7 @@ async def test_fetch(dummy_endpoint):
 @pytest.mark.asyncio
 async def test_streaming_fetch(dummy_endpoint):
     # Read content by chunks.
-    with aioresponses() as m, Session() as session:
+    with aioresponses() as m, Session():
         body = b'hello world'
         m.post(
             dummy_endpoint + 'function', status=200, body=body,
@@ -179,7 +179,7 @@ async def test_streaming_fetch(dummy_endpoint):
 
 @pytest.mark.asyncio
 async def test_invalid_requests(dummy_endpoint):
-    with aioresponses() as m, Session() as session:
+    with aioresponses() as m, Session():
         body = json.dumps({
             'type': 'https://api.backend.ai/probs/kernel-not-found',
             'title': 'Kernel Not Found',
@@ -201,7 +201,7 @@ async def test_invalid_requests(dummy_endpoint):
 
 @pytest.mark.asyncio
 async def test_fetch_invalid_method_async():
-    async with AsyncSession() as session:
+    async with AsyncSession():
         rqst = Request('STRANGE', '/')
         with pytest.raises(AssertionError):
             async with rqst.fetch():
@@ -211,7 +211,7 @@ async def test_fetch_invalid_method_async():
 @pytest.mark.asyncio
 async def test_fetch_client_error_async(dummy_endpoint):
     with aioresponses() as m:
-        async with AsyncSession() as session:
+        async with AsyncSession():
             m.post(dummy_endpoint,
                    exception=aiohttp.ClientConnectionError())
             rqst = Request('POST', '/')
@@ -225,7 +225,7 @@ async def test_fetch_client_error_async(dummy_endpoint):
 async def test_fetch_cancellation_async(dummy_endpoint):
     # It seems that aiohttp swallows asyncio.CancelledError
     with aioresponses() as m:
-        async with AsyncSession() as session:
+        async with AsyncSession():
             m.post(dummy_endpoint,
                    exception=asyncio.CancelledError())
             rqst = Request('POST', '/')
@@ -237,7 +237,7 @@ async def test_fetch_cancellation_async(dummy_endpoint):
 @pytest.mark.asyncio
 async def test_fetch_timeout_async(dummy_endpoint):
     with aioresponses() as m:
-        async with AsyncSession() as session:
+        async with AsyncSession():
             m.post(dummy_endpoint,
                    exception=asyncio.TimeoutError())
             rqst = Request('POST', '/')
@@ -255,7 +255,7 @@ async def test_response_async(defconfig, dummy_endpoint):
             headers={'Content-Type': 'application/json',
                      'Content-Length': str(len(body))},
         )
-        async with AsyncSession(config=defconfig) as session:
+        async with AsyncSession(config=defconfig):
             rqst = Request('POST', '/function')
             async with rqst.fetch() as resp:
                 assert await resp.text() == '{"test": 5678}'

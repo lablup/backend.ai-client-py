@@ -108,7 +108,6 @@ class WebSocketProxy:
 
 
 async def web_handler(request):
-    session = request.app['client_session']
     path = re.sub(r'^/?v(\d+)/', '/', request.path)
     try:
         # We treat all requests and responses as streaming universally
@@ -157,7 +156,6 @@ async def web_handler(request):
 
 
 async def websocket_handler(request):
-    session = request.app['client_session']
     path = re.sub(r'^/?v(\d+)/', '/', request.path)
     try:
         api_rqst = Request(
