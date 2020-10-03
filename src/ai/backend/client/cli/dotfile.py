@@ -22,8 +22,13 @@ def dotfile():
               help='Path to dotfile to upload. '
                    'If not specified, client will try to read file from STDIN. ')
 @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
-              help='Set the owner of the target session explicitly.')
-def create(path, permission, dotfile_path, owner_access_key):
+              help='Specify the owner of the target session of user dotfiles.')
+@click.option('-d', '--domain', 'domain', metavar='DOMAIN',
+              help='Specify the domain name of domain dotfiles.')
+@click.option('-g', '--group', metavar='GROUP',
+              help='Sepcify the group name or id of group dotfiles. '
+                   '(If group name is provided, domain name must be specified with option -d)')
+def create(path, permission, dotfile_path, owner_access_key, domain, group):
     '''
     Store dotfile to Backend.AI Manager.
     Dotfiles will be automatically loaded when creating kernels.
@@ -43,7 +48,8 @@ def create(path, permission, dotfile_path, owner_access_key):
             if not permission:
                 permission = '755'
             dotfile_ = session.Dotfile.create(body, path, permission,
-                                              owner_access_key=owner_access_key)
+                                              owner_access_key=owner_access_key,
+                                              domain=domain, group=group)
             print_info(f'Dotfile {dotfile_.path} created and ready')
         except Exception as e:
             print_error(e)
@@ -53,14 +59,20 @@ def create(path, permission, dotfile_path, owner_access_key):
 @dotfile.command()
 @click.argument('path', metavar='PATH')
 @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
-              help='Specify the owner of the target session explicitly.')
-def get(path, owner_access_key):
+              help='Specify the owner of the target session of user dotfiles.')
+@click.option('-d', '--domain', 'domain', metavar='DOMAIN',
+              help='Specify the domain name of domain dotfiles.')
+@click.option('-g', '--group', metavar='GROUP',
+              help='Sepcify the group name or id of group dotfiles. '
+                   '(If group name is provided, domain name must be specified with option -d)')
+def get(path, owner_access_key, domain, group):
     '''
-    Print dotfile content
+    Print dotfile content.
     '''
     with Session() as session:
         try:
-            dotfile_ = session.Dotfile(path, owner_access_key=owner_access_key)
+            dotfile_ = session.Dotfile(path, owner_access_key=owner_access_key,
+                                       domain=domain, group=group)
             body = dotfile_.get()
             print(body['data'])
         except Exception as e:
@@ -69,9 +81,16 @@ def get(path, owner_access_key):
 
 
 @dotfile.command()
-def list():
+@click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
+              help='Specify the owner of the target session of user dotfiles.')
+@click.option('-d', '--domain', 'domain', metavar='DOMAIN',
+              help='Specify the domain name of domain dotfiles.')
+@click.option('-g', '--group', metavar='GROUP',
+              help='Sepcify the group name or id of group dotfiles. '
+                   '(If group name is provided, domain name must be specified with option -d)')
+def list(owner_access_key, domain, group):
     '''
-    List all availabe dotfiles by user.
+    List availabe user/domain/group dotfiles.
     '''
     fields = [
         ('Path', 'path', None),
@@ -80,7 +99,8 @@ def list():
     ]
     with Session() as session:
         try:
-            resp = session.Dotfile.list_dotfiles()
+            resp = session.Dotfile.list_dotfiles(owner_access_key=owner_access_key,
+                                                 domain=domain, group=group)
             if not resp:
                 print('There is no dotfiles created yet.')
                 return
@@ -107,8 +127,13 @@ def list():
               help='Path to dotfile to upload. '
                    'If not specified, client will try to read file from STDIN. ')
 @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
-              help='Specify the owner of the target session explicitly.')
-def update(path, permission, dotfile_path, owner_access_key):
+              help='Specify the owner of the target session of user dotfiles.')
+@click.option('-d', '--domain', 'domain', metavar='DOMAIN',
+              help='Specify the domain name of domain dotfiles.')
+@click.option('-g', '--group', metavar='GROUP',
+              help='Sepcify the group name or id of group dotfiles. '
+                   '(If group name is provided, domain name must be specified with option -d)')
+def update(path, permission, dotfile_path, owner_access_key, domain, group):
     '''
     Update dotfile stored in Backend.AI Manager.
     '''
@@ -124,7 +149,8 @@ def update(path, permission, dotfile_path, owner_access_key):
         try:
             if not permission:
                 permission = '755'
-            dotfile_ = session.Dotfile(path, owner_access_key=owner_access_key)
+            dotfile_ = session.Dotfile(path, owner_access_key=owner_access_key,
+                                       domain=domain, group=group)
             dotfile_.update(body, permission)
             print_info(f'Dotfile {dotfile_.path} updated')
         except Exception as e:
@@ -137,13 +163,19 @@ def update(path, permission, dotfile_path, owner_access_key):
 @click.option('-f', '--force', type=bool, is_flag=True,
               help='Delete dotfile without confirmation.')
 @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
-              help='Specify the owner of the target session explicitly.')
-def delete(path, force, owner_access_key):
+              help='Specify the owner of the target session of user dotfiles.')
+@click.option('-d', '--domain', 'domain', metavar='DOMAIN',
+              help='Specify the domain name of domain dotfiles.')
+@click.option('-g', '--group', metavar='GROUP',
+              help='Sepcify the group name or id of group dotfiles. '
+                   '(If group name is provided, domain name must be specified with option -d)')
+def delete(path, force, owner_access_key, domain, group):
     '''
     Delete dotfile from Backend.AI Manager.
     '''
     with Session() as session:
-        dotfile_ = session.Dotfile(path, owner_access_key=owner_access_key)
+        dotfile_ = session.Dotfile(path, owner_access_key=owner_access_key,
+                                   domain=domain, group=group)
         if not force:
             print_warn('Are you sure? (y/[n])')
             result = input()

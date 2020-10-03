@@ -6,7 +6,6 @@ from ..request import (
     Request,
     SSEContextManager,
 )
-from ..session import api_session
 
 
 class BackgroundTask(BaseFunction):
@@ -30,7 +29,6 @@ class BackgroundTask(BaseFunction):
             'task_id': str(self.task_id),
         }
         request = Request(
-            api_session.get(),
             'GET', '/events/background-task',
             params=params,
         )

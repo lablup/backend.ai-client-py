@@ -3,7 +3,6 @@ from typing import Iterable, Sequence
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 
 __all__ = (
     'Group',
@@ -43,7 +42,7 @@ class Group(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'domain_name': domain_name}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -71,7 +70,7 @@ class Group(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'gid': gid}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -112,7 +111,7 @@ class Group(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -150,7 +149,7 @@ class Group(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -173,7 +172,7 @@ class Group(BaseFunction):
             }
         """)
         variables = {'gid': gid}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -196,7 +195,7 @@ class Group(BaseFunction):
             }
         """)
         variables = {'gid': gid}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -227,7 +226,7 @@ class Group(BaseFunction):
                 'user_uuids': user_uuids,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -258,7 +257,7 @@ class Group(BaseFunction):
                 'user_uuids': user_uuids,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,

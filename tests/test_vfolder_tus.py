@@ -47,7 +47,7 @@ async def test_upload_jwt_generation(tmp_path):
             m.post(build_url(session.config, '/folders/{}/request-upload'.format(vfolder_name)),
                    payload=payload, status=200)
 
-            rqst = Request(session, 'POST', '/folders/{}/request-upload'.format(vfolder_name))
+            rqst = Request('POST', '/folders/{}/request-upload'.format(vfolder_name))
             rqst.set_json({
                 'path': "{}".format(str(Path(mock_file))),
                 'size': str(file_size),

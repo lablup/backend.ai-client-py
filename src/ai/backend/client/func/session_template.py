@@ -19,8 +19,7 @@ class SessionTemplate(BaseFunction):
                      group_name: str = None,
                      owner_access_key: str = None,
                      ) -> 'SessionTemplate':
-        rqst = Request(api_session.get(),
-                       'POST', '/template/session')
+        rqst = Request('POST', '/template/session')
         if domain_name is None:
             # Even if config.domain is None, it can be guessed in the manager by user information.
             domain_name = api_session.get().config.domain
@@ -40,8 +39,7 @@ class SessionTemplate(BaseFunction):
     @api_function
     @classmethod
     async def list_templates(cls, list_all: bool = False) -> List[Mapping[str, str]]:
-        rqst = Request(api_session.get(),
-                       'GET', '/template/session')
+        rqst = Request('GET', '/template/session')
         rqst.set_json({'all': list_all})
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -55,8 +53,7 @@ class SessionTemplate(BaseFunction):
         params = {'format': body_format}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(api_session.get(),
-                       'GET', f'/template/session/{self.template_id}',
+        rqst = Request('GET', f'/template/session/{self.template_id}',
                        params=params)
         async with rqst.fetch() as resp:
             data = await resp.text()
@@ -69,8 +66,7 @@ class SessionTemplate(BaseFunction):
         }
         if self.owner_access_key:
             body['owner_access_key'] = self.owner_access_key
-        rqst = Request(api_session.get(),
-                       'PUT', f'/template/session/{self.template_id}')
+        rqst = Request('PUT', f'/template/session/{self.template_id}')
         rqst.set_json(body)
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -80,8 +76,7 @@ class SessionTemplate(BaseFunction):
         params = {}
         if self.owner_access_key:
             params['owner_access_key'] = self.owner_access_key
-        rqst = Request(api_session.get(),
-                       'DELETE', f'/template/session/{self.template_id}',
+        rqst = Request('DELETE', f'/template/session/{self.template_id}',
                        params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
