@@ -53,7 +53,7 @@ def test_create_with_config(mocker, api_version):
             assert prefix == 'session'
         assert session.config is myconfig
         session.ComputeSession.get_or_create('python')
-        mock_req.assert_called_once_with(session, 'POST', f'/{prefix}')
+        mock_req.assert_called_once_with('POST', f'/{prefix}')
         current_api_session = api_session.get()
         assert str(current_api_session.config.endpoint) == 'https://localhost:9999'
         assert current_api_session.config.user_agent == 'BAIClientTest'
@@ -77,7 +77,7 @@ def test_create_kernel_url(mocker):
     with Session() as session:
         prefix = get_naming(session.api_version, 'path')
         session.ComputeSession.get_or_create('python:3.6-ubuntu18.04')
-        mock_req.assert_called_once_with(session, 'POST', f'/{prefix}')
+        mock_req.assert_called_once_with('POST', f'/{prefix}')
         mock_req_obj.fetch.assert_called_once_with()
         mock_req_obj.fetch.return_value.json.assert_called_once_with()
 
@@ -93,7 +93,6 @@ def test_destroy_kernel_url(mocker):
         cs = session.ComputeSession(session_name)
         cs.destroy()
         mock_req.assert_called_once_with(
-            session,
             'DELETE', f'/{prefix}/{session_name}',
             params={})
         mock_req_obj.fetch.assert_called_once_with()
@@ -110,7 +109,6 @@ def test_restart_kernel_url(mocker):
         cs = session.ComputeSession(session_name)
         cs.restart()
         mock_req.assert_called_once_with(
-            session,
             'PATCH', f'/{prefix}/{session_name}',
             params={})
         mock_req_obj.fetch.assert_called_once_with()
@@ -130,7 +128,6 @@ def test_get_kernel_info_url(mocker):
         cs = session.ComputeSession(session_name)
         cs.get_info()
         mock_req.assert_called_once_with(
-            session,
             'GET', f'/{prefix}/{session_name}',
             params={})
         mock_req_obj.fetch.assert_called_once_with()
@@ -152,7 +149,7 @@ def test_execute_code_url(mocker):
         run_id = secrets.token_hex(8)
         cs.execute(run_id, 'hello')
         mock_req.assert_called_once_with(
-            session, 'POST', f'/{prefix}/{session_name}',
+            'POST', f'/{prefix}/{session_name}',
             params={}
         )
         mock_req_obj.fetch.assert_called_once_with()

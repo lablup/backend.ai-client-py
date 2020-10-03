@@ -2,7 +2,6 @@ from typing import Iterable, Sequence
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 
 __all__ = (
     'Image',
@@ -40,7 +39,7 @@ class Image(BaseFunction):
         variables = {
             'is_operation': operation,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -60,7 +59,7 @@ class Image(BaseFunction):
         variables = {
             'registry': registry,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -81,7 +80,7 @@ class Image(BaseFunction):
             'alias': alias,
             'target': target,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -101,7 +100,7 @@ class Image(BaseFunction):
         variables = {
             'alias': alias,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -113,7 +112,7 @@ class Image(BaseFunction):
     @api_function
     @classmethod
     async def get_image_import_form(cls) -> dict:
-        rqst = Request(api_session.get(), 'GET', '/image/import')
+        rqst = Request('GET', '/image/import')
         async with rqst.fetch() as resp:
             data = await resp.json()
         return data
@@ -121,7 +120,7 @@ class Image(BaseFunction):
     @api_function
     @classmethod
     async def build(cls, **kwargs) -> dict:
-        rqst = Request(api_session.get(), 'POST', '/image/import')
+        rqst = Request('POST', '/image/import')
         rqst.set_json(kwargs)
         async with rqst.fetch() as resp:
             data = await resp.json()

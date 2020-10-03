@@ -9,7 +9,6 @@ from typing import (
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 from ..pagination import generate_paginated_results
 
 __all__ = (
@@ -63,7 +62,7 @@ class KeyPair(BaseFunction):
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -97,7 +96,7 @@ class KeyPair(BaseFunction):
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -120,7 +119,7 @@ class KeyPair(BaseFunction):
         variables = {
             'access_key': access_key,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -159,7 +158,7 @@ class KeyPair(BaseFunction):
         }
         if user_id is not None:
             variables['email'] = user_id
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -217,7 +216,7 @@ class KeyPair(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
         })
@@ -246,7 +245,7 @@ class KeyPair(BaseFunction):
                 'rate_limit': None,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,
@@ -278,7 +277,7 @@ class KeyPair(BaseFunction):
                 'rate_limit': None,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': q,
             'variables': variables,

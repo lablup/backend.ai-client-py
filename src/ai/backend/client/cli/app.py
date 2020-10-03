@@ -58,7 +58,7 @@ class WSProxy:
             params['envs'] = json.dumps(self.envs)
 
         api_rqst = Request(
-            self.api_session, "GET", path, b'',
+            "GET", path, b'',
             params=params,
             content_type="application/json")
         async with api_rqst.connect_websocket() as ws:

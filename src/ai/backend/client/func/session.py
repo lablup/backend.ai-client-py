@@ -120,7 +120,7 @@ class ComputeSession(BaseFunction):
     @api_function
     @classmethod
     async def hello(cls) -> str:
-        rqst = Request(api_session.get(), 'GET', '/')
+        rqst = Request('GET', '/')
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -131,7 +131,7 @@ class ComputeSession(BaseFunction):
         chunk_size: int = 8192
     ) -> AsyncIterator[bytes]:
         prefix = get_naming(api_session.get().api_version, 'path')
-        rqst = Request(api_session.get(), 'GET', f'/{prefix}/_/logs', params={
+        rqst = Request('GET', f'/{prefix}/_/logs', params={
             'taskId': task_id,
         })
         async with rqst.fetch() as resp:
@@ -250,7 +250,7 @@ class ComputeSession(BaseFunction):
 
         mounts.extend(api_session.get().config.vfolder_mounts)
         prefix = get_naming(api_session.get().api_version, 'path')
-        rqst = Request(api_session.get(), 'POST', f'/{prefix}')
+        rqst = Request('POST', f'/{prefix}')
         params: Dict[str, Any] = {
             'tag': tag,
             get_naming(api_session.get().api_version, 'name_arg'): name,
@@ -411,7 +411,7 @@ class ComputeSession(BaseFunction):
         if api_session.get().config.vfolder_mounts:
             mounts.extend(api_session.get().config.vfolder_mounts)
         prefix = get_naming(api_session.get().api_version, 'path')
-        rqst = Request(api_session.get(), 'POST', f'/{prefix}/_/create-from-template')
+        rqst = Request('POST', f'/{prefix}/_/create-from-template')
         params: Dict[str, Any]
         params = {
             'template_id': template_id,
@@ -495,7 +495,6 @@ class ComputeSession(BaseFunction):
         if forced:
             params['forced'] = 'true'
         rqst = Request(
-            api_session.get(),
             'DELETE', f'/{prefix}/{self.name}',
             params=params,
         )
@@ -515,7 +514,6 @@ class ComputeSession(BaseFunction):
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            api_session.get(),
             'PATCH', f'/{prefix}/{self.name}',
             params=params,
         )
@@ -534,7 +532,6 @@ class ComputeSession(BaseFunction):
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            api_session.get(),
             'POST', f'/{prefix}/{self.name}/interrupt',
             params=params,
         )
@@ -563,7 +560,6 @@ class ComputeSession(BaseFunction):
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            api_session.get(),
             'POST', f'/{prefix}/{self.name}/complete',
             params=params,
         )
@@ -589,7 +585,6 @@ class ComputeSession(BaseFunction):
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            api_session.get(),
             'GET', f'/{prefix}/{self.name}',
             params=params,
         )
@@ -606,7 +601,6 @@ class ComputeSession(BaseFunction):
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            api_session.get(),
             'GET', f'/{prefix}/{self.name}/logs',
             params=params,
         )
@@ -650,7 +644,6 @@ class ComputeSession(BaseFunction):
             assert code is not None, \
                    'The code argument must be a valid string even when empty.'
             rqst = Request(
-                api_session.get(),
                 'POST', f'/{prefix}/{self.name}',
                 params=params,
             )
@@ -661,7 +654,6 @@ class ComputeSession(BaseFunction):
             })
         elif mode == 'batch':
             rqst = Request(
-                api_session.get(),
                 'POST', f'/{prefix}/{self.name}',
                 params=params,
             )
@@ -678,7 +670,6 @@ class ComputeSession(BaseFunction):
             })
         elif mode == 'complete':
             rqst = Request(
-                api_session.get(),
                 'POST', f'/{prefix}/{self.name}',
                 params=params,
             )
@@ -750,7 +741,6 @@ class ComputeSession(BaseFunction):
                     raise ValueError(msg) from None
 
             rqst = Request(
-                api_session.get(),
                 'POST', f'/{prefix}/{self.name}/upload',
                 params=params,
             )
@@ -776,7 +766,6 @@ class ComputeSession(BaseFunction):
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            api_session.get(),
             'GET', f'/{prefix}/{self.name}/download',
             params=params,
         )
@@ -828,7 +817,6 @@ class ComputeSession(BaseFunction):
             params['owner_access_key'] = self.owner_access_key
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request(
-            api_session.get(),
             'GET', f'/{prefix}/{self.name}/files',
             params=params,
         )
@@ -846,7 +834,6 @@ class ComputeSession(BaseFunction):
         prefix = get_naming(api_session.get().api_version, 'path')
         id_or_name = get_id_or_name(api_session.get().api_version, self)
         api_rqst = Request(
-            api_session.get(),
             'GET', f'/stream/{prefix}/{id_or_name}/apps',
             params=params,
         )
@@ -863,7 +850,6 @@ class ComputeSession(BaseFunction):
         """
         if api_session.get().api_version[0] >= 6:
             request = Request(
-                api_session.get(),
                 'GET', '/events/session',
                 params={
                     **self.get_session_identity_params(),
@@ -879,7 +865,6 @@ class ComputeSession(BaseFunction):
                 params['owner_access_key'] = self.owner_access_key
             path = get_naming(api_session.get().api_version, 'session_events_path')
             request = Request(
-                api_session.get(),
                 'GET', path,
                 params=params,
             )
@@ -901,7 +886,6 @@ class ComputeSession(BaseFunction):
         prefix = get_naming(api_session.get().api_version, 'path')
         id_or_name = get_id_or_name(api_session.get().api_version, self)
         request = Request(
-            api_session.get(),
             'GET', f'/stream/{prefix}/{id_or_name}/pty',
             params=params,
         )
@@ -935,7 +919,6 @@ class ComputeSession(BaseFunction):
             msg = 'Invalid stream-execution mode: {0}'.format(mode)
             raise BackendClientError(msg)
         request = Request(
-            api_session.get(),
             'GET', f'/stream/{prefix}/{id_or_name}/execute',
             params=params,
         )

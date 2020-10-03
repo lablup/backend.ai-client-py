@@ -3,7 +3,7 @@ import sys
 
 from tabulate import tabulate
 
-from ...session import AsyncSession, api_session
+from ...session import AsyncSession
 from ...request import Request
 from ..pretty import print_done, print_error, print_warn
 from . import admin
@@ -16,7 +16,7 @@ def show_license():
     '''
     async def _show_license():
         async with AsyncSession():
-            rqst = Request(api_session.get(), 'GET', '/license')
+            rqst = Request('GET', '/license')
             async with rqst.fetch() as resp:
                 data = await resp.json()
             if data['status'] == 'valid':

@@ -42,7 +42,7 @@ async def test_create_kernel_url(mocker):
         await session.ComputeSession.get_or_create('python:3.6-ubuntu18.04')
         prefix = get_naming(session.api_version, 'path')
         mock_req_cls.assert_called_once_with(
-            session, 'POST', f'/{prefix}')
+            'POST', f'/{prefix}')
         mock_req_obj.fetch.assert_called_once_with()
         mock_req_obj.fetch.return_value.json.assert_awaited_once_with()
 
@@ -58,7 +58,7 @@ async def test_destroy_kernel_url(mocker):
         prefix = get_naming(session.api_version, 'path')
         await session.ComputeSession(session_name).destroy()
         mock_req_cls.assert_called_once_with(
-            session, 'DELETE', f'/{prefix}/{session_name}', params={})
+            'DELETE', f'/{prefix}/{session_name}', params={})
 
 
 @pytest.mark.asyncio
@@ -72,7 +72,7 @@ async def test_restart_kernel_url(mocker):
         prefix = get_naming(session.api_version, 'path')
         await session.ComputeSession(session_name).restart()
         mock_req_cls.assert_called_once_with(
-            session, 'PATCH', f'/{prefix}/{session_name}', params={})
+            'PATCH', f'/{prefix}/{session_name}', params={})
 
 
 @pytest.mark.asyncio
@@ -89,7 +89,7 @@ async def test_get_kernel_info_url(mocker):
         prefix = get_naming(session.api_version, 'path')
         await session.ComputeSession(session_name).get_info()
         mock_req_cls.assert_called_once_with(
-            session, 'GET', f'/{prefix}/{session_name}', params={})
+            'GET', f'/{prefix}/{session_name}', params={})
 
 
 @pytest.mark.asyncio
@@ -107,5 +107,5 @@ async def test_execute_code_url(mocker):
         prefix = get_naming(session.api_version, 'path')
         await session.ComputeSession(session_name).execute(run_id, 'hello')
         mock_req_cls.assert_called_once_with(
-            session, 'POST', f'/{prefix}/{session_name}',
+            'POST', f'/{prefix}/{session_name}',
             params={})

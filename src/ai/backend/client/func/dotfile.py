@@ -2,7 +2,6 @@ from typing import List, Mapping, Optional
 
 from .base import api_function, BaseFunction
 from ..request import Request
-from ..session import api_session
 
 
 __all__ = (
@@ -40,7 +39,7 @@ class Dotfile(BaseFunction):
                 body['owner_access_key'] = owner_access_key
             rqst_endpoint = '/user-config/dotfiles'
 
-        rqst = Request(api_session.get(), 'POST', rqst_endpoint)
+        rqst = Request('POST', rqst_endpoint)
         rqst.set_json(body)
         async with rqst.fetch() as resp:
             await resp.json()
@@ -67,7 +66,7 @@ class Dotfile(BaseFunction):
                 params['onwer_access_key'] = owner_access_key
             rqst_endpoint = '/user-config/dotfiles'
 
-        rqst = Request(api_session.get(), 'GET', rqst_endpoint, params=params)
+        rqst = Request('GET', rqst_endpoint, params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -94,7 +93,7 @@ class Dotfile(BaseFunction):
                 params['owner_access_key'] = self.owner_access_key
             rqst_endpoint = '/user-config/dotfiles'
 
-        rqst = Request(api_session.get(), 'GET', rqst_endpoint, params=params)
+        rqst = Request('GET', rqst_endpoint, params=params)
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -118,7 +117,7 @@ class Dotfile(BaseFunction):
                 body['owner_access_key'] = self.owner_access_key
             rqst_endpoint = '/user-config/dotfiles'
 
-        rqst = Request(api_session.get(), 'PATCH', rqst_endpoint)
+        rqst = Request('PATCH', rqst_endpoint)
         rqst.set_json(body)
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -139,6 +138,6 @@ class Dotfile(BaseFunction):
                 params['owner_access_key'] = self.owner_access_key
             rqst_endpoint = '/user-config/dotfiles'
 
-        rqst = Request(api_session.get(), 'DELETE', rqst_endpoint, params=params)
+        rqst = Request('DELETE', rqst_endpoint, params=params)
         async with rqst.fetch() as resp:
             return await resp.json()

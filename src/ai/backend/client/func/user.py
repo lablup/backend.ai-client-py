@@ -41,7 +41,7 @@ class User(BaseFunction):
         Its functionality will be expanded in the future to support multiple types
         of authentication methods.
         """
-        rqst = Request(api_session.get(), 'POST', '/auth/authorize')
+        rqst = Request('POST', '/auth/authorize')
         rqst.set_json({
             'type': token_type.value,
             'domain': api_session.get().config.domain,
@@ -81,7 +81,7 @@ class User(BaseFunction):
             'status': status,
             'group': group,
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -146,7 +146,7 @@ class User(BaseFunction):
             """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'email': email}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         if email is None:
             rqst.set_json({
                 'query': query,
@@ -191,7 +191,7 @@ class User(BaseFunction):
             """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'user_id': str(user_uuid)}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         if user_uuid is None:
             rqst.set_json({
                 'query': query,
@@ -245,7 +245,7 @@ class User(BaseFunction):
                 'group_ids': group_ids,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -293,7 +293,7 @@ class User(BaseFunction):
                 'group_ids': group_ids,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -316,7 +316,7 @@ class User(BaseFunction):
             }
         """)
         variables = {'email': email}
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
@@ -348,7 +348,7 @@ class User(BaseFunction):
                 'purge_shared_vfolders': purge_shared_vfolders,
             },
         }
-        rqst = Request(api_session.get(), 'POST', '/admin/graphql')
+        rqst = Request('POST', '/admin/graphql')
         rqst.set_json({
             'query': query,
             'variables': variables,
