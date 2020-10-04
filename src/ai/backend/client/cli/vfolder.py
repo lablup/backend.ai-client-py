@@ -94,9 +94,9 @@ def list_allowed_types():
               help='Quota of the virtual folder. '
                    '(Use \'m\' for megabytes, \'g\' for gigabytes, and etc.) '
                    'Default is maximum amount possible.')
-@click.option('--allow-clone', 'allow_clone', type=bool, is_flag=True,
+@click.option('--allow-clone', '--clonable', type=bool, is_flag=True,
               help='Allows the virtual folder to be cloned by users.')
-def create(name, host, group, host_path, usage_mode, permission, quota, allow_clone):
+def create(name, host, group, host_path, usage_mode, permission, quota, clonable):
     '''Create a new virtual folder.
 
     \b
@@ -113,7 +113,7 @@ def create(name, host, group, host_path, usage_mode, permission, quota, allow_cl
                     usage_mode=usage_mode,
                     permission=permission,
                     quota=quota,
-                    clone_allowed=allow_clone,
+                    clonable=clonable,
                 )
             else:
                 result = session.VFolder.create(
@@ -123,7 +123,7 @@ def create(name, host, group, host_path, usage_mode, permission, quota, allow_cl
                     usage_mode=usage_mode,
                     permission=permission,
                     quota=quota,
-                    clone_allowed=allow_clone,
+                    clonable=clonable,
                 )
             print('Virtual folder "{0}" is created.'.format(result['name']))
         except Exception as e:
@@ -188,7 +188,7 @@ def info(name):
             print('- Usage Mode: {0}'.format(result.get('usage_mode', '')))
             print('- Group ID: {0}'.format(result['group']))
             print('- User ID: {0}'.format(result['user']))
-            print('- Clone Allowed: {0}'.format(result['clone_allowed']))
+            print('- Clone Allowed: {0}'.format(result['clonable']))
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -521,23 +521,27 @@ def leave(name):
               help='Cloned virtual folder\'s permission. '
                    'Default value is \'rw\'.')
 def clone(name, target_name, target_host, usage_mode, permission):
-    '''Clone a virtual folder.
+    """Clone a virtual folder.
 
     \b
     NAME: Name of the virtual folder to clone from.
-    TARGET NAME: Name of the virtual folder to clone to.
-    TARGET HOST: Name of a virtual folder host to which the virtual folder will be cloned.
-    '''
+    TARGET_NAME: Name of the virtual folder to clone to.
+    TARGET_HOST: Name of a virtual folder host to which the virtual folder will be cloned.
+    """
     with Session() as session:
         try:
             vfolder_info = session.VFolder(name).info()
-            if not vfolder_info['clone_allowed']:
-                print('Clone is not allowed for this virtual folder. '
-                      'Please update the \'clone_allowed\' option.')
+            if not vfolder_info['clonable']:
+                print("Clone is not allowed for this virtual folder. "
+                      "Please update the 'clonable' option.")
                 return
-            session.VFolder(name).clone(target_name, target_host=target_host,
-                                        usage_mode=usage_mode, permission=permission)
-            print_done('Cloned.')
+            session.VFolder(name).clone(
+                target_name,
+                target_host=target_host,
+                usage_mode=usage_mode,
+                permission=permission,
+            )
+            print_done("Cloned.")
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -545,25 +549,29 @@ def clone(name, target_name, target_host, usage_mode, permission):
 
 @vfolder.command()
 @click.argument('name', type=str)
-@click.option('-p', '--permission', metavar='PERMISSION', type=str,
-              help='Folder\'s innate permission.')
-@click.option('--clone-allowed', type=bool,
-              help='Whether a virtual folder can be cloned. '
-                   'Available options: True and False.')
-def update_options(name, permission, clone_allowed):
-    ''' Update an existing virtual folder.
+@click.option('-p', '--permission', type=str, metavar='PERMISSION',
+              help="Folder's innate permission.")
+@click.option('--set-clonable', type=bool, metavar='BOOLEXPR',
+              help="A boolean-interpretable string whether a virtual folder can be cloned. "
+                   "If not set, the clonable property is not changed.")
+def update_options(name, permission, clonable):
+    """Update an existing virtual folder.
 
+    \b
     NAME: Name of the virtual folder to update.
-    '''
+    """
     with Session() as session:
         try:
             vfolder_info = session.VFolder(name).info()
             if not vfolder_info['is_owner']:
-                print('You cannot update virtual folder that you do not onw.')
+                print("You cannot update virtual folder that you do not own.")
                 return
-            session.VFolder(name).update_options(name, permission=permission,
-                                                 clone_allowed=clone_allowed)
-            print('Updated.')
+            session.VFolder(name).update_options(
+                name,
+                permission=permission,
+                clonable=clonable,
+            )
+            print_done("Updated.")
         except Exception as e:
             print_error(e)
             sys.exit(1)
