@@ -38,7 +38,7 @@ class VFolder(BaseFunction):
         usage_mode: str = 'general',
         permission: str = 'rw',
         quota: str = None,
-        clonable: bool = False
+        cloneable: bool = False
     ):
         rqst = Request('POST', '/folders')
         rqst.set_json({
@@ -49,7 +49,7 @@ class VFolder(BaseFunction):
             'usage_mode': usage_mode,
             'permission': permission,
             'quota': quota,
-            'clonable': clonable,
+            'cloneable': cloneable,
         })
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -367,10 +367,10 @@ class VFolder(BaseFunction):
 
     @api_function
     async def update_options(self, name: str, permission: str = None,
-                             clonable: bool = None):
+                             cloneable: bool = None):
         rqst = Request('POST', '/folders/{}/update-options'.format(self.name))
         rqst.set_json({
-            'clonable': clonable,
+            'cloneable': cloneable,
             'permission': permission
         })
         async with rqst.fetch() as resp:
