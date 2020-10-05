@@ -2,12 +2,13 @@
 A support module to async mocks in Python versiosn prior to 3.8.
 """
 
+import sys
 from unittest import mock
-try:
+if sys.version_info >= (3, 8, 0):
     # Since Python 3.8, AsyncMock is now part of the stdlib.
     # Python 3.8 also adds magic-mocking async iterators and async context managers.
     from unittest.mock import AsyncMock
-except ImportError:
+else:
     from asynctest import CoroutineMock as AsyncMock  # type: ignore
 
 
