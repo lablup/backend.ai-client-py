@@ -31,4 +31,6 @@ jobs:
         python -m pip install -U -r requirements/test.txt
     - name: Test with pytest
       run: |
-        python -m pytest -m 'not integration' tests
+        python -m pytest -v --cov=src -m 'not integration' tests
+    - name: Send code coverage report
+      uses: codecov/codecov-action@v1
