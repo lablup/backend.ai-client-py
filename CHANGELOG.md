@@ -16,6 +16,36 @@ Changes
 
 .. towncrier release notes start
 
+20.09.0a1 (2020-10-06)
+----------------------
+
+### Breaking Changes
+* Low-level API: Removed no longer needed `session` argument when instantiating `client.request.Request` ([#128](https://github.com/lablup/backend.ai-client-py/issues/128))
+
+### Features
+* Add purge command for users, groups, and domains. ([#117](https://github.com/lablup/backend.ai-client-py/issues/117))
+* Add support for storage proxy ([#118](https://github.com/lablup/backend.ai-client-py/issues/118))
+  - The vfolder upload and download functions/commands now uses the storage proxy designated by the gateway APIs with the issued JWT token to transfer actual payloads.
+  - The vfolder upload function uses `aiotusclient` for large-sized, resumable uploads.
+* Display users' full name when querying keypair(s). ([#122](https://github.com/lablup/backend.ai-client-py/issues/122))
+* Support for APIv6 clustering ([#125](https://github.com/lablup/backend.ai-client-py/issues/125))
+  - Add `--cluster-size` and `--cluster-mode` CLI arguments and function API arguments when creating new sessions, which are added in APIv6
+  - Include the session ID by default in `backend.ai ps` and `backend.ai admin session` commands
+* Add new functional APIs and commands corresponding to the new vfolder clone and update-options APIs ([#127](https://github.com/lablup/backend.ai-client-py/issues/127), [#133](https://github.com/lablup/backend.ai-client-py/issues/133))
+* Add quota as an option for vfolder creation. ([#130](https://github.com/lablup/backend.ai-client-py/issues/130))
+* Add support for adding/updating/deleting/listing domain dotfiles and group dotfiles ([#132](https://github.com/lablup/backend.ai-client-py/issues/132))
+
+### Fixes
+* Extends the keypair's `paginated_list` query to accept `user_id` parameter. ([#119](https://github.com/lablup/backend.ai-client-py/issues/119))
+* Fix various API v4/v5 compatibility issues when using CLI commands and make output of "admin session" more readable ([#121](https://github.com/lablup/backend.ai-client-py/issues/121))
+* Use session IDs when invoking stream APIs to prevent conflicts in partial matches of prefix-overlapping session names ([#126](https://github.com/lablup/backend.ai-client-py/issues/126))
+* Fix tus upload and download test functions ([#131](https://github.com/lablup/backend.ai-client-py/issues/131))
+* Include more details in the `vfolder list` command, including the hosting volume name and the creation date ([#135](https://github.com/lablup/backend.ai-client-py/issues/135))
+
+### Miscellaneous
+* Improve CI execution performance by migrating to GitHub Actions ([#134](https://github.com/lablup/backend.ai-client-py/issues/134))
+
+
 20.03.0 (2020-07-28)
 --------------------
 

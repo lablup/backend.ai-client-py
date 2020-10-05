@@ -1,1 +1,0 @@
-Remove no longer needed session argument in client.request.Request and edit parts which receive session in other instances inheriting this instance
