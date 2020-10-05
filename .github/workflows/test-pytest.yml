@@ -31,9 +31,4 @@ jobs:
         python -m pip install -U -r requirements/test.txt
     - name: Test with pytest
       run: |
-        if [ "$GITHUB_EVENT_NAME" == "pull_request" -a -n "$GITHUB_HEAD_REF" ]; then
-          echo "(skipping matchers for pull request from local branches)"
-        else
-          echo "::add-matcher::.github/workflows/flake8-matcher.json"
-        fi
         python -m pytest -m 'not integration' tests
