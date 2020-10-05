@@ -28,12 +28,14 @@ def list(list_all):
     fields = [
         ('Name', 'name'),
         ('ID', 'id'),
+        ('Volume', 'host'),
         ('Owner', 'is_owner'),
         ('Permission', 'permission'),
         ('Owership Type', 'ownership_type'),
         ('Usage Mode', 'usage_mode'),
         ('User', 'user'),
         ('Group', 'group'),
+        ('Created At', 'created_at'),
     ]
     with Session() as session:
         try:
