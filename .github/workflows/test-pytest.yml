@@ -3,7 +3,7 @@ name: Test with pytest
 on: [push, pull_request]
 
 jobs:
-  lint:
+  test:
 
     runs-on: ${{ matrix.os }}
     strategy:
