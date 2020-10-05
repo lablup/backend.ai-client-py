@@ -22,7 +22,7 @@ jobs:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
         restore-keys: |
-          ${{ runner.os }}-pip--${{ matrix.python-version }}
+          ${{ runner.os }}-pip-${{ matrix.python-version }}
           ${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
