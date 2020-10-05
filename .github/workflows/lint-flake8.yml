@@ -20,7 +20,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.cfg') }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}
           ${{ runner.os }}-pip-
