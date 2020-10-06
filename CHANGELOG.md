@@ -16,6 +16,17 @@ Changes
 
 .. towncrier release notes start
 
+20.03.6 (2020-10-06)
+--------------------
+
+
+### Fixes
+* Use session IDs when invoking stream APIs to prevent conflicts in partial matches of prefix-overlapping session names ([#126](https://github.com/lablup/backend.ai-client-py/issues/126))
+
+### Miscellaneous
+* Improve CI execution performance by migrating to GitHub Actions ([#134](https://github.com/lablup/backend.ai-client-py/issues/134))
+
+
 20.03.5 (2020-09-09)
 --------------------
 
