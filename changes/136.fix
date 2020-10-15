@@ -1,0 +1,1 @@
+Improve error message output when the server responds with invalid API parameter errors, when it only sends generic text-only error messages.
