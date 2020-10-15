@@ -116,6 +116,9 @@ def format_error(exc: Exception):
             if existing_session_id is not None:
                 yield f"\n- Existing session ID: {existing_session_id}"
         elif exc.data['type'].endswith('/invalid-api-params'):
+            general_error_msg = exc.data.get('msg', None)
+            if general_error_msg is not None:
+                yield f"\n- {general_error_msg}"
             per_field_errors = exc.data.get('data', {})
             if isinstance(per_field_errors, dict):
                 for k, v in per_field_errors.items():
