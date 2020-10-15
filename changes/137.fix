@@ -1,0 +1,1 @@
+Fix naming and defaults of new vfolder creation parameters `cloneable` and `quota` (added in APIv6) for both the functional SDK and the CLI arguments
