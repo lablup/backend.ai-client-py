@@ -37,7 +37,7 @@ class VFolder(BaseFunction):
         group: str = None,
         usage_mode: str = 'general',
         permission: str = 'rw',
-        quota: str = None,
+        quota: str = '0',
         cloneable: bool = False
     ):
         rqst = Request('POST', '/folders')
