@@ -92,11 +92,11 @@ def list_allowed_types():
               help='Folder\'s innate permission. '
                    'Group folders can be shared as read-only by setting this option to "ro".'
                    'Invited folders override this setting by its own invitation permission.')
-@click.option('-q', '--quota', metavar='QUOTA', type=ByteSizeParamCheckType(), default=None,
+@click.option('-q', '--quota', metavar='QUOTA', type=ByteSizeParamCheckType(), default='0',
               help='Quota of the virtual folder. '
                    '(Use \'m\' for megabytes, \'g\' for gigabytes, and etc.) '
                    'Default is maximum amount possible.')
-@click.option('--allow-clone', '--cloneable', type=bool, is_flag=True,
+@click.option('--cloneable', '--allow-clone', type=bool, is_flag=True,
               help='Allows the virtual folder to be cloned by users.')
 def create(name, host, group, host_path, usage_mode, permission, quota, cloneable):
     '''Create a new virtual folder.
