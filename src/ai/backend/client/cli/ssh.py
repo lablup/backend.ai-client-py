@@ -21,23 +21,25 @@ def ssh():
 
 """
 
-def ssh(user, host, port):
+def ssh_exec(user, host, path_id, port):
 
-    
+    if user is None or user =="":
+        user = "work"
+        
+    if host is None or host == "":
+        host="localhost"
+
+    if path_id is None or path_id == "":
+        path_id="~/.ssh/id_container"
+
     # Ports are handled in ~/.ssh/config since we use OpenSSH
-    COMMAND="uname -a"
+    
 
-    ssh = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i", "id_container",  "work@localhost", "-p", "9922"],
-                        shell=False,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE)
-    result = ssh.stdout.readlines()
-    if result == []:
-        error = ssh.stderr.readlines()
-        print (sys.stderr, "ERROR: %s" % error)
-    else:
-        print (result)
-
+    ssh = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i", path_id,  "{}@{}".format(user, host), "-p", str(port)],
+                        shell=False)
+    
+    (stdoutdata, stderrdata) = ssh.communicate()
+    
     return 1
 
 
@@ -45,9 +47,11 @@ def main():
     # connect to server
     print(1)
     user = 'work'
-    host = 'localhost2'
+    host = 'localhost'
     port = 9922
-    ssh(user, host, port)
+    path_id = None
+
+    ssh_exec(user, host, path_id, port)
     print("Done")
 
     return 1
