@@ -1,62 +1,29 @@
-from datetime import datetime
-from pathlib import Path
-import sys
-
-import click
-import humanize
-
 import subprocess
-import sys
-
-"""
+import click
 from . import main
-from .interaction import ask_yn
-from .pretty import print_done, print_error, print_fail, print_info, print_wait
-from ..session import Session
-
-@main.group()
-def ssh():
-    '''Provides ssh operations.'''
 
 
-"""
+@main.command()
+@click.argument("user", default="work", type=str, metavar='USER')
+@click.argument("host", default="localhost", type=str, metavar='HOST')
+@click.option('-i', '--id_path', default="~/.ssh/id_container",  type=str, metavar='ID',
+              help="path to id_container, ex.) ~/.ssh/id_container")
+@click.option('-p', '--port',  type=int, metavar='PORT', help="host port number")
+def ssh(user, host, id_path, port):
+    """SSH client to SSH server.
 
-def ssh_exec(user, host, path_id, port):
+    \b
+    USER: Name of the user at the session image. Default: work
+    HOST: ip address of the host machine. Default: localhost or 127.0.0.1
+    ID_PATH: path to the id_container which contains private key of the remote host.
+    Default ~/.ssh/id_container
+    PORT: port number of remote host SSH server.
+    """
 
-    if user is None or user =="":
-        user = "work"
-        
-    if host is None or host == "":
-        host="localhost"
-
-    if path_id is None or path_id == "":
-        path_id="~/.ssh/id_container"
-
-    # Ports are handled in ~/.ssh/config since we use OpenSSH
-    
-
-    ssh = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i", path_id,  "{}@{}".format(user, host), "-p", str(port)],
-                        shell=False)
-    
-    (stdoutdata, stderrdata) = ssh.communicate()
-    
+    ssh = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i", id_path,
+                            "{}@{}".format(user, host),
+                            "-p", str(port)], shell=False)
+    ssh.communicate()
+    print("done")
     return 1
 
-
-def main():
-    # connect to server
-    print(1)
-    user = 'work'
-    host = 'localhost'
-    port = 9922
-    path_id = None
-
-    ssh_exec(user, host, path_id, port)
-    print("Done")
-
-    return 1
-
-
-
-if __name__=="__main__":
-    main()
