@@ -26,4 +26,3 @@ def ssh(user, host, id_path, port):
     ssh.communicate()
     print("done")
     return 1
-
