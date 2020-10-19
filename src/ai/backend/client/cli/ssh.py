@@ -21,20 +21,25 @@ def ssh(sess_name, port):
     user = "work"
     host = "localhost"
 
-    popen = subprocess.Popen(["backend.ai", "download", "{}".format(sess_name), "id_container"], shell=False)
+    popen = subprocess.Popen(["backend.ai", "download", "{}".format(sess_name),
+                              "id_container"], shell=False)
     popen.communicate()
     popen = subprocess.Popen(["mv", "id_container", "~/.ssh/"], shell=False)
     popen.communicate()
-    popen = subprocess.Popen(["backend.ai", "app", "{}".format(sess_name), "sshd", "-b", "{}".format(port)], shell=True)
+    popen = subprocess.Popen(["backend.ai", "app", "{}".format(sess_name),
+                              "sshd", "-b", "{}".format(port)], shell=True)
     popen.communicate()
 
-    info_str = "session name: {}; user: {}; server: {}; port: {}".format(sess_name, user, host, port)
-    popen = subprocess.Popen(["echo", "\n****************\n{}\n****************".format(info_str)], shell=False)
+    info_str = "session name: {}; user: {}; server: {}; port: {}".format(
+                sess_name, user, host, port)
+    popen = subprocess.Popen(["echo", "\n****************\n{}\n****************"
+                             .format(info_str)], shell=False)
     popen.communicate()
 
-    ssh_proc = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i", id_path,
-                            "{}@{}".format(user, host),
-                            "-p", str(port)], shell=False)
+    ssh_proc = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i",
+                                 id_path,
+                                 "{}@{}".format(user, host),
+                                 "-p", str(port)], shell=False)
     ssh_proc.communicate()
     print("Goodbye")
     return 1

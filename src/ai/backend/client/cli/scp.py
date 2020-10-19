@@ -17,14 +17,27 @@ def scp(sess_name, port, command):
     Default ~/.ssh/id_container
     PORT: port number of remote host SSH server.
     """
+    id_path = "~/.ssh/id_container"
+    user = "work"
+    host = "localhost"
 
-    popen = subprocess.Popen(["backend.ai", "download", "{}".format(sess_name), "id_container"], shell=False)
+    popen = subprocess.Popen(["backend.ai", "download", "{}".format(sess_name),
+                              "id_container"], shell=False)
     popen.communicate()
     popen = subprocess.Popen(["mv", "id_container", "~/.ssh/"], shell=False)
     popen.communicate()
-    popen = subprocess.Popen(["backend.ai", "app", "{}".format(sess_name), "sshd", "-b", "{}".format(port)], shell=True)
+    popen = subprocess.Popen(["backend.ai", "app", "{}".format(sess_name),
+                              "sshd", "-b", "{}".format(port)], shell=True)
     popen.communicate()
-    scp = subprocess.Popen(["scp", "-o", "StrictHostKeyChecking=no", "-i", id_path, "-P", port, command], shell=False)
+
+    info_str = "session name: {}; user: {}; server: {}; port: {}".format(
+                sess_name, user, host, port)
+    popen = subprocess.Popen(["echo",
+                             "\n****************\n{}\n****************"
+                              .format(info_str)], shell=False)
+
+    scp = subprocess.Popen(["scp", "-o", "StrictHostKeyChecking=no", "-i",
+                            id_path, "-P", port, command], shell=False)
     scp.communicate()
     # scp -o StrictHostKeyChecking=no -i id_container -P 9922 vfolder.py work@localhost:tmp/
     print("Done")
