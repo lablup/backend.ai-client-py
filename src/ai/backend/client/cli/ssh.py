@@ -4,12 +4,9 @@ from . import main
 
 
 @main.command()
-@click.argument("user", default="work", type=str, metavar='USER')
-@click.argument("host", default="localhost", type=str, metavar='HOST')
-@click.option('-i', '--id_path', default="~/.ssh/id_container",  type=str, metavar='ID',
-              help="path to id_container, ex.) ~/.ssh/id_container")
-@click.option('-p', '--port',  type=int, metavar='PORT', help="host port number")
-def ssh(user, host, id_path, port):
+@click.argument("sess_name",  type=str, metavar='SESS_NAME')
+@click.option('-p', '--port',  type=int, metavar='PORT', default=9922, help="host port number")
+def ssh(sess_name, port):
     """SSH client to SSH server.
 
     \b
@@ -20,9 +17,24 @@ def ssh(user, host, id_path, port):
     PORT: port number of remote host SSH server.
     """
 
-    ssh = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i", id_path,
+    id_path = "~/.ssh/id_container"
+    user = "work"
+    host = "localhost"
+
+    popen = subprocess.Popen(["backend.ai", "download", "{}".format(sess_name), "id_container"], shell=False)
+    popen.communicate()
+    popen = subprocess.Popen(["mv", "id_container", "~/.ssh/"], shell=False)
+    popen.communicate()
+    popen = subprocess.Popen(["backend.ai", "app", "{}".format(sess_name), "sshd", "-b", "{}".format(port)], shell=True)
+    popen.communicate()
+
+    info_str = "session name: {}; user: {}; server: {}; port: {}".format(sess_name, user, host, port)
+    popen = subprocess.Popen(["echo", "\n****************\n{}\n****************".format(info_str)], shell=False)
+    popen.communicate()
+
+    ssh_proc = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i", id_path,
                             "{}@{}".format(user, host),
                             "-p", str(port)], shell=False)
-    ssh.communicate()
-    print("done")
+    ssh_proc.communicate()
+    print("Goodbye")
     return 1
