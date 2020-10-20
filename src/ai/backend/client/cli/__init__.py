@@ -33,7 +33,9 @@ def main(skip_sslcert_validation):
 
 
 def _attach_command():
-    from . import admin, config, app, files, logs, manager, proxy, ps, run  # noqa
+    from . import admin, config, app, files, logs, manager, proxy, ps, run # noqa
+    from . import ssh
+    from . import scp
     from . import vfolder       # noqa
     from . import session_template  # noqa
     from . import dotfile  # noqa
