@@ -22,13 +22,16 @@ def scp(sess_name, src, dest, port, r):
     Port: Port num where ssh is opened
     R: Option to download/ upload directories
 
-    Example: upload local directory to remote host: backend.ai scp mysess -p 9922 -r tmp/ work@localhost:tmp2/
-    download directory from host to local: backend.ai scp mysess -p 9922 -r work@localhost:tmp2/ tmp/
+    Example: upload local directory to remote host:
+    backend.ai scp mysess -p 9922 -r tmp/ work@localhost:tmp2/
+    download directory from host to local:
+    backend.ai scp mysess -p 9922 -r work@localhost:tmp2/ tmp/
     """
 
     id_path = "~/.ssh/id_container"
 
-    info_str = "session name: {}; src: {}; dest: {}; port: {}".format(sess_name, src, dest, port)
+    info_str = "session name: {}; src: {}; dest: {}; port: {}".format(
+                sess_name, src, dest, port)
     subprocess.Popen(["echo",
                       "\n****************\n{}; \n****************"
                       .format(info_str)], shell=False)
@@ -38,7 +41,8 @@ def scp(sess_name, src, dest, port, r):
         opt_r = ""
 
     scp_proc = subprocess.Popen(["scp", "-o", "StrictHostKeyChecking=no", "-i",
-                                 id_path, "-P", str(port), opt_r, src, dest], shell=False)
+                                id_path, "-P", str(port), opt_r, src, dest],
+                                shell=False)
     scp_proc.communicate()
     print("Done")
     return 1
