@@ -5,7 +5,8 @@ from . import main
 
 @main.command()
 @click.argument("sess_name",  type=str, metavar='SESS_NAME')
-@click.option('-p', '--port',  type=int, metavar='PORT', default=9922, help="host port number")
+@click.option('-p', '--port',  type=int, metavar='PORT', default=9922,
+              help="the port number is for localhost")
 def ssh(sess_name, port):
     """SSH client to SSH server.
 
@@ -17,29 +18,33 @@ def ssh(sess_name, port):
     PORT: port number of remote host SSH server.
     """
 
-    id_path = "~/.ssh/id_container"
     user = "work"
     host = "localhost"
 
-    popen = subprocess.Popen(["backend.ai", "download", "{}".format(sess_name),
-                              "id_container"], shell=False)
-    popen.communicate()
-    popen = subprocess.Popen(["mv", "id_container", "~/.ssh/"], shell=False)
-    popen.communicate()
-    popen = subprocess.Popen(["backend.ai", "app", "{}".format(sess_name),
-                              "sshd", "-b", "{}".format(port)], shell=True)
-    popen.communicate()
+    subprocess.call(["backend.ai", "download", "{}".format(sess_name),
+                    "id_container"], shell=False)
+
+    subprocess.call(["mv", "id_container", "~./ssh/{}".format(sess_name)],
+                    shell=False)
+
+    subprocess.call(["backend.ai", "app", "{}".format(sess_name),
+                    "sshd", "-b", "{}".format(port)], shell=True)
 
     info_str = "session name: {}; user: {}; server: {}; port: {}".format(
                 sess_name, user, host, port)
-    popen = subprocess.Popen(["echo", "\n****************\n{}\n****************"
-                             .format(info_str)], shell=False)
-    popen.communicate()
 
-    ssh_proc = subprocess.Popen(["ssh", "-o", "StrictHostKeyChecking=no", "-i",
-                                 id_path,
-                                 "{}@{}".format(user, host),
-                                 "-p", str(port)], shell=False)
-    ssh_proc.communicate()
-    print("Goodbye")
-    return 1
+    print("\n****************\n{}; \n****************".format(info_str))
+
+    ssh_proc = subprocess.call(["ssh", "-o", "StrictHostKeyChecking=no", "-i",
+                                "~/.ssh/{}".format(sess_name),
+                                "{}@{}".format(user, host),
+                                "-p", str(port)], shell=False)
+    if ssh_proc:
+        subprocess.call(["rm", "-f", "~/.ssh/{}".format(sess_name)],
+                        shell=False)
+        click.Abort()
+        return ssh_proc
+    else:
+        subprocess.call(["rm", "-f", "~/.ssh/{}".format(sess_name)],
+                        shell=False)
+        return ssh_proc
