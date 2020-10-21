@@ -556,7 +556,7 @@ def clone(name, target_name, target_host, usage_mode, permission):
 @click.option('--set-cloneable', type=bool, metavar='BOOLEXPR',
               help="A boolean-interpretable string whether a virtual folder can be cloned. "
                    "If not set, the cloneable property is not changed.")
-def update_options(name, permission, cloneable):
+def update_options(name, permission, set_cloneable):
     """Update an existing virtual folder.
 
     \b
@@ -571,7 +571,7 @@ def update_options(name, permission, cloneable):
             session.VFolder(name).update_options(
                 name,
                 permission=permission,
-                cloneable=cloneable,
+                cloneable=set_cloneable,
             )
             print_done("Updated.")
         except Exception as e:
