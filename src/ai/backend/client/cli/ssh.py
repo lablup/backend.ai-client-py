@@ -21,13 +21,13 @@ def ssh(sess_name, port):
     user = "work"
     host = "localhost"
 
-    subprocess.call(["backend.ai", "download", "{}".format(sess_name),
+    subprocess.run(["backend.ai", "download", "{}".format(sess_name),
                     "id_container"], shell=False)
 
-    subprocess.call(["mv", "id_container", "~./ssh/{}".format(sess_name)],
-                    shell=False)
+    subprocess.run(["mv", "id_container", "~./ssh/{}".format(sess_name)],
+                   shell=False)
 
-    subprocess.call(["backend.ai", "app", "{}".format(sess_name),
+    subprocess.run(["backend.ai", "app", "{}".format(sess_name),
                     "sshd", "-b", "{}".format(port)], shell=True)
 
     info_str = "session name: {}; user: {}; server: {}; port: {}".format(
@@ -35,16 +35,16 @@ def ssh(sess_name, port):
 
     print("\n****************\n{}; \n****************".format(info_str))
 
-    ssh_proc = subprocess.call(["ssh", "-o", "StrictHostKeyChecking=no", "-i",
-                                "~/.ssh/{}".format(sess_name),
-                                "{}@{}".format(user, host),
-                                "-p", str(port)], shell=False)
+    ssh_proc = subprocess.run(["ssh", "-o", "StrictHostKeyChecking=no", "-i",
+                               "~/.ssh/{}".format(sess_name),
+                               "{}@{}".format(user, host),
+                               "-p", str(port)], shell=False)
     if ssh_proc:
-        subprocess.call(["rm", "-f", "~/.ssh/{}".format(sess_name)],
-                        shell=False)
+        subprocess.run(["rm", "-f", "~/.ssh/{}".format(sess_name)],
+                       shell=False)
         click.Abort()
         return ssh_proc
     else:
-        subprocess.call(["rm", "-f", "~/.ssh/{}".format(sess_name)],
-                        shell=False)
+        subprocess.run(["rm", "-f", "~/.ssh/{}".format(sess_name)],
+                       shell=False)
         return ssh_proc

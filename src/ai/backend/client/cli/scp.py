@@ -29,15 +29,14 @@ def scp(sess_name, src, dest, port, r):
     backend.ai scp mysess -p 9922 -r work@localhost:tmp2/ tmp/
     """
 
-    id_path = "~/.ssh/{}".format(sess_name)
-
     info_str = "session name: {}; src: {}; dest: {}; port: {}".format(
                 sess_name, src, dest, port)
 
     print("\n****************\n{}; \n****************".format(info_str))
     opt_r = "-r" if r else ""
-    scp_proc = subprocess.call(["scp", "-o", "StrictHostKeyChecking=no", "-i",
-                               id_path, "-P", str(port), opt_r, src, dest],
+    scp_proc = subprocess.run(["scp", "-o", "StrictHostKeyChecking=no", "-i",
+                               "~/.ssh/{}".format(sess_name), "-P", str(port),
+                               opt_r, src, dest],
                                shell=False)
 
     if scp_proc:
