@@ -13,8 +13,8 @@ def ssh(sess_name, port):
     \b
     USER: Name of the user at the session image. Default: work
     HOST: ip address of the host machine. Default: localhost or 127.0.0.1
-    ID_PATH: path to the id_container which contains private key of the remote host.
-    Default ~/.ssh/id_container
+    ID_PATH: path to the id_container which contains private key of the remote
+    host is stored as session name file. Default ~/.ssh/id_container
     PORT: port number of remote host SSH server.
     """
 
@@ -34,17 +34,17 @@ def ssh(sess_name, port):
                 sess_name, user, host, port)
 
     print("\n****************\n{}; \n****************".format(info_str))
-
-    ssh_proc = subprocess.run(["ssh", "-o", "StrictHostKeyChecking=no", "-i",
-                               "~/.ssh/{}".format(sess_name),
-                               "{}@{}".format(user, host),
-                               "-p", str(port)], shell=False)
-    if ssh_proc:
-        subprocess.run(["rm", "-f", "~/.ssh/{}".format(sess_name)],
-                       shell=False)
-        click.Abort()
-        return ssh_proc
-    else:
-        subprocess.run(["rm", "-f", "~/.ssh/{}".format(sess_name)],
-                       shell=False)
-        return ssh_proc
+    try:
+        ssh_proc = subprocess.run(["ssh", "-o", "StrictHostKeyChecking=no",
+                                   "-i",
+                                   "~/.ssh/{}".format(sess_name),
+                                   "{}@{}".format(user, host),
+                                   "-p", str(port)],  shell=False, check=True)
+        try:
+            subprocess.run(["rm", "-f", "~/.ssh/{}".format(sess_name)],
+                           shell=False, check=True)
+        except subprocess.CalledProcessError as e:
+            return e.returncode
+        return ssh_proc.returncode
+    except subprocess.CalledProcessError as e:
+        return e.returncode

@@ -1,1 +1,1 @@
-Backend.AI SSH client implementation within client-sdk
+Feature add SSH client and SCP support for client-sdk

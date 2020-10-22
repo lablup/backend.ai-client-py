@@ -9,19 +9,19 @@ from . import main
 @click.argument("dest",  type=str, default="work@localhost", metavar='DEST')
 @click.option('-p', '--port',  type=str, metavar='PORT', default=9922,
               help="the port number is for localhost")
-@click.option('-r',  metavar="RECURSIVE", default=False, is_flag=True,
-              help="recursive option to process directories")
-def scp(sess_name, src, dest, port, r):
+@click.option('-r',  '--recursive', default=False, is_flag=True,
+              help="recursive flag option to process directories")
+def scp(sess_name, src, dest, port, recursive):
     """SCP client to Backend.AI SSH server.
 
     \b
-    It is assumed that first connection is made through `backend.ai ssh sess_name`
+    First connection is made through `backend.ai ssh sess_name`
     which starts SSH Server.
     SESS_NAME: Name of the running session.
     SRC: file or directory which you want to move
     Dest: file or directory destination. Ex) work@localhost:tmp/
     Port: Port num where ssh is opened
-    R: Option to download/ upload directories
+    Recursive: Option to download/ upload directories
 
     Example: upload local directory to remote host:
     backend.ai scp mysess -p 9922 -r tmp/ work@localhost:tmp2/
@@ -33,14 +33,15 @@ def scp(sess_name, src, dest, port, r):
                 sess_name, src, dest, port)
 
     print("\n****************\n{}; \n****************".format(info_str))
-    opt_r = "-r" if r else ""
-    scp_proc = subprocess.run(["scp", "-o", "StrictHostKeyChecking=no", "-i",
-                               "~/.ssh/{}".format(sess_name), "-P", str(port),
-                               opt_r, src, dest],
-                               shell=False)
+    opt_r = "-r" if recursive else ""
 
-    if scp_proc:
-        click.Abort()
-        return scp_proc
-    else:
-        return scp_proc
+    try:
+        scp_proc = subprocess.run(["scp", "-o", "StrictHostKeyChecking=no",
+                                   "-i",
+                                   "~/.ssh/{}".format(sess_name), "-P",
+                                   str(port),
+                                   opt_r, src, dest],
+                                  shell=False, check=True)
+        return scp_proc.returncode
+    except subprocess.CalledProcessError as e:
+        return e.returncode
