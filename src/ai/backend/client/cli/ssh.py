@@ -24,7 +24,7 @@ def ssh(sess_name, port):
     subprocess.run(["backend.ai", "download", "{}".format(sess_name),
                     "id_container"], shell=False)
 
-    subprocess.run(["mv", "id_container", "~./ssh/{}".format(sess_name)],
+    subprocess.run(["mv", "id_container", "~/.ssh/{}".format(sess_name)],
                    shell=False)
 
     subprocess.run(["backend.ai", "app", "{}".format(sess_name),
