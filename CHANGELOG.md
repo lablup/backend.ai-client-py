@@ -16,6 +16,14 @@ Changes
 
 .. towncrier release notes start
 
+20.03.7 (2020-10-23)
+--------------------
+
+### Fixes
+* Improve error message output when the server responds with invalid API parameter errors, when it only sends generic text-only error messages. ([#136](https://github.com/lablup/backend.ai-client-py/issues/136))
+* Fix regression of the `admin vfolders` command since introduction of paginated GraphQL queries ([#140](https://github.com/lablup/backend.ai-client-py/issues/140))
+
+
 20.03.6 (2020-10-06)
 --------------------
 
