@@ -8,14 +8,10 @@ from . import main
 @click.option('-p', '--port',  type=int, metavar='PORT', default=9922,
               help="the port number is for localhost")
 def ssh(sess_name, port):
-    """SSH client to SSH server.
+    """Execute the SSH client against the backend.ai SSH server.
 
     \b
-    USER: Name of the user at the session image. Default: work
-    HOST: ip address of the host machine. Default: localhost or 127.0.0.1
-    ID_PATH: path to the id_container which contains private key of the remote
-    host is stored as session name file. Default ~/.ssh/id_container
-    PORT: port number of remote host SSH server.
+    sess_name: name of backend.ai session executed buy user.
     """
 
     user = "work"
@@ -30,10 +26,6 @@ def ssh(sess_name, port):
     subprocess.run(["backend.ai", "app", "{}".format(sess_name),
                     "sshd", "-b", "{}".format(port)], shell=True)
 
-    info_str = "session name: {}; user: {}; server: {}; port: {}".format(
-                sess_name, user, host, port)
-
-    print("\n****************\n{}; \n****************".format(info_str))
     try:
         ssh_proc = subprocess.run(["ssh", "-o", "StrictHostKeyChecking=no",
                                    "-i",
