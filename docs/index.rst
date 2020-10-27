@@ -64,6 +64,7 @@ Getting Started
 
    gsg/installation
    gsg/config
+   gsg/quickstart
 
 Command-line Interface
 ----------------------
