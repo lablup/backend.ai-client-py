@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+20.03.8 (2020-10-27)
+--------------------
+
+### Miscellaneous
+* Update dependencies (including aiohttp 3.7.1) and CI workflows to use `towncrier.check` instead of the psf-chronogrphaer app ([#142](https://github.com/lablup/backend.ai-client-py/issues/142))
+
+
 20.03.7 (2020-10-23)
 --------------------
 
