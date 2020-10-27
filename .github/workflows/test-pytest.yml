@@ -29,8 +29,16 @@ jobs:
       run: |
         python -m pip install -U pip setuptools
         python -m pip install -U -r requirements/test.txt
-        patch_target=$(python -c 'from pathlib import Path; import aioresponses; print(Path(aioresponses.__file__).parent / "compat.py")')
-        sed -i"" "s/return StreamReader(protocol, loop=loop)/return StreamReader(protocol, limit=2 ** 16, loop=loop)/" $patch_target
+        python <<EOF
+        # temporary patch until pnuckowski/aioresponses#174 is released or aiohttp is patched.
+        from pathlib import Path
+        import re
+        import aioresponses
+        p = (Path(aioresponses.__file__).parent / "compat.py")
+        t = p.read_text()
+        t.replace("return StreamReader(protocol, loop=loop)", "return StreamReader(protocol, limit=2 ** 16, loop=loop)")
+        p.write_text(t)
+        EOF
       shell: bash
     - name: Test with pytest
       run: |
