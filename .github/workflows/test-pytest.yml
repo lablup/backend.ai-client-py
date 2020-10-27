@@ -29,6 +29,9 @@ jobs:
       run: |
         python -m pip install -U pip setuptools
         python -m pip install -U -r requirements/test.txt
+        patch_target=$(python -c 'from pathlib import Path; import aioresponses; print(Path(aioresponses.__file__).parent / "compat.py")')
+        sed -i"" "s/return StreamReader(protocol, loop=loop)/return StreamReader(protocol, limit=2 ** 16, loop=loop)/" $patch_target
+      shell: bash
     - name: Test with pytest
       run: |
         python -m pytest -v --cov=src -m 'not integration' tests
