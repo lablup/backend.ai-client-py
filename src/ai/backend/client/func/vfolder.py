@@ -261,6 +261,9 @@ class VFolder(BaseFunction):
                     assert part.headers.get(hdrs.CONTENT_TRANSFER_ENCODING, 'binary').lower() in (
                         'binary', '8bit', '7bit',
                     )
+                    if part.filename is None:
+                        raise RuntimeError("The server sent an unnamed file!")
+                    file_names.append(part.filename)
                     with open(part.filename, 'wb') as fp:
                         while True:
                             chunk = await part.read_chunk(DEFAULT_CHUNK_SIZE)
