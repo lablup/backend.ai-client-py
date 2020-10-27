@@ -7,7 +7,7 @@ Display Help Text
 You can print the help text for a command by suffixing ``-h`` or
 ``--help``.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai <cmd> -h
    $ backend.ai <cmd> --help
@@ -20,7 +20,7 @@ Login to gain access to the Backend.AI server. ``BACKEND_ENDPOINT_TYPE``
 should be set to ``session``, and you need to specify ``BACKEND_ENDPOINT``
 correctly.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ export BACKEND_ENDPOINT_TYPE=session
    $ export BACKEND_ENDPOINT=<backend-session-endpoint>
@@ -40,7 +40,7 @@ Linux.
 Query running compute sessions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai ps
    There are no matching sessions.
@@ -52,7 +52,7 @@ Specify inline code with ``-c`` option. This will create a new compute
 session and execute the code. You can destroy the compute session by ``rm``
 command.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai run -c "print('hello')" \
          lablup/python-tensorflow:2.3-py36-cuda10.1
@@ -74,14 +74,14 @@ command.
    If the code execution failed, you may not belong to the default domain
    and group. You can check your domain and group by:
 
-   .. code-block:: shell
+   .. code-block:: console
 
       $ backend.ai admin domain
       $ backend.ai admin groups
 
    To specify non-default domain and group,
 
-   .. code-block:: shell
+   .. code-block:: console
 
       $ backend.ai run -d <domain-name> -g <group-name> \
             -c "print('hello')" lablup/python-tensorflow:2.3-py36-cuda10.1
@@ -97,7 +97,7 @@ compute session and be executed by the command given in ``--exec``.
 With ``--rm`` option, the compute session will be automatically terminated
 after executing the code.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai run --rm --exec "python mycode.py" \
          lablup/python-tensorflow:2.3-py36-cuda10.1 mycode.py
@@ -156,7 +156,7 @@ like ``cuda.device=2`` to allocate 2 physical GPUs to the compute session.
    If the file name is ``main.py``, you do not need to supply ``--exec``
    parameter since ``main.py`` is the default file name.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai run -r cpu=3 -r mem=2g -r cuda.shares=0.5 \
          lablup/python-tensorflow:2.3-py36-cuda10.1 main.py
@@ -181,7 +181,7 @@ Now, check the allocated amount of GPU. This time, by using
 session, not creating new one. Also, note that we specified ``--exec``
 option to execute ``nvidia-smi`` command instead of executing ``main.py``.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai ps -f name,occupied_slots,status,image
    Session Name      Occupied Resource                                        Status    Image
@@ -228,7 +228,7 @@ fractional GPU sharing is working.
 
 If you're done, destroy the compute session.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai rm pysdk-b53bbf9abb
    ✔ Done.
@@ -250,7 +250,7 @@ virtual folder, you need to query and choose what host to use beforehand.
 
 To query and create a virtual folder, follow the steps below.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai vfolder list
    There is no virtual folders created yet.
@@ -273,7 +273,7 @@ This folder is mounted under ``/home/work/`` inside the compute session.
 Let's check this is true by executing ``ls`` command on ``/home/work``
 inside the compute session.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai run --rm --exec "ls /home/work" \
          lablup/python-tensorflow:2.3-py36-cuda10.1 main.py
@@ -312,7 +312,7 @@ will be preserved after compute session is terminated (``--rm``). You can
 check this by using ``vfolder ls`` command, which displays the
 file/directory inside a specific virtual folder.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai vfolder ls myfolder
    ✔ Retrived.
@@ -357,7 +357,7 @@ password, but need to provide additional environment variables. The
 endpoint for API connection mode and access-/secret-key should be got from
 your Backend.AI admins.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ export BACKEND_ENDPOINT_TYPE=api
    $ # This endpoint may differ from the one used for session mode.
@@ -372,7 +372,7 @@ You can create a compute session without executing any code. Note that
 there is no ``--rm`` option in the example below, and we specified session
 name with ``-t`` option.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai start -t app-test -m myfolder \
          -r cpu=4 -r mem=8g -r cuda.shares=1 \
@@ -388,7 +388,7 @@ reports app services available, such as jupyter, ttyd, etc. These are the
 list of interactive apps, mostly provide web-based easy-to-use UI.  Here,
 let's launch a web-terminal (``ttyd``) using ``app`` command.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai app app-test ttyd
    ∙ A local proxy to the application "ttyd" provided by the session "app-test" is available at:
@@ -413,7 +413,7 @@ Launch Jupyter Notebook
 
 With ``-b`` (bind) option, you can launch the app from any local port.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ backend.ai app -b 9123 app-test jupyter
    ∙ A local proxy to the application "jupyter" provided by the session "app-test" is available at:
@@ -447,7 +447,7 @@ session.
    program such as PuTTYgen. You can refer to the following link for the
    conversion method: https://wiki.filezilla-project.org/Howto.
 
-.. code-block:: shell
+.. code-block:: console
 
    $ # download /home/work/id_container
    $ backend.ai download app-test id_container
@@ -458,7 +458,7 @@ session.
 
 In another terminal on the same PC:
 
-.. code-block:: shell
+.. code-block:: console
 
    $ ssh -o StrictHostKeyChecking=no \
    >     -o UserKnownHostsFile=/dev/null \
