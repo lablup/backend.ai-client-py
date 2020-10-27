@@ -8,21 +8,21 @@ setup_requires = [
 ]
 install_requires = [
     'backend.ai-cli~=0.4.1',
-    'aiohttp~=3.6.2',
+    'aiohttp~=3.7.1',
     'aiotusclient~=0.1.3',
     'appdirs~=1.4.3',
     'async_timeout~=3.0',  # to avoid pip10 resolver issue
-    'attrs>=19.3',         # to avoid pip10 resolver issue
-    'click~=7.1.1',
+    'attrs>=20.1',         # to avoid pip10 resolver issue
+    'click~=7.1.2',
     'colorama~=0.4.3',
-    'humanize~=1.0.0',
-    'janus~=0.5.0',
+    'humanize~=3.1.0',
+    'janus~=0.6.0',
     'multidict~=4.7.4',
     'python-dateutil~=2.8.1',
     'PyYAML~=5.3.1',
     'tabulate~=0.8.6',
     'tqdm~=4.48',
-    'yarl~=1.5.1',
+    'yarl~=1.6.1',
     'typing-extensions~=3.7.4',
 ]
 build_requires = [
@@ -31,11 +31,11 @@ build_requires = [
     'towncrier>=19.2.0',
 ]
 test_requires = [
-    'pytest~=5.4.2',
+    'pytest~=6.1.1',
     'pytest-cov',
     'pytest-mock',
     'pytest-asyncio>=0.12.0',
-    'aioresponses~=0.6.3',
+    'aioresponses~=0.7.0',
     'asynctest>=0.13; python_version<"3.8"',
     'codecov',
 ]
