@@ -1,5 +1,5 @@
-Quickstart
-==========
+CLI Quickstart
+==============
 
 Display Help Text
 -----------------
