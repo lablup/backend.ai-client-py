@@ -5,7 +5,7 @@ import secrets
 import signal
 import subprocess
 import sys
-from typing import Iterator
+from typing import Iterator, List
 
 import click
 
@@ -27,7 +27,7 @@ def container_ssh_ctx(session_ref: str, port: int) -> Iterator[Path]:
             stderr=subprocess.STDOUT,
         )
     except subprocess.CalledProcessError as e:
-        print_fail("Failed to download the SSH key from the session:")
+        print_fail(f"Failed to download the SSH key from the session (exit: {e.returncode}):")
         print(e.stdout.decode())
         sys.exit(1)
     os.rename(key_filename, key_path)
@@ -43,12 +43,19 @@ def container_ssh_ctx(session_ref: str, port: int) -> Iterator[Path]:
             stderr=subprocess.STDOUT,
         )
         assert proxy_proc.stdout is not None
+        lines: List[bytes] = []
         while True:
             line = proxy_proc.stdout.readline(1024)
             if not line:
-                raise RuntimeError("EOF reached too early")
+                proxy_proc.wait()
+                print_fail(f"Unexpected early termination of the sshd app command "
+                           f"(exit: {proxy_proc.returncode}):")
+                print((b"\n".join(lines)).decode())
+                sys.exit(1)
             if f"127.0.0.1:{port}".encode() in line:
                 break
+            lines.append(line)
+        lines.clear()
         yield key_path
     finally:
         proxy_proc.send_signal(signal.SIGINT)
