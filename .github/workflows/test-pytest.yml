@@ -21,10 +21,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
+        key: test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
         restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}
-          ${{ runner.os }}-pip-
+          test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}
+          test-pytest-${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools
