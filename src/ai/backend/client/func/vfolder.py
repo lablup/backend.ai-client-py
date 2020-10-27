@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 from typing import (
+    AsyncIterator,
     Sequence,
     Union
 )
@@ -15,10 +16,21 @@ from aiotusclient import client
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
+from ..pagination import generate_paginated_results
 from ..request import Request
 
 __all__ = (
     'VFolder',
+)
+
+_default_list_fields = (
+    'host',
+    'name',
+    'created_at',
+    'creator',
+    'group',
+    'permission',
+    'ownership_type',
 )
 
 
@@ -69,6 +81,33 @@ class VFolder(BaseFunction):
         rqst.set_json({'all': list_all})
         async with rqst.fetch() as resp:
             return await resp.json()
+
+    @api_function
+    @classmethod
+    async def paginated_list(
+        cls,
+        group: str = None,
+        access_key: str = None,
+        *,
+        fields: Sequence[str] = _default_list_fields,
+        page_size: int = 20,
+    ) -> AsyncIterator[dict]:
+        """
+        Fetches the list of vfolders. Domain admins can only get domain vfolders.
+
+        :param group: Fetch vfolders in a specific group.
+        :param fields: Additional per-vfolder query fields to fetch.
+        """
+        async for item in generate_paginated_results(
+            'vfolder_list',
+            {
+                'group_id': (group, 'UUID'),
+                'access_key': (access_key, 'String'),
+            },
+            fields,
+            page_size=page_size,
+        ):
+            yield item
 
     @api_function
     @classmethod

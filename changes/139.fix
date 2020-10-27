@@ -1,0 +1,1 @@
+Fix a wrong argument name in `vfolder update-options` cli command
