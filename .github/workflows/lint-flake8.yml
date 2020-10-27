@@ -1,9 +1,9 @@
 name: Lint with flake8
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
-  lint:
+  lint-flake8:
 
     runs-on: ubuntu-latest
     strategy:
@@ -20,10 +20,10 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
+        key: lint-flake8-${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('setup.py') }}
         restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}
-          ${{ runner.os }}-pip-
+          lint-flake8-${{ runner.os }}-pip-${{ matrix.python-version }}
+          lint-flake8-${{ runner.os }}-pip-
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools
