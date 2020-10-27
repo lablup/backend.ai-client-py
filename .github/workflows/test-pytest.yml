@@ -32,11 +32,11 @@ jobs:
         python <<EOF
         # temporary patch until pnuckowski/aioresponses#174 is released or aiohttp is patched.
         from pathlib import Path
-        import re
         import aioresponses
         p = (Path(aioresponses.__file__).parent / "compat.py")
+        print(">>> Patching aioresponses #174 manually")
         t = p.read_text()
-        t.replace("return StreamReader(protocol, loop=loop)", "return StreamReader(protocol, limit=2 ** 16, loop=loop)")
+        t = t.replace("return StreamReader(protocol, loop=loop)", "return StreamReader(protocol, limit=2 ** 16, loop=loop)")
         p.write_text(t)
         EOF
       shell: bash
