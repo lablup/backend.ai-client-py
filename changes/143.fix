@@ -1,0 +1,1 @@
+Update aiohttp to 3.7.2 to fix [an upstream issue](https://github.com/aio-libs/aiohttp/issues/5149) related to fallback of `sendfile()` with uvloop
