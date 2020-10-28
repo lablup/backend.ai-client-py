@@ -8,7 +8,7 @@ setup_requires = [
 ]
 install_requires = [
     'backend.ai-cli~=0.4.1',
-    'aiohttp~=3.7.1',
+    'aiohttp~=3.7.2',
     'aiotusclient~=0.1.3',
     'appdirs~=1.4.3',
     'async_timeout~=3.0',  # to avoid pip10 resolver issue
@@ -40,10 +40,10 @@ test_requires = [
     'codecov',
 ]
 lint_requires = [
-    'flake8>=3.8.1',
+    'flake8>=3.8.4',
 ]
 typecheck_requires = [
-    'mypy>=0.770',
+    'mypy>=0.790',
 ]
 dev_requires: List[str] = [
     # 'pytest-sugar>=0.9.1',
