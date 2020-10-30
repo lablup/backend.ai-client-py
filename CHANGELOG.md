@@ -16,6 +16,23 @@ Changes
 
 .. towncrier release notes start
 
+20.09.0a2 (2020-10-30)
+----------------------
+
+### Features
+* Add `backend.ai ssh` and `backend.ai scp` command which provides transparent wrappers of `ssh` and `scp` against the given compute session ([#138](https://github.com/lablup/backend.ai-client-py/issues/138))
+
+### Fixes
+* Improve error message output when the server responds with invalid API parameter errors, when it only sends generic text-only error messages. ([#136](https://github.com/lablup/backend.ai-client-py/issues/136))
+* Fix naming and defaults of new vfolder creation parameters `cloneable` and `quota` (added in APIv6) for both the functional SDK and the CLI arguments ([#137](https://github.com/lablup/backend.ai-client-py/issues/137))
+* Fix a wrong argument name in `vfolder update-options` cli command ([#139](https://github.com/lablup/backend.ai-client-py/issues/139))
+* Fix regression of the `admin vfolders` command since introduction of paginated GraphQL queries ([#140](https://github.com/lablup/backend.ai-client-py/issues/140))
+* Update aiohttp to 3.7.2 to fix [an upstream issue](https://github.com/aio-libs/aiohttp/issues/5149) related to fallback of `sendfile()` with uvloop ([#143](https://github.com/lablup/backend.ai-client-py/issues/143))
+
+### Miscellaneous
+* Update dependencies (including aiohttp 3.7.1) and CI workflows to use `towncrier.check` instead of the psf-chronogrphaer app ([#142](https://github.com/lablup/backend.ai-client-py/issues/142))
+
+
 20.09.0a1 (2020-10-06)
 ----------------------
 
