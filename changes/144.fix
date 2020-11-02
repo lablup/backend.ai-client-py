@@ -1,0 +1,1 @@
+Write upstream websocket errors more reliably to the client (browser) in the downstream

@@ -106,9 +106,13 @@ class WSProxy:
                     self.down_task = None
 
     async def write_error(self, msg):
+        if isinstance(msg.data, bytes):
+            error_msg = msg.data.decode('utf8')
+        else:
+            error_msg = str(msg.data)
         rsp = 'HTTP/1.1 503 Service Unavailable\r\n' \
-            'Connection: Closed\r\n\r\n' \
-            'WebSocket reply: {}'.format(msg.data.decode('utf8'))
+              'Connection: Closed\r\n\r\n' \
+              'WebSocket reply: {}'.format(error_msg)
         self.writer.write(rsp.encode())
         await self.writer.drain()
 
