@@ -38,7 +38,6 @@ def health_check(agents):
     """Health check on manager and/or agent hosts."""
     try:
         with Session() as session:
-            print('# agents:', list(agents))
             resp = session.Manager.health_check(agents)
             print(json.dumps(resp, indent=2))
     except Exception as e:
