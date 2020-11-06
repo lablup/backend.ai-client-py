@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 from .base import api_function, BaseFunction
 from ..request import Request
@@ -21,6 +21,16 @@ class Manager(BaseFunction):
         rqst.set_json({
             'status': 'running',
         })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    @classmethod
+    async def health_check(cls, agents: List[str] = None):
+        if agents is None:
+            agents = []
+        rqst = Request('GET', '/manager/health')
+        rqst.set_json({'agent_ids': agents})
         async with rqst.fetch() as resp:
             return await resp.json()
 

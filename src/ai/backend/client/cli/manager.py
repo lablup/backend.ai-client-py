@@ -33,6 +33,20 @@ def status():
 
 
 @manager.command()
+@click.argument('agents', nargs=-1)
+def health_check(agents):
+    """Health check on manager and/or agent hosts."""
+    try:
+        with Session() as session:
+            print('# agents:', list(agents))
+            resp = session.Manager.health_check(agents)
+            print(json.dumps(resp, indent=2))
+    except Exception as e:
+        print_error(e)
+        sys.exit(1)
+
+
+@manager.command()
 @click.option('--wait', is_flag=True,
               help='Hold up freezing the manager until '
                    'there are no running sessions in the manager.')
