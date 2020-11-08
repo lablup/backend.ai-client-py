@@ -34,11 +34,13 @@ def status():
 
 @manager.command()
 @click.argument('agents', nargs=-1)
-def health_check(agents):
+@click.option('-a', '--with-all-agents', is_flag=True,
+              help='Fetch all agent host information as well.')
+def health_check(agents, with_all_agents):
     """Health check on manager and/or agent hosts."""
     try:
         with Session() as session:
-            resp = session.Manager.health_check(agents)
+            resp = session.Manager.health_check(agents, with_all_agents)
             print(json.dumps(resp, indent=2))
     except Exception as e:
         print_error(e)
