@@ -1,0 +1,1 @@
+Fix an inadvertent internal cancellation error when a client closes an app-proxy connection in the `app` command

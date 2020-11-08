@@ -26,17 +26,19 @@ class WSProxy:
         'app_name', 'protocol',
         'args', 'envs',
         'reader', 'writer',
-        'down_task',
     )
 
-    def __init__(self, api_session: AsyncSession,
-                 session_name: str,
-                 app_name: str,
-                 protocol: str,
-                 args: MutableMapping[str, Union[None, str, List[str]]],
-                 envs: MutableMapping[str, str],
-                 reader: asyncio.StreamReader,
-                 writer: asyncio.StreamWriter):
+    def __init__(
+        self,
+        api_session: AsyncSession,
+        session_name: str,
+        app_name: str,
+        protocol: str,
+        args: MutableMapping[str, Union[None, str, List[str]]],
+        envs: MutableMapping[str, str],
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+    ) -> None:
         self.api_session = api_session
         self.session_name = session_name
         self.app_name = app_name
@@ -45,9 +47,8 @@ class WSProxy:
         self.envs = envs
         self.reader = reader
         self.writer = writer
-        self.down_task = None
 
-    async def run(self):
+    async def run(self) -> None:
         prefix = get_naming(self.api_session.api_version, 'path')
         path = f"/stream/{prefix}/{self.session_name}/{self.protocol}proxy"
         params = {'app': self.app_name}
@@ -63,7 +64,7 @@ class WSProxy:
             content_type="application/json")
         async with api_rqst.connect_websocket() as ws:
 
-            async def downstream():
+            async def downstream() -> None:
                 try:
                     async for msg in ws:
                         if msg.type == aiohttp.WSMsgType.ERROR:
@@ -79,17 +80,16 @@ class WSProxy:
                 except ConnectionResetError:
                     pass  # shutting down
                 except asyncio.CancelledError:
-                    raise
+                    pass
                 finally:
                     self.writer.close()
-                    if hasattr(self.writer, 'wait_closed'):  # Python 3.7+
-                        try:
-                            await self.writer.wait_closed()
-                        except (BrokenPipeError, IOError):
-                            # closed
-                            pass
+                    try:
+                        await self.writer.wait_closed()
+                    except (BrokenPipeError, IOError):
+                        # closed
+                        pass
 
-            self.down_task = asyncio.ensure_future(downstream())
+            down_task = asyncio.create_task(downstream())
             try:
                 while True:
                     chunk = await self.reader.read(DEFAULT_CHUNK_SIZE)
@@ -101,14 +101,18 @@ class WSProxy:
             except asyncio.CancelledError:
                 raise
             finally:
-                if not self.down_task.done():
-                    await self.down_task
-                    self.down_task = None
+                if not down_task.done():
+                    down_task.cancel()
+                    await down_task
 
-    async def write_error(self, msg):
+    async def write_error(self, msg: aiohttp.WSMessage) -> None:
+        if isinstance(msg.data, bytes):
+            error_msg = msg.data.decode('utf8')
+        else:
+            error_msg = str(msg.data)
         rsp = 'HTTP/1.1 503 Service Unavailable\r\n' \
             'Connection: Closed\r\n\r\n' \
-            'WebSocket reply: {}'.format(msg.data.decode('utf8'))
+            'WebSocket reply: {}'.format(error_msg)
         self.writer.write(rsp.encode())
         await self.writer.drain()
 
@@ -134,11 +138,17 @@ class ProxyRunnerContext:
     local_server: Optional[asyncio.AbstractServer]
     exit_code: int
 
-    def __init__(self, host: str, port: int,
-                 session_name: str, app_name: str, *,
-                 protocol: str = 'http',
-                 args: Sequence[str] = None,
-                 envs: Sequence[str] = None) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        session_name: str,
+        app_name: str,
+        *,
+        protocol: str = 'http',
+        args: Sequence[str] = None,
+        envs: Sequence[str] = None,
+    ) -> None:
         self.host = host
         self.port = port
         self.session_name = session_name
@@ -176,8 +186,11 @@ class ProxyRunnerContext:
                 else:
                     self.envs[split[0]] = ''
 
-    async def handle_connection(self, reader: asyncio.StreamReader,
-                                writer: asyncio.StreamWriter) -> None:
+    async def handle_connection(
+        self,
+        reader: asyncio.StreamReader,
+        writer: asyncio.StreamWriter,
+    ) -> None:
         assert self.api_session is not None
         p = WSProxy(self.api_session, self.session_name,
                     self.app_name, self.protocol,
