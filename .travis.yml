@@ -28,5 +28,5 @@ jobs:
         password:
           secure: "nXxyiMTQZgdLnpw+hZBm2nHtlMV9prg5bl+3lB4Q/pnWWaW4VvAU6U2Lw/gljAaD3jxOV+RWKOCdt6ZWmQc9M8Fh5mcTlq9IjcMgk0R39onsP7YP7UJUh7saqZG1EkruglCHwCjcz3XwmRyJ+GKIANDH6jRooEmGQt/b8sR0ZIuMxx9ANNPozGEIxcrEqkO2CT1NQzEYc969danjYoyRImDUyDLKTJKd5ZkC7vwmT9z1chm0oxbZMdBJbL26g3TEr7dq1gQAiiLB5lhFVxklWqYlthlWl5qvmtgcn9ZNh1OA2WF8jTwDaafXoYHOotfq82ASRZI3dOckJQM6bsEJEPh5tTIvJJNxMmPTomHCRmc8/sNfOOoPPTLhjXVGE1BxL4u3DXZt0VAw80mkQseXu9wtzNEdZqCxGlSzycyut4cLtXpWXZDN/zqDYczAPUAYeRi2XbxT06OHhczmtn7WPGp2O/HYrXzHrMjAho0tNdch/62hJycEYAMRN0iQSnB2Gs2Ja7h6WUmf6lw2P4qS8gOSKuBJ3Z5Q0glbS2m28oCDZjP6zBqCwYucMZfUqF/aKiVei0NQp1dvjKUBqMJVogesuOAvtDVo+wN3rp2pcTntEKJHqYbNL9fOzwErJM8r/ZUMGC0HkdyTcnPS7uGkRF5WlzFl1cVBNmHzburc+N4="
         edge:
-          source: 'native-api/dpl'
-          branch: 'pip_fix_upgrade_deps'
+          source: "travis-ci/dpl"
+          branch: "v1"
