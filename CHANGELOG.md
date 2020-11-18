@@ -16,6 +16,14 @@ Changes
 
 .. towncrier release notes start
 
+20.09.0a3 (2020-11-16)
+----------------------
+
+### Fixes
+* Write upstream websocket errors more reliably to the client (browser) in the downstream ([#144](https://github.com/lablup/backend.ai-client-py/issues/144))
+* Fix an inadvertent internal cancellation error when a client closes an app-proxy connection in the `app` command ([#146](https://github.com/lablup/backend.ai-client-py/issues/146))
+
+
 20.09.0a2 (2020-10-30)
 ----------------------
 
