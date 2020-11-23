@@ -34,13 +34,20 @@ def status():
 
 @manager.command()
 @click.argument('agents', nargs=-1)
-@click.option('-a', '--with-all-agents', is_flag=True,
-              help='Fetch all agent host information as well.')
-def health_check(agents, with_all_agents):
+@click.option('-s', '--status', default=None,
+              type=click.Choice(['ALIVE', 'NONALIVE']),
+              help='Filter agents by specific status.')
+def health_check(agents, status):
     """Health check on manager and/or agent hosts."""
     try:
+        agents = None if len(agents) < 1 else agents
+        alive = None
+        if status == 'ALIVE':
+            alive = True
+        elif status == 'NONALIVE':
+            alive = False
         with Session() as session:
-            resp = session.Manager.health_check(agents, with_all_agents)
+            resp = session.Manager.health_check(agents, alive)
             print(json.dumps(resp, indent=2))
     except Exception as e:
         print_error(e)

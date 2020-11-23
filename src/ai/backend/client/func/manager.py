@@ -26,13 +26,11 @@ class Manager(BaseFunction):
 
     @api_function
     @classmethod
-    async def health_check(cls, agents: List[str] = None, with_all_agents: bool = False):
-        if agents is None:
-            agents = []
+    async def health_check(cls, agents: List[str] = None, alive: bool = None):
         rqst = Request('GET', '/manager/health')
         rqst.set_json({
-            'agent_ids': agents,
-            'with_all_agents': with_all_agents,
+            'agent_ids': agents if agents is not None else '*',
+            'alive': alive,
         })
         async with rqst.fetch() as resp:
             return await resp.json()
