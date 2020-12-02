@@ -16,6 +16,16 @@ Changes
 
 .. towncrier release notes start
 
+20.03.9 (2020-12-02)
+--------------------
+
+### Features
+* Add more detail fields (`live_stat` and `allowed_docker_registries`) to admin session/domain query CLI commands ([#147](https://github.com/lablup/backend.ai-client-py/issues/147))
+
+### Fixes
+* Fix an inadvertent internal cancellation error when a client closes an app-proxy connection in the `app` command ([#146](https://github.com/lablup/backend.ai-client-py/issues/146))
+
+
 20.03.8 (2020-10-27)
 --------------------
 
