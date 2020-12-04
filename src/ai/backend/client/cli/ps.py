@@ -10,7 +10,7 @@ from .admin.sessions import sessions
                   'PENDING',
                   'PREPARING', 'BUILDING', 'RUNNING', 'RESTARTING',
                   'RESIZING', 'SUSPENDED', 'TERMINATING',
-                  'TERMINATED', 'ERROR',
+                  'TERMINATED', 'ERROR', 'CANCELLED',
                   'ALL',  # special case
               ]),
               help='Filter by the given status')
