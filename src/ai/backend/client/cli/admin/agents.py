@@ -1,6 +1,8 @@
+import json
 import sys
 
 import click
+import humanize
 from tabulate import tabulate
 
 from . import admin
@@ -14,9 +16,60 @@ from ..pagination import (
 from ...exceptions import NoItems
 
 
+def format_stats(raw_stats):
+
+    value_formatters = {
+        'bytes': lambda m: "{} / {}".format(
+            humanize.filesize.naturalsize(int(m['current'])),
+            humanize.filesize.naturalsize(int(m['capacity'])),
+        ),
+        'Celsius': lambda m: "{:,} C".format(
+            float(m['current']),
+        ),
+        'bps': lambda m: "{}/s".format(
+            humanize.naturalsize(float(m['current'])),
+        ),
+        'pct': lambda m: "{:.2f} %".format(
+            float(m['pct']),
+        ),
+    }
+
+    def format_value(metric):
+        formatter = value_formatters.get(
+            metric['unit_hint'],
+            lambda m: "{} / {} {}".format(
+                m['current'],
+                m['capacity'],
+                m['unit_hint'],
+            ),
+        )
+        return formatter(metric)
+
+    bufs = []
+    node_metric_bufs = []
+    for stat_key, metric in raw_stats['node'].items():
+        if stat_key == 'cpu_util':
+            num_cores = len(raw_stats['devices']['cpu_util'])
+            node_metric_bufs.append(f"{stat_key}: {float(metric['pct']):,.2f} % ({num_cores} cores)")
+        else:
+            node_metric_bufs.append(f"{stat_key}: {format_value(metric)}")
+    bufs.append(", ".join(node_metric_bufs))
+    dev_metric_bufs = []
+    for stat_key, per_dev_metric in raw_stats['devices'].items():
+        dev_metric_bufs.append(f"+ {stat_key}")
+        if stat_key == 'cpu_util' and len(per_dev_metric) > 8:
+            dev_metric_bufs.append("  - (per-core stats hidden for large CPUs with more than 8 cores)")
+        else:
+            for dev_id, metric in per_dev_metric.items():
+                dev_metric_bufs.append(
+                    f"  - {dev_id}: {format_value(metric)}"
+                )
+    bufs.append("\n".join(dev_metric_bufs))
+    return '\n'.join(bufs)
+
+
 @admin.command()
-@click.option('-i', '--id', 'agent_id', required=True,
-              help='The agent Id to inspect.')
+@click.argument('agent_id')
 def agent(agent_id):
     '''
     Show the information about the given agent.
@@ -27,9 +80,9 @@ def agent(agent_id):
         ('Region', 'region'),
         ('First Contact', 'first_contact'),
         ('CPU Usage (%)', 'cpu_cur_pct'),
-        ('Used Memory (MiB)', 'mem_cur_bytes'),
         ('Total slots', 'available_slots'),
         ('Occupied slots', 'occupied_slots'),
+        ('Live Stat', 'live_stat'),
     ]
     if is_legacy_server():
         del fields[9]
@@ -46,7 +99,10 @@ def agent(agent_id):
             if key == 'mem_cur_bytes' and resp[key] is not None:
                 resp[key] = round(resp[key] / 2 ** 20, 1)
             if key in resp:
-                rows.append((name, resp[key]))
+                if key == 'live_stat' and resp[key] is not None:
+                    rows.append((name, format_stats(json.loads(resp[key]))))
+                else:
+                    rows.append((name, resp[key]))
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
