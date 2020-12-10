@@ -29,8 +29,8 @@ def format_stats(raw_stats):
         'bps': lambda m: "{}/s".format(
             humanize.naturalsize(float(m['current'])),
         ),
-        'pct': lambda m: "{:.2f} %".format(
-            float(m['pct']),
+        'pct': lambda m: "{} %".format(
+            m['pct'],
         ),
     }
 
@@ -53,7 +53,7 @@ def format_stats(raw_stats):
             if metric['pct'] is None:
                 node_metric_bufs.append(f"{stat_key}: (calculating...) % ({num_cores} cores)")
             else:
-                node_metric_bufs.append(f"{stat_key}: {float(metric['pct']):,.2f} % ({num_cores} cores)")
+                node_metric_bufs.append(f"{stat_key}: {metric['pct']} % ({num_cores} cores)")
         else:
             node_metric_bufs.append(f"{stat_key}: {format_value(metric)}")
     bufs.append(", ".join(node_metric_bufs))
