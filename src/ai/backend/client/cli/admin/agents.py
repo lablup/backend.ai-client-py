@@ -20,8 +20,8 @@ def format_stats(raw_stats):
 
     value_formatters = {
         'bytes': lambda m: "{} / {}".format(
-            humanize.filesize.naturalsize(int(m['current'])),
-            humanize.filesize.naturalsize(int(m['capacity'])),
+            humanize.naturalsize(int(m['current']), binary=True),
+            humanize.naturalsize(int(m['capacity']), binary=True),
         ),
         'Celsius': lambda m: "{:,} C".format(
             float(m['current']),
