@@ -50,7 +50,10 @@ def format_stats(raw_stats):
     for stat_key, metric in raw_stats['node'].items():
         if stat_key == 'cpu_util':
             num_cores = len(raw_stats['devices']['cpu_util'])
-            node_metric_bufs.append(f"{stat_key}: {float(metric['pct']):,.2f} % ({num_cores} cores)")
+            if metric['pct'] is None:
+                node_metric_bufs.append(f"{stat_key}: (calculating...) % ({num_cores} cores)")
+            else:
+                node_metric_bufs.append(f"{stat_key}: {float(metric['pct']):,.2f} % ({num_cores} cores)")
         else:
             node_metric_bufs.append(f"{stat_key}: {format_value(metric)}")
     bufs.append(", ".join(node_metric_bufs))
