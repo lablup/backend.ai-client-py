@@ -200,7 +200,10 @@ def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str
         for cinfo in containers:
             text += "\n".join((
                 f"+ {cinfo['id']}",
-                *(f"  - {k + ': ':18s}{v}" for k, v in cinfo.items() if k not in ('id', 'last_stat')),
+                *(f"  - {k + ': ':18s}{v}"
+                  for k, v in cinfo.items()
+                  if k not in ('id', 'live_stat', 'last_stat')),
+                f"  + live_stat: {format_stats(cinfo['live_stat'], indent='    ')}",
                 f"  + last_stat: {format_stats(cinfo['last_stat'], indent='    ')}",
             )) + "\n"
     return "\n" + textwrap.indent(text, indent)
@@ -268,14 +271,16 @@ def session(id_or_name):
                     'Containers',
                     'containers {'
                     ' id cluster_role cluster_idx cluster_hostname '
-                    ' agent status status_info status_changed occupied_slots last_stat '
+                    ' agent status status_info status_changed '
+                    ' occupied_slots live_stat last_stat '
                     '}',
                 ))
             else:
                 fields.append((
                     'Containers',
                     'containers {'
-                    ' id role agent status status_info status_changed occupied_slots last_stat '
+                    ' id role agent status status_info status_changed '
+                    ' occupied_slots live_stat last_stat '
                     '}',
                 ))
             fields.append((
