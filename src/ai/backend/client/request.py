@@ -579,6 +579,8 @@ class FetchContextManager:
                       '\u279c {!r}'.format(e)
                 await raw_resp.__aexit__(*sys.exc_info())
                 raise BackendClientError(msg) from e
+            finally:
+                self.session.config.load_balance_endpoints()
 
     async def __aexit__(self, *exc_info) -> Optional[bool]:
         assert self._rqst_ctx is not None
@@ -716,6 +718,8 @@ class WebSocketContextManager:
                 raise BackendClientError(msg) from e
             else:
                 break
+            finally:
+                self.session.config.load_balance_endpoints()
 
         wrapped_ws = self.response_cls(self.session, cast(aiohttp.ClientResponse, raw_ws))
         if self.on_enter is not None:
@@ -871,6 +875,8 @@ class SSEContextManager:
                 msg = 'API endpoint response error.\n' \
                       '\u279c {!r}'.format(e)
                 raise BackendClientError(msg) from e
+            finally:
+                self.session.config.load_balance_endpoints()
 
     async def __aexit__(self, *args) -> Optional[bool]:
         assert self._rqst_ctx is not None
