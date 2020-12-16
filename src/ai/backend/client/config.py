@@ -113,12 +113,10 @@ def _clean_urls(v: Union[URL, str]) -> List[URL]:
     return urls
 
 
-def _clean_tokens(v):
-    if isinstance(v, str):
-        if not v:
-            return tuple()
-        return tuple(v.split(','))
-    return tuple(iter(v))
+def _clean_tokens(v: str) -> Tuple[str, ...]:
+    if not v:
+        return tuple()
+    return tuple(v.split(','))
 
 
 class APIConfig:
