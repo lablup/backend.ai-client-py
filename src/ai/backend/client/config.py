@@ -1,9 +1,9 @@
+import enum
 import os
 from pathlib import Path
 import random
 import re
 from typing import (
-    Any,
     Callable,
     Iterable,
     List,
@@ -11,6 +11,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    TypeVar,
     Union,
     cast,
 )
@@ -28,8 +29,13 @@ __all__ = [
     'MAX_INFLIGHT_CHUNKS',
 ]
 
+
+class Undefined(enum.Enum):
+    token = object()
+
+
 _config = None
-_undefined = object()
+_undefined = Undefined.token
 
 API_VERSION = (6, '20200815')
 
@@ -47,8 +53,19 @@ def parse_api_version(value: str) -> Tuple[int, str]:
     raise ValueError('Could not parse the given API version string', value)
 
 
-def get_env(key: str, default: Any = _undefined, *,
-            clean: Callable[[str], Any] = lambda v: v):
+T = TypeVar('T')
+
+
+def default_clean(v: str) -> T:
+    return cast(T, v)
+
+
+def get_env(
+    key: str,
+    default: Union[str, Undefined] = _undefined,
+    *,
+    clean: Callable[[str], T] = default_clean,
+) -> T:
     """
     Retrieves a configuration value from the environment variables.
     The given *key* is uppercased and prefixed by ``"BACKEND_"`` and then
@@ -64,14 +81,14 @@ def get_env(key: str, default: Any = _undefined, *,
     :returns: The value processed by the *clean* function.
     """
     key = key.upper()
-    v = os.environ.get('BACKEND_' + key)
-    if v is None:
-        v = os.environ.get('SORNA_' + key)
-    if v is None:
+    raw = os.environ.get('BACKEND_' + key)
+    if raw is None:
+        raw = os.environ.get('SORNA_' + key)
+    if raw is None:
         if default is _undefined:
             raise KeyError(key)
-        v = default
-    return clean(v)
+        raw = default
+    return clean(raw)
 
 
 def bool_env(v: str) -> bool:
@@ -86,8 +103,8 @@ def bool_env(v: str) -> bool:
 def _clean_urls(v: Union[URL, str]) -> List[URL]:
     if isinstance(v, URL):
         return [v]
+    urls = []
     if isinstance(v, str):
-        urls = []
         for entry in v.split(','):
             url = URL(entry)
             if not url.is_absolute():
@@ -96,12 +113,10 @@ def _clean_urls(v: Union[URL, str]) -> List[URL]:
     return urls
 
 
-def _clean_tokens(v):
-    if isinstance(v, str):
-        if not v:
-            return tuple()
-        return tuple(v.split(','))
-    return tuple(iter(v))
+def _clean_tokens(v: str) -> Tuple[str, ...]:
+    if not v:
+        return tuple()
+    return tuple(v.split(','))
 
 
 class APIConfig:
@@ -141,21 +156,22 @@ class APIConfig:
         <ai.backend.client.kernel.Kernel.get_or_create>` calls.
     """
 
-    DEFAULTS: Mapping[str, Any] = {
+    DEFAULTS: Mapping[str, str] = {
         'endpoint': 'https://api.backend.ai',
         'endpoint_type': 'api',
         'version': f'v{API_VERSION[0]}.{API_VERSION[1]}',
         'hash_type': 'sha256',
         'domain': 'default',
         'group': 'default',
-        'connection_timeout': 10.0,
-        'read_timeout': None,
+        'connection_timeout': '10.0',
+        'read_timeout': '0',
     }
     """
     The default values for config parameterse settable via environment variables
     xcept the access and secret keys.
     """
 
+    _endpoints: List[URL]
     _group: str
     _hash_type: str
 
@@ -179,35 +195,39 @@ class APIConfig:
         from . import get_user_agent
         self._endpoints = (
             _clean_urls(endpoint) if endpoint else
-            get_env('ENDPOINT', self.DEFAULTS['endpoint'], clean=_clean_urls))
+            get_env('ENDPOINT', self.DEFAULTS['endpoint'], clean=_clean_urls)
+        )
         random.shuffle(self._endpoints)
-        self._endpoint_type = endpoint_type if endpoint_type is not None \
-                              else get_env('ENDPOINT_TYPE', self.DEFAULTS['endpoint_type'])
-        self._domain = domain if domain is not None else get_env('DOMAIN', self.DEFAULTS['domain'])
-        self._group = group if group is not None else get_env('GROUP', self.DEFAULTS['group'])
-        self._version = version if version is not None else self.DEFAULTS['version']
+        self._endpoint_type = endpoint_type if endpoint_type is not None else \
+            get_env('ENDPOINT_TYPE', self.DEFAULTS['endpoint_type'], clean=str)
+        self._domain = domain if domain is not None else \
+            get_env('DOMAIN', self.DEFAULTS['domain'], clean=str)
+        self._group = group if group is not None else \
+            get_env('GROUP', self.DEFAULTS['group'], clean=str)
+        self._version = version if version is not None else \
+            self.DEFAULTS['version']
         self._user_agent = user_agent if user_agent is not None else get_user_agent()
         if self._endpoint_type == 'api':
-            self._access_key = access_key if access_key is not None \
-                               else get_env('ACCESS_KEY', '')
-            self._secret_key = secret_key if secret_key is not None \
-                               else get_env('SECRET_KEY', '')
+            self._access_key = access_key if access_key is not None else \
+                get_env('ACCESS_KEY', '')
+            self._secret_key = secret_key if secret_key is not None else \
+                get_env('SECRET_KEY', '')
         else:
             self._access_key = 'dummy'
             self._secret_key = 'dummy'
         self._hash_type = hash_type.lower() if hash_type is not None else \
                           cast(str, self.DEFAULTS['hash_type'])
         arg_vfolders = set(vfolder_mounts) if vfolder_mounts else set()
-        env_vfolders = set(get_env('VFOLDER_MOUNTS', [], clean=_clean_tokens))
+        env_vfolders = set(get_env('VFOLDER_MOUNTS', '', clean=_clean_tokens))
         self._vfolder_mounts = [*(arg_vfolders | env_vfolders)]
         # prefer the argument flag and fallback to env if the flag is not set.
         self._skip_sslcert_validation = (skip_sslcert_validation
              if skip_sslcert_validation else
              get_env('SKIP_SSLCERT_VALIDATION', 'no', clean=bool_env))
         self._connection_timeout = connection_timeout if connection_timeout else \
-            get_env('CONNECTION_TIMEOUT', self.DEFAULTS['connection_timeout'])
+            get_env('CONNECTION_TIMEOUT', self.DEFAULTS['connection_timeout'], clean=float)
         self._read_timeout = read_timeout if read_timeout else \
-            get_env('READ_TIMEOUT', self.DEFAULTS['read_timeout'])
+            get_env('READ_TIMEOUT', self.DEFAULTS['read_timeout'], clean=float)
         self._announcement_handler = announcement_handler
 
     @property
@@ -232,6 +252,9 @@ class APIConfig:
         if len(self._endpoints) > 1:
             item = self._endpoints.pop(0)
             self._endpoints.append(item)
+
+    def load_balance_endpoints(self):
+        pass
 
     @property
     def endpoint_type(self) -> str:
