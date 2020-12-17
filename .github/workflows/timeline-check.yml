@@ -1,12 +1,10 @@
-name: Check existence of news fragment
+name: timeline-check
 
 on: [pull_request]
 
 jobs:
-  lint-towncrier:
-
+  towncrier:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
       with:
