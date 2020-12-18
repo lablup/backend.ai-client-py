@@ -1,1 +1,0 @@
-Add a missing status option `CANCELLED` to the `ps` command (which is present in the `admin sessions` command)

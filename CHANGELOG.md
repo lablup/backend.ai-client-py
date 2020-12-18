@@ -16,6 +16,20 @@ Changes
 
 .. towncrier release notes start
 
+20.09.0b2 (2020-12-18)
+----------------------
+
+### Features
+* Improve the output `backend.ai admin agent <AgentID>` command with live statistics ([#145](https://github.com/lablup/backend.ai-client-py/issues/145))
+
+### Fixes
+* Add a missing status option `CANCELLED` to the `ps` command (which is present in the `admin sessions` command) ([#148](https://github.com/lablup/backend.ai-client-py/issues/148))
+
+### Miscellaneous
+* Improve type annotations for API configurations and prepare the skeleton for future in-session endpoint load balancing implementation ([#150](https://github.com/lablup/backend.ai-client-py/issues/150))
+* Reorganize and update GitHub Actions workflow for better CI/CD ([#151](https://github.com/lablup/backend.ai-client-py/issues/151))
+
+
 20.09.0b1 (2020-12-02)
 ----------------------
 
