@@ -1,4 +1,6 @@
 import re
+import textwrap
+from typing import Any, Mapping
 
 import click
 
@@ -37,3 +39,18 @@ class ByteSizeParamCheckType(ByteSizeParamType):
         if m is None:
             self.fail(f"{value!r} is not a valid byte-size expression", param, ctx)
         return value
+
+
+def format_nested_dicts(value: Mapping[str, Mapping[str, Any]]) -> str:
+    """
+    Format a mapping from string keys to sub-mappings.
+    """
+    rows = []
+    for outer_key, outer_value in value.items():
+        if isinstance(outer_value, dict):
+            rows.append(f"+ {outer_key}")
+            inner_rows = format_nested_dicts(outer_value)
+            rows.append(textwrap.indent(inner_rows, prefix="  "))
+        else:
+            rows.append(f"- {outer_key}: {outer_value}")
+    return "\n".join(rows)

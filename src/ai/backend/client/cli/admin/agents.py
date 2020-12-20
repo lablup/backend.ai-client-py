@@ -13,6 +13,7 @@ from ..pagination import (
     echo_via_pager,
     tabulate_items,
 )
+from ..utils import format_key_dicts
 from ...exceptions import NoItems
 
 
@@ -85,6 +86,7 @@ def agent(agent_id):
         ('CPU Usage (%)', 'cpu_cur_pct'),
         ('Total slots', 'available_slots'),
         ('Occupied slots', 'occupied_slots'),
+        ('Hardware Metadata', 'hardware_metadata'),
         ('Live Stat', 'live_stat'),
     ]
     if is_legacy_server():
@@ -104,6 +106,8 @@ def agent(agent_id):
             if key in resp:
                 if key == 'live_stat' and resp[key] is not None:
                     rows.append((name, format_stats(json.loads(resp[key]))))
+                elif key == 'hardware_metadata':
+                    rows.append((name, format_key_dicts(json.loads(resp[key]))))
                 else:
                     rows.append((name, resp[key]))
         print(tabulate(rows, headers=('Field', 'Value')))
