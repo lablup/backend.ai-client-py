@@ -13,7 +13,7 @@ from ..pagination import (
     echo_via_pager,
     tabulate_items,
 )
-from ..utils import format_nested_dicts
+from ..utils import format_nested_dicts, format_value
 from ...exceptions import NoItems
 
 
@@ -47,7 +47,7 @@ def storage(vfolder_host):
                 if key in ('hardware_metadata', 'performance_metric'):
                     rows.append((name, format_nested_dicts(json.loads(resp[key]))))
                 else:
-                    rows.append((name, resp[key]))
+                    rows.append((name, format_value(resp[key])))
         print(tabulate(rows, headers=('Field', 'Value')))
 
 

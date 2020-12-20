@@ -46,6 +46,8 @@ def format_nested_dicts(value: Mapping[str, Mapping[str, Any]]) -> str:
     Format a mapping from string keys to sub-mappings.
     """
     rows = []
+    if not value:
+        rows.append("(empty)")
     for outer_key, outer_value in value.items():
         if isinstance(outer_value, dict):
             if outer_value:
@@ -60,3 +62,11 @@ def format_nested_dicts(value: Mapping[str, Mapping[str, Any]]) -> str:
             else:
                 rows.append(f"- {outer_key}: {outer_value}")
     return "\n".join(rows)
+
+
+def format_value(value: Any) -> str:
+    if value is None:
+        return "(null)"
+    if isinstance(value, (dict, list, set)) and not value:
+        return "(empty)"
+    return str(value)
