@@ -13,7 +13,7 @@ from ..pagination import (
     echo_via_pager,
     tabulate_items,
 )
-from ..utils import format_key_dicts
+from ..utils import format_nested_dicts
 from ...exceptions import NoItems
 
 
@@ -107,7 +107,7 @@ def agent(agent_id):
                 if key == 'live_stat' and resp[key] is not None:
                     rows.append((name, format_stats(json.loads(resp[key]))))
                 elif key == 'hardware_metadata':
-                    rows.append((name, format_key_dicts(json.loads(resp[key]))))
+                    rows.append((name, format_nested_dicts(json.loads(resp[key]))))
                 else:
                     rows.append((name, resp[key]))
         print(tabulate(rows, headers=('Field', 'Value')))
