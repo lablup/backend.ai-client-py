@@ -48,9 +48,15 @@ def format_nested_dicts(value: Mapping[str, Mapping[str, Any]]) -> str:
     rows = []
     for outer_key, outer_value in value.items():
         if isinstance(outer_value, dict):
-            rows.append(f"+ {outer_key}")
-            inner_rows = format_nested_dicts(outer_value)
-            rows.append(textwrap.indent(inner_rows, prefix="  "))
+            if outer_value:
+                rows.append(f"+ {outer_key}")
+                inner_rows = format_nested_dicts(outer_value)
+                rows.append(textwrap.indent(inner_rows, prefix="  "))
+            else:
+                rows.append(f"+ {outer_key}: (empty)")
         else:
-            rows.append(f"- {outer_key}: {outer_value}")
+            if outer_value is None:
+                rows.append(f"- {outer_key}: (null)")
+            else:
+                rows.append(f"- {outer_key}: {outer_value}")
     return "\n".join(rows)
