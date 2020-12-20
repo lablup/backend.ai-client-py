@@ -31,6 +31,7 @@ def storage(vfolder_host):
         ('Path', 'path'),
         ('FS prefix', 'fsprefix'),
         ('Hardware Metadata', 'hardware_metadata'),
+        ('Perf. Metric', 'performance_metric'),
     ]
     with Session() as session:
         try:
@@ -43,7 +44,7 @@ def storage(vfolder_host):
         rows = []
         for name, key in fields:
             if key in resp:
-                if key == 'hardware_metadata':
+                if key in ('hardware_metadata', 'performance_metric'):
                     rows.append((name, format_nested_dicts(json.loads(resp[key]))))
                 else:
                     rows.append((name, resp[key]))
