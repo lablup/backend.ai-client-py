@@ -2,7 +2,6 @@ import json
 import sys
 
 import click
-import humanize
 from tabulate import tabulate
 
 from . import admin
