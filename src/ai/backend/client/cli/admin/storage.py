@@ -51,7 +51,7 @@ def storage(vfolder_host):
 
 
 @admin.command()
-def storages():
+def storage_list():
     """
     List storage volumes.
     (super-admin privilege required)
