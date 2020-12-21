@@ -67,7 +67,7 @@ class Storage(BaseFunction):
         cls,
         vfolder_host: str,
         fields: Sequence[str] = _default_detail_fields,
-    ) -> Sequence[dict]:
+    ) -> dict:
         query = textwrap.dedent("""\
             query($vfolder_host: String!) {
                 storage_volume(id: $vfolder_host) {$fields}
