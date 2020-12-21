@@ -19,11 +19,10 @@ Changes
 20.09.0b3 (2020-12-21)
 ----------------------
 
-
 ### Features
-* Add support for hardware metadata queries for super-admins
+* Add support for hardware metadata queries for super-admins ([#152](https://github.com/lablup/backend.ai-client-py/issues/152))
   - Add `admin storages` and `admin storage {vfolder-host}` commands which provides the hardware metadata and performance metric
-  - Include `hardware_metadata` field in the `Agent` graph object type. ([#152](https://github.com/lablup/backend.ai-client-py/issues/152))
+  - Include `hardware_metadata` field in the `Agent` graph object type.
 
 
 20.09.0b2 (2020-12-18)
