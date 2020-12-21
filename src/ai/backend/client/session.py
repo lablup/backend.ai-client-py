@@ -243,7 +243,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         '_config', '_closed', '_context_token', '_proxy_mode',
         'aiohttp_session', 'api_version',
         'System', 'Manager', 'Admin',
-        'Agent', 'AgentWatcher', 'ScalingGroup',
+        'Agent', 'AgentWatcher', 'ScalingGroup', 'Storage',
         'Image', 'ComputeSession', 'SessionTemplate',
         'Domain', 'Group', 'Auth', 'User', 'KeyPair',
         'BackgroundTask',
@@ -273,6 +273,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         from .func.system import System
         from .func.admin import Admin
         from .func.agent import Agent, AgentWatcher
+        from .func.storage import Storage
         from .func.auth import Auth
         from .func.bgtask import BackgroundTask
         from .func.domain import Domain
@@ -295,6 +296,7 @@ class BaseSession(metaclass=abc.ABCMeta):
         self.Admin = Admin
         self.Agent = Agent
         self.AgentWatcher = AgentWatcher
+        self.Storage = Storage
         self.Auth = Auth
         self.BackgroundTask = BackgroundTask
         self.EtcdConfig = EtcdConfig
