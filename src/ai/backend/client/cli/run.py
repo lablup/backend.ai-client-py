@@ -357,7 +357,8 @@ def _prepare_mount_arg(
 @click.option('--max-parallel', metavar='NUM', type=int, default=2,
               help='The maximum number of parallel sessions.')
 # resource spec
-@click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
+@click.option('-v', '--volume', '-m', '--mount', 'mount',
+              metavar='NAME[=PATH]', type=str, multiple=True,
               help='User-owned virtual folder names to mount. '
                    'If path is not provided, virtual folder will be mounted under /home/work. '
                    'All virtual folders can only be mounted under /home/work. ')
@@ -369,6 +370,9 @@ def _prepare_mount_arg(
                    '(e.g: -r cpu=2 -r mem=256 -r cuda.device=1)')
 @click.option('--cluster-size', metavar='NUMBER', type=int, default=1,
               help='The size of cluster in number of containers.')
+@click.option('--cluster-mode', metavar='MODE',
+              type=click.Choice(['single-node', 'multi-node']), default='single-node',
+              help='The mode of clustering.')
 @click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
               help='Resource options for creating compute session. '
                    '(e.g: shmem=64m)')
@@ -388,7 +392,8 @@ def run(image, files, name,                                 # base args
         env,                                                # execution environment
         bootstrap_script, rm, stats, tag, quiet,            # extra options
         env_range, build_range, exec_range, max_parallel,   # experiment support
-        mount, scaling_group, resources, cluster_size,      # resource spec
+        mount, scaling_group, resources,                    # resource spec
+        cluster_size, cluster_mode,
         resource_opts,
         domain, group, preopen):                            # resource grouping
     """
@@ -482,6 +487,7 @@ def run(image, files, name,                                 # base args
                 max_wait=max_wait,
                 no_reuse=no_reuse,
                 cluster_size=cluster_size,
+                cluster_mode=cluster_mode,
                 mounts=mount,
                 mount_map=mount_map,
                 envs=envs,
@@ -575,6 +581,7 @@ def run(image, files, name,                                 # base args
                 max_wait=max_wait,
                 no_reuse=no_reuse,
                 cluster_size=cluster_size,
+                cluster_mode=cluster_mode,
                 mounts=mount,
                 mount_map=mount_map,
                 envs=envs,
@@ -787,7 +794,8 @@ def run(image, files, name,                                 # base args
 @click.option('--tag', type=str, default=None,
               help='User-defined tag string to annotate sessions.')
 # resource spec
-@click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
+@click.option('-v', '--volume', '-m', '--mount', 'mount',
+              metavar='NAME[=PATH]', type=str, multiple=True,
               help='User-owned virtual folder names to mount. '
                    'If path is not provided, virtual folder will be mounted under /home/work. '
                    'All virtual folders can only be mounted under /home/work. ')
@@ -801,6 +809,9 @@ def run(image, files, name,                                 # base args
                    'The unit of mem(ory) is MiB.')
 @click.option('--cluster-size', metavar='NUMBER', type=int, default=1,
               help='The size of cluster in number of containers.')
+@click.option('--cluster-mode', metavar='MODE',
+              type=click.Choice(['single-node', 'multi-node']), default='single-node',
+              help='The mode of clustering.')
 @click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
               help='Resource options for creating compute session '
                    '(e.g: shmem=64m)')
@@ -817,7 +828,8 @@ def start(image, name, owner,                                 # base args
           type, starts_at, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
           env,                                            # execution environment
           bootstrap_script, tag,                          # extra options
-          mount, scaling_group, resources, cluster_size,  # resource spec
+          mount, scaling_group, resources,                # resource spec
+          cluster_size, cluster_mode,
           resource_opts,
           domain, group, preopen):                        # resource grouping
     """
@@ -853,6 +865,7 @@ def start(image, name, owner,                                 # base args
                 max_wait=max_wait,
                 no_reuse=no_reuse,
                 cluster_size=cluster_size,
+                cluster_mode=cluster_mode,
                 mounts=mount,
                 mount_map=mount_map,
                 envs=envs,
