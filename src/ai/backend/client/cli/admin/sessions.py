@@ -63,7 +63,7 @@ def transform_fields(item: SessionItem, *, in_row: bool = True) -> SessionItem:
         item['mem_cur_bytes'] = round(item['mem_cur_bytes'] / 2 ** 20, 1)
     if 'mem_max_bytes' in item:
         item['mem_max_bytes'] = round(item['mem_max_bytes'] / 2 ** 20, 1)
-    if 'status_info' in item and in_row:
+    if item.get('status_info') is not None and in_row:
         item['status_info'] = item['status_info'].split('\n', maxsplit=1)[0]
     return item
 
