@@ -58,11 +58,13 @@ format_options_legacy = {
 }
 
 
-def transform_legacy_mem_fields(item: SessionItem) -> SessionItem:
+def transform_fields(item: SessionItem) -> SessionItem:
     if 'mem_cur_bytes' in item:
         item['mem_cur_bytes'] = round(item['mem_cur_bytes'] / 2 ** 20, 1)
     if 'mem_max_bytes' in item:
         item['mem_max_bytes'] = round(item['mem_max_bytes'] / 2 ** 20, 1)
+    if 'status_info' in item:
+        item['status_info'] = item['status_info'].replace('\n', ' / ')
     return item
 
 
@@ -175,7 +177,7 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
                 else:
                     echo_via_pager(
                         tabulate_items(items, fields,
-                                       item_formatter=transform_legacy_mem_fields)
+                                       item_formatter=transform_fields)
                     )
             except NoItems:
                 print("There are no matching sessions.")
@@ -310,7 +312,7 @@ def session(id_or_name):
             else:
                 print_fail('There is no such compute session.')
             sys.exit(1)
-        transform_legacy_mem_fields(resp['compute_session'])
+        transform_fields(resp['compute_session'])
         for i, (key, value) in enumerate(resp['compute_session'].items()):
             fmt = field_formatters[key]
             print(f"{fields[i][0] + ': ':20s}{fmt(value)}")
