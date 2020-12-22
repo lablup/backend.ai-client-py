@@ -58,13 +58,13 @@ format_options_legacy = {
 }
 
 
-def transform_fields(item: SessionItem) -> SessionItem:
+def transform_fields(item: SessionItem, *, in_row: bool = True) -> SessionItem:
     if 'mem_cur_bytes' in item:
         item['mem_cur_bytes'] = round(item['mem_cur_bytes'] / 2 ** 20, 1)
     if 'mem_max_bytes' in item:
         item['mem_max_bytes'] = round(item['mem_max_bytes'] / 2 ** 20, 1)
-    if 'status_info' in item:
-        item['status_info'] = item['status_info'].replace('\n', ' / ')
+    if 'status_info' in item and in_row:
+        item['status_info'] = item['status_info'].split('\n', maxsplit=1)[0]
     return item
 
 
@@ -194,7 +194,18 @@ def format_stats(raw_stats: Optional[str], indent='') -> str:
     return "\n" + textwrap.indent(text, indent)
 
 
+def format_multiline(value: Any, indent_length: int) -> str:
+    buf = []
+    for idx, line in enumerate(str(value).strip().splitlines()):
+        if idx == 0:
+            buf.append(line)
+        else:
+            buf.append((" " * indent_length) + line)
+    return "\n".join(buf)
+
+
 def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str:
+
     if len(containers) == 0:
         text = "- (There are no sub-containers belonging to the session)"
     else:
@@ -202,7 +213,7 @@ def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str
         for cinfo in containers:
             text += "\n".join((
                 f"+ {cinfo['id']}",
-                *(f"  - {k + ': ':18s}{v}"
+                *(f"  - {k + ': ':18s}{format_multiline(v, 22)}"
                   for k, v in cinfo.items()
                   if k not in ('id', 'live_stat', 'last_stat')),
                 f"  + live_stat: {format_stats(cinfo['live_stat'], indent='    ')}",
@@ -256,6 +267,7 @@ def session(id_or_name):
         field_formatters['last_stat'] = format_stats
         field_formatters['containers'] = functools.partial(format_containers, indent='  ')
         field_formatters['dependencies'] = functools.partial(format_dependencies, indent='  ')
+        field_formatters['status_info'] = functools.partial(format_multiline, indent_length=20)
         if session_.api_version[0] < 5:
             # In API v4 or older, we can only query a currently running session
             # using its user-defined alias name.
@@ -312,7 +324,7 @@ def session(id_or_name):
             else:
                 print_fail('There is no such compute session.')
             sys.exit(1)
-        transform_fields(resp['compute_session'])
+        transform_fields(resp['compute_session'], in_row=False)
         for i, (key, value) in enumerate(resp['compute_session'].items()):
             fmt = field_formatters[key]
             print(f"{fields[i][0] + ': ':20s}{fmt(value)}")
