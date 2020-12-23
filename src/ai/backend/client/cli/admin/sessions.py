@@ -1,13 +1,11 @@
 from collections import defaultdict
 import functools
-import json
 import sys
 import textwrap
 from typing import (
     Any,
     Dict,
     Mapping,
-    Optional,
     Sequence,
 )
 import uuid
@@ -23,6 +21,7 @@ from ..pagination import (
     echo_via_pager,
     tabulate_items,
 )
+from ..utils import format_multiline, format_stats
 from ...exceptions import NoItems
 
 
@@ -30,7 +29,7 @@ SessionItem = Dict[str, Any]
 
 
 # Lets say formattable options are:
-format_options = {
+field_names = {
     'name':             ('Session Name',
                          lambda api_session: get_naming(api_session.api_version, 'name_gql_field')),
     'type':             ('Type',
@@ -39,6 +38,7 @@ format_options = {
     'session_id':       ('Session ID', 'session_id'),
     'status':           ('Status', 'status'),
     'status_info':      ('Status Info', 'status_info'),
+    'status_data':      ('Status Data', 'status_data'),
     'created_at':       ('Created At', 'created_at'),
     'terminated_at':    ('Terminated At', 'terminated_at'),
     'last_updated':     ('Last updated', 'status_changed'),
@@ -51,14 +51,14 @@ format_options = {
     'cluster_hostname': ('Hostname', 'cluster_hostname'),
 }
 
-format_options_legacy = {
+field_names_legacy = {
     'used_memory':     ('Used Memory (MiB)', 'mem_cur_bytes'),
     'max_used_memory': ('Max Used Memory (MiB)', 'mem_max_bytes'),
     'cpu_using':       ('CPU Using (%)', 'cpu_using'),
 }
 
 
-def transform_legacy_mem_fields(item: SessionItem) -> SessionItem:
+def transform_fields(item: SessionItem, *, in_row: bool = True) -> SessionItem:
     if 'mem_cur_bytes' in item:
         item['mem_cur_bytes'] = round(item['mem_cur_bytes'] / 2 ** 20, 1)
     if 'mem_max_bytes' in item:
@@ -97,9 +97,9 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
         is_admin = session.KeyPair(session.config.access_key).info()['is_admin']
         try:
             name_key = get_naming(session.api_version, 'name_gql_field')
-            fields.append(format_options['name'])
+            fields.append(field_names['name'])
             if is_admin:
-                fields.append(format_options['owner'])
+                fields.append(field_names['owner'])
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -108,36 +108,36 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
         elif format is not None:
             options = format.split(',')
             for opt in options:
-                if opt not in format_options:
+                if opt not in field_names:
                     print_fail(f'There is no such format option: {opt}')
                     sys.exit(1)
             fields = [
-                format_options[opt] for opt in options
+                field_names[opt] for opt in options
             ]
         else:
             if session.api_version[0] >= 6:
-                fields.append(format_options['session_id'])
+                fields.append(field_names['session_id'])
             fields.extend([
-                format_options['group'],
-                format_options['kernel_id'],
-                format_options['image'],
-                format_options['type'],
-                format_options['status'],
-                format_options['status_info'],
-                format_options['last_updated'],
-                format_options['result'],
+                field_names['group'],
+                field_names['kernel_id'],
+                field_names['image'],
+                field_names['type'],
+                field_names['status'],
+                field_names['status_info'],
+                field_names['last_updated'],
+                field_names['result'],
             ])
             if detail:
                 fields.extend([
-                    format_options['tag'],
-                    format_options['created_at'],
-                    format_options['occupied_slots'],
+                    field_names['tag'],
+                    field_names['created_at'],
+                    field_names['occupied_slots'],
                 ])
                 if session.api_version[0] < 5:
                     fields.extend([
-                        format_options_legacy['used_memory'],
-                        format_options_legacy['max_used_memory'],
-                        format_options_legacy['cpu_using'],
+                        field_names_legacy['used_memory'],
+                        field_names_legacy['max_used_memory'],
+                        field_names_legacy['cpu_using'],
                     ])
 
     no_match_name = None
@@ -175,7 +175,7 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
                 else:
                     echo_via_pager(
                         tabulate_items(items, fields,
-                                       item_formatter=transform_legacy_mem_fields)
+                                       item_formatter=transform_fields)
                     )
             except NoItems:
                 print("There are no matching sessions.")
@@ -184,15 +184,8 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
         sys.exit(1)
 
 
-def format_stats(raw_stats: Optional[str], indent='') -> str:
-    if raw_stats is None:
-        return "(unavailable)"
-    stats = json.loads(raw_stats)
-    text = "\n".join(f"- {k + ': ':18s}{v}" for k, v in stats.items())
-    return "\n" + textwrap.indent(text, indent)
-
-
 def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str:
+
     if len(containers) == 0:
         text = "- (There are no sub-containers belonging to the session)"
     else:
@@ -200,7 +193,7 @@ def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str
         for cinfo in containers:
             text += "\n".join((
                 f"+ {cinfo['id']}",
-                *(f"  - {k + ': ':18s}{v}"
+                *(f"  - {k + ': ':18s}{format_multiline(v, 22)}"
                   for k, v in cinfo.items()
                   if k not in ('id', 'live_stat', 'last_stat')),
                 f"  + live_stat: {format_stats(cinfo['live_stat'], indent='    ')}",
@@ -235,19 +228,20 @@ def session(id_or_name):
             )),
         ]
         if session_.api_version[0] >= 6:
-            fields.append(format_options['session_id'])
-            fields.append(format_options['kernel_id'])
+            fields.append(field_names['session_id'])
+            fields.append(field_names['kernel_id'])
         fields.extend([
-            format_options['image'],
+            field_names['image'],
         ])
         if session_.api_version >= (4, '20181215'):
-            fields.append(format_options['tag'])
+            fields.append(field_names['tag'])
         fields.extend([
-            format_options['created_at'],
-            format_options['terminated_at'],
-            format_options['status'],
-            format_options['status_info'],
-            format_options['occupied_slots'],
+            field_names['created_at'],
+            field_names['terminated_at'],
+            field_names['status'],
+            field_names['status_info'],
+            field_names['status_data'],
+            field_names['occupied_slots'],
         ])
         fields = apply_version_aware_fields(session_, fields)
         field_formatters = defaultdict(lambda: str)
@@ -271,7 +265,7 @@ def session(id_or_name):
                     'Containers',
                     'containers {'
                     ' id cluster_role cluster_idx cluster_hostname '
-                    ' agent status status_info status_changed '
+                    ' agent status status_info status_data status_changed '
                     ' occupied_slots live_stat last_stat '
                     '}',
                 ))
@@ -310,7 +304,7 @@ def session(id_or_name):
             else:
                 print_fail('There is no such compute session.')
             sys.exit(1)
-        transform_legacy_mem_fields(resp['compute_session'])
+        transform_fields(resp['compute_session'], in_row=False)
         for i, (key, value) in enumerate(resp['compute_session'].items()):
             fmt = field_formatters[key]
             print(f"{fields[i][0] + ': ':20s}{fmt(value)}")
