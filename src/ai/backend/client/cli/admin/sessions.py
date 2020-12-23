@@ -1,6 +1,5 @@
 from collections import defaultdict
 import functools
-import json
 import sys
 import textwrap
 from typing import (
@@ -22,7 +21,7 @@ from ..pagination import (
     echo_via_pager,
     tabulate_items,
 )
-from ..utils import format_nested_dicts, format_multiline, format_stats
+from ..utils import format_multiline, format_stats
 from ...exceptions import NoItems
 
 
