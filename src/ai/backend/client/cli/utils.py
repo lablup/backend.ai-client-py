@@ -1,6 +1,7 @@
+import json
 import re
 import textwrap
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 
 import click
 
@@ -41,6 +42,24 @@ class ByteSizeParamCheckType(ByteSizeParamType):
         return value
 
 
+def format_stats(raw_stats: Optional[str], indent='') -> str:
+    if raw_stats is None:
+        return "(unavailable)"
+    stats = json.loads(raw_stats)
+    text = "\n".join(f"- {k + ': ':18s}{v}" for k, v in stats.items())
+    return "\n" + textwrap.indent(text, indent)
+
+
+def format_multiline(value: Any, indent_length: int) -> str:
+    buf = []
+    for idx, line in enumerate(str(value).strip().splitlines()):
+        if idx == 0:
+            buf.append(line)
+        else:
+            buf.append((" " * indent_length) + line)
+    return "\n".join(buf)
+
+
 def format_nested_dicts(value: Mapping[str, Mapping[str, Any]]) -> str:
     """
     Format a mapping from string keys to sub-mappings.
@@ -48,19 +67,20 @@ def format_nested_dicts(value: Mapping[str, Mapping[str, Any]]) -> str:
     rows = []
     if not value:
         rows.append("(empty)")
-    for outer_key, outer_value in value.items():
-        if isinstance(outer_value, dict):
-            if outer_value:
-                rows.append(f"+ {outer_key}")
-                inner_rows = format_nested_dicts(outer_value)
-                rows.append(textwrap.indent(inner_rows, prefix="  "))
+    else:
+        for outer_key, outer_value in value.items():
+            if isinstance(outer_value, dict):
+                if outer_value:
+                    rows.append(f"+ {outer_key}")
+                    inner_rows = format_nested_dicts(outer_value)
+                    rows.append(textwrap.indent(inner_rows, prefix="  "))
+                else:
+                    rows.append(f"+ {outer_key}: (empty)")
             else:
-                rows.append(f"+ {outer_key}: (empty)")
-        else:
-            if outer_value is None:
-                rows.append(f"- {outer_key}: (null)")
-            else:
-                rows.append(f"- {outer_key}: {outer_value}")
+                if outer_value is None:
+                    rows.append(f"- {outer_key}: (null)")
+                else:
+                    rows.append(f"- {outer_key}: {outer_value}")
     return "\n".join(rows)
 
 
