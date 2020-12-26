@@ -16,9 +16,14 @@ Changes
 
 .. towncrier release notes start
 
+20.09.0 (2020-12-27)
+--------------------
+
+No significant changes.
+
+
 20.09.0rc1 (2020-12-23)
 -----------------------
-
 
 ### Features
 * Add support for `status_data` field when querying session/kernel information to help diagnosing multi-container and scheduling problems ([#153](https://github.com/lablup/backend.ai-client-py/issues/153))
