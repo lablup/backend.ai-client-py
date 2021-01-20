@@ -49,12 +49,12 @@ dev_requires: List[str] = [
     # 'pytest-sugar>=0.9.1',
 ]
 docs_requires = [
-    'sphinx~=2.4',
+    'Sphinx~=3.4.3',
     'sphinx-intl>=2.0',
     'sphinx_rtd_theme>=0.4.3',
-    'sphinxcontrib-trio~=1.1.0',
-    'sphinx-autodoc-typehints~=1.8.0',
-    'pygments~=2.5',
+    'sphinxcontrib-trio>=1.1.0',
+    'sphinx-autodoc-typehints~=1.11.1',
+    'pygments~=2.7.4',
 ]
 
 
