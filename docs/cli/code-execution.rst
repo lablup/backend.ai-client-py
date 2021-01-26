@@ -9,9 +9,9 @@ Compute sessions
    Please consult the detailed usage in the help of each command.
    (use ``-h`` or ``--help`` argument to display the manual)
 
-----------------
+
 Listing sessions
-----------------
+~~~~~~~~~~~~~~~~
 
 List the session owned by you with various status filters.
 The most recently status-changed sessions are listed first.
@@ -96,9 +96,9 @@ Both commands offer options to specify which fields of sessions should be printe
 
 .. _simple-execution:
 
------------------------
+
 Running simple sessions
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The following command spawns a Python session and executes
 the code passed as ``-c`` argument immediately.
@@ -148,9 +148,9 @@ To watch what is happening behind the scene until the session starts,
 try ``backend.ai events <sessionID>`` to receive the lifecycle events
 such as its scheduling and preparation steps.
 
-----------------------------------
+
 Running sessions with accelerators
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use one or more ``-r`` options to specify resource requirements when
 using ``backend.ai run`` and ``backend.ai start`` commands.
@@ -165,9 +165,9 @@ memory to execute ``./mygpucode.py`` file inside it.
              -r cpu=4 -r mem=8g -r cuda.shares=2 \
              python-tensorflow:1.12-py36 ./mygpucode.py
 
-----------------------------------
+
 Terminating or cancelling sessions
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Without ``--rm`` option, your session remains alive for a configured
 amount of idle timeout (default is 30 minutes).
@@ -290,9 +290,9 @@ Container Applications
    Please consult the detailed usage in the help of each command
    (use ``-h`` or ``--help`` argument to display the manual).
 
----------------------------------------------------------
+
 Starting a session and connecting to its Jupyter Notebook
----------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following command first spawns a Python session named "mysession"
 without running any code immediately, and then executes a local proxy which
@@ -315,9 +315,9 @@ For the jupyter service, use your favorite web browser just like the
 way you use Jupyter Notebooks.
 To stop the ``app`` command, press ``Ctrl+C`` or send the ``SIGINT`` signal.
 
--------------------------------------
+
 Accessing sessions via a web terminal
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 All Backend.AI sessions expose an intrinsic application named ``"ttyd"``.
 It is an web application that embeds xterm.js-based full-screen terminal
@@ -359,9 +359,9 @@ Options for ``app`` commands
   * - ``-e, --env "ENVNAME=envvalue"`` 
     - Add additional environment variable when starting service.
 
---------------------------------------
+
 Accessing sessions via native SSH/SFTP
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Backend.AI offers direct access to compute sessions (containers) via SSH
 and SFTP, by auto-generating host identity and user keypairs for all
@@ -520,9 +520,9 @@ Advanced Code Execution
    Please consult the detailed usage in the help of each command
    (use ``-h`` or ``--help`` argument to display the manual).
 
---------------------------------------
+
 Running concurrent experiment sessions
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In addition to single-shot code execution as described in
 :ref:`simple-execution`, the ``run`` command offers concurrent execution of
@@ -588,9 +588,9 @@ values specified by each range.
 Session Templates
 -----------------
 
---------------------------------------
+
 Creating and starting session template
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Users may define commonly used set of session creation parameters as
 reusable templates.
@@ -679,9 +679,10 @@ Other CRUD command examples are as follows:
   
   * - ``update``
     - Update task template stored in Backend.AI Manager.
------------------------------
+
+
 Full syntax for task template
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: text
 

@@ -14,12 +14,16 @@ between users and user group members.
 Vfolder Basics
 --------------
 
------------------------------------
+
 Creating vfolders and managing them
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The command-line interface provides a set of subcommands under ``backend.ai
 vfolder`` to manage vfolders and files inside them.
+
+.. code-block:: console
+
+  $ backend.ai vfolder [subcommands]
 
 To list accessible vfolders including your own ones and those shared by
 other users:
@@ -47,9 +51,9 @@ To delete the vfolder completey:
 
   $ backend.ai vfolder delete mydata1
 
------------------------------
+
 File transfers and management
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To upload a file from the current working directory into the vfolder:
 
@@ -80,9 +84,9 @@ To delete files in the vfolder:
    All file uploads and downloads overwrite existing files and all file
    operations are irreversible.
 
-------------------------------
+
 Running sessions with storages
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following command spawns a Python session where the virtual folder
 "mydata1" is mounted.  The execution options are omitted in this example.
@@ -103,9 +107,9 @@ By reusing the same vfolder in subsequent sessions, you do not have to
 donwload the result and upload it as the input for next sessions, just
 keeping them in the storage.
 
-----------------------------------
+
 Creating default files for kernels
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Backend.AI has a feature called 'dotfile', created to all the kernels
 user spawns. As you can guess, dotfile's path should start with ``.``.

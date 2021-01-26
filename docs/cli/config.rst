@@ -66,13 +66,18 @@ Run the following command to list your current active configurations.
 
 Command Reference
 -----------------------------------
-+-----------+----------------------------------------------------------------------+
-| Command   | Description                                                          |
-+===========+======================================================================+
-| login     | Log-in to the console API proxy.                                     |
-+-----------+----------------------------------------------------------------------+ 
-| logout    | Log-out from the console API proxy and clears the local cookie data. |
-+-----------+----------------------------------------------------------------------+
-| config    | Shows the current configuration.                                     |
-+-----------+----------------------------------------------------------------------+
+.. list-table::
+  :widths: 15 85 
+  :header-rows: 1
 
+  * - Command
+    - Description
+    
+  * - ``login``
+    - Log-in to the console API proxy..
+
+  * - ``logout``
+    - Log-out from the console API proxy and clears the local cookie data.
+
+  * - ``config``
+    - Shows the current configuration.
