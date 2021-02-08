@@ -23,7 +23,7 @@ from ..versioning import get_naming
 class WSProxy:
     __slots__ = (
         'api_session', 'session_name',
-        'app_name', 'protocol',
+        'app_name',
         'args', 'envs',
         'reader', 'writer',
     )
@@ -33,7 +33,6 @@ class WSProxy:
         api_session: AsyncSession,
         session_name: str,
         app_name: str,
-        protocol: str,
         args: MutableMapping[str, Union[None, str, List[str]]],
         envs: MutableMapping[str, str],
         reader: asyncio.StreamReader,
@@ -42,7 +41,6 @@ class WSProxy:
         self.api_session = api_session
         self.session_name = session_name
         self.app_name = app_name
-        self.protocol = protocol
         self.args = args
         self.envs = envs
         self.reader = reader
@@ -50,7 +48,7 @@ class WSProxy:
 
     async def run(self) -> None:
         prefix = get_naming(self.api_session.api_version, 'path')
-        path = f"/stream/{prefix}/{self.session_name}/{self.protocol}proxy"
+        path = f"/stream/{prefix}/{self.session_name}/tcpproxy"
         params = {'app': self.app_name}
 
         if len(self.args.keys()) > 0:
@@ -145,7 +143,7 @@ class ProxyRunnerContext:
         session_name: str,
         app_name: str,
         *,
-        protocol: str = 'http',
+        protocol: str = 'tcp',
         args: Sequence[str] = None,
         envs: Sequence[str] = None,
     ) -> None:
@@ -192,10 +190,15 @@ class ProxyRunnerContext:
         writer: asyncio.StreamWriter,
     ) -> None:
         assert self.api_session is not None
-        p = WSProxy(self.api_session, self.session_name,
-                    self.app_name, self.protocol,
-                    self.args, self.envs,
-                    reader, writer)
+        p = WSProxy(
+            self.api_session,
+            self.session_name,
+            self.app_name,
+            self.args,
+            self.envs,
+            reader,
+            writer,
+        )
         try:
             await p.run()
         except asyncio.CancelledError:
@@ -258,15 +261,13 @@ class ProxyRunnerContext:
 @main.command()
 @click.argument('session_name', type=str, metavar='NAME')
 @click.argument('app', type=str)
-@click.option('-p', '--protocol', type=click.Choice(['http', 'tcp', 'preopen']), default='http',
-              help='The application-level protocol to use.')
 @click.option('-b', '--bind', type=str, default='127.0.0.1:8080', metavar='[HOST:]PORT',
               help='The IP/host address and the port number to bind this proxy.')
 @click.option('--arg', type=str, multiple=True, metavar='"--option <value>"',
               help='Add additional argument when starting service.')
 @click.option('-e', '--env', type=str, multiple=True, metavar='"ENVNAME=envvalue"',
               help='Add additional environment variable when starting service.')
-def app(session_name, app, protocol, bind, arg, env):
+def app(session_name, app, bind, arg, env):
     """
     Run a local proxy to a service provided by Backend.AI compute sessions.
 
@@ -287,7 +288,7 @@ def app(session_name, app, protocol, bind, arg, env):
         proxy_ctx = ProxyRunnerContext(
             host, port,
             session_name, app,
-            protocol=protocol,
+            protocol='tcp',
             args=arg,
             envs=env,
         )
