@@ -16,6 +16,17 @@ Changes
 
 .. towncrier release notes start
 
+20.03.10 (2021-03-04)
+---------------------
+
+### Fixes
+* Add a missing status option `CANCELLED` to the `ps` command (which is present in the `admin sessions` command) ([#148](https://github.com/lablup/backend.ai-client-py/issues/148))
+* Remove the legacy `-p/--protocol` option from the `app` command sicne it now works as the TCP protocol always ([#156](https://github.com/lablup/backend.ai-client-py/issues/156))
+
+### Miscellaneous
+* Reorganize and update GitHub Actions workflow for better CI/CD ([#151](https://github.com/lablup/backend.ai-client-py/issues/151))
+
+
 20.03.9 (2020-12-02)
 --------------------
 
