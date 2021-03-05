@@ -16,6 +16,16 @@ Changes
 
 .. towncrier release notes start
 
+20.09.1 (2021-03-05)
+--------------------
+
+### Fixes
+* Remove the legacy `-p/--protocol` option from the `app` command sicne it now works as the TCP protocol always ([#156](https://github.com/lablup/backend.ai-client-py/issues/156))
+
+### Miscellaneous
+* Update the package requirements for documentation builds ([#154](https://github.com/lablup/backend.ai-client-py/issues/154))
+
+
 20.09.0 (2020-12-27)
 --------------------
 
