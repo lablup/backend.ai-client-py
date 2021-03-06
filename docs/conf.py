@@ -20,11 +20,13 @@ import re
 _init_path = (Path(__file__).parent.parent / 'src' /
               'ai' / 'backend' / 'client' / '__init__.py')
 _init_text = _init_path.read_text()
-try:
-    _version_info = re.search(
-        r"^__version__ = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?P<tag>.*)?'$",  # noqa
-        _init_text, re.M).groupdict()
-except IndexError:
+_version_info = None
+_m = re.search(
+    r"^__version__ = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?P<tag>.*)?'$",
+    _init_text, re.M)
+if _m is not None:
+    _version_info = _m.groupdict()
+else:
     raise RuntimeError('Unable to determine version.')
 
 
@@ -34,14 +36,14 @@ if on_rtd:
     try:
         from ai.backend.client import request  # noqa
     except ImportError:
-        subprocess.run('pip install -U "pip>=19.2" "setuptools>=41.2"', shell=True)
-        subprocess.run('pip install -e "..[docs]"', shell=True)
+        subprocess.run('pip install -U "pip>=20.2" "setuptools>=50.3"', shell=True)
+        subprocess.run('pip install -r "requirements/docs.txt"', shell=True)
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'Backend.AI Client SDK for Python'
-copyright = '2019, Lablup Inc.'
+copyright = '2020, Lablup Inc.'
 author = 'Lablup Inc.'
 
 # The short X.Y version.
