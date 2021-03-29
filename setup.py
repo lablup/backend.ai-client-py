@@ -26,8 +26,8 @@ install_requires = [
     'typing-extensions~=3.7.4',
 ]
 build_requires = [
-    'wheel>=0.34.2',
-    'twine>=3.1.1',
+    'wheel>=0.36.2',
+    'twine>=3.4.1',
     'towncrier>=19.2.0',
 ]
 test_requires = [
