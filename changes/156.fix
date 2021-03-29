@@ -1,1 +1,0 @@
-Remove the legacy `-p/--protocol` option from the `app` command sicne it now works as the TCP protocol always
