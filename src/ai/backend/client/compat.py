@@ -21,7 +21,7 @@ else:
 if hasattr(asyncio, 'all_tasks'):  # Python 3.7+
     all_tasks = asyncio.all_tasks
 else:
-    all_tasks = asyncio.Task.all_tasks
+    all_tasks = asyncio.Task.all_tasks  # type: ignore
 
 
 def _cancel_all_tasks(loop):
