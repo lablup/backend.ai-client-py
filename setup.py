@@ -4,11 +4,11 @@ from pathlib import Path
 import re
 
 setup_requires = [
-    'setuptools>=46.1.0',
+    'setuptools>=54.2.0',
 ]
 install_requires = [
     'backend.ai-cli~=0.4.1',
-    'aiohttp~=3.7.2',
+    'aiohttp~=3.7.4',
     'aiotusclient~=0.1.3',
     'appdirs~=1.4.3',
     'async_timeout~=3.0',  # to avoid pip10 resolver issue
@@ -19,7 +19,7 @@ install_requires = [
     'janus~=0.6.0',
     'multidict~=4.7.4',
     'python-dateutil~=2.8.1',
-    'PyYAML~=5.3.1',
+    'PyYAML~=5.4.1',
     'tabulate~=0.8.6',
     'tqdm~=4.48',
     'yarl~=1.6.1',
@@ -28,7 +28,7 @@ install_requires = [
 build_requires = [
     'wheel>=0.36.2',
     'twine>=3.4.1',
-    'towncrier>=19.2.0',
+    'towncrier>=21.3.0',
 ]
 test_requires = [
     'pytest~=6.1.1',
@@ -43,7 +43,7 @@ lint_requires = [
     'flake8>=3.8.4',
 ]
 typecheck_requires = [
-    'mypy>=0.790',
+    'mypy>=0.812',
 ]
 dev_requires: List[str] = [
     # 'pytest-sugar>=0.9.1',
@@ -88,6 +88,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Operating System :: POSIX',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
