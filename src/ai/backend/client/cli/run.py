@@ -241,6 +241,8 @@ def _format_stats(stats):
             else:
                 val = metric['current']
                 unit = ''
+            if val is None:
+                continue
             ip, _, fp = val.partition('.')
             max_integer_len = max(len(ip), max_integer_len)
             max_fraction_len = max(len(fp), max_fraction_len)
