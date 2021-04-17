@@ -106,7 +106,7 @@ class ScalingGroup(BaseFunction):
         if fields is None:
             fields = ('name',)
         query = textwrap.dedent("""\
-            mutation($name: String!, $input: ScalingGroupInput!) {
+            mutation($name: String!, $input: CreateScalingGroupInput!) {
                 create_scaling_group(name: $name, props: $input) {
                     ok msg scaling_group {$fields}
                 }
