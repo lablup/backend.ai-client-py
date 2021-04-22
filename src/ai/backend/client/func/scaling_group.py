@@ -284,7 +284,7 @@ class ScalingGroup(BaseFunction):
         :param group_id: The ID of a group.
         """
         query = textwrap.dedent("""\
-            mutation($scaling_group: String!, $user_group: String!) {
+            mutation($scaling_group: String!, $user_group: UUID!) {
                 associate_scaling_group_with_user_group(
                         scaling_group: $scaling_group, user_group: $user_group) {
                     ok msg
@@ -337,7 +337,7 @@ class ScalingGroup(BaseFunction):
         :param group_id: The ID of a group.
         """
         query = textwrap.dedent("""\
-            mutation($group_id: String!) {
+            mutation($group_id: UUID!) {
                 disassociate_all_scaling_groups_with_group(user_group: $group_id) {
                     ok msg
                 }
