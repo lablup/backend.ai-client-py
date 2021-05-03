@@ -505,6 +505,10 @@ def run(image, files, name,                                 # base args
             print_info('Session ID {0} is enqueued for scheduling.'
                        .format(name))
             return
+        elif compute_session.status == 'SCHEDULED':
+            print_info('Session ID {0} is scheduled and about to be started.'
+                       .format(name))
+            return
         elif compute_session.status == 'RUNNING':
             if compute_session.created:
                 vprint_done(
@@ -600,6 +604,10 @@ def run(image, files, name,                                 # base args
             return
         if compute_session.status == 'PENDING':
             print_info('Session ID {0} is enqueued for scheduling.'
+                       .format(name))
+            return
+        elif compute_session.status == 'SCHEDULED':
+            print_info('Session ID {0} is scheduled and about to be started.'
                        .format(name))
             return
         elif compute_session.status == 'RUNNING':
@@ -888,6 +896,10 @@ def start(image, name, owner,                                 # base args
             if compute_session.status == 'PENDING':
                 print_info('Session ID {0} is enqueued for scheduling.'
                            .format(compute_session.id))
+            elif compute_session.status == 'SCHEDULED':
+                print_info('Session ID {0} is scheduled and about to be started.'
+                           .format(compute_session.id))
+                return
             elif compute_session.status == 'RUNNING':
                 if compute_session.created:
                     print_info('Session ID {0} is created and ready.'
@@ -1055,6 +1067,10 @@ def start_template(
             if compute_session.status == 'PENDING':
                 print_info('Session ID {0} is enqueued for scheduling.'
                            .format(name))
+            elif compute_session.status == 'SCHEDULED':
+                print_info('Session ID {0} is scheduled and about to be started.'
+                           .format(name))
+                return
             elif compute_session.status == 'RUNNING':
                 if compute_session.created:
                     print_info('Session ID {0} is created and ready.'

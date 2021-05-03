@@ -7,7 +7,7 @@ from .admin.sessions import sessions
 @main.command()
 @click.option('-s', '--status', default=None,
               type=click.Choice([
-                  'PENDING',
+                  'PENDING', 'SCHEDULED',
                   'PREPARING', 'BUILDING', 'RUNNING', 'RESTARTING',
                   'RESIZING', 'SUSPENDED', 'TERMINATING',
                   'TERMINATED', 'ERROR', 'CANCELLED',
