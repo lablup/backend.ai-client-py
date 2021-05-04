@@ -1,0 +1,1 @@
+Rename ScalingGroupInput to CreateScalingGroupInput, which was changed in Manager by recent commit.
