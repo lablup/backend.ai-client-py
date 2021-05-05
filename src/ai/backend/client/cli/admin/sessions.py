@@ -69,7 +69,7 @@ def transform_fields(item: SessionItem, *, in_row: bool = True) -> SessionItem:
 @admin.command()
 @click.option('-s', '--status', default=None,
               type=click.Choice([
-                  'PENDING',
+                  'PENDING', 'SCHEDULED',
                   'PREPARING', 'BUILDING', 'RUNNING', 'RESTARTING',
                   'RESIZING', 'SUSPENDED', 'TERMINATING',
                   'TERMINATED', 'ERROR', 'CANCELLED',
@@ -142,7 +142,8 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
 
     no_match_name = None
     if status is None:
-        status = 'PENDING,PREPARING,PULLING,RUNNING,RESTARTING,TERMINATING,RESIZING,SUSPENDED,ERROR'
+        status = ('PENDING,SCHEDULED,PREPARING,PULLING,RUNNING,RESTARTING,TERMINATING,'
+                  'RESIZING,SUSPENDED,ERROR')
         no_match_name = 'active'
     if running:
         status = 'PREPARING,PULLING,RUNNING'
@@ -151,7 +152,8 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
         status = 'CANCELLED,TERMINATED'
         no_match_name = 'dead'
     if status == 'ALL':
-        status = ('PENDING,PREPARING,PULLING,RUNNING,RESTARTING,TERMINATING,RESIZING,SUSPENDED,ERROR,'
+        status = ('PENDING,SCHEDULED,PREPARING,PULLING,RUNNING,RESTARTING,TERMINATING,'
+                  'RESIZING,SUSPENDED,ERROR,'
                   'CANCELLED,TERMINATED')
         no_match_name = 'in any status'
     if no_match_name is None:
