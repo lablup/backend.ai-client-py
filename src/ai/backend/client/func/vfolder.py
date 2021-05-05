@@ -386,6 +386,24 @@ class VFolder(BaseFunction):
             return await resp.json()
 
     @api_function
+    async def share(self, perm: str, emails: Sequence[str]):
+        rqst = Request('POST', '/folders/{}/share'.format(self.name))
+        rqst.set_json({
+            'permission': perm, 'emails': emails,
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    async def unshare(self, emails: Sequence[str]):
+        rqst = Request('DELETE', '/folders/{}/unshare'.format(self.name))
+        rqst.set_json({
+            'emails': emails,
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
     async def leave(self):
         rqst = Request('POST', '/folders/{}/leave'.format(self.name))
         async with rqst.fetch() as resp:

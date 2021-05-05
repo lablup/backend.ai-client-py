@@ -406,18 +406,17 @@ def ls(name, path):
 @click.argument('name', type=str)
 @click.argument('emails', type=str, nargs=-1, required=True)
 @click.option('-p', '--perm', metavar='PERMISSION', type=str, default='rw',
-              help='Permission to give. "ro" (read-only) / "rw" (read-write).')
+              help='Permission to give. "ro" (read-only) / "rw" (read-write) / "wd" (write-delete).')
 def invite(name, emails, perm):
-    """Invite other users to access the virtual folder.
+    """Invite other users to access a user-type virtual folder.
 
     \b
     NAME: Name of a virtual folder.
-    EMAIL: Emails to invite.
+    EMAILS: Emails to invite.
     """
     with Session() as session:
         try:
-            assert perm in ['rw', 'ro'], \
-                   'Invalid permission: {}'.format(perm)
+            assert perm in ['rw', 'ro', 'wd'], 'Invalid permission: {}'.format(perm)
             result = session.VFolder(name).invite(perm, emails)
             invited_ids = result.get('invited_ids', [])
             if len(invited_ids) > 0:
@@ -483,6 +482,59 @@ def invitations():
                         break
                     elif action.lower() == 'c':
                         break
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolder.command()
+@click.argument('name', type=str)
+@click.argument('emails', type=str, nargs=-1, required=True)
+@click.option('-p', '--perm', metavar='PERMISSION', type=str, default='rw',
+              help='Permission to give. "ro" (read-only) / "rw" (read-write) / "wd" (write-delete).')
+def share(name, emails, perm):
+    """Share a group folder to users with overriding permission.
+
+    \b
+    NAME: Name of a (group-type) virtual folder.
+    EMAILS: Emails to share.
+    """
+    with Session() as session:
+        try:
+            assert perm in ['rw', 'ro', 'wd'], 'Invalid permission: {}'.format(perm)
+            result = session.VFolder(name).share(perm, emails)
+            shared_emails = result.get('shared_emails', [])
+            if len(shared_emails) > 0:
+                print('Shared with {} permission to:'.format(perm))
+                for _email in shared_emails:
+                    print('\t- ' + _email)
+            else:
+                print('No users found. Folder is not shared.')
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@vfolder.command()
+@click.argument('name', type=str)
+@click.argument('emails', type=str, nargs=-1, required=True)
+def unshare(name, emails):
+    """Unshare a group folder from users.
+
+    \b
+    NAME: Name of a (group-type) virtual folder.
+    EMAILS: Emails to share.
+    """
+    with Session() as session:
+        try:
+            result = session.VFolder(name).unshare(emails)
+            unshared_emails = result.get('unshared_emails', [])
+            if len(unshared_emails) > 0:
+                print('Unshared from:')
+                for _email in unshared_emails:
+                    print('\t- ' + _email)
+            else:
+                print('No users found. Folder is not unshared.')
         except Exception as e:
             print_error(e)
             sys.exit(1)
