@@ -16,6 +16,15 @@ Changes
 
 .. towncrier release notes start
 
+20.09.2 (2021-05-05)
+--------------------
+
+### Fixes
+* Gracefully skip null-metric when printing statistics ([#157](https://github.com/lablup/backend.ai-client-py/issues/157))
+* Update dependencies to embrace security patches in PyYAML ([#158](https://github.com/lablup/backend.ai-client-py/issues/158))
+* Rename ScalingGroupInput to CreateScalingGroupInput, which was changed in Manager by recent commit. ([#160](https://github.com/lablup/backend.ai-client-py/issues/160))
+
+
 20.09.1 (2021-03-05)
 --------------------
 
