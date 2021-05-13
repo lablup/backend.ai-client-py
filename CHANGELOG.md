@@ -16,6 +16,19 @@ Changes
 
 .. towncrier release notes start
 
+21.03.1 (2021-05-14)
+--------------------
+
+### Features
+* Add commands to share/unshare a group virtual folder directly to specific users. This is to allow specified users (usually teachers with user account) can upload data/materials to a virtual folder while it is shared as read-only for other group users. ([#159](https://github.com/lablup/backend.ai-client-py/issues/159))
+* Add support for the `SCHEDULED` status in `ps` (including `admin sessions`), `run`, and `start` commands ([#161](https://github.com/lablup/backend.ai-client-py/issues/161))
+
+### Fixes
+* Gracefully skip null-metric when printing statistics ([#157](https://github.com/lablup/backend.ai-client-py/issues/157))
+* Update dependencies to embrace security patches in PyYAML ([#158](https://github.com/lablup/backend.ai-client-py/issues/158))
+* Rename ScalingGroupInput to CreateScalingGroupInput, which was changed in Manager by recent commit. ([#160](https://github.com/lablup/backend.ai-client-py/issues/160))
+
+
 21.03.0 (2021-03-29)
 --------------------
 
