@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+20.09.3 (2021-05-14)
+--------------------
+
+### Features
+* Add support for the `SCHEDULED` status in `ps` (including `admin sessions`), `run`, and `start` commands ([#161](https://github.com/lablup/backend.ai-client-py/issues/161))
+
+
 20.09.2 (2021-05-05)
 --------------------
 
