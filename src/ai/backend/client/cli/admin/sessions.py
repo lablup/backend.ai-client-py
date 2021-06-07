@@ -218,8 +218,8 @@ def format_dependencies(dependencies: Sequence[Mapping[str, Any]], indent='') ->
 
 
 @admin.command()
-@click.argument('id_or_name', metavar='ID_OR_NAME')
-def session(id_or_name):
+@click.argument('session_id', metavar='SESSID')
+def session(session_id):
     '''
     Show detailed information for a running compute session.
     '''
@@ -257,7 +257,7 @@ def session(id_or_name):
             q = 'query($name: String!) {' \
                 '  compute_session(sess_id: $name) { $fields }' \
                 '}'
-            v = {'name': id_or_name}
+            v = {'name': session_id}
         else:
             # In API v5 or later, we can query any compute session both in the history
             # and currently running using its UUID.
@@ -289,11 +289,11 @@ def session(id_or_name):
                 '  }' \
                 '}'
             try:
-                uuid.UUID(id_or_name)
+                uuid.UUID(session_id)
             except ValueError:
                 print_fail("In API v5 or later, the session ID must be given in the UUID format.")
                 sys.exit(1)
-            v = {'id': id_or_name}
+            v = {'id': session_id}
         q = q.replace('$fields', ' '.join(item[1] for item in fields))
         try:
             resp = session_.Admin.query(q, v)
