@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+21.03.2 (2021-06-13)
+--------------------
+
+### Fixes
+* Fix desynchronized parameters of the `info` command alias of the `admin session` command ([#162](https://github.com/lablup/backend.ai-client-py/issues/162))
+
+
 21.03.1 (2021-05-14)
 --------------------
 
