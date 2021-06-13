@@ -43,7 +43,10 @@ lint_requires = [
     'flake8>=3.8.4',
 ]
 typecheck_requires = [
-    'mypy>=0.812',
+    'mypy>=0.901',
+    'types-click',
+    'types-python-dateutil',
+    'types-tabulate',
 ]
 dev_requires: List[str] = [
     # 'pytest-sugar>=0.9.1',

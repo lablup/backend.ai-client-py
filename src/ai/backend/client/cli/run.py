@@ -1177,11 +1177,9 @@ def restart(session_names):
 
 
 @main.command()
-@click.argument('session_name', metavar='NAME')
-@click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
-              help='Specify the owner of the target session explicitly.')
+@click.argument('session_id', metavar='SESSID')
 @click.pass_context
-def info(ctx, session_name, owner_access_key):
+def info(ctx, session_id):
     """
     Show detailed information for a running compute session.
     This is an alias of the "admin session <sess_id>" command.
