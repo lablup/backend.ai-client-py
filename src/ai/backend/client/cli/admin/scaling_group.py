@@ -8,7 +8,14 @@ from ..pretty import print_done, print_warn, print_error, print_fail
 from ...session import Session
 
 
-@admin.command()
+@admin.group()
+def scaling_group() -> None:
+    """
+    Scaling group (resource group) administration commands.
+    """
+
+
+@scaling_group.command()
 @click.argument('group', type=str, metavar='GROUP_NAME')
 def list_scaling_groups(group):
     with Session() as session:
@@ -23,14 +30,14 @@ def list_scaling_groups(group):
         print(resp)
 
 
-@admin.command()
+@scaling_group.command()
 @click.option('-n', '--name', type=str, default=None,
               help="Name of a scaling group.")
-def scaling_group(name):
-    '''
+def info(name):
+    """
     Show the information about the given scaling group.
     (superadmin privilege required)
-    '''
+    """
     fields = [
         ('Name', 'name'),
         ('Description', 'description'),
@@ -55,13 +62,13 @@ def scaling_group(name):
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.group(invoke_without_command=True)
+@scaling_group.command()
 @click.pass_context
-def scaling_groups(ctx):
-    '''
+def list(ctx):
+    """
     List and manage scaling groups.
     (superadmin privilege required)
-    '''
+    """
     if ctx.invoked_subcommand is not None:
         return
     fields = [
@@ -88,7 +95,7 @@ def scaling_groups(ctx):
                         headers=(item[0] for item in fields)))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new scaling group')
@@ -104,11 +111,11 @@ def scaling_groups(ctx):
               help='Set scheduler options.')
 def add(name, description, inactive,
         driver, driver_opts, scheduler, scheduler_opts):
-    '''
+    """
     Add a new scaling group.
 
     NAME: Name of new scaling group.
-    '''
+    """
     with Session() as session:
         try:
             data = session.ScalingGroup.create(
@@ -130,7 +137,7 @@ def add(name, description, inactive,
         print_done('Scaling group name {0} is created.'.format(item['name']))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new scaling group')
@@ -146,11 +153,11 @@ def add(name, description, inactive,
               help='Set scheduler options.')
 def update(name, description, inactive,
            driver, driver_opts, scheduler, scheduler_opts):
-    '''
+    """
     Update existing scaling group.
 
     NAME: Name of new scaling group.
-    '''
+    """
     with Session() as session:
         try:
             data = session.ScalingGroup.update(
@@ -171,7 +178,7 @@ def update(name, description, inactive,
         print_done('Scaling group {0} is updated.'.format(name))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('name', type=str, metavar='NAME')
 def delete(name):
     """
@@ -191,7 +198,7 @@ def delete(name):
         print_done('Scaling group is deleted: ' + name + '.')
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('scaling_group', type=str, metavar='SCALING_GROUP')
 @click.argument('domain', type=str, metavar='DOMAIN')
 def associate_scaling_group(scaling_group, domain):
@@ -214,7 +221,7 @@ def associate_scaling_group(scaling_group, domain):
         print_done('Scaling group {} is assocatiated with domain {}.'.format(scaling_group, domain))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('scaling_group', type=str, metavar='SCALING_GROUP')
 @click.argument('domain', type=str, metavar='DOMAIN')
 def dissociate_scaling_group(scaling_group, domain):

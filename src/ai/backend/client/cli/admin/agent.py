@@ -72,12 +72,19 @@ def format_stats(raw_stats):
     return '\n'.join(bufs)
 
 
-@admin.command()
+@admin.group()
+def agent():
+    """
+    Agent administration commands.
+    """
+
+
+@agent.command()
 @click.argument('agent_id')
-def agent(agent_id):
-    '''
+def info(agent_id):
+    """
     Show the information about the given agent.
-    '''
+    """
     fields = [
         ('ID', 'id'),
         ('Status', 'status'),
@@ -113,16 +120,16 @@ def agent(agent_id):
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.command()
+@agent.command()
 @click.option('-s', '--status', type=str, default='ALIVE',
               help='Filter agents by the given status.')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='Filter agents by the scaling group.')
-def agents(status, scaling_group):
-    '''
+def list(status, scaling_group):
+    """
     List and manage agents.
     (super-admin privilege required)
-    '''
+    """
     fields = [
         ('ID', 'id'),
         ('Status', 'status'),
@@ -165,22 +172,23 @@ def agents(status, scaling_group):
 
 @admin.group()
 def watcher():
-    '''Provides agent watcher operations.
+    """
+    Agent watcher commands.
 
-    Watcher operations are available only for Linux distributions.
-    '''
+    Available only for Linux-based agents.
+    """
 
 
 @watcher.command()
 @click.argument('agent', type=str)
 def status(agent):
-    '''
+    """
     Get agent and watcher status.
     (superadmin privilege required)
 
     \b
     AGENT: Agent id.
-    '''
+    """
     with Session() as session:
         try:
             status = session.AgentWatcher.get_status(agent)
@@ -193,13 +201,13 @@ def status(agent):
 @watcher.command()
 @click.argument('agent', type=str)
 def agent_start(agent):
-    '''
+    """
     Start agent service.
     (superadmin privilege required)
 
     \b
     AGENT: Agent id.
-    '''
+    """
     with Session() as session:
         try:
             status = session.AgentWatcher.agent_start(agent)
@@ -212,13 +220,13 @@ def agent_start(agent):
 @watcher.command()
 @click.argument('agent', type=str)
 def agent_stop(agent):
-    '''
+    """
     Stop agent service.
     (superadmin privilege required)
 
     \b
     AGENT: Agent id.
-    '''
+    """
     with Session() as session:
         try:
             status = session.AgentWatcher.agent_stop(agent)
@@ -231,13 +239,13 @@ def agent_stop(agent):
 @watcher.command()
 @click.argument('agent', type=str)
 def agent_restart(agent):
-    '''
+    """
     Restart agent service.
     (superadmin privilege required)
 
     \b
     AGENT: Agent id.
-    '''
+    """
     with Session() as session:
         try:
             status = session.AgentWatcher.agent_restart(agent)

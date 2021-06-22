@@ -11,9 +11,16 @@ from ...session import Session, AsyncSession
 from ..pretty import print_done, print_warn, print_fail, print_error
 
 
-@admin.command()
+@admin.group()
+def image() -> None:
+    """
+    Image administration commands.
+    """
+
+
+@image.command()
 @click.option('--operation', is_flag=True, help='Get operational images only')
-def images(operation: bool) -> None:
+def list(operation: bool) -> None:
     """
     Show the list of registered images in this cluster.
     """
@@ -40,11 +47,11 @@ def images(operation: bool) -> None:
                        floatfmt=',.0f'))
 
 
-@admin.command()
+@image.command()
 @click.option('-r', '--registry', type=str, default=None,
               help='The name (usually hostname or "lablup") '
                    'of the Docker registry configured.')
-def rescan_images(registry: str) -> None:
+def rescan(registry: str) -> None:
     """
     Update the kernel image metadata from all configured docker registries.
     """
@@ -86,10 +93,10 @@ def rescan_images(registry: str) -> None:
     asyncio_run(rescan_images_impl(registry))
 
 
-@admin.command()
+@image.command()
 @click.argument('alias', type=str)
 @click.argument('target', type=str)
-def alias_image(alias, target):
+def alias(alias, target):
     """Add an image alias."""
     with Session() as session:
         try:
@@ -103,9 +110,9 @@ def alias_image(alias, target):
             print_fail("Aliasing has failed: {0}".format(result['msg']))
 
 
-@admin.command()
+@image.command()
 @click.argument('alias', type=str)
-def dealias_image(alias):
+def dealias(alias):
     """Remove an image alias."""
     with Session() as session:
         try:

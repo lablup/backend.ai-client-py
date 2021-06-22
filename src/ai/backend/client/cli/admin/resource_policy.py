@@ -9,10 +9,17 @@ from ..interaction import ask_yn
 from ..pretty import print_done, print_error, print_fail, print_info, print_warn
 
 
-@admin.command()
+@admin.group()
+def keypair_resource_policy() -> None:
+    """
+    KeyPair resource policy administration commands.
+    """
+
+
+@keypair_resource_policy.command()
 @click.option('-n', '--name', type=str, default=None,
               help='Name of the resource policy.')
-def keypair_resource_policy(name):
+def info(name):
     """
     Show details about a keypair resource policy. When `name` option is omitted, the
     resource policy for the current access_key will be returned.
@@ -45,13 +52,13 @@ def keypair_resource_policy(name):
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.group(invoke_without_command=True)
+@keypair_resource_policy.command()
 @click.pass_context
-def keypair_resource_policies(ctx):
-    '''
+def list(ctx):
+    """
     List and manage keypair resource policies.
     (admin privilege required)
-    '''
+    """
     if ctx.invoked_subcommand is not None:
         return
     fields = [
@@ -79,7 +86,7 @@ def keypair_resource_policies(ctx):
                        headers=(item[0] for item in fields)))
 
 
-@keypair_resource_policies.command()
+@keypair_resource_policy.command()
 @click.argument('name', type=str, default=None, metavar='NAME')
 @click.option('--default-for-unspecified', type=str, default='UNLIMITED',
               help='Default behavior for unspecified resources: '
@@ -104,11 +111,11 @@ def keypair_resource_policies(ctx):
 def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sessions,
         max_containers_per_session, max_vfolder_count, max_vfolder_size,
         idle_timeout, allowed_vfolder_hosts):
-    '''
+    """
     Add a new keypair resource policy.
 
     NAME: NAME of a new keypair resource policy.
-    '''
+    """
     with Session() as session:
         try:
             data = session.KeypairResourcePolicy.create(
@@ -133,7 +140,7 @@ def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sess
         print_done('Keypair resource policy ' + item['name'] + ' is created.')
 
 
-@keypair_resource_policies.command()
+@keypair_resource_policy.command()
 @click.argument('name', type=str, default=None, metavar='NAME')
 @click.option('--default-for-unspecified', type=str,
               help='Default behavior for unspecified resources: '
@@ -183,7 +190,7 @@ def update(name, default_for_unspecified, total_resource_slots,
         print_done('Update succeeded.')
 
 
-@keypair_resource_policies.command()
+@keypair_resource_policy.command()
 @click.argument('name', type=str, default=None, metavar='NAME')
 def delete(name):
     """

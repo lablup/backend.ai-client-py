@@ -24,7 +24,7 @@ import tabulate as tabulate_mod
 from tabulate import tabulate
 
 from . import main
-from .admin.session import session as cli_admin_session
+from .admin.session import info as session_info
 from ..config import local_cache_path
 from ..compat import asyncio_run, current_loop
 from ..exceptions import BackendError, BackendAPIError
@@ -1186,7 +1186,7 @@ def info(ctx, session_id):
 
     SESSID: session ID or its alias given when creating the session.
     """
-    ctx.forward(cli_admin_session)
+    ctx.forward(session_info)
 
 
 @main.command()

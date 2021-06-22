@@ -9,14 +9,21 @@ from ..pretty import print_error, print_info, print_fail
 from ...session import Session
 
 
-@admin.command()
+@admin.group()
+def domain():
+    """
+    Domain administration commands.
+    """
+
+
+@domain.command()
 @click.option('-n', '--name', type=str, default=None,
               help="Domain name to get information.")
-def domain(name):
-    '''
+def info(name):
+    """
     Show the information about the given domain.
     If name is not give, user's own domain information will be retrieved.
-    '''
+    """
     fields = [
         ('Name', 'name'),
         ('Description', 'description'),
@@ -41,13 +48,13 @@ def domain(name):
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.group(invoke_without_command=True)
+@domain.command()
 @click.pass_context
-def domains(ctx):
-    '''
+def list(ctx):
+    """
     List and manage domains.
     (admin privilege required)
-    '''
+    """
     if ctx.invoked_subcommand is not None:
         return
     fields = [
@@ -74,7 +81,7 @@ def domains(ctx):
                         headers=(item[0] for item in fields)))
 
 
-@domains.command()
+@domain.command()
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new domain')
@@ -88,11 +95,11 @@ def domains(ctx):
               help='Allowed docker registries.')
 def add(name, description, inactive, total_resource_slots,
         allowed_vfolder_hosts, allowed_docker_registries):
-    '''
+    """
     Add a new domain.
 
     NAME: Name of new domain.
-    '''
+    """
     with Session() as session:
         try:
             data = session.Domain.create(
@@ -113,7 +120,7 @@ def add(name, description, inactive, total_resource_slots,
         print('Domain name {0} is created.'.format(item['name']))
 
 
-@domains.command()
+@domain.command()
 @click.argument('name', type=str, metavar='NAME')
 @click.option('--new-name', type=str, help='New name of the domain')
 @click.option('--description', type=str, help='Description of the domain')
@@ -126,11 +133,11 @@ def add(name, description, inactive, total_resource_slots,
               help='Allowed docker registries.')
 def update(name, new_name, description, is_active, total_resource_slots,
            allowed_vfolder_hosts, allowed_docker_registries):
-    '''
+    """
     Update an existing domain.
 
     NAME: Name of new domain.
-    '''
+    """
     with Session() as session:
         try:
             data = session.Domain.update(
@@ -151,7 +158,7 @@ def update(name, new_name, description, is_active, total_resource_slots,
         print('Domain {0} is updated.'.format(name))
 
 
-@domains.command()
+@domain.command()
 @click.argument('name', type=str, metavar='NAME')
 def delete(name):
     """
@@ -171,7 +178,7 @@ def delete(name):
         print('Domain is inactivated: ' + name + '.')
 
 
-@domains.command()
+@domain.command()
 @click.argument('name', type=str, metavar='NAME')
 def purge(name):
     """

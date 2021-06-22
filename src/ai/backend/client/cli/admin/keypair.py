@@ -14,11 +14,18 @@ from ..pagination import (
 from ...exceptions import NoItems
 
 
-@admin.command()
-def keypair():
-    '''
+@admin.group()
+def keypair() -> None:
+    """
+    KeyPair administration commands.
+    """
+
+
+@keypair.command()
+def info():
+    """
     Show the server-side information of the currently configured access key.
-    '''
+    """
     fields = [
         ('Email', 'user_id'),
         ('Full Name', 'user_info { full_name }'),
@@ -50,19 +57,19 @@ def keypair():
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.group(invoke_without_command=True)
+@keypair.command()
 @click.pass_context
 @click.option('-u', '--user-id', type=str, default=None,
               help='Show keypairs of this given user. [default: show all]')
 @click.option('--is-active', type=bool, default=None,
               help='Filter keypairs by activation.')
-def keypairs(ctx, user_id, is_active):
-    '''
+def list(ctx, user_id, is_active):
+    """
     List and manage keypairs.
     To show all keypairs or other user's, your access key must have the admin
     privilege.
     (admin privilege required)
-    '''
+    """
     if ctx.invoked_subcommand is not None:
         return
     fields = [
@@ -107,7 +114,7 @@ def keypairs(ctx, user_id, is_active):
         sys.exit(1)
 
 
-@keypairs.command()
+@keypair.command()
 @click.argument('user-id', type=str, default=None, metavar='USERID')
 @click.argument('resource-policy', type=str, default=None, metavar='RESOURCE_POLICY')
 @click.option('-a', '--admin', is_flag=True,
@@ -117,12 +124,12 @@ def keypairs(ctx, user_id, is_active):
 @click.option('-r', '--rate-limit', type=int, default=5000,
               help='Set the API query rate limit.')
 def add(user_id, resource_policy, admin, inactive,  rate_limit):
-    '''
+    """
     Add a new keypair.
 
     USER_ID: User ID of a new key pair.
     RESOURCE_POLICY: resource policy for new key pair.
-    '''
+    """
     try:
         user_id = int(user_id)
     except ValueError:
@@ -146,18 +153,18 @@ def add(user_id, resource_policy, admin, inactive,  rate_limit):
         print('Secret Key: {0}'.format(item['secret_key']))
 
 
-@keypairs.command()
+@keypair.command()
 @click.argument('access_key', type=str, default=None, metavar='ACCESSKEY')
 @click.option('--resource-policy', type=str, help='Resource policy for the keypair.')
 @click.option('--is-admin', type=bool, help='Set admin privilege.')
 @click.option('--is-active', type=bool, help='Set key pair active or not.')
 @click.option('-r', '--rate-limit', type=int, help='Set the API query rate limit.')
 def update(access_key, resource_policy, is_admin, is_active,  rate_limit):
-    '''
+    """
     Update an existing keypair.
 
     ACCESS_KEY: Access key of an existing key pair.
-    '''
+    """
     with Session() as session:
         try:
             data = session.KeyPair.update(
@@ -175,7 +182,7 @@ def update(access_key, resource_policy, is_admin, is_active,  rate_limit):
         print_done('Key pair is updated: ' + access_key + '.')
 
 
-@keypairs.command()
+@keypair.command()
 @click.argument('access-key', type=str, metavar='ACCESSKEY')
 def delete(access_key):
     """
@@ -195,7 +202,7 @@ def delete(access_key):
         print_done('Key pair is deleted: ' + access_key + '.')
 
 
-@keypairs.command()
+@keypair.command()
 @click.argument('access-key', type=str, metavar='ACCESSKEY')
 def activate(access_key):
     """
@@ -215,7 +222,7 @@ def activate(access_key):
         print_done('Key pair is activated: ' + access_key + '.')
 
 
-@keypairs.command()
+@keypair.command()
 @click.argument('access-key', type=str, metavar='ACCESSKEY')
 def deactivate(access_key):
     """

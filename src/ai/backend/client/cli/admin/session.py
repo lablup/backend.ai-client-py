@@ -66,7 +66,14 @@ def transform_fields(item: SessionItem, *, in_row: bool = True) -> SessionItem:
     return item
 
 
-@admin.command()
+@admin.group()
+def session() -> None:
+    """
+    Session administration commands.
+    """
+
+
+@session.command()
 @click.option('-s', '--status', default=None,
               type=click.Choice([
                   'PENDING', 'SCHEDULED',
@@ -88,10 +95,10 @@ def transform_fields(item: SessionItem, *, in_row: bool = True) -> SessionItem:
 @click.option('-f', '--format', default=None,  help='Display only specified fields.')
 @click.option('--plain', is_flag=True,
               help='Display the session list without decorative line drawings and the header.')
-def sessions(status, access_key, name_only, dead, running, detail, plain, format):
-    '''
+def list(status, access_key, name_only, dead, running, detail, plain, format):
+    """
     List and manage compute sessions.
-    '''
+    """
     fields = []
     with Session() as session:
         is_admin = session.KeyPair(session.config.access_key).info()['is_admin']
@@ -217,12 +224,12 @@ def format_dependencies(dependencies: Sequence[Mapping[str, Any]], indent='') ->
     return "\n" + textwrap.indent(text, indent)
 
 
-@admin.command()
+@session.command()
 @click.argument('session_id', metavar='SESSID')
-def session(session_id):
-    '''
+def info(session_id):
+    """
     Show detailed information for a running compute session.
-    '''
+    """
     with Session() as session_:
         fields = [
             ('Session Name', lambda api_session: get_naming(

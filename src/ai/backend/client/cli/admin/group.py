@@ -9,15 +9,22 @@ from ..pretty import print_error, print_info, print_fail
 from ...session import Session
 
 
-@admin.command()
+@admin.group()
+def group() -> None:
+    """
+    User group (project) administration commands
+    """
+
+
+@group.command()
 @click.argument('gid', type=str)
-def group(gid):
-    '''
+def info(gid):
+    """
     Show the information about the given group.
 
     \b
     GID: Group ID.
-    '''
+    """
     fields = [
         ('ID', 'id'),
         ('Name', 'name'),
@@ -45,15 +52,15 @@ def group(gid):
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.group(invoke_without_command=True)
+@group.command()
 @click.pass_context
 @click.option('-d', '--domain-name', type=str, default=None,
               help='Domain name to list groups belongs to it.')
-def groups(ctx, domain_name):
-    '''
+def list(ctx, domain_name):
+    """
     List and manage groups.
     (admin privilege required)
-    '''
+    """
     if ctx.invoked_subcommand is not None:
         return
     fields = [
@@ -81,7 +88,7 @@ def groups(ctx, domain_name):
                         headers=(item[0] for item in fields)))
 
 
-@groups.command()
+@group.command()
 @click.argument('domain_name', type=str, metavar='DOMAIN_NAME')
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
@@ -94,13 +101,13 @@ def groups(ctx, domain_name):
               help='Allowed virtual folder hosts.')
 def add(domain_name, name, description, inactive, total_resource_slots,
         allowed_vfolder_hosts):
-    '''
+    """
     Add new group. A group must belong to a domain, so DOMAIN_NAME should be provided.
 
     \b
     DOMAIN_NAME: Name of the domain where new group belongs to.
     NAME: Name of new group.
-    '''
+    """
     with Session() as session:
         try:
             data = session.Group.create(
@@ -120,7 +127,7 @@ def add(domain_name, name, description, inactive, total_resource_slots,
         print('Group name {0} is created in domain {1}.'.format(item['name'], item['domain_name']))
 
 
-@groups.command()
+@group.command()
 @click.argument('gid', type=str, metavar='GROUP_ID')
 @click.option('-n', '--name', type=str, help='New name of the group')
 @click.option('-d', '--description', type=str, help='Description of the group')
@@ -130,11 +137,11 @@ def add(domain_name, name, description, inactive, total_resource_slots,
               help='Allowed virtual folder hosts.')
 def update(gid, name, description, is_active, total_resource_slots,
            allowed_vfolder_hosts):
-    '''
+    """
     Update an existing group. Domain name is not necessary since group ID is unique.
 
     GROUP_ID: Group ID to update.
-    '''
+    """
     with Session() as session:
         try:
             data = session.Group.update(
@@ -154,7 +161,7 @@ def update(gid, name, description, is_active, total_resource_slots,
         print('Group {0} is updated.'.format(gid))
 
 
-@groups.command()
+@group.command()
 @click.argument('gid', type=str, metavar='GROUP_ID')
 def delete(gid):
     """
@@ -174,7 +181,7 @@ def delete(gid):
         print('Group is inactivated: ' + gid + '.')
 
 
-@groups.command()
+@group.command()
 @click.argument('gid', type=str, metavar='GROUP_ID')
 def purge(gid):
     """
@@ -197,17 +204,17 @@ def purge(gid):
         print('Group is deleted: ' + gid + '.')
 
 
-@groups.command()
+@group.command()
 @click.argument('gid', type=str, metavar='GROUP_ID')
 @click.argument('user_uuids', type=str, metavar='USER_UUIDS', nargs=-1)
 def add_users(gid, user_uuids):
-    '''
+    """
     Add users to a group.
 
     \b
     GROUP_ID: Group ID where users will be belong to.
     USER_UUIDS: List of users' uuids to be added to the group.
-    '''
+    """
     with Session() as session:
         try:
             data = session.Group.add_users(gid, user_uuids)
@@ -220,17 +227,17 @@ def add_users(gid, user_uuids):
         print('Users are added to the group')
 
 
-@groups.command()
+@group.command()
 @click.argument('gid', type=str, metavar='GROUP_ID')
 @click.argument('user_uuids', type=str, metavar='USER_UUIDS', nargs=-1)
 def remove_users(gid, user_uuids):
-    '''
+    """
     Remove users from a group.
 
     \b
     GROUP_ID: Group ID where users currently belong to.
     USER_UUIDS: List of users' uuids to be removed from the group.
-    '''
+    """
     with Session() as session:
         try:
             data = session.Group.remove_users(gid, user_uuids)

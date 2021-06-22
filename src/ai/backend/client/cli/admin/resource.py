@@ -6,15 +6,14 @@ from ..pretty import print_error
 
 
 @admin.group()
-def resources():
-    '''
-    Manage resources.
-    (admin privilege required)
-    '''
+def resource() -> None:
+    """
+    Resource administration commands.
+    """
 
 
-@resources.command()
-def resource_slots():
+@resource.command()
+def query_slots():
     """
     Get available resource slots.
     """
@@ -27,7 +26,7 @@ def resource_slots():
             print_error(e)
 
 
-@resources.command()
+@resource.command()
 def vfolder_types():
     """
     Get available vfolder types.
@@ -41,7 +40,7 @@ def vfolder_types():
             print_error(e)
 
 
-@resources.command()
+@resource.command()
 def docker_registries():
     """
     Get registered docker registries.
@@ -55,7 +54,7 @@ def docker_registries():
             print_error(e)
 
 
-@resources.command()
+@resource.command()
 def recalculate_usage():
     """
     Re-calculate resource occupation by sessions.
@@ -71,7 +70,7 @@ def recalculate_usage():
             print_error(e)
 
 
-@resources.command()
+@resource.command()
 @click.argument('month', metavar='MONTH')
 @click.argument('groups', metavar='GROUP_IDS', nargs=-1)
 def usage_per_month(month, groups):
@@ -110,7 +109,7 @@ def usage_per_month(month, groups):
             print()
 
 
-@resources.command()
+@resource.command()
 @click.argument('group')
 @click.argument('start_date')
 @click.argument('end_date')

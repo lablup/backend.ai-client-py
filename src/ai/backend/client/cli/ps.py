@@ -1,7 +1,7 @@
 import click
 
 from . import main
-from .admin.session import sessions
+from .admin.session import list as session_list
 
 
 @main.command()
@@ -29,4 +29,4 @@ def ps(ctx, status, name_only, dead, running, detail, plain, format):
     Lists the current running compute sessions for the current keypair.
     This is an alias of the "admin sessions --status=RUNNING" command.
     '''
-    ctx.forward(sessions)
+    ctx.forward(session_list)

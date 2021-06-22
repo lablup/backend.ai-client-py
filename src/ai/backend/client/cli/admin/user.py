@@ -15,14 +15,21 @@ from ..pagination import (
 from ...exceptions import NoItems
 
 
-@admin.command()
+@admin.group()
+def user() -> None:
+    """
+    User administration commands.
+    """
+
+
+@user.command()
 @click.option('-e', '--email', type=str, default=None,
               help='Email of a user to display.')
-def user(email):
-    '''
+def info(email):
+    """
     Show the information about the given user by email. If email is not give,
     requester's information will be displayed.
-    '''
+    """
     fields = [
         ('UUID', 'uuid'),
         ('Username', 'username'),
@@ -55,17 +62,17 @@ def user(email):
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.group(invoke_without_command=True)
+@user.command()
 @click.pass_context
 @click.option('-s', '--status', type=str, default=None,
               help='Filter users in a specific state (active, inactive, deleted, before-verification).')
 @click.option('-g', '--group', type=str, default=None,
               help='Filter by group ID.')
-def users(ctx, status, group) -> None:
-    '''
+def list(ctx, status, group) -> None:
+    """
     List and manage users.
     (admin privilege required)
-    '''
+    """
     if ctx.invoked_subcommand is not None:
         return
     fields = [
@@ -106,7 +113,7 @@ def users(ctx, status, group) -> None:
         sys.exit(1)
 
 
-@users.command()
+@user.command()
 @click.argument('domain_name', type=str, metavar='DOMAIN_NAME')
 @click.argument('email', type=str, metavar='EMAIL')
 @click.argument('password', type=str, metavar='PASSWORD')
@@ -122,14 +129,14 @@ def users(ctx, status, group) -> None:
 @click.option('--description', type=str, default='', help='Description of the user.')
 def add(domain_name, email, password, username, full_name, role, status,
         need_password_change, description):
-    '''
+    """
     Add new user. A user must belong to a domain, so DOMAIN_NAME should be provided.
 
     \b
     DOMAIN_NAME: Name of the domain where new user belongs to.
     EMAIL: Email of new user.
     PASSWORD: Password of new user.
-    '''
+    """
     with Session() as session:
         try:
             data = session.User.create(
@@ -149,7 +156,7 @@ def add(domain_name, email, password, username, full_name, role, status,
         print('User {0} is created in domain {1}.'.format(item['email'], item['domain_name']))
 
 
-@users.command()
+@user.command()
 @click.argument('email', type=str, metavar='EMAIL')
 @click.option('-p', '--password', type=str, help='Password.')
 @click.option('-u', '--username', type=str, help='Username.')
@@ -165,11 +172,11 @@ def add(domain_name, email, password, username, full_name, role, status,
 @click.option('--description', type=str, default='', help='Description of the user.')
 def update(email, password, username, full_name, domain_name, role, status,
            need_password_change, description):
-    '''
+    """
     Update an existing user.
 
     EMAIL: Email of user to update.
-    '''
+    """
     with Session() as session:
         try:
             data = session.User.update(
@@ -188,7 +195,7 @@ def update(email, password, username, full_name, domain_name, role, status,
         print('User {0} is updated.'.format(email))
 
 
-@users.command()
+@user.command()
 @click.argument('email', type=str, metavar='EMAIL')
 def delete(email):
     """
@@ -208,7 +215,7 @@ def delete(email):
         print('User is inactivated: ' + email + '.')
 
 
-@users.command()
+@user.command()
 @click.argument('email', type=str, metavar='EMAIL')
 @click.option('--purge-shared-vfolders', is_flag=True, default=False,
               help='Delete user\'s all virtual folders. '

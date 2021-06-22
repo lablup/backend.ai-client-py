@@ -16,9 +16,16 @@ from ..utils import format_nested_dicts, format_value
 from ...exceptions import NoItems
 
 
-@admin.command()
+@admin.group()
+def storage() -> None:
+    """
+    Storage proxy administration commands.
+    """
+
+
+@storage.command()
 @click.argument('vfolder_host')
-def storage(vfolder_host):
+def info(vfolder_host):
     """
     Show the information about the given storage volume.
     (super-admin privilege required)
@@ -50,8 +57,8 @@ def storage(vfolder_host):
         print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.command()
-def storage_list():
+@storage.command()
+def list():
     """
     List storage volumes.
     (super-admin privilege required)
