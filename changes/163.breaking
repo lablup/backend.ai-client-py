@@ -1,0 +1,1 @@
+The CLI command hierarchy and arguments are revamped to be much more consistent with enumeration and item queries, and to support global options such as `--output=json` and `-y`/`--yes` flags. This is not backward-compatible due to parsing ambiguity.
