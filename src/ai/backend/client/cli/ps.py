@@ -1,7 +1,7 @@
 import click
 
 from . import main
-from .admin.sessions import sessions
+from .admin.session import sessions
 
 
 @main.command()

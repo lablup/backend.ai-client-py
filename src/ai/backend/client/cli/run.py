@@ -24,7 +24,7 @@ import tabulate as tabulate_mod
 from tabulate import tabulate
 
 from . import main
-from .admin.sessions import session as cli_admin_session
+from .admin.session import session as cli_admin_session
 from ..config import local_cache_path
 from ..compat import asyncio_run, current_loop
 from ..exceptions import BackendError, BackendAPIError
