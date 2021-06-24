@@ -7,7 +7,7 @@ setup_requires = [
     'setuptools>=54.2.0',
 ]
 install_requires = [
-    'backend.ai-cli~=0.4.1',
+    'backend.ai-cli~=0.5.0.post1',
     'aiohttp~=3.7.4',
     'aiotusclient~=0.1.3',
     'appdirs~=1.4.3',
