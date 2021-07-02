@@ -23,7 +23,7 @@ from humanize import naturalsize
 import tabulate as tabulate_mod
 from tabulate import tabulate
 
-from . import main
+from .main import main
 from .admin.session import info as session_info
 from ..config import local_cache_path
 from ..compat import asyncio_run, current_loop

@@ -7,7 +7,7 @@ import click
 import humanize
 from tabulate import tabulate
 
-from . import main
+from .main import main
 from .interaction import ask_yn
 from .pretty import print_done, print_error, print_fail, print_info, print_wait
 from .utils import ByteSizeParamType, ByteSizeParamCheckType

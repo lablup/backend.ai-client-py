@@ -2,32 +2,10 @@ import sys
 
 import click
 
-from . import main
-from .pretty import print_wait, print_done, print_error
+from .main import main
+from .pretty import print_error
 from ..compat import asyncio_run
-from ..session import Session, AsyncSession
-
-
-@main.command()
-@click.argument('session_id', metavar='SESSID')
-def logs(session_id):
-    '''
-    Shows the output logs of a running container.
-
-    \b
-    SESSID: Session ID or its alias given when creating the session.
-    '''
-    with Session() as session:
-        try:
-            print_wait('Retrieving live container logs...')
-            kernel = session.ComputeSession(session_id)
-            result = kernel.get_logs().get('result')
-            logs = result.get('logs') if 'logs' in result else ''
-            print(logs)
-            print_done('End of logs.')
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
+from ..session import AsyncSession
 
 
 @main.command()

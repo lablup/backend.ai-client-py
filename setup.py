@@ -115,7 +115,7 @@ setup(
     data_files=[],
     entry_points={
         'backendai_cli_v10': [
-            '_ = ai.backend.client.cli:main',
+            '_ = ai.backend.client.cli.main:main',
         ]
     },
 )

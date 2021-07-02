@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from . import main
+from .main import main
 from .pretty import print_error
 from ..session import Session
 
