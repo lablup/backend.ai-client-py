@@ -17,7 +17,7 @@ from ..session import Session
 
 @main.group()
 def vfolder():
-    '''Provides virtual folder operations.'''
+    """Set of vfolder operations"""
 
 
 @vfolder.command()

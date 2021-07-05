@@ -10,7 +10,7 @@ from ..session import Session
 
 @main.group(aliases=['sesstpl'])
 def session_template():
-    '''Provides task template operations'''
+    """Set of session template operations"""
 
 
 @session_template.command()

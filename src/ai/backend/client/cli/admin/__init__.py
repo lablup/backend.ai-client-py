@@ -4,7 +4,7 @@ from ..main import main
 @main.group()
 def admin():
     """
-    Provides the admin API access.
+    Administrative command set
     """
 
 
@@ -15,6 +15,7 @@ from . import (  # noqa
     group,
     image,
     keypair,
+    manager,
     license,
     resource,
     resource_policy,

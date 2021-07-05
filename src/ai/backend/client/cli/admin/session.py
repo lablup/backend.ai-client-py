@@ -23,6 +23,7 @@ from ..pagination import (
     tabulate_items,
 )
 from ..utils import format_multiline, format_stats
+from ..session import session as user_session
 from ...exceptions import NoItems
 
 
@@ -203,8 +204,9 @@ def _list_cmd(name: str = "list", docs: str = None):
 # Make it available as:
 # - backend.ai ps
 # - backend.ai admin session list
-main.command()(_list_cmd(name="ps", docs="Alias of \"admin session list\""))
-scp = session.command()(_list_cmd())
+main.command()(_list_cmd(name="ps", docs="Alias of \"session list\""))
+user_session.command()(_list_cmd(docs="Alias of \"admin session list\""))
+session.command()(_list_cmd())
 
 
 def format_containers(containers: Sequence[Mapping[str, Any]], indent='') -> str:
@@ -238,96 +240,106 @@ def format_dependencies(dependencies: Sequence[Mapping[str, Any]], indent='') ->
     return "\n" + textwrap.indent(text, indent)
 
 
-@session.command()
-@click.argument('session_id', metavar='SESSID')
-def info(session_id):
-    """
-    Show detailed information for a running compute session.
-    """
-    with Session() as session_:
-        fields = [
-            ('Session Name', lambda api_session: get_naming(
-                api_session.api_version, 'name_gql_field',
-            )),
-        ]
-        if session_.api_version[0] >= 6:
-            fields.append(field_names['session_id'])
-            fields.append(field_names['kernel_id'])
-        fields.extend([
-            field_names['image'],
-        ])
-        if session_.api_version >= (4, '20181215'):
-            fields.append(field_names['tag'])
-        fields.extend([
-            field_names['created_at'],
-            field_names['terminated_at'],
-            field_names['status'],
-            field_names['status_info'],
-            field_names['status_data'],
-            field_names['occupied_slots'],
-        ])
-        fields = apply_version_aware_fields(session_, fields)
-        field_formatters = defaultdict(lambda: str)
-        field_formatters['last_stat'] = format_stats
-        field_formatters['containers'] = functools.partial(format_containers, indent='  ')
-        field_formatters['dependencies'] = functools.partial(format_dependencies, indent='  ')
-        if session_.api_version[0] < 5:
-            # In API v4 or older, we can only query a currently running session
-            # using its user-defined alias name.
-            fields.append(('Last Stats', 'last_stat'))
-            q = 'query($name: String!) {' \
-                '  compute_session(sess_id: $name) { $fields }' \
-                '}'
-            v = {'name': session_id}
-        else:
-            # In API v5 or later, we can query any compute session both in the history
-            # and currently running using its UUID.
-            # NOTE: Partial ID/alias matching is supported in the REST API only.
+def _info_cmd(docs: str = None):
+
+    @click.argument('session_id', metavar='SESSID')
+    def info(session_id):
+        """
+        Show detailed information for a running compute session.
+        """
+        with Session() as session_:
+            fields = [
+                ('Session Name', lambda api_session: get_naming(
+                    api_session.api_version, 'name_gql_field',
+                )),
+            ]
             if session_.api_version[0] >= 6:
-                fields.append((
-                    'Containers',
-                    'containers {'
-                    ' id cluster_role cluster_idx cluster_hostname '
-                    ' agent status status_info status_data status_changed '
-                    ' occupied_slots live_stat last_stat '
-                    '}',
-                ))
-            else:
-                fields.append((
-                    'Containers',
-                    'containers {'
-                    ' id role agent status status_info status_changed '
-                    ' occupied_slots live_stat last_stat '
-                    '}',
-                ))
-            fields.append((
-                'Dependencies',
-                'dependencies { name id status status_info status_changed }',
-            ))
-            q = 'query($id: UUID!) {' \
-                '  compute_session(id: $id) {' \
-                '    $fields' \
-                '  }' \
-                '}'
-            try:
-                uuid.UUID(session_id)
-            except ValueError:
-                print_fail("In API v5 or later, the session ID must be given in the UUID format.")
-                sys.exit(1)
-            v = {'id': session_id}
-        q = q.replace('$fields', ' '.join(item[1] for item in fields))
-        try:
-            resp = session_.Admin.query(q, v)
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
-        if resp['compute_session'] is None:
+                fields.append(field_names['session_id'])
+                fields.append(field_names['kernel_id'])
+            fields.extend([
+                field_names['image'],
+            ])
+            if session_.api_version >= (4, '20181215'):
+                fields.append(field_names['tag'])
+            fields.extend([
+                field_names['created_at'],
+                field_names['terminated_at'],
+                field_names['status'],
+                field_names['status_info'],
+                field_names['status_data'],
+                field_names['occupied_slots'],
+            ])
+            fields = apply_version_aware_fields(session_, fields)
+            field_formatters = defaultdict(lambda: str)
+            field_formatters['last_stat'] = format_stats
+            field_formatters['containers'] = functools.partial(format_containers, indent='  ')
+            field_formatters['dependencies'] = functools.partial(format_dependencies, indent='  ')
             if session_.api_version[0] < 5:
-                print_fail('There is no such running compute session.')
+                # In API v4 or older, we can only query a currently running session
+                # using its user-defined alias name.
+                fields.append(('Last Stats', 'last_stat'))
+                q = 'query($name: String!) {' \
+                    '  compute_session(sess_id: $name) { $fields }' \
+                    '}'
+                v = {'name': session_id}
             else:
-                print_fail('There is no such compute session.')
-            sys.exit(1)
-        transform_fields(resp['compute_session'], in_row=False)
-        for i, (key, value) in enumerate(resp['compute_session'].items()):
-            fmt = field_formatters[key]
-            print(f"{fields[i][0] + ': ':20s}{fmt(value)}")
+                # In API v5 or later, we can query any compute session both in the history
+                # and currently running using its UUID.
+                # NOTE: Partial ID/alias matching is supported in the REST API only.
+                if session_.api_version[0] >= 6:
+                    fields.append((
+                        'Containers',
+                        'containers {'
+                        ' id cluster_role cluster_idx cluster_hostname '
+                        ' agent status status_info status_data status_changed '
+                        ' occupied_slots live_stat last_stat '
+                        '}',
+                    ))
+                else:
+                    fields.append((
+                        'Containers',
+                        'containers {'
+                        ' id role agent status status_info status_changed '
+                        ' occupied_slots live_stat last_stat '
+                        '}',
+                    ))
+                fields.append((
+                    'Dependencies',
+                    'dependencies { name id status status_info status_changed }',
+                ))
+                q = 'query($id: UUID!) {' \
+                    '  compute_session(id: $id) {' \
+                    '    $fields' \
+                    '  }' \
+                    '}'
+                try:
+                    uuid.UUID(session_id)
+                except ValueError:
+                    print_fail("In API v5 or later, the session ID must be given in the UUID format.")
+                    sys.exit(1)
+                v = {'id': session_id}
+            q = q.replace('$fields', ' '.join(item[1] for item in fields))
+            try:
+                resp = session_.Admin.query(q, v)
+            except Exception as e:
+                print_error(e)
+                sys.exit(1)
+            if resp['compute_session'] is None:
+                if session_.api_version[0] < 5:
+                    print_fail('There is no such running compute session.')
+                else:
+                    print_fail('There is no such compute session.')
+                sys.exit(1)
+            transform_fields(resp['compute_session'], in_row=False)
+            for i, (key, value) in enumerate(resp['compute_session'].items()):
+                fmt = field_formatters[key]
+                print(f"{fields[i][0] + ': ':20s}{fmt(value)}")
+
+    if docs is not None:
+        info.__doc__ = docs
+    return info
+
+
+main.command()(_info_cmd(docs="Alias of \"session info\""))
+user_session.command()(_info_cmd(docs="Alias of \"admin session info\""))
+session.command()(_info_cmd())
