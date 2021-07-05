@@ -9,8 +9,9 @@ from tabulate import tabulate
 
 from . import main
 from .interaction import ask_yn
-from .pretty import print_done, print_error, print_fail, print_info, print_wait
+from .pretty import print_done, print_error, print_fail, print_info, print_wait, print_warn
 from ..session import Session
+from .config import get_config
 
 
 @main.group()
@@ -204,3 +205,42 @@ def exclude_agents(agent_ids):
     except Exception as e:
         print_error(e)
         sys.exit(1)
+
+
+@main.command()
+@click.argument('scaling_group', metavar='SCALING_GROUP', default='default')
+@click.argument('group', metavar='GROUP', default='default')
+@click.option('-a', '--all', is_flag=True,
+              help='Get all resources of group.')
+def get_resources(scaling_group, group, all):
+    '''
+    Get available resources from the scaling groups.
+    '''
+    config = get_config()
+    if config.endpoint_type != 'session':
+        print_warn('To use get-resources, your endpoint type must be "session".')
+        raise click.Abort()
+
+    with Session() as session:
+        ret = session.Resource.get_available_resources(scaling_group, group)
+        print(f'Total remaining resources of group [{group}]:')
+        print('  CPU:', ret['scaling_group_remaining']['cpu'])
+        print('  Memory:', ret['scaling_group_remaining']['mem'])
+        print('Each resources of scaling groups:')
+        if not all:
+            print(f'  [{scaling_group}]')
+            print('    Using:')
+            print('      CPU:', ret['scaling_groups'][scaling_group]['using']['cpu'])
+            print('      Memory:', ret['scaling_groups'][scaling_group]['using']['mem'])
+            print('    Remaining:')
+            print('      CPU:', ret['scaling_groups'][scaling_group]['remaining']['cpu'])
+            print('      Memory:', ret['scaling_groups'][scaling_group]['remaining']['mem'])
+        else:
+            for x in ret['scaling_groups'].keys():
+                print(f'  [{x}]')
+                print('    Using:')
+                print('      CPU:', ret['scaling_groups'][x]['using']['cpu'])
+                print('      Memory:', ret['scaling_groups'][x]['using']['mem'])
+                print('    Remaining:')
+                print('      CPU:', ret['scaling_groups'][x]['remaining']['cpu'])
+                print('      Memory:', ret['scaling_groups'][x]['remaining']['mem'])

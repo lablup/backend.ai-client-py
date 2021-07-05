@@ -36,6 +36,17 @@ class Resource(BaseFunction):
 
     @api_function
     @classmethod
+    async def get_available_resources(cls, scaling_group: str, group: str):
+        """
+        Lists all resource presets in the current scaling group with additiona
+        information.
+        """
+        rqst = Request('GET', '/resource/get-resources')
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    @classmethod
     async def get_docker_registries(cls):
         """
         Lists all registered docker registries.
