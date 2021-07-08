@@ -253,4 +253,3 @@ def get_resources(scaling_group, group, all):
         print('Group remaining:')
         print('  CPU:', ret['group_remaining']['cpu'])
         print('  Memory:', ret['group_remaining']['mem'])
-
