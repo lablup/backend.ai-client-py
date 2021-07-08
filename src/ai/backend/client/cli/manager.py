@@ -223,7 +223,7 @@ def get_resources(scaling_group, group, all):
 
     with Session() as session:
         ret = session.Resource.get_available_resources(scaling_group, group)
-        print(f'Total remaining resources of group [{group}]:')
+        print(f'Total remaining resources of scaling group [{scaling_group}]:')
         print('  CPU:', ret['scaling_group_remaining']['cpu'])
         print('  Memory:', ret['scaling_group_remaining']['mem'])
         print('Each resources of scaling groups:')
@@ -244,3 +244,13 @@ def get_resources(scaling_group, group, all):
                 print('    Remaining:')
                 print('      CPU:', ret['scaling_groups'][x]['remaining']['cpu'])
                 print('      Memory:', ret['scaling_groups'][x]['remaining']['mem'])
+        print('Group limits:')
+        print('  CPU:', ret['group_limits']['cpu'])
+        print('  Memory:', ret['group_limits']['mem'])
+        print('Group using:')
+        print('  CPU:', ret['group_using']['cpu'])
+        print('  Memory:', ret['group_using']['mem'])
+        print('Group remaining:')
+        print('  CPU:', ret['group_remaining']['cpu'])
+        print('  Memory:', ret['group_remaining']['mem'])
+

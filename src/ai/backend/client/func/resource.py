@@ -41,7 +41,7 @@ class Resource(BaseFunction):
         Lists all resource presets in the current scaling group with additiona
         information.
         """
-        rqst = Request('GET', '/resource/get-resources')
+        rqst = Request('GET', '/resource/available-resources')
         async with rqst.fetch() as resp:
             return await resp.json()
 
