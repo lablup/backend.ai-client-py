@@ -38,8 +38,7 @@ class Resource(BaseFunction):
     @classmethod
     async def get_available_resources(cls, scaling_group: str, group: str):
         """
-        Lists all resource presets in the current scaling group with additiona
-        information.
+        Lists available resources from the scaling groups.
         """
         rqst = Request('GET', '/resource/available-resources')
         async with rqst.fetch() as resp:
