@@ -1,0 +1,1 @@
+Fix a missing `py.typed` marker in the wheel package
