@@ -103,7 +103,7 @@ class ComputeSession(BaseFunction):
                 'type',
                 'status',
                 'status_info',
-                'last_updated',
+                'status_changed',
                 'result',
             ]
         async for item in generate_paginated_results(
