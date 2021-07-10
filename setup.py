@@ -112,6 +112,9 @@ setup(
         'docs': docs_requires,
     },
     data_files=[],
+    package_data={
+        'ai.backend.client': ['py.typed'],
+    },
     entry_points={
         'backendai_cli_v10': [
             '_ = ai.backend.client.cli:main',
