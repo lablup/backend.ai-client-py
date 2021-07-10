@@ -7,7 +7,7 @@ setup_requires = [
     'setuptools>=54.2.0',
 ]
 install_requires = [
-    'backend.ai-cli~=0.5.0',
+    'backend.ai-cli~=0.5.0.post1',
     'aiohttp~=3.7.4',
     'aiotusclient~=0.1.3',
     'appdirs~=1.4.3',
@@ -113,6 +113,9 @@ setup(
         'docs': docs_requires,
     },
     data_files=[],
+    package_data={
+        'ai.backend.client': ['py.typed'],
+    },
     entry_points={
         'backendai_cli_v10': [
             '_ = ai.backend.client.cli.main:main',
