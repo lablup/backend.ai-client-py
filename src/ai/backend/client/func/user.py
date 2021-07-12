@@ -81,14 +81,8 @@ class User(BaseFunction):
             'status': status,
             'group': group,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['users']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['users']
 
     @api_function
     @classmethod
@@ -146,19 +140,8 @@ class User(BaseFunction):
             """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'email': email}
-        rqst = Request('POST', '/admin/graphql')
-        if email is None:
-            rqst.set_json({
-                'query': query,
-            })
-        else:
-            rqst.set_json({
-                'query': query,
-                'variables': variables,
-            })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['user']
+        data = await api_session.get().Admin._query(query, variables if email is not None else None)
+        return data['user']
 
     @api_function
     @classmethod
@@ -191,19 +174,8 @@ class User(BaseFunction):
             """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'user_id': str(user_uuid)}
-        rqst = Request('POST', '/admin/graphql')
-        if user_uuid is None:
-            rqst.set_json({
-                'query': query,
-            })
-        else:
-            rqst.set_json({
-                'query': query,
-                'variables': variables,
-            })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['user_from_uuid']
+        data = await api_session.get().Admin._query(query, variables if user_uuid is not None else None)
+        return data['user_from_uuid']
 
     @api_function
     @classmethod
@@ -245,14 +217,8 @@ class User(BaseFunction):
                 'group_ids': group_ids,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['create_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['create_user']
 
     @api_function
     @classmethod
@@ -293,14 +259,8 @@ class User(BaseFunction):
                 'group_ids': group_ids,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['modify_user']
 
     @api_function
     @classmethod
@@ -316,14 +276,8 @@ class User(BaseFunction):
             }
         """)
         variables = {'email': email}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['delete_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['delete_user']
 
     @api_function
     @classmethod
@@ -348,11 +302,5 @@ class User(BaseFunction):
                 'purge_shared_vfolders': purge_shared_vfolders,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['purge_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['purge_user']

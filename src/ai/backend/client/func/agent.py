@@ -6,6 +6,7 @@ from typing import (
 
 from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 from ..pagination import generate_paginated_results
 
 __all__ = (
@@ -86,14 +87,8 @@ class Agent(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'agent_id': agent_id}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['agent']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['agent']
 
 
 class AgentWatcher(BaseFunction):
