@@ -24,7 +24,8 @@ class Admin(BaseFunction):
     @api_function
     @classmethod
     async def query(
-        cls, query: str,
+        cls,
+        query: str,
         variables: Optional[Mapping[str, Any]] = None,
     ) -> Any:
         """
@@ -36,6 +37,18 @@ class Admin(BaseFunction):
             in the query.
 
         :returns: The object parsed from the response JSON string.
+        """
+        return await cls._query(query, variables)
+
+    @classmethod
+    async def _query(
+        cls,
+        query: str,
+        variables: Optional[Mapping[str, Any]] = None,
+    ) -> Any:
+        """
+        Internal async implementation of the query() method,
+        which may be reused by other functional APIs to make GQL requests.
         """
         gql_query = {
             'query': query,
