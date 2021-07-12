@@ -2,7 +2,7 @@ import textwrap
 from typing import Iterable, Sequence
 
 from .base import api_function, BaseFunction
-from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'Group',
@@ -42,13 +42,7 @@ class Group(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'domain_name': domain_name}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['groups']
 
     @api_function
@@ -70,13 +64,7 @@ class Group(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'gid': gid}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['group']
 
     @api_function
@@ -111,13 +99,7 @@ class Group(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['create_group']
 
     @api_function
@@ -149,13 +131,7 @@ class Group(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['modify_group']
 
     @api_function
@@ -172,13 +148,7 @@ class Group(BaseFunction):
             }
         """)
         variables = {'gid': gid}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['delete_group']
 
     @api_function
@@ -195,13 +165,7 @@ class Group(BaseFunction):
             }
         """)
         variables = {'gid': gid}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['purge_group']
 
     @api_function
@@ -226,13 +190,7 @@ class Group(BaseFunction):
                 'user_uuids': user_uuids,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['modify_group']
 
     @api_function
@@ -257,11 +215,5 @@ class Group(BaseFunction):
                 'user_uuids': user_uuids,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(query, variables)
         return data['modify_group']

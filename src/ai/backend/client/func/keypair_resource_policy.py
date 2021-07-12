@@ -1,7 +1,7 @@
 from typing import Iterable, Sequence
 
 from .base import api_function, BaseFunction
-from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'KeypairResourcePolicy'
@@ -54,14 +54,8 @@ class KeypairResourcePolicy(BaseFunction):
                 'allowed_vfolder_hosts': allowed_vfolder_hosts,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['create_keypair_resource_policy']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['create_keypair_resource_policy']
 
     @api_function
     @classmethod
@@ -97,14 +91,8 @@ class KeypairResourcePolicy(BaseFunction):
                 'allowed_vfolder_hosts': allowed_vfolder_hosts,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_keypair_resource_policy']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['modify_keypair_resource_policy']
 
     @api_function
     @classmethod
@@ -122,14 +110,8 @@ class KeypairResourcePolicy(BaseFunction):
         variables = {
             'name': name,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['delete_keypair_resource_policy']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['delete_keypair_resource_policy']
 
     @api_function
     @classmethod
@@ -151,13 +133,8 @@ class KeypairResourcePolicy(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['keypair_resource_policies']
+        data = await api_session.get().Admin._query(q)
+        return data['keypair_resource_policies']
 
     @api_function
     async def info(self, name: str, fields: Iterable[str] = None) -> dict:
@@ -184,11 +161,5 @@ class KeypairResourcePolicy(BaseFunction):
         variables = {
             'name': name,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['keypair_resource_policy']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['keypair_resource_policy']

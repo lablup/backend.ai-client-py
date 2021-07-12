@@ -2,6 +2,7 @@ from typing import Iterable, Sequence
 
 from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'Image',
@@ -17,13 +18,14 @@ class Image(BaseFunction):
 
     @api_function
     @classmethod
-    async def list(cls,
-                   operation: bool = False,
-                   fields: Iterable[str] = None) -> Sequence[dict]:
+    async def list(
+        cls,
+        operation: bool = False,
+        fields: Iterable[str] = None,
+    ) -> Sequence[dict]:
         """
         Fetches the list of registered images in this cluster.
         """
-
         if fields is None:
             fields = (
                 'name',
@@ -39,13 +41,7 @@ class Image(BaseFunction):
         variables = {
             'is_operation': operation,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(q, variables)
         return data['images']
 
     @api_function
@@ -59,13 +55,7 @@ class Image(BaseFunction):
         variables = {
             'registry': registry,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(q, variables)
         return data['rescan_images']
 
     @api_function
@@ -80,13 +70,7 @@ class Image(BaseFunction):
             'alias': alias,
             'target': target,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(q, variables)
         return data['alias_image']
 
     @api_function
@@ -100,13 +84,7 @@ class Image(BaseFunction):
         variables = {
             'alias': alias,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
+        data = await api_session.get().Admin._query(q, variables)
         return data['dealias_image']
 
     @api_function
