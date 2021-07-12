@@ -13,7 +13,7 @@ from typing_extensions import (  # for Python 3.7
 )
 
 from .exceptions import NoItems
-from .request import Request
+from .session import api_session
 
 MAX_PAGE_SIZE: Final = 100
 
@@ -57,13 +57,7 @@ async def execute_paginated_query(
     var_values = {key: value[0] for key, value in variables.items()}
     var_values['limit'] = limit
     var_values['offset'] = offset
-    rqst = Request('POST', '/admin/graphql')
-    rqst.set_json({
-        'query': query,
-        'variables': var_values,
-    })
-    async with rqst.fetch() as resp:
-        data = await resp.json()
+    data = await api_session.get().Admin._query(query, var_values)
     return cast(PaginatedResult, data[root_field])
 
 
