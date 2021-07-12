@@ -223,33 +223,34 @@ def get_resources(scaling_group, group, all):
 
     with Session() as session:
         ret = session.Resource.get_available_resources(scaling_group, group)
+        slot_types = session.Resource.get_resource_slots()
         print(f'Total remaining resources of scaling group [{scaling_group}]:')
-        print('  CPU:', ret['scaling_group_remaining']['cpu'])
-        print('  Memory:', ret['scaling_group_remaining']['mem'])
+        for key in slot_types.keys():
+            print('  ' + key, ret['scaling_group_remaining'][key])
         print('Each resources of scaling groups:')
         if not all:
             print(f'  [{scaling_group}]')
             print('    Using:')
-            print('      CPU:', ret['scaling_groups'][scaling_group]['using']['cpu'])
-            print('      Memory:', ret['scaling_groups'][scaling_group]['using']['mem'])
+            for key in slot_types.keys():
+                print('      ' + key, ret['scaling_groups'][scaling_group]['using'][key])
             print('    Remaining:')
-            print('      CPU:', ret['scaling_groups'][scaling_group]['remaining']['cpu'])
-            print('      Memory:', ret['scaling_groups'][scaling_group]['remaining']['mem'])
+            for key in slot_types.keys():
+                print('      ' + key, ret['scaling_groups'][scaling_group]['remaining'][key])
         else:
             for x in ret['scaling_groups'].keys():
                 print(f'  [{x}]')
                 print('    Using:')
-                print('      CPU:', ret['scaling_groups'][x]['using']['cpu'])
-                print('      Memory:', ret['scaling_groups'][x]['using']['mem'])
+                for key in slot_types.keys():
+                    print('      ' + key, ret['scaling_groups'][x]['using'][key])
                 print('    Remaining:')
-                print('      CPU:', ret['scaling_groups'][x]['remaining']['cpu'])
-                print('      Memory:', ret['scaling_groups'][x]['remaining']['mem'])
+                for key in slot_types.keys():
+                    print('      ' + key, ret['scaling_groups'][x]['remaining'][key])
         print('Group limits:')
-        print('  CPU:', ret['group_limits']['cpu'])
-        print('  Memory:', ret['group_limits']['mem'])
+        for key in slot_types.keys():
+            print('  ' + key, ret['group_limits'][key])
         print('Group using:')
-        print('  CPU:', ret['group_using']['cpu'])
-        print('  Memory:', ret['group_using']['mem'])
+        for key in slot_types.keys():
+            print('  ' + key, ret['group_using'][key])
         print('Group remaining:')
-        print('  CPU:', ret['group_remaining']['cpu'])
-        print('  Memory:', ret['group_remaining']['mem'])
+        for key in slot_types.keys():
+            print('  ' + key, ret['group_remaining'][key])
