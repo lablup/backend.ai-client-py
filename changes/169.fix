@@ -1,0 +1,1 @@
+Fix regression of `vfolder upload` and other commands using `ByteSizeParamType` with the default values given as `int`

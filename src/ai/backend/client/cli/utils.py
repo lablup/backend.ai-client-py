@@ -20,6 +20,8 @@ class ByteSizeParamType(click.ParamType):
     }
 
     def convert(self, value, param, ctx):
+        if isinstance(value, int):
+            return value
         if not isinstance(value, str):
             self.fail(f"expected string, got {value!r} of type {type(value).__name__}", param, ctx)
         m = self._rx_digits.search(value)
@@ -34,6 +36,8 @@ class ByteSizeParamCheckType(ByteSizeParamType):
     name = "byte-check"
 
     def convert(self, value, param, ctx):
+        if isinstance(value, int):
+            return value
         if not isinstance(value, str):
             self.fail(f"expected string, got {value!r} of type {type(value).__name__}", param, ctx)
         m = self._rx_digits.search(value)
