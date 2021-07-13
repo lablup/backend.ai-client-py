@@ -16,6 +16,15 @@ Changes
 
 .. towncrier release notes start
 
+20.09.5 (2021-07-13)
+--------------------
+
+### Fixes
+* Fix a missing `py.typed` marker in the wheel package ([#166](https://github.com/lablup/backend.ai-client-py/issues/166))
+* Fix a wrong field name (`last_updated`) for `status_changed` when `ComputeSession.paginated_list()` is executed without the explicit field list. ([#167](https://github.com/lablup/backend.ai-client-py/issues/167))
+* Fix regression of `vfolder upload` and other commands using `ByteSizeParamType` with the default values given as `int` ([#169](https://github.com/lablup/backend.ai-client-py/issues/169))
+
+
 20.09.4 (2021-06-13)
 --------------------
 
