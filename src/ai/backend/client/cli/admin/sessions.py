@@ -85,10 +85,11 @@ def transform_fields(item: SessionItem, *, in_row: bool = True) -> SessionItem:
 @click.option('--running', is_flag=True,
               help='Filter only scheduled and running sessions. Ignores --status option.')
 @click.option('--detail', is_flag=True, help='Show more details using more columns.')
-@click.option('-f', '--format', default=None,  help='Display only specified fields.')
+@click.option('-f', '--format', default=None, help='Display only specified fields.')
+@click.option('--filter', 'filter_', default=None, help='Set the query filter expression.')
 @click.option('--plain', is_flag=True,
               help='Display the session list without decorative line drawings and the header.')
-def sessions(status, access_key, name_only, dead, running, detail, plain, format):
+def sessions(status, access_key, name_only, dead, running, detail, filter_, plain, format):
     '''
     List and manage compute sessions.
     '''
@@ -169,6 +170,7 @@ def sessions(status, access_key, name_only, dead, running, detail, plain, format
                     status, access_key,
                     fields=[f[1] for f in fields],
                     page_size=page_size,
+                    query_filter=filter_,
                 )
                 if name_only:
                     echo_via_pager(
