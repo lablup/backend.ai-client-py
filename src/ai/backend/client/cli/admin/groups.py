@@ -30,19 +30,63 @@ def group(gid):
     ]
     with Session() as session:
         try:
-            resp = session.Group.detail(gid=gid,
-                                        fields=(item[1] for item in fields))
+            item = session.Group.detail(
+                gid=gid,
+                fields=(item[1] for item in fields),
+            )
         except Exception as e:
             print_error(e)
             sys.exit(1)
         rows = []
-        if resp is None:
-            print('There is no such group.')
+        if item is None:
+            print_fail('There is no such group.')
             sys.exit(1)
         for name, key in fields:
-            if key in resp:
-                rows.append((name, resp[key]))
+            if key in item:
+                rows.append((name, item[key]))
         print(tabulate(rows, headers=('Field', 'Value')))
+
+
+@admin.command()
+@click.argument('name', type=str)
+def group_by_name(name: str):
+    '''
+    Show the information about the given group.
+
+    \b
+    name: Group name.
+    '''
+    fields = [
+        ('ID', 'id'),
+        ('Name', 'name'),
+        ('Domain', 'domain_name'),
+        ('Description', 'description'),
+        ('Active?', 'is_active'),
+        ('Created At', 'created_at'),
+        ('Total Resource Slots', 'total_resource_slots'),
+        ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
+    ]
+    with Session() as session:
+        try:
+            items = session.Group.from_name(
+                name,
+                fields=(item[1] for item in fields),
+            )
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+        rows = []
+        if not items:
+            print_fail('There is no such group.')
+            sys.exit(1)
+        show_splitter = (len(items) > 1)
+        for item_idx, item in enumerate(items):
+            if show_splitter and item_idx > 0:
+                print("=" * 40)
+            for name, key in fields:
+                if key in item:
+                    rows.append((name, item[key]))
+            print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @admin.group(invoke_without_command=True)
@@ -65,6 +109,7 @@ def groups(ctx, domain_name):
         ('Created At', 'created_at'),
         ('Total Resource Slots', 'total_resource_slots'),
         ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
+        ('Allowed scaling groups', 'scaling_groups'),
     ]
     with Session() as session:
         try:
@@ -74,7 +119,7 @@ def groups(ctx, domain_name):
             print_error(e)
             sys.exit(1)
         if len(resp) < 1:
-            print('There is no group.')
+            print_fail('There is no group.')
             return
         fields = [field for field in fields if field[1] in resp[0]]
         print(tabulate((item.values() for item in resp),
