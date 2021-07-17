@@ -49,7 +49,10 @@ class Group(BaseFunction):
         domain_name: str = None,
     ) -> Sequence[dict]:
         """
-        Find the group by its name.
+        Find the group(s) by its name.
+        It may return multiple groups when there are groups with the same name
+        in different domains and it is invoked with a super-admin account
+        without setting the domain name.
 
         :param domain_name: Name of domain to get groups from.
         :param fields: Per-group query fields to fetch.
@@ -58,7 +61,7 @@ class Group(BaseFunction):
             fields = _default_detail_fields
         query = textwrap.dedent("""\
             query($name: String!, $domain_name: String) {
-                group_by_name(name: $name, domain_name: $domain_name) {$fields}
+                groups_by_name(name: $name, domain_name: $domain_name) {$fields}
             }
         """)
         query = query.replace('$fields', ' '.join(fields))
@@ -67,7 +70,7 @@ class Group(BaseFunction):
             'domain_name': domain_name,
         }
         data = await api_session.get().Admin._query(query, variables)
-        return data['group_by_name']
+        return data['groups_by_name']
 
     @api_function
     @classmethod

@@ -49,9 +49,12 @@ def group(gid):
 
 @admin.command()
 @click.argument('name', type=str)
-def group_by_name(name: str):
+def groups_by_name(name: str):
     '''
-    Show the information about the given group.
+    Show the information about the group(s) having the given name.
+    Two or more groups in different domains may have the same name,
+    so this may print out information of multiple groups if queried
+    by a superadmin.
 
     \b
     name: Group name.
