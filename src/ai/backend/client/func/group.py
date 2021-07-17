@@ -8,6 +8,25 @@ __all__ = (
     'Group',
 )
 
+_default_list_fields = (
+    'id',
+    'name',
+    'is_active',
+    'created_at',
+    'integration_id',
+)
+_default_detail_fields = (
+    'id',
+    'name',
+    'description',
+    'is_active',
+    'created_at',
+    'domain_name',
+    'total_resource_slots',
+    'allowed_vfolder_hosts',
+    'integration_id',
+)
+
 
 class Group(BaseFunction):
     """
@@ -22,19 +41,52 @@ class Group(BaseFunction):
 
     @api_function
     @classmethod
-    async def list(cls, domain_name: str,
-                   fields: Iterable[str] = None) -> Sequence[dict]:
+    async def from_name(
+        cls,
+        name: str,
+        *,
+        fields: Iterable[str] = None,
+        domain_name: str = None,
+    ) -> Sequence[dict]:
+        """
+        Find the group(s) by its name.
+        It may return multiple groups when there are groups with the same name
+        in different domains and it is invoked with a super-admin account
+        without setting the domain name.
+
+        :param domain_name: Name of domain to get groups from.
+        :param fields: Per-group query fields to fetch.
+        """
+        if fields is None:
+            fields = _default_detail_fields
+        query = textwrap.dedent("""\
+            query($name: String!, $domain_name: String) {
+                groups_by_name(name: $name, domain_name: $domain_name) {$fields}
+            }
+        """)
+        query = query.replace('$fields', ' '.join(fields))
+        variables = {
+            'name': name,
+            'domain_name': domain_name,
+        }
+        data = await api_session.get().Admin._query(query, variables)
+        return data['groups_by_name']
+
+    @api_function
+    @classmethod
+    async def list(
+        cls,
+        domain_name: str,
+        fields: Iterable[str] = None,
+    ) -> Sequence[dict]:
         """
         Fetches the list of groups.
 
         :param domain_name: Name of domain to list groups.
-        :param fields: Additional per-group query fields to fetch.
+        :param fields: Per-group query fields to fetch.
         """
         if fields is None:
-            fields = ('id', 'name', 'description', 'is_active',
-                      'created_at', 'domain_name',
-                      'total_resource_slots', 'allowed_vfolder_hosts',
-                      'integration_id')
+            fields = _default_list_fields
         query = textwrap.dedent("""\
             query($domain_name: String) {
                 groups(domain_name: $domain_name) {$fields}
@@ -61,8 +113,7 @@ class Group(BaseFunction):
         :param fields: Additional per-group query fields to fetch.
         """
         if fields is None:
-            fields = ('id', 'name', 'description', 'is_active', 'created_at', 'domain_name',
-                      'total_resource_slots', 'allowed_vfolder_hosts', 'integration_id')
+            fields = _default_detail_fields
         query = textwrap.dedent("""\
             query($gid: UUID!) {
                 group(id: $gid) {$fields}
