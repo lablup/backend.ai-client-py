@@ -21,10 +21,11 @@ from .admin.sessions import sessions
               help='Filter only scheduled and running sessions. Ignores --status option.')
 @click.option('--detail', is_flag=True, help='Show more details using more columns.')
 @click.option('-f', '--format', default=None,  help='Display only specified fields.')
+@click.option('--filter', 'filter_', default=None, help='Set the query filter expression.')
 @click.option('--plain', is_flag=True,
               help='Display the session list without decorative line drawings and the header.')
 @click.pass_context
-def ps(ctx, status, name_only, dead, running, detail, plain, format):
+def ps(ctx, status, name_only, dead, running, detail, filter_, plain, format):
     '''
     Lists the current running compute sessions for the current keypair.
     This is an alias of the "admin sessions --status=RUNNING" command.
