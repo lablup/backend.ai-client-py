@@ -8,8 +8,8 @@ from typing import (
 )
 
 from .base import api_function, BaseFunction
-from ..request import Request
 from ..pagination import generate_paginated_results
+from ..session import api_session
 
 __all__ = (
     'KeyPair',
@@ -62,14 +62,8 @@ class KeyPair(BaseFunction):
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['create_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['create_keypair']
 
     @api_function
     @classmethod
@@ -96,14 +90,8 @@ class KeyPair(BaseFunction):
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['modify_keypair']
 
     @api_function
     @classmethod
@@ -119,14 +107,8 @@ class KeyPair(BaseFunction):
         variables = {
             'access_key': access_key,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['delete_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['delete_keypair']
 
     @api_function
     @classmethod
@@ -158,14 +140,8 @@ class KeyPair(BaseFunction):
         }
         if user_id is not None:
             variables['email'] = user_id
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['keypairs']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['keypairs']
 
     @api_function
     @classmethod
@@ -216,13 +192,8 @@ class KeyPair(BaseFunction):
             '  }' \
             '}'
         q = q.replace('$fields', ' '.join(fields))
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['keypair']
+        data = await api_session.get().Admin._query(q)
+        return data['keypair']
 
     @api_function
     @classmethod
@@ -245,14 +216,8 @@ class KeyPair(BaseFunction):
                 'rate_limit': None,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['modify_keypair']
 
     @api_function
     @classmethod
@@ -277,11 +242,5 @@ class KeyPair(BaseFunction):
                 'rate_limit': None,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['modify_keypair']

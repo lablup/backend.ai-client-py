@@ -2,7 +2,7 @@ import textwrap
 from typing import Iterable, Sequence
 
 from .base import api_function, BaseFunction
-from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'Domain',
@@ -39,13 +39,8 @@ class Domain(BaseFunction):
             }
         """)
         query = query.replace('$fields', ' '.join(fields))
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['domains']
+        data = await api_session.get().Admin._query(query)
+        return data['domains']
 
     @api_function
     @classmethod
@@ -67,14 +62,8 @@ class Domain(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'name': name}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['domain']
 
     @api_function
     @classmethod
@@ -109,14 +98,8 @@ class Domain(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['create_domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['create_domain']
 
     @api_function
     @classmethod
@@ -149,14 +132,8 @@ class Domain(BaseFunction):
                 'integration_id': integration_id,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['modify_domain']
 
     @api_function
     @classmethod
@@ -172,14 +149,8 @@ class Domain(BaseFunction):
             }
         """)
         variables = {'name': name}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['delete_domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['delete_domain']
 
     @api_function
     @classmethod
@@ -195,11 +166,5 @@ class Domain(BaseFunction):
             }
         """)
         variables = {'name': name}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['purge_domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['purge_domain']

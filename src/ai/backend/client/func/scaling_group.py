@@ -4,6 +4,7 @@ from typing import Iterable, Mapping, Sequence
 
 from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'ScalingGroup',
@@ -29,8 +30,10 @@ class ScalingGroup(BaseFunction):
         List available scaling groups for the current user,
         considering the user, the user's domain, and the designated user group.
         """
-        rqst = Request('GET', '/scaling-groups',
-                       params={'group': group})
+        rqst = Request(
+            'GET', '/scaling-groups',
+            params={'group': group},
+        )
         async with rqst.fetch() as resp:
             return await resp.json()
 
@@ -55,14 +58,8 @@ class ScalingGroup(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'is_active': None}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['scaling_groups']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['scaling_groups']
 
     @api_function
     @classmethod
@@ -85,14 +82,8 @@ class ScalingGroup(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'name': name}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['scaling_group']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['scaling_group']
 
     @api_function
     @classmethod
@@ -124,14 +115,8 @@ class ScalingGroup(BaseFunction):
                 'scheduler_opts': json.dumps(scheduler_opts),
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['create_scaling_group']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['create_scaling_group']
 
     @api_function
     @classmethod
@@ -163,14 +148,8 @@ class ScalingGroup(BaseFunction):
                 'scheduler_opts': json.dumps(scheduler_opts),
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_scaling_group']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['modify_scaling_group']
 
     @api_function
     @classmethod
@@ -186,14 +165,8 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'name': name}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['delete_scaling_group']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['delete_scaling_group']
 
     @api_function
     @classmethod
@@ -213,14 +186,8 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'domain': domain}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['associate_scaling_group_with_domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['associate_scaling_group_with_domain']
 
     @api_function
     @classmethod
@@ -240,14 +207,8 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'domain': domain}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['disassociate_scaling_group_with_domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['disassociate_scaling_group_with_domain']
 
     @api_function
     @classmethod
@@ -265,14 +226,8 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'domain': domain}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['disassociate_all_scaling_groups_with_domain']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['disassociate_all_scaling_groups_with_domain']
 
     @api_function
     @classmethod
@@ -292,14 +247,8 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'user_group': group_id}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['associate_scaling_group_with_user_group']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['associate_scaling_group_with_user_group']
 
     @api_function
     @classmethod
@@ -319,14 +268,8 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'scaling_group': scaling_group, 'user_group': group_id}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['disassociate_scaling_group_with_user_group']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['disassociate_scaling_group_with_user_group']
 
     @api_function
     @classmethod
@@ -344,11 +287,5 @@ class ScalingGroup(BaseFunction):
             }
         """)
         variables = {'group_id': group_id}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['disassociate_all_scaling_groups_with_group']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['disassociate_all_scaling_groups_with_group']
