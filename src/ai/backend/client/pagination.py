@@ -3,7 +3,7 @@ from typing import (
     cast,
     Any,
     AsyncIterator,
-    Mapping,
+    Dict,
     Sequence,
     Tuple,
 )
@@ -25,7 +25,7 @@ class PaginatedResult(TypedDict):
 
 async def execute_paginated_query(
     root_field: str,
-    variables: Mapping[str, Tuple[Any, str]],
+    variables: Dict[str, Tuple[Any, str]],
     fields: Sequence[str],
     *,
     limit: int,
@@ -63,7 +63,7 @@ async def execute_paginated_query(
 
 async def generate_paginated_results(
     root_field: str,
-    variables: Mapping[str, Tuple[Any, str]],
+    variables: Dict[str, Tuple[Any, str]],
     fields: Sequence[str],
     *,
     page_size: int,
