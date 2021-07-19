@@ -16,6 +16,17 @@ Changes
 
 .. towncrier release notes start
 
+21.03.4 (2021-07-19)
+--------------------
+
+### Features
+* Add `admin groups-by-name` to resolve group information by the name ([#170](https://github.com/lablup/backend.ai-client-py/issues/170))
+* Add support for queryfilter (`--filter`) and ordering (`--order`) arguments for paginated lists (e.g., `ps`, `admin agents`, `admin users` commands) ([#171](https://github.com/lablup/backend.ai-client-py/issues/171))
+
+### Fixes
+* Support the new standard-compliant GQL endpoint in the manager with the API version v6.20210815 ([#168](https://github.com/lablup/backend.ai-client-py/issues/168))
+
+
 21.03.3 (2021-07-13)
 --------------------
 
