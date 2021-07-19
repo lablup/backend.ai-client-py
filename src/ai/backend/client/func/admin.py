@@ -61,7 +61,11 @@ class Admin(BaseFunction):
                 response = await resp.json()
                 errors = response.get("errors", [])
                 if errors:
-                    raise BackendAPIError(400, reason="GraphQL-generated error", data=errors)
+                    raise BackendAPIError(400, reason="Invalid request", data={
+                        'type': 'https://api.backend.ai/probs/graphql-error',
+                        'title': 'GraphQL-generated error',
+                        'data': errors,
+                    })
                 else:
                     return response["data"]
         else:
