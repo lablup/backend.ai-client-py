@@ -93,6 +93,8 @@ class User(BaseFunction):
         *,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
@@ -107,6 +109,8 @@ class User(BaseFunction):
             {
                 'status': (status, 'String'),
                 'group_id': (group, 'UUID'),
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
             },
             fields,
             page_size=page_size,
