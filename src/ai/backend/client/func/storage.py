@@ -48,6 +48,8 @@ class Storage(BaseFunction):
         *,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Lists the keypairs.
@@ -55,7 +57,10 @@ class Storage(BaseFunction):
         """
         async for item in generate_paginated_results(
             'storage_volume_list',
-            {},
+            {
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
+            },
             fields,
             page_size=page_size,
         ):

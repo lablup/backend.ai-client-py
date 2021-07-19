@@ -44,6 +44,13 @@ class BackendAPIError(BackendError):
         return self.args[2]
 
 
+class BackendAPIVersionError(BackendError):
+    """
+    Exception indicating that the given operation/argument is not supported
+    in the currently negotiated server API version.
+    """
+
+
 class BackendClientError(BackendError):
     """
     Exceptions from the client library, such as argument validation

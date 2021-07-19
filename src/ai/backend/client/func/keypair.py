@@ -34,12 +34,15 @@ class KeyPair(BaseFunction):
 
     @api_function
     @classmethod
-    async def create(cls, user_id: Union[int, str],
-                     is_active: bool = True,
-                     is_admin: bool = False,
-                     resource_policy: str = None,
-                     rate_limit: int = None,
-                     fields: Iterable[str] = None) -> dict:
+    async def create(
+        cls,
+        user_id: Union[int, str],
+        is_active: bool = True,
+        is_admin: bool = False,
+        resource_policy: str = None,
+        rate_limit: int = None,
+        fields: Iterable[str] = None,
+    ) -> dict:
         """
         Creates a new keypair with the given options.
         You need an admin privilege for this operation.
@@ -67,11 +70,14 @@ class KeyPair(BaseFunction):
 
     @api_function
     @classmethod
-    async def update(cls, access_key: str,
-                     is_active: bool = None,
-                     is_admin: bool = None,
-                     resource_policy: str = None,
-                     rate_limit: int = None) -> dict:
+    async def update(
+        cls,
+        access_key: str,
+        is_active: bool = None,
+        is_admin: bool = None,
+        resource_policy: str = None,
+        rate_limit: int = None,
+    ) -> dict:
         """
         Creates a new keypair with the given options.
         You need an admin privilege for this operation.
@@ -113,7 +119,8 @@ class KeyPair(BaseFunction):
     @api_function
     @classmethod
     async def list(
-        cls, user_id: Union[int, str] = None,
+        cls,
+        user_id: Union[int, str] = None,
         is_active: bool = None,
         fields: Sequence[str] = _default_list_fields,
     ) -> Sequence[dict]:
@@ -153,6 +160,8 @@ class KeyPair(BaseFunction):
         user_id: str = None,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Lists the keypairs.
@@ -161,6 +170,8 @@ class KeyPair(BaseFunction):
         variables = {
             'is_active': (is_active, 'Boolean'),
             'domain_name': (domain_name, 'String'),
+            'filter': (filter, 'String'),
+            'order': (order, 'String'),
         }
         if user_id is not None:
             variables['email'] = (user_id, 'String')
