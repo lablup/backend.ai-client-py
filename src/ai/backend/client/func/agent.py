@@ -57,6 +57,8 @@ class Agent(BaseFunction):
         *,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Lists the keypairs.
@@ -67,6 +69,8 @@ class Agent(BaseFunction):
             {
                 'status': (status, 'String'),
                 'scaling_group': (scaling_group, 'String'),
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
             },
             fields,
             page_size=page_size,

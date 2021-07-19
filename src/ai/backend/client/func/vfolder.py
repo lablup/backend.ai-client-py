@@ -91,6 +91,8 @@ class VFolder(BaseFunction):
         *,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Fetches the list of vfolders. Domain admins can only get domain vfolders.
@@ -103,6 +105,8 @@ class VFolder(BaseFunction):
             {
                 'group_id': (group, 'UUID'),
                 'access_key': (access_key, 'String'),
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
             },
             fields,
             page_size=page_size,

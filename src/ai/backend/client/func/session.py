@@ -89,6 +89,8 @@ class ComputeSession(BaseFunction):
         *,
         fields: Sequence[str] = None,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
@@ -111,6 +113,8 @@ class ComputeSession(BaseFunction):
             {
                 'status': (status, 'String'),
                 'access_key': (access_key, 'String'),
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
             },
             fields,
             page_size=page_size,
