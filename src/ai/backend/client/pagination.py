@@ -3,7 +3,7 @@ from typing import (
     cast,
     Any,
     AsyncIterator,
-    Mapping,
+    Dict,
     Sequence,
     Tuple,
 )
@@ -12,7 +12,7 @@ from typing_extensions import (  # for Python 3.7
     TypedDict,
 )
 
-from .exceptions import NoItems
+from .exceptions import NoItems, BackendAPIVersionError
 from .session import api_session
 
 MAX_PAGE_SIZE: Final = 100
@@ -25,7 +25,7 @@ class PaginatedResult(TypedDict):
 
 async def execute_paginated_query(
     root_field: str,
-    variables: Mapping[str, Tuple[Any, str]],
+    variables: Dict[str, Tuple[Any, str]],
     fields: Sequence[str],
     *,
     limit: int,
@@ -63,13 +63,21 @@ async def execute_paginated_query(
 
 async def generate_paginated_results(
     root_field: str,
-    variables: Mapping[str, Tuple[Any, str]],
+    variables: Dict[str, Tuple[Any, str]],
     fields: Sequence[str],
     *,
     page_size: int,
 ) -> AsyncIterator[Any]:
     if page_size > MAX_PAGE_SIZE:
         raise ValueError(f"The page size cannot exceed {MAX_PAGE_SIZE}")
+    if api_session.get().api_version < (6, '20210815'):
+        if variables['filter'][0] is not None or variables['order'][0] is not None:
+            raise BackendAPIVersionError(
+                "filter and order arguments for paginated lists require v6.20210815 or later."
+            )
+        # should remove to work with older managers
+        variables.pop('filter')
+        variables.pop('order')
     offset = 0
     total_count = -1
     while True:

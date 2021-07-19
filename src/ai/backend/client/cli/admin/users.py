@@ -61,7 +61,11 @@ def user(email):
               help='Filter users in a specific state (active, inactive, deleted, before-verification).')
 @click.option('-g', '--group', type=str, default=None,
               help='Filter by group ID.')
-def users(ctx, status, group) -> None:
+@click.option('--filter', 'filter_', default=None,
+              help='Set the query filter expression.')
+@click.option('--order', default=None,
+              help='Set the query ordering expression.')
+def users(ctx, status, group, filter_, order) -> None:
     '''
     List and manage users.
     (admin privilege required)
@@ -94,6 +98,8 @@ def users(ctx, status, group) -> None:
                     status, group,
                     fields=[f[1] for f in fields],
                     page_size=page_size,
+                    filter=filter_,
+                    order=order,
                 )
                 echo_via_pager(
                     tabulate_items(items, fields,
