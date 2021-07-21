@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import enum
 import textwrap
 from typing import AsyncIterator, Iterable, Sequence, Union
 import uuid
@@ -10,6 +13,8 @@ from ..pagination import generate_paginated_results
 
 __all__ = (
     'User',
+    'UserStatus',
+    'UserRole',
 )
 
 _default_list_fields = (
@@ -22,6 +27,26 @@ _default_list_fields = (
     'domain_name',
     'groups',
 )
+
+
+class UserRole(str, enum.Enum):
+    """
+    The role (privilege level) of users.
+    """
+    SUPERADMIN = 'superadmin'
+    ADMIN = 'admin'
+    USER = 'user'
+    MONITOR = 'monitor'
+
+
+class UserStatus(enum.Enum):
+    """
+    The detailed status of users to represent the signup process and account lifecycles.
+    """
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+    DELETED = 'deleted'
+    BEFORE_VERIFICATION = 'before-verification'
 
 
 class User(BaseFunction):
@@ -186,8 +211,12 @@ class User(BaseFunction):
     async def create(
         cls,
         domain_name: str,
-        email: str, password: str, username: str = None, full_name: str = None,
-        role: str = 'user', status: bool = True,
+        email: str,
+        password: str,
+        username: str = None,
+        full_name: str = None,
+        role: UserRole | str = UserRole.USER,
+        status: UserStatus | str = UserStatus.ACTIVE,
         need_password_change: bool = False,
         description: str = '',
         group_ids: Iterable[str] = None,
@@ -213,8 +242,8 @@ class User(BaseFunction):
                 'password': password,
                 'username': username,
                 'full_name': full_name,
-                'role': role,
-                'status': status,
+                'role': role.value if isinstance(role, UserRole) else role,
+                'status': status.value if isinstance(status, UserStatus) else status,
                 'need_password_change': need_password_change,
                 'description': description,
                 'domain_name': domain_name,
@@ -232,7 +261,8 @@ class User(BaseFunction):
         password: str = None, username: str = None,
         full_name: str = None,
         domain_name: str = None,
-        role: str = None, status: bool = None,
+        role: UserRole | str = UserRole.USER,
+        status: UserStatus | str = UserStatus.ACTIVE,
         need_password_change: bool = None,
         description: str = None,
         group_ids: Iterable[str] = None,
@@ -256,8 +286,8 @@ class User(BaseFunction):
                 'username': username,
                 'full_name': full_name,
                 'domain_name': domain_name,
-                'role': role,
-                'status': status,
+                'role': role.value if isinstance(role, UserRole) else role,
+                'status': status.value if isinstance(status, UserStatus) else status,
                 'need_password_change': need_password_change,
                 'description': description,
                 'group_ids': group_ids,
