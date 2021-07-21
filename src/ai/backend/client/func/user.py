@@ -31,7 +31,7 @@ _default_list_fields = (
 
 class UserRole(str, enum.Enum):
     """
-    User's role.
+    The role (privilege level) of users.
     """
     SUPERADMIN = 'superadmin'
     ADMIN = 'admin'
@@ -40,6 +40,9 @@ class UserRole(str, enum.Enum):
 
 
 class UserStatus(enum.Enum):
+    """
+    The detailed status of users to represent the signup process and account lifecycles.
+    """
     ACTIVE = 'active'
     INACTIVE = 'inactive'
     DELETED = 'deleted'
