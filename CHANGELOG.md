@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+21.03.5 (2021-07-21)
+--------------------
+
+### Fixes
+* Fix wrong type and default value of `status` argument for `User.create()` and `User.update()` functional APIs and let `role` and `status` arguments accept explicit enum types in addition to raw strings ([#172](https://github.com/lablup/backend.ai-client-py/issues/172))
+
+
 21.03.4 (2021-07-19)
 --------------------
 
