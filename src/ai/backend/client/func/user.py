@@ -153,7 +153,7 @@ class User(BaseFunction):
         :param fields: Additional per-user query fields to fetch.
         """
         if fields is None:
-            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info'
+            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info',
                       'created_at', 'domain_name', 'role')
         if email is None:
             query = textwrap.dedent("""\
