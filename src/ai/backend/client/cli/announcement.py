@@ -7,6 +7,7 @@ import appdirs
 
 from .pretty import print_info
 
+from rich import print as rprint #added, changed to rprint to not mess with linking
 
 _printed_announcement = False
 
@@ -27,10 +28,10 @@ def announce(msg: str, only_once: bool = True) -> None:
     msg_hash = hasher.hexdigest()
 
     if not (last_state['hash'] == msg_hash and last_state['dismissed']):
-        print_info("The server has an announcement!", file=sys.stderr)
-        print('----------', file=sys.stderr)
-        print(msg, file=sys.stderr)
-        print('----------', file=sys.stderr)
+        rprint('[bold cyan]The server has an announcement![/]', file=sys.stderr)
+        rprint('[bold cyan]----------[/]', file=sys.stderr)
+        rprint(msg, file=sys.stderr)
+        rprint('[bold cyan]----------[/]', file=sys.stderr)
     _printed_announcement = True
 
     last_state['hash'] = msg_hash
