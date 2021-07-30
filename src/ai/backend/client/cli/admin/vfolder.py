@@ -11,6 +11,7 @@ from ..pagination import (
     tabulate_items,
 )
 from ..pretty import print_error
+from ..vfolder import vfolder as user_vfolder
 from ...session import Session
 from ...exceptions import NoItems
 
@@ -22,52 +23,62 @@ def vfolder() -> None:
     """
 
 
-@vfolder.command()
-@click.pass_context
-@click.option('--access-key', type=str, default=None,
-              help='Get vfolders for the given access key '
-                   '(only works if you are a super-admin)')
-@click.option('-g', '--group', type=str, default=None,
-              help='Filter by group ID.')
-@click.option('--filter', 'filter_', default=None,
-              help='Set the query filter expression.')
-@click.option('--order', default=None,
-              help='Set the query ordering expression.')
-def list(ctx, access_key, group, filter_, order):
-    """
-    List virtual folders.
-    """
-    fields = [
-        ('Name', 'name'),
-        ('Host', 'host'),
-        ('Group', 'group'),
-        ('Creator', 'creator'),
-        ('Permission', 'permission'),
-        ('Usage Mode', 'usage_mode'),
-        ('Ownership Type', 'ownership_type'),
-        ('Created At', 'created_at'),
-        ('Last Used', 'last_used'),
-        ('Max Size', 'max_size'),
-    ]
-    try:
-        with Session() as session:
-            page_size = get_preferred_page_size()
-            try:
-                items = session.VFolder.paginated_list(
-                    group, access_key,
-                    fields=[f[1] for f in fields],
-                    page_size=page_size,
-                    filter=filter_,
-                    order=order,
-                )
-                echo_via_pager(
-                    tabulate_items(items, fields)
-                )
-            except NoItems:
-                print("There are no matching vfolders.")
-    except Exception as e:
-        print_error(e)
-        sys.exit(1)
+def _list_cmd(docs: str = None):
+
+    @click.pass_context
+    @click.option('--access-key', type=str, default=None,
+                help='Get vfolders for the given access key '
+                    '(only works if you are a super-admin)')
+    @click.option('-g', '--group', type=str, default=None,
+                help='Filter by group ID.')
+    @click.option('--filter', 'filter_', default=None,
+                help='Set the query filter expression.')
+    @click.option('--order', default=None,
+                help='Set the query ordering expression.')
+    def list(ctx, access_key, group, filter_, order):
+        """
+        List virtual folders.
+        """
+        fields = [
+            ('Name', 'name'),
+            ('Host', 'host'),
+            ('ID', 'id'),
+            ('Group', 'group'),
+            ('Creator', 'creator'),
+            ('Permission', 'permission'),
+            ('Usage Mode', 'usage_mode'),
+            ('Ownership Type', 'ownership_type'),
+            ('Created At', 'created_at'),
+            ('Last Used', 'last_used'),
+            ('Max Size', 'max_size'),
+        ]
+        try:
+            with Session() as session:
+                page_size = get_preferred_page_size()
+                try:
+                    items = session.VFolder.paginated_list(
+                        group, access_key,
+                        fields=[f[1] for f in fields],
+                        page_size=page_size,
+                        filter=filter_,
+                        order=order,
+                    )
+                    echo_via_pager(
+                        tabulate_items(items, fields)
+                    )
+                except NoItems:
+                    print("There are no matching vfolders.")
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+    if docs is not None:
+        list.__doc__ = docs
+    return list
+
+
+user_vfolder.command()(_list_cmd())
+vfolder.command()(_list_cmd())
 
 
 @vfolder.command()
