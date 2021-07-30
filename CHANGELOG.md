@@ -16,6 +16,16 @@ Changes
 
 .. towncrier release notes start
 
+21.03.6 (2021-07-30)
+--------------------
+
+### Fixes
+* Fix a missing comman that breaks `User.detail()` functional API when called without an explicit field list ([#173](https://github.com/lablup/backend.ai-client-py/issues/173))
+
+### Miscellaneous
+* Update dependencies and change the version ranges to specify the minimum to allow more flexibility in the components relying on this SDK ([#175](https://github.com/lablup/backend.ai-client-py/issues/175))
+
+
 21.03.5 (2021-07-21)
 --------------------
 
