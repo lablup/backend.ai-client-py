@@ -6,6 +6,7 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
+from typing import IO, Literal, Sequence
 import uuid
 
 import click
@@ -19,7 +20,7 @@ from .run import format_stats, prepare_env_arg, prepare_resource_arg, prepare_mo
 from ..compat import asyncio_run
 from ..exceptions import BackendAPIError
 from ..session import Session, AsyncSession
-from ..types import undefined
+from ..types import Undefined, undefined
 
 
 @main.group()
@@ -80,6 +81,8 @@ def _create_cmd(docs: str = None):
     @click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
                   help='Resource options for creating compute session '
                        '(e.g: shmem=64m)')
+    @click.option('--preopen', default=None,
+                  help='Pre-open service ports')
     # resource grouping
     @click.option('-d', '--domain', metavar='DOMAIN_NAME', default=None,
                   help='Domain name where the session will be spawned. '
@@ -87,17 +90,34 @@ def _create_cmd(docs: str = None):
     @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
                   help='Group name where the session is spawned. '
                        'User should be a member of the group to execute the code.')
-    @click.option('--preopen',  default=None,
-                  help='Pre-open service ports')
     def create(
-        image, name, owner,                                 # base args
-        type, starts_at, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
-        env,                                            # execution environment
-        bootstrap_script, tag,                          # extra options
-        mount, scaling_group, resources,                # resource spec
-        cluster_size, cluster_mode,
-        resource_opts,
-        domain, group, preopen,                         # resource grouping
+        # base args
+        image: str,
+        name: str | None,
+        owner: str | None,
+        # job scheduling options
+        type: Literal['batch', 'interactive'],
+        starts_at: str | None,
+        startup_command: str | None,
+        enqueue_only: bool,
+        max_wait: bool,
+        no_reuse: bool,
+        # execution environment
+        env: Sequence[str],
+        # extra options
+        bootstrap_script: IO | None,
+        tag: str | None,
+        # resource spec
+        mount: Sequence[str],
+        scaling_group: str | None,
+        resources: Sequence[str],
+        cluster_size: int,
+        cluster_mode: Literal['single-node', 'multi-node'],
+        resource_opts: Sequence[str],
+        preopen: str | None,
+        # resource grouping
+        domain: str | None,
+        group: str | None,
     ) -> None:
         """
         Prepare and start a single compute session without executing codes.
@@ -214,7 +234,7 @@ def _create_from_template_cmd(docs: str = None):
     @click.option('--enqueue-only', is_flag=True,
                   help='Enqueue the session and return immediately without waiting for its startup.')
     @click.option('--max-wait', metavar='SECONDS', type=int,
-                  default=-1,
+                  default=undefined,
                   help='The maximum duration to wait until the session starts.')
     @click.option('--no-reuse', is_flag=True,
                   help='Do not reuse existing sessions but return an error.')
@@ -222,8 +242,7 @@ def _create_from_template_cmd(docs: str = None):
     @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
                   help='Environment variable (may appear multiple times)')
     # extra options
-    @click.option('--tag', type=str,
-                  default='$NODEF$',
+    @click.option('--tag', type=str, default=undefined,
                   help='User-defined tag string to annotate sessions.')
     # resource spec
     @click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
@@ -231,7 +250,7 @@ def _create_from_template_cmd(docs: str = None):
                        'If path is not provided, virtual folder will be mounted under /home/work. '
                        'All virtual folders can only be mounted under /home/work. ')
     @click.option('--scaling-group', '--sgroup', type=str,
-                  default='$NODEF$',
+                  default=undefined,
                   help='The scaling group to execute session. If not specified, '
                        'all available scaling groups are included in the scheduling.')
     @click.option('-r', '--resources', metavar='KEY=VAL', type=str, multiple=True,
@@ -239,8 +258,7 @@ def _create_from_template_cmd(docs: str = None):
                        '(e.g: -r cpu=2 -r mem=256 -r gpu=1).'
                        '1 slot of cpu/gpu represents 1 core. '
                        'The unit of mem(ory) is MiB.')
-    @click.option('--cluster-size', metavar='NUMBER', type=int,
-                  default=-1,
+    @click.option('--cluster-size', metavar='NUMBER', type=int, default=undefined,
                   help='The size of cluster in number of containers.')
     @click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
                   help='Resource options for creating compute session '
@@ -252,6 +270,7 @@ def _create_from_template_cmd(docs: str = None):
     @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
                   help='Group name where the session is spawned. '
                        'User should be a member of the group to execute the code.')
+    # template overrides
     @click.option('--no-mount', is_flag=True,
                   help='If specified, client.py will tell server not to mount '
                        'any vFolders specified at template,')
@@ -262,21 +281,41 @@ def _create_from_template_cmd(docs: str = None):
                   help='If specified, client.py will tell server not to add '
                        'any resource specified at template,')
     def create_from_template(
-        template_id, name, owner,        # base args
-        type_, starts_at, image, startup_command, enqueue_only, max_wait, no_reuse,  # job scheduling options
-        env,                                            # execution environment
-        tag,                                            # extra options
-        mount, scaling_group, resources, cluster_size,  # resource spec
-        resource_opts,
-        domain, group,                                  # resource grouping
-        no_mount, no_env, no_resource,
+        # base args
+        template_id: str,
+        name: str | Undefined,
+        owner: str | Undefined,
+        # job scheduling options
+        type_: Literal['batch', 'interactive'] | Undefined,
+        starts_at: str | None,
+        image: str | Undefined,
+        startup_command: str | Undefined,
+        enqueue_only: bool,
+        max_wait: int | Undefined,
+        no_reuse: bool,
+        # execution environment
+        env: Sequence[str],
+        # extra options
+        tag: str | Undefined,
+        # resource spec
+        mount: Sequence[str],
+        scaling_group: str | Undefined,
+        resources: Sequence[str],
+        cluster_size: int | Undefined,
+        resource_opts: Sequence[str],
+        # resource grouping
+        domain: str | None,
+        group: str | None,
+        # template overrides
+        no_mount: bool,
+        no_env: bool,
+        no_resource: bool,
     ) -> None:
         """
         Prepare and start a single compute session without executing codes.
         You may use the created session to execute codes using the "run" command
         or connect to an application service provided by the session using the "app"
         command.
-
 
         \b
         IMAGE: The name (and version/platform tags appended after a colon) of session
@@ -287,23 +326,16 @@ def _create_from_template_cmd(docs: str = None):
         else:
             name = name
 
-        if max_wait == -1:
-            max_wait = undefined
-        if tag == '$NODEF$':
-            tag = undefined
-        if scaling_group == '$NODEF$':
-            scaling_group = undefined
-        if cluster_size == -1:
-            cluster_size = undefined
-
-        ######
-
         envs = prepare_env_arg(env) if len(env) > 0 or no_env else undefined
         resources = prepare_resource_arg(resources) if len(resources) > 0 or no_resource else undefined
-        resource_opts = (prepare_resource_arg(resource_opts)
-                         if len(resource_opts) > 0 or no_resource else undefined)
-        mount, mount_map = (prepare_mount_arg(mount)
-                            if len(mount) > 0 or no_mount else (undefined, undefined))
+        resource_opts = (
+            prepare_resource_arg(resource_opts)
+            if len(resource_opts) > 0 or no_resource else undefined
+        )
+        prepared_mount, prepared_mount_map = (
+            prepare_mount_arg(mount)
+            if len(mount) > 0 or no_mount else (undefined, undefined)
+        )
         with Session() as session:
             try:
                 compute_session = session.ComputeSession.create_from_template(
@@ -316,8 +348,8 @@ def _create_from_template_cmd(docs: str = None):
                     max_wait=max_wait,
                     no_reuse=no_reuse,
                     cluster_size=cluster_size,
-                    mounts=mount,
-                    mount_map=mount_map,
+                    mounts=prepared_mount,
+                    mount_map=prepared_mount_map,
                     envs=envs,
                     startup_command=startup_command,
                     resources=resources,
@@ -326,7 +358,8 @@ def _create_from_template_cmd(docs: str = None):
                     domain_name=domain,
                     group_name=group,
                     scaling_group=scaling_group,
-                    tag=tag)
+                    tag=tag,
+                )
             except Exception as e:
                 print_error(e)
                 sys.exit(1)

@@ -15,7 +15,6 @@ from typing import (
     Sequence,
     Tuple,
 )
-import uuid
 
 import aiohttp
 import click
@@ -26,9 +25,8 @@ from tabulate import tabulate
 from .main import main
 from ..config import local_cache_path
 from ..compat import asyncio_run, current_loop
-from ..exceptions import BackendError, BackendAPIError
+from ..exceptions import BackendError
 from ..session import Session, AsyncSession, is_legacy_server
-from ..types import undefined
 from .pretty import (
     print_info, print_wait, print_done, print_error, print_fail, print_warn,
     format_info,
