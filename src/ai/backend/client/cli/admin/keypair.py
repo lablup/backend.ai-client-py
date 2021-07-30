@@ -63,9 +63,13 @@ def info():
               help='Show keypairs of this given user. [default: show all]')
 @click.option('--is-active', type=bool, default=None,
               help='Filter keypairs by activation.')
-def list(ctx, user_id, is_active):
+@click.option('--filter', 'filter_', default=None,
+              help='Set the query filter expression.')
+@click.option('--order', default=None,
+              help='Set the query ordering expression.')
+def list(ctx, user_id, is_active, filter_, order):
     """
-    List and manage keypairs.
+    List keypairs.
     To show all keypairs or other user's, your access key must have the admin
     privilege.
     (admin privilege required)
@@ -103,6 +107,8 @@ def list(ctx, user_id, is_active):
                     is_active,
                     fields=[f[1] for f in fields],
                     page_size=page_size,
+                    filter=filter_,
+                    order=order,
                 )
                 echo_via_pager(
                     tabulate_items(items, fields, item_formatter=format_item)

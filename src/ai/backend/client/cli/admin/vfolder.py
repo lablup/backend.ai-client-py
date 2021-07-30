@@ -29,13 +29,14 @@ def vfolder() -> None:
                    '(only works if you are a super-admin)')
 @click.option('-g', '--group', type=str, default=None,
               help='Filter by group ID.')
-def list(ctx, access_key, group):
+@click.option('--filter', 'filter_', default=None,
+              help='Set the query filter expression.')
+@click.option('--order', default=None,
+              help='Set the query ordering expression.')
+def list(ctx, access_key, group, filter_, order):
     """
-    List and manage virtual folders.
+    List virtual folders.
     """
-    if ctx.invoked_subcommand is not None:
-        return
-
     fields = [
         ('Name', 'name'),
         ('Host', 'host'),
@@ -48,7 +49,6 @@ def list(ctx, access_key, group):
         ('Last Used', 'last_used'),
         ('Max Size', 'max_size'),
     ]
-
     try:
         with Session() as session:
             page_size = get_preferred_page_size()
@@ -57,6 +57,8 @@ def list(ctx, access_key, group):
                     group, access_key,
                     fields=[f[1] for f in fields],
                     page_size=page_size,
+                    filter=filter_,
+                    order=order,
                 )
                 echo_via_pager(
                     tabulate_items(items, fields)

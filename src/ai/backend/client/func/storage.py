@@ -5,8 +5,8 @@ from typing import (
 )
 
 from .base import api_function, BaseFunction
-from ..request import Request
 from ..pagination import generate_paginated_results
+from ..session import api_session
 
 __all__ = (
     'Storage',
@@ -48,6 +48,8 @@ class Storage(BaseFunction):
         *,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Lists the keypairs.
@@ -55,7 +57,10 @@ class Storage(BaseFunction):
         """
         async for item in generate_paginated_results(
             'storage_volume_list',
-            {},
+            {
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
+            },
             fields,
             page_size=page_size,
         ):
@@ -75,11 +80,5 @@ class Storage(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'vfolder_host': vfolder_host}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['storage_volume']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['storage_volume']

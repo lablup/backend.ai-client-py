@@ -125,9 +125,13 @@ def info(agent_id):
               help='Filter agents by the given status.')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='Filter agents by the scaling group.')
-def list(status, scaling_group):
+@click.option('--filter', 'filter_', default=None,
+              help='Set the query filter expression.')
+@click.option('--order', default=None,
+              help='Set the query ordering expression.')
+def list(status, scaling_group, filter_, order):
     """
-    List and manage agents.
+    List agents.
     (super-admin privilege required)
     """
     fields = [
@@ -158,6 +162,8 @@ def list(status, scaling_group):
                     scaling_group,
                     fields=[f[1] for f in fields],
                     page_size=page_size,
+                    filter=filter_,
+                    order=order,
                 )
                 echo_via_pager(
                     tabulate_items(items, fields,

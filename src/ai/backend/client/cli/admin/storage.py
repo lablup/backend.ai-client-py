@@ -58,7 +58,11 @@ def info(vfolder_host):
 
 
 @storage.command()
-def list():
+@click.option('--filter', 'filter_', default=None,
+              help='Set the query filter expression.')
+@click.option('--order', default=None,
+              help='Set the query ordering expression.')
+def list(filter_, order):
     """
     List storage volumes.
     (super-admin privilege required)
@@ -75,6 +79,8 @@ def list():
                 items = session.Storage.paginated_list(
                     fields=[f[1] for f in fields],
                     page_size=page_size,
+                    filter=filter_,
+                    order=order,
                 )
                 echo_via_pager(
                     tabulate_items(items, fields)

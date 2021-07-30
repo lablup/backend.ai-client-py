@@ -98,7 +98,9 @@ def _list_cmd(name: str = "list", docs: str = None):
     @click.option('-f', '--format', default=None,  help='Display only specified fields.')
     @click.option('--plain', is_flag=True,
                   help='Display the session list without decorative line drawings and the header.')
-    def list(status, access_key, name_only, dead, running, detail, plain, format):
+    @click.option('--filter', 'filter_', default=None, help='Set the query filter expression.')
+    @click.option('--order', default=None, help='Set the query ordering expression.')
+    def list(status, access_key, name_only, dead, running, detail, plain, format, filter_, order):
         """
         List and manage compute sessions.
         """
@@ -179,6 +181,8 @@ def _list_cmd(name: str = "list", docs: str = None):
                         status, access_key,
                         fields=[f[1] for f in fields],
                         page_size=page_size,
+                        filter=filter_,
+                        order=order,
                     )
                     if name_only:
                         echo_via_pager(
