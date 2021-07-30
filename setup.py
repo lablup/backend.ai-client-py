@@ -7,43 +7,43 @@ setup_requires = [
     'setuptools>=54.2.0',
 ]
 install_requires = [
-    'backend.ai-cli~=0.4.1',
     'aiohttp~=3.7.4',
-    'aiotusclient~=0.1.3',
-    'appdirs~=1.4.3',
-    'async_timeout~=3.0',  # to avoid pip10 resolver issue
-    'attrs>=20.1',         # to avoid pip10 resolver issue
-    'click~=7.1.2',
-    'colorama~=0.4.3',
-    'humanize~=3.1.0',
-    'janus~=0.6.0',
-    'multidict~=4.7.4',
-    'python-dateutil~=2.8.1',
+    'aiotusclient~=0.1.4',
+    'appdirs~=1.4.4',
+    'async_timeout>=3.0',
+    'attrs>=21.2',
+    'click>=8.0.1',
+    'colorama>=0.4.4',
+    'humanize>=3.1.0',
+    'janus>=0.6.1',
+    'multidict>=5.1.0',
+    'python-dateutil>=2.8.2',
     'PyYAML~=5.4.1',
-    'tabulate~=0.8.6',
-    'tqdm~=4.48',
-    'yarl~=1.6.1',
-    'typing-extensions~=3.7.4',
+    'tabulate>=0.8.9',
+    'tqdm>=4.61',
+    'typing-extensions>=3.10.0',
+    'yarl>=1.6.3',
+    'backend.ai-cli~=0.5.0.post1',
 ]
 build_requires = [
     'wheel>=0.36.2',
-    'twine>=3.4.1',
+    'twine>=3.4.2',
     'towncrier>=21.3.0',
 ]
 test_requires = [
-    'pytest~=6.1.1',
+    'pytest~=6.2.4',
     'pytest-cov',
     'pytest-mock',
-    'pytest-asyncio>=0.12.0',
-    'aioresponses~=0.7.0',
+    'pytest-asyncio>=0.15.1',
+    'aioresponses>=0.7.2',
     'asynctest>=0.13; python_version<"3.8"',
     'codecov',
 ]
 lint_requires = [
-    'flake8>=3.8.4',
+    'flake8>=3.9.2',
 ]
 typecheck_requires = [
-    'mypy>=0.901',
+    'mypy>=0.910',
     'types-click',
     'types-python-dateutil',
     'types-tabulate',
