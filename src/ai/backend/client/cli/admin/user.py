@@ -77,8 +77,6 @@ def list(ctx, status, group, filter_, order) -> None:
     List users.
     (admin privilege required)
     """
-    if ctx.invoked_subcommand is not None:
-        return
     fields = [
         ('UUID', 'uuid'),
         ('Username', 'username'),

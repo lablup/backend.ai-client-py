@@ -228,13 +228,11 @@ def _create_from_template_cmd(docs: str = None):
                   help='Let session to be started at a specific or relative time.')
     @click.option('-i', '--image', default=undefined,
                   help='Set compute_session image to run.')
-    @click.option('-c', '--startup-command', metavar='COMMAND',
-                  default=undefined,
+    @click.option('-c', '--startup-command', metavar='COMMAND', default=undefined,
                   help='Set the command to execute for batch-type sessions.')
     @click.option('--enqueue-only', is_flag=True,
                   help='Enqueue the session and return immediately without waiting for its startup.')
-    @click.option('--max-wait', metavar='SECONDS', type=int,
-                  default=undefined,
+    @click.option('--max-wait', metavar='SECONDS', type=int, default=undefined,
                   help='The maximum duration to wait until the session starts.')
     @click.option('--no-reuse', is_flag=True,
                   help='Do not reuse existing sessions but return an error.')
@@ -249,8 +247,7 @@ def _create_from_template_cmd(docs: str = None):
                   help='User-owned virtual folder names to mount. '
                        'If path is not provided, virtual folder will be mounted under /home/work. '
                        'All virtual folders can only be mounted under /home/work. ')
-    @click.option('--scaling-group', '--sgroup', type=str,
-                  default=undefined,
+    @click.option('--scaling-group', '--sgroup', type=str, default=undefined,
                   help='The scaling group to execute session. If not specified, '
                        'all available scaling groups are included in the scheduling.')
     @click.option('-r', '--resources', metavar='KEY=VAL', type=str, multiple=True,
