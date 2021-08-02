@@ -26,7 +26,7 @@ from .main import main
 from ..config import local_cache_path
 from ..compat import asyncio_run, current_loop
 from ..exceptions import BackendError
-from ..session import Session, AsyncSession, is_legacy_server
+from ..session import AsyncSession
 from .pretty import (
     print_info, print_wait, print_done, print_error, print_fail, print_warn,
     format_info,
@@ -708,26 +708,6 @@ def run(image, files, name,                                 # base args
                     stdout.close()
                     stderr.close()
 
-    def _run_cases_legacy():
-        if name is None:
-            name_prefix = f'pysdk-{secrets.token_hex(5)}'
-        else:
-            name_prefix = name
-        vprint_info('Session token prefix: {0}'.format(name_prefix))
-        vprint_info('In the legacy mode, all cases will run serially!')
-        with Session() as session:
-            for idx, case in enumerate(case_set.keys()):
-                if is_multi:
-                    _name = '{0}-{1}'.format(name_prefix, idx)
-                else:
-                    _name = name_prefix
-                envs = dict(case[0])
-                clean_cmd = clean if clean else '*'
-                build_cmd = case[1]
-                exec_cmd = case[2]
-                _run_legacy(session, idx, _name, envs,
-                            clean_cmd, build_cmd, exec_cmd)
-
     async def _run_cases():
         loop = current_loop()
         if name is None:
@@ -762,9 +742,6 @@ def run(image, files, name,                                 # base args
                 sys.exit(1)
 
     try:
-        if is_legacy_server():
-            _run_cases_legacy()
-        else:
-            asyncio_run(_run_cases())
+        asyncio_run(_run_cases())
     except Exception as e:
         print_fail('{0}'.format(e))
