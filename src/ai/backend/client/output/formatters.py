@@ -261,7 +261,7 @@ class ContainerListFormatter(NestedObjectFormatter):
                     for f in field.subfields.values()
                     if f.field_name != "id"
                 )
-        return "\n" + textwrap.indent(text, indent)
+        return textwrap.indent(text, indent)
 
 
 class DependencyListFormatter(NestedObjectFormatter):
@@ -281,4 +281,4 @@ class DependencyListFormatter(NestedObjectFormatter):
                     for f in field.subfields.values()
                     if f.field_name not in ("id", "name")
                 )
-        return "\n" + textwrap.indent(text, indent)
+        return textwrap.indent(text, indent)
