@@ -11,7 +11,7 @@ from typing import (
 
 import humanize
 
-from .types import AbstractOutputFormatter
+from .types import AbstractOutputFormatter, FieldSpec
 
 
 def format_stats(raw_stats: Optional[str], indent='') -> str:
@@ -69,7 +69,7 @@ class OutputFormatter(AbstractOutputFormatter):
     The base implementation of output formats.
     """
 
-    def format_console(self, value):
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         if value is None:
             return "(null)"
         if isinstance(value, (dict, list, set)) and not value:
@@ -80,7 +80,7 @@ class OutputFormatter(AbstractOutputFormatter):
             return [self.format_console(v) for v in value]
         return str(value)
 
-    def format_json(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         if isinstance(value, decimal.Decimal):
             return str(value)
         elif isinstance(value, dict):
@@ -92,38 +92,40 @@ class OutputFormatter(AbstractOutputFormatter):
 
 class NestedDictOutputFormatter(OutputFormatter):
 
-    def format_console(self, value):
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         value = json.loads(value)
         return format_nested_dicts(value)
 
-    def format_json(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         return json.loads(value)
 
 
 class MiBytesOutputFormatter(OutputFormatter):
-    def format_console(self, value):
+
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         value = round(value / 2 ** 20, 1)
         return super().format_console(value)
 
-    def format_json(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         value = round(value / 2 ** 20, 1)
         return super().format_json(value)
 
 
 class SubFieldOutputFormatter(OutputFormatter):
+
     def __init__(self, subfield_name: str) -> None:
         self._subfield_name = subfield_name
 
-    def format_console(self, value):
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         return super().format_console(value[self._subfield_name])
 
-    def format_json(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         return super().format_json(value[self._subfield_name])
 
 
 class ResourceSlotFormatter(OutputFormatter):
 
-    def format_console(self, value):
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         value = json.loads(value)
         if mem := value.get('mem'):
             value['mem'] = humanize.naturalsize(mem, binary=True, gnu=True)
@@ -131,7 +133,7 @@ class ResourceSlotFormatter(OutputFormatter):
             f"{k}:{v}" for k, v in value.items()
         )
 
-    def format_json(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         return json.loads(value)
 
 
@@ -143,8 +145,8 @@ resource_slot_formatter = ResourceSlotFormatter()
 
 class AgentStatFormatter(OutputFormatter):
 
-    def format_console(self, raw_stats):
-        raw_stats = json.loads(raw_stats)
+    def format_console(self, value: Any, field: FieldSpec) -> str:
+        raw_stats = json.loads(value)
 
         value_formatters = {
             'bytes': lambda m: "{} / {}".format(
@@ -200,64 +202,73 @@ class AgentStatFormatter(OutputFormatter):
         bufs.append("\n".join(dev_metric_bufs))
         return '\n'.join(bufs)
 
-    format_json = format_console
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
+        # TODO: improve
+        return self.format_console(value)
 
 
 class GroupListFormatter(OutputFormatter):
 
-    def format_console(self, value):
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         return ", ".join(g['name'] for g in value)
 
-    def format_json(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         return value
 
 
 class KernelStatFormatter(OutputFormatter):
 
-    def format_console(self, value):
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         return format_stats(value)
 
-    def format_json(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         return value
 
 
-class ContainerListFormatter(OutputFormatter):
+class NestedObjectFormatter(OutputFormatter):
 
-    def format_console(self, value, indent='') -> str:
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
+        assert isinstance(value, list)
+        return [
+            {
+                f.alt_name: f.formatter.format_json(item[f.field_name], f)
+                for f in field.subfields.values()
+            }
+            for item in value
+        ]
+
+
+class ContainerListFormatter(NestedObjectFormatter):
+
+    def format_console(self, value: Any, field: FieldSpec, indent='') -> str:
         assert isinstance(value, list)
         if len(value) == 0:
-            text = "- (There are no sub-containers belonging to the session)"
+            text = "(no sub-containers belonging to the session)"
         else:
             text = ""
-            for cinfo in value:
-                text += "\n".join((
-                    f"+ {cinfo['id']}",
-                    *(f"  - {k + ': ':18s}{format_multiline(v, 22)}"
-                    for k, v in cinfo.items()
-                    if k not in ('id', 'live_stat', 'last_stat')),
-                    f"  + live_stat: {format_stats(cinfo['live_stat'], indent='    ')}",
-                    f"  + last_stat: {format_stats(cinfo['last_stat'], indent='    ')}",
-                )) + "\n"
-        return "\n" + textwrap.indent(text, indent)
-
-    def format_json(self, value):
-        return value
-
-
-class DependencyListFormatter(OutputFormatter):
-
-    def format_console(self, value, indent='') -> str:
-        assert isinstance(value, list)
-        if len(value) == 0:
-            text = "- (There are no dependency tasks)"
-        else:
-            text = ""
-            for dinfo in value:
+            for item in value:
+                text += f"+ {item['id']}\n"
                 text += "\n".join(
-                    (f"+ {dinfo['name']} ({dinfo['id']})",
-                    *(f"  - {k + ': ':18s}{v}" for k, v in dinfo.items() if k not in ('name', 'id'))),
+                    f"  - {f.humanized_name}: {f.formatter.format_console(item[f.field_name], f)}"
+                    for f in field.subfields.values()
+                    if f.field_name != "id"
                 )
         return "\n" + textwrap.indent(text, indent)
 
-    def format_json(self, value):
-        return value
+
+class DependencyListFormatter(NestedObjectFormatter):
+
+    def format_console(self, value: Any, field: FieldSpec, indent='') -> str:
+        assert isinstance(value, list)
+        if len(value) == 0:
+            text = "(no dependency tasks)"
+        else:
+            text = ""
+            for item in value:
+                text += f"+ {item['name']} ({item['id']})\n"
+                text += "\n".join(
+                    f"  - {f.humanized_name}: {f.formatter.format_console(item[f.field_name], f)}"
+                    for f in field.subfields.values()
+                    if f.field_name not in ("id", "name")
+                )
+        return "\n" + textwrap.indent(text, indent)

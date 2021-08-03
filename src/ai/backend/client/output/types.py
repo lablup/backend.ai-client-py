@@ -42,11 +42,11 @@ class AbstractOutputFormatter(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def format_json(self, value):
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         raise NotImplementedError
 
     @abstractmethod
-    def format_console(self, value):
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         raise NotImplementedError
 
 

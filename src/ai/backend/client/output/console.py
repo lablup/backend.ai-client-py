@@ -36,7 +36,10 @@ class ConsoleOutputHandler(BaseOutputHandler):
         field_map = {f.field_name: f for f in fields}
         print(tabulate(
             [
-                (field_map[k].humanized_name, field_map[k].formatter.format_console(v))
+                (
+                    field_map[k].humanized_name,
+                    field_map[k].formatter.format_console(v, field_map[k]),
+                )
                 for k, v in item.items()
             ],
             headers=('Field', 'Value'),
@@ -53,7 +56,10 @@ class ConsoleOutputHandler(BaseOutputHandler):
                 print("-" * 20)
             print(tabulate(
                 [
-                    (field_map[k].humanized_name, field_map[k].formatter.format_console(v))
+                    (
+                        field_map[k].humanized_name,
+                        field_map[k].formatter.format_console(v, field_map[k]),
+                    )
                     for k, v in item.items()
                 ],
                 headers=('Field', 'Value'),

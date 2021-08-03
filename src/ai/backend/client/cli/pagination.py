@@ -46,7 +46,7 @@ def tabulate_items(
         table = tabulate(
             [
                 [
-                    f.formatter.format_console(v) for f, v in zip(fields, item.values())
+                    f.formatter.format_console(v, f) for f, v in zip(fields, item.values())
                 ] for item in buffered_items
             ],
             headers=(
