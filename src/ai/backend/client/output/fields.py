@@ -88,11 +88,13 @@ session_fields = FieldSet([
     FieldSpec(
         'containers',
         subfields=FieldSet([
-            FieldSpec('id'),
+            FieldSpec('id', "Kernel ID", alt_name='kernel_id'),
+            FieldSpec('session_id', "Session ID"),
             FieldSpec('cluster_role'),
             FieldSpec('cluster_idx'),
             FieldSpec('cluster_hostname'),
             FieldSpec('agent'),
+            FieldSpec('image'),
             FieldSpec('status'),
             FieldSpec('status_info'),
             FieldSpec('status_data', formatter=nested_dict_formatter),
@@ -113,9 +115,11 @@ session_fields_v5 = FieldSet([
     FieldSpec(
         'containers',
         subfields=FieldSet([
-            FieldSpec('id'),
+            FieldSpec('id', "Kernel ID", alt_name='kernel_id'),
+            FieldSpec('session_id', "Session ID"),
             FieldSpec('role'),
             FieldSpec('agent'),
+            FieldSpec('image'),
             FieldSpec('status'),
             FieldSpec('status_info'),
             FieldSpec('status_data', formatter=nested_dict_formatter),
