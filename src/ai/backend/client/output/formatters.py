@@ -238,6 +238,13 @@ class NestedObjectFormatter(OutputFormatter):
         ]
 
 
+def _fit_multiline_in_cell(text: str, indent: str) -> str:
+    if '\n' in text:
+        return '\n' + textwrap.indent(text, indent)
+    else:
+        return text
+
+
 class ContainerListFormatter(NestedObjectFormatter):
 
     def format_console(self, value: Any, field: FieldSpec, indent='') -> str:
@@ -249,7 +256,8 @@ class ContainerListFormatter(NestedObjectFormatter):
             for item in value:
                 text += f"+ {item['id']}\n"
                 text += "\n".join(
-                    f"  - {f.humanized_name}: {f.formatter.format_console(item[f.field_name], f)}"
+                    f"  - {f.humanized_name}: "
+                    f"{_fit_multiline_in_cell(f.formatter.format_console(item[f.field_name], f), '    ')}"
                     for f in field.subfields.values()
                     if f.field_name != "id"
                 )
@@ -267,7 +275,9 @@ class DependencyListFormatter(NestedObjectFormatter):
             for item in value:
                 text += f"+ {item['name']} ({item['id']})\n"
                 text += "\n".join(
-                    f"  - {f.humanized_name}: {f.formatter.format_console(item[f.field_name], f)}"
+                    # f"  - {f.humanized_name}: {f.formatter.format_console(item[f.field_name], f)}"
+                    f"  - {f.humanized_name}: "
+                    f"{_fit_multiline_in_cell(f.formatter.format_console(item[f.field_name], f), '    ')}"
                     for f in field.subfields.values()
                     if f.field_name not in ("id", "name")
                 )
