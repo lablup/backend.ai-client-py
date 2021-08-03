@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import textwrap
 from typing import (
-    AsyncIterator,
     Sequence,
 )
 
+from ai.backend.client.output.types import (
+    FieldSpec,
+    PaginatedResult,
+)
+from ai.backend.client.output.fields import agent_fields
+from ai.backend.client.request import Request
+from ai.backend.client.session import api_session
+from ai.backend.client.pagination import generate_paginated_results
 from .base import api_function, BaseFunction
-from ..request import Request
-from ..session import api_session
-from ..pagination import generate_paginated_results
 
 __all__ = (
     'Agent',
@@ -15,24 +21,24 @@ __all__ = (
 )
 
 _default_list_fields = (
-    'id',
-    'status',
-    'scaling_group',
-    'available_slots',
-    'occupied_slots',
+    agent_fields['id'],
+    agent_fields['status'],
+    agent_fields['scaling_group'],
+    agent_fields['available_slots'],
+    agent_fields['occupied_slots'],
 )
 
 _default_detail_fields = (
-    'id',
-    'status',
-    'scaling_group',
-    'addr',
-    'region',
-    'first_contact',
-    'cpu_cur_pct',
-    'mem_cur_bytes',
-    'available_slots',
-    'occupied_slots',
+    agent_fields['id'],
+    agent_fields['status'],
+    agent_fields['scaling_group'],
+    agent_fields['addr'],
+    agent_fields['region'],
+    agent_fields['first_contact'],
+    agent_fields['cpu_cur_pct'],
+    agent_fields['mem_cur_bytes'],
+    agent_fields['available_slots'],
+    agent_fields['occupied_slots'],
 )
 
 
@@ -55,16 +61,17 @@ class Agent(BaseFunction):
         status: str = 'ALIVE',
         scaling_group: str = None,
         *,
-        fields: Sequence[str] = _default_list_fields,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+        page_offset: int = 0,
         page_size: int = 20,
         filter: str = None,
         order: str = None,
-    ) -> AsyncIterator[dict]:
+    ) -> PaginatedResult:
         """
         Lists the keypairs.
         You need an admin privilege for this operation.
         """
-        async for item in generate_paginated_results(
+        return await generate_paginated_results(
             'agent_list',
             {
                 'status': (status, 'String'),
@@ -74,22 +81,22 @@ class Agent(BaseFunction):
             },
             fields,
             page_size=page_size,
-        ):
-            yield item
+            page_offset=page_offset,
+        )
 
     @api_function
     @classmethod
     async def detail(
         cls,
         agent_id: str,
-        fields: Sequence[str] = _default_detail_fields,
+        fields: Sequence[FieldSpec] = _default_detail_fields,
     ) -> Sequence[dict]:
         query = textwrap.dedent("""\
             query($agent_id: String!) {
                 agent(agent_id: $agent_id) {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'agent_id': agent_id}
         data = await api_session.get().Admin._query(query, variables)
         return data['agent']

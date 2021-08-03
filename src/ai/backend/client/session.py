@@ -21,7 +21,6 @@ import warnings
 
 import aiohttp
 from multidict import CIMultiDict
-
 from .config import APIConfig, MIN_API_VERSION, get_config, parse_api_version
 from .exceptions import APIVersionWarning, BackendAPIError, BackendClientError
 from .types import Sentinel, sentinel
@@ -67,7 +66,8 @@ async def _negotiate_api_version(
                 warnings.warn(
                     f"The server is too old and does not meet the minimum API version requirement: "
                     f"v{MIN_API_VERSION[0]}.{MIN_API_VERSION[1]}\n"
-                    f"Please upgrade the server or downgrade/reinstall the client SDK with the same major.minor release of the server.",
+                    f"Please upgrade the server or downgrade/reinstall the client SDK with "
+                    f"the same major.minor release of the server.",
                     category=APIVersionWarning,
                 )
             return min(server_version, client_version)

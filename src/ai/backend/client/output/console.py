@@ -6,19 +6,17 @@ from typing import (
     Callable,
     Mapping,
     Sequence,
-    Tuple,
-    TypeVar,
 )
 
 from tabulate import tabulate
 
-from ...types import FieldSpec, PaginatedResult
-from ..pretty import print_error as pretty_error, print_fail
-from ..pagination import echo_via_pager, get_preferred_page_size, tabulate_items
-from . import BaseOutputHandler, _identity_func
-
-
-T = TypeVar('T')
+from ai.backend.client.cli.pretty import print_error, print_fail
+from ai.backend.client.cli.pagination import (
+    echo_via_pager,
+    get_preferred_page_size,
+    tabulate_items,
+)
+from .types import FieldSpec, PaginatedResult, BaseOutputHandler
 
 
 class NoItems(Exception):
@@ -34,10 +32,11 @@ class ConsoleOutputHandler(BaseOutputHandler):
     ) -> None:
         if item is None:
             print_fail("No matching entry found.")
-        field_map = {f.field_name.partition(" ")[0]: f for f in fields}
+            return
+        field_map = {f.field_name: f for f in fields}
         print(tabulate(
             [
-                (field_map[k].humanized_name, field_map[k].format(v))
+                (field_map[k].humanized_name, field_map[k].formatter.format_console(v))
                 for k, v in item.items()
             ],
             headers=('Field', 'Value'),
@@ -48,13 +47,13 @@ class ConsoleOutputHandler(BaseOutputHandler):
         items: Sequence[Mapping[str, Any]],
         fields: Sequence[FieldSpec],
     ) -> None:
-        field_map = {f.field_name.partition(" ")[0]: f for f in fields}
+        field_map = {f.field_name: f for f in fields}
         for idx, item in enumerate(items):
             if idx > 0:
                 print("-" * 20)
             print(tabulate(
                 [
-                    (field_map[k].humanized_name, field_map[k].format(v))
+                    (field_map[k].humanized_name, field_map[k].formatter.format_console(v))
                     for k, v in item.items()
                 ],
                 headers=('Field', 'Value'),
@@ -62,20 +61,24 @@ class ConsoleOutputHandler(BaseOutputHandler):
 
     def print_paginated_list(
         self,
-        fetch_func: Callable[[int, int], PaginatedResult[T]],
+        fetch_func: Callable[[int, int], PaginatedResult],
         initial_page_offset: int,
         page_size: int = None,
     ) -> None:
-        if sys.stdout.isatty():
-            page_size = page_size or get_preferred_page_size()
+        if sys.stdout.isatty() and page_size is None:
+            page_size = get_preferred_page_size()
+            fields: Sequence[FieldSpec] = []
 
             def infinite_fetch():
+                nonlocal fields
                 current_offset = initial_page_offset
                 while True:
                     result = fetch_func(current_offset, page_size)
                     if result.total_count == 0:
                         raise NoItems
-                    current_offset += result
+                    current_offset += len(result.items)
+                    if not fields:
+                        fields.extend(result.fields)
                     yield from result.items
                     if current_offset >= result.total_count:
                         break
@@ -83,8 +86,8 @@ class ConsoleOutputHandler(BaseOutputHandler):
             try:
                 echo_via_pager(
                     tabulate_items(
-                        map(format_item, infinite_fetch()),
-                        result.fields,
+                        infinite_fetch(),
+                        fields,
                     )
                 )
             except NoItems:
@@ -92,16 +95,20 @@ class ConsoleOutputHandler(BaseOutputHandler):
         else:
             page_size = page_size or 20
             result = fetch_func(initial_page_offset, page_size)
-            field_map = {f.field_name: f for f in result.fields}
-            print(
-                tabulate_items(
-                    map(format_item, result.items),
-                    result.fields,
-                )
-            )
+            for line in tabulate_items(
+                result.items,  # type: ignore
+                result.fields,
+            ):
+                print(line, end="")
 
     def print_error(
         self,
         error: Exception,
     ) -> None:
-        pretty_error(error)
+        print_error(error)
+
+    def print_fail(
+        self,
+        message: str,
+    ) -> None:
+        print_fail(message)

@@ -7,13 +7,13 @@ from typing import (
     List,
     MutableMapping,
     Sequence,
-    Tuple,
 )
 from typing_extensions import Literal
 
 import click
 from tabulate import tabulate
 
+from ai.backend.client.output.types import FieldSpec
 from ..pagination import MAX_PAGE_SIZE
 
 
@@ -26,7 +26,7 @@ _Item = MutableMapping[str, Any]
 
 def tabulate_items(
     items: Iterator[_Item],
-    fields: Sequence[Tuple[str, str]],
+    fields: Sequence[FieldSpec],
     *,
     page_size: int = None,
     item_formatter: Callable[[_Item], None] = None,
@@ -44,10 +44,14 @@ def tabulate_items(
 
     def _tabulate_buffer() -> Iterator[str]:
         table = tabulate(
-            [item.values() for item in buffered_items],
+            [
+                [
+                    f.formatter.format_console(v) for f, v in zip(fields, item.values())
+                ] for item in buffered_items
+            ],
             headers=(
                 [] if tablefmt == 'plain'
-                else [field[0] for field in fields]
+                else [field.humanized_name for field in fields]
             ),
             tablefmt=tablefmt,
         )

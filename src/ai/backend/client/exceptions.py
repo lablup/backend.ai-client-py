@@ -66,7 +66,3 @@ class APIVersionWarning(UserWarning):
     """
 
     pass
-
-
-class NoItems(BackendError):
-    pass

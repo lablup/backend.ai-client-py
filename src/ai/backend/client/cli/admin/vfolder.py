@@ -1,19 +1,17 @@
+from __future__ import annotations
+
 import sys
 
 import click
 import humanize
 from tabulate import tabulate
 
-from . import admin
-from ..pagination import (
-    get_preferred_page_size,
-    echo_via_pager,
-    tabulate_items,
-)
+from ai.backend.client.session import Session
+from ai.backend.client.output.fields import vfolder_fields
 from ..pretty import print_error
+from ..types import CLIContext
 from ..vfolder import vfolder as user_vfolder
-from ...session import Session
-from ...exceptions import NoItems
+from . import admin
 
 
 @admin.group()
@@ -35,41 +33,44 @@ def _list_cmd(docs: str = None):
                 help='Set the query filter expression.')
     @click.option('--order', default=None,
                 help='Set the query ordering expression.')
-    def list(ctx, access_key, group, filter_, order):
+    @click.option('--offset', default=0,
+                help='The index of the current page start for pagination.')
+    @click.option('--limit', default=None,
+                help='The page size for pagination.')
+    def list(ctx: CLIContext, access_key, group, filter_, order, offset, limit) -> None:
         """
         List virtual folders.
         """
         fields = [
-            ('Name', 'name'),
-            ('Host', 'host'),
-            ('ID', 'id'),
-            ('Group', 'group'),
-            ('Creator', 'creator'),
-            ('Permission', 'permission'),
-            ('Usage Mode', 'usage_mode'),
-            ('Ownership Type', 'ownership_type'),
-            ('Created At', 'created_at'),
-            ('Last Used', 'last_used'),
-            ('Max Size', 'max_size'),
+            vfolder_fields['name'],
+            vfolder_fields['host'],
+            vfolder_fields['id'],
+            vfolder_fields['group'],
+            vfolder_fields['creator'],
+            vfolder_fields['permission'],
+            vfolder_fields['usage_mode'],
+            vfolder_fields['ownership_type'],
+            vfolder_fields['created_at'],
+            vfolder_fields['last_used'],
+            vfolder_fields['max_size'],
         ]
         try:
             with Session() as session:
-                page_size = get_preferred_page_size()
-                try:
-                    items = session.VFolder.paginated_list(
-                        group, access_key,
-                        fields=[f[1] for f in fields],
-                        page_size=page_size,
-                        filter=filter_,
-                        order=order,
-                    )
-                    echo_via_pager(
-                        tabulate_items(items, fields)
-                    )
-                except NoItems:
-                    print("There are no matching vfolders.")
+                fetch_func = lambda pg_offset, pg_size: session.VFolder.paginated_list(
+                    group, access_key,
+                    fields=fields,
+                    page_offset=pg_offset,
+                    page_size=pg_size,
+                    filter=filter_,
+                    order=order,
+                )
+                ctx.output.print_paginated_list(
+                    fetch_func,
+                    initial_page_offset=offset,
+                    page_size=limit,
+                )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
 
     if docs is not None:

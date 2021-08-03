@@ -25,6 +25,8 @@ import aiohttp
 from aiohttp import hdrs
 from tqdm import tqdm
 
+from ai.backend.client.output.fields import session_fields
+from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE
@@ -43,6 +45,16 @@ from ..versioning import get_naming, get_id_or_name
 
 __all__ = (
     'ComputeSession',
+)
+
+_default_list_fields = (
+    session_fields['session_id'],
+    session_fields['image'],
+    session_fields['type'],
+    session_fields['status'],
+    session_fields['status_info'],
+    session_fields['status_changed'],
+    session_fields['result'],
 )
 
 
@@ -87,28 +99,19 @@ class ComputeSession(BaseFunction):
         status: str = None,
         access_key: str = None,
         *,
-        fields: Sequence[str] = None,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+        page_offset: int = 0,
         page_size: int = 20,
         filter: str = None,
         order: str = None,
-    ) -> AsyncIterator[dict]:
+    ) -> PaginatedResult[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
 
         :param is_active: Fetches active or inactive users only if not None.
         :param fields: Additional per-user query fields to fetch.
         """
-        if fields is None:
-            fields = [
-                'task_id',
-                'image',
-                'type',
-                'status',
-                'status_info',
-                'status_changed',
-                'result',
-            ]
-        async for item in generate_paginated_results(
+        return await generate_paginated_results(
             'compute_session_list',
             {
                 'status': (status, 'String'),
@@ -117,9 +120,9 @@ class ComputeSession(BaseFunction):
                 'order': (order, 'String'),
             },
             fields,
+            page_offset=page_offset,
             page_size=page_size,
-        ):
-            yield item
+        )
 
     @api_function
     @classmethod
