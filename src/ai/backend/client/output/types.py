@@ -52,11 +52,37 @@ class AbstractOutputFormatter(metaclass=ABCMeta):
 
 @attr.define(slots=True, frozen=True)
 class FieldSpec:
+    """
+    The specification on how to represent a GraphQL object field
+    in the functional API and CLI output handlers.
+
+    Attributes:
+        field_ref: The string to be interpolated inside GraphQL queries.
+            It may contain sub-fields if the queried field supports.
+        humanized_name: The string to be shown as the field name by the console formatter.
+            If not set, it's auto-generated from field_name by camel-casing it and checking
+            a predefined humanization mapping.
+        field_name: The exact field name slug.  If not set, it's taken from field_ref.
+        alt_name: The field name slug to refer the field inside a FieldSet object hosting
+            this FieldSpec instance.
+        formatter: The formatter instance which provide per-output-type format methods.
+            (console and json)
+        subfields: A FieldSet instance to represent sub-fields in the GraphQL schema.
+            If set, field_ref is Automatically updated to have the braced subfield list
+            for actual GraphQL queries.
+    """
+
     field_ref: str = attr.field()
     humanized_name: str = attr.field()
     field_name: str = attr.field()
     alt_name: str = attr.field()
     formatter: AbstractOutputFormatter = attr.field()
+    subfields: FieldSet = attr.field(factory=lambda: FieldSet([]))
+
+    def __attrs_post_init__(self) -> None:
+        if self.subfields:
+            subfields = " ".join(f.field_ref for f in self.subfields.values())
+            object.__setattr__(self, 'field_ref', f"{self.field_name} {{ {subfields} }}")
 
     @humanized_name.default
     def _autogen_humanized_name(self) -> str:
@@ -82,7 +108,7 @@ class FieldSpec:
         return default_output_formatter
 
 
-class FieldSet(UserDict):
+class FieldSet(UserDict[str, FieldSpec]):
 
     def __init__(self, fields: Sequence[FieldSpec]) -> None:
         self.data = {

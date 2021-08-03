@@ -3,11 +3,65 @@ from __future__ import annotations
 import decimal
 import json
 import textwrap
+from typing import (
+    Any,
+    Mapping,
+    Optional,
+)
 
 import humanize
 
 from .types import AbstractOutputFormatter
-from ..cli.utils import format_multiline, format_stats, format_nested_dicts
+
+
+def format_stats(raw_stats: Optional[str], indent='') -> str:
+    if raw_stats is None:
+        return "(unavailable)"
+    stats = json.loads(raw_stats)
+    text = "\n".join(f"- {k + ': ':18s}{v}" for k, v in stats.items())
+    return "\n" + textwrap.indent(text, indent)
+
+
+def format_multiline(value: Any, indent_length: int) -> str:
+    buf = []
+    for idx, line in enumerate(str(value).strip().splitlines()):
+        if idx == 0:
+            buf.append(line)
+        else:
+            buf.append((" " * indent_length) + line)
+    return "\n".join(buf)
+
+
+def format_nested_dicts(value: Mapping[str, Mapping[str, Any]]) -> str:
+    """
+    Format a mapping from string keys to sub-mappings.
+    """
+    rows = []
+    if not value:
+        rows.append("(empty)")
+    else:
+        for outer_key, outer_value in value.items():
+            if isinstance(outer_value, dict):
+                if outer_value:
+                    rows.append(f"+ {outer_key}")
+                    inner_rows = format_nested_dicts(outer_value)
+                    rows.append(textwrap.indent(inner_rows, prefix="  "))
+                else:
+                    rows.append(f"+ {outer_key}: (empty)")
+            else:
+                if outer_value is None:
+                    rows.append(f"- {outer_key}: (null)")
+                else:
+                    rows.append(f"- {outer_key}: {outer_value}")
+    return "\n".join(rows)
+
+
+def format_value(value: Any) -> str:
+    if value is None:
+        return "(null)"
+    if isinstance(value, (dict, list, set)) and not value:
+        return "(empty)"
+    return str(value)
 
 
 class OutputFormatter(AbstractOutputFormatter):

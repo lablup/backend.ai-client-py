@@ -6,6 +6,7 @@ from .formatters import (
     ContainerListFormatter,
     DependencyListFormatter,
     SubFieldOutputFormatter,
+    KernelStatFormatter,
     nested_dict_formatter,
     mibytes_output_formatter,
     resource_slot_formatter
@@ -85,11 +86,21 @@ session_fields = FieldSet([
     FieldSpec('occupied_slots', formatter=resource_slot_formatter),
     FieldSpec('cluster_hostname'),
     FieldSpec(
-        'containers {'
-        ' id cluster_role cluster_idx cluster_hostname '
-        ' agent status status_info status_data status_changed '
-        ' occupied_slots live_stat last_stat '
-        '}',
+        'containers',
+        subfields=FieldSet([
+            FieldSpec('id'),
+            FieldSpec('cluster_role'),
+            FieldSpec('cluster_idx'),
+            FieldSpec('cluster_hostname'),
+            FieldSpec('agent'),
+            FieldSpec('status'),
+            FieldSpec('status_info'),
+            FieldSpec('status_data', formatter=nested_dict_formatter),
+            FieldSpec('status_changed'),
+            FieldSpec('occupied_slots', formatter=resource_slot_formatter),
+            FieldSpec('live_stat', formatter=KernelStatFormatter()),
+            FieldSpec('last_stat', formatter=KernelStatFormatter()),
+        ]),
         formatter=ContainerListFormatter(),
     ),
     FieldSpec(
@@ -100,10 +111,19 @@ session_fields = FieldSet([
 
 session_fields_v5 = FieldSet([
     FieldSpec(
-        'containers {'
-        ' id role agent status status_info status_changed '
-        ' occupied_slots live_stat last_stat '
-        '}',
+        'containers',
+        subfields=FieldSet([
+            FieldSpec('id'),
+            FieldSpec('role'),
+            FieldSpec('agent'),
+            FieldSpec('status'),
+            FieldSpec('status_info'),
+            FieldSpec('status_data', formatter=nested_dict_formatter),
+            FieldSpec('status_changed'),
+            FieldSpec('occupied_slots', formatter=resource_slot_formatter),
+            FieldSpec('live_stat', formatter=KernelStatFormatter()),
+            FieldSpec('last_stat', formatter=KernelStatFormatter()),
+        ]),
         formatter=ContainerListFormatter(),
     )
 ])
