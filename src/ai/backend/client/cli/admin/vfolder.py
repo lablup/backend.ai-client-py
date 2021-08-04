@@ -7,7 +7,7 @@ import humanize
 from tabulate import tabulate
 
 from ai.backend.client.session import Session
-from ai.backend.client.output.fields import vfolder_fields
+from ai.backend.client.func.vfolder import _default_list_fields
 from ..pretty import print_error
 from ..types import CLIContext
 from ..vfolder import vfolder as user_vfolder
@@ -23,7 +23,7 @@ def vfolder() -> None:
 
 def _list_cmd(docs: str = None):
 
-    @click.pass_context
+    @click.pass_obj
     @click.option('--access-key', type=str, default=None,
                 help='Get vfolders for the given access key '
                     '(only works if you are a super-admin)')
@@ -41,24 +41,11 @@ def _list_cmd(docs: str = None):
         """
         List virtual folders.
         """
-        fields = [
-            vfolder_fields['name'],
-            vfolder_fields['host'],
-            vfolder_fields['id'],
-            vfolder_fields['group'],
-            vfolder_fields['creator'],
-            vfolder_fields['permission'],
-            vfolder_fields['usage_mode'],
-            vfolder_fields['ownership_type'],
-            vfolder_fields['created_at'],
-            vfolder_fields['last_used'],
-            vfolder_fields['max_size'],
-        ]
         try:
             with Session() as session:
                 fetch_func = lambda pg_offset, pg_size: session.VFolder.paginated_list(
                     group, access_key,
-                    fields=fields,
+                    fields=_default_list_fields,
                     page_offset=pg_offset,
                     page_size=pg_size,
                     filter=filter_,
