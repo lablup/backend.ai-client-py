@@ -110,7 +110,7 @@ class FieldSpec:
         return default_output_formatter
 
 
-class FieldSet(UserDict[str, FieldSpec]):
+class FieldSet(UserDict, Mapping[str, FieldSpec]):
 
     def __init__(self, fields: Sequence[FieldSpec]) -> None:
         self.data = {
