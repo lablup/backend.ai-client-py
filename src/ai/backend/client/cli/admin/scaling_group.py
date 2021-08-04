@@ -1,7 +1,6 @@
 import sys
 
 import click
-from tabulate import tabulate
 
 from ai.backend.client.session import Session
 from ai.backend.client.func.scaling_group import (
@@ -10,7 +9,7 @@ from ai.backend.client.func.scaling_group import (
 )
 from ai.backend.client.output.fields import scaling_group_fields
 from . import admin
-from ..pretty import print_done, print_warn, print_error, print_fail
+from ..pretty import print_done, print_error, print_fail
 from ..types import CLIContext
 
 

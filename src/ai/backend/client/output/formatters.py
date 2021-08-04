@@ -75,18 +75,22 @@ class OutputFormatter(AbstractOutputFormatter):
         if isinstance(value, (dict, list, set)) and not value:
             return "(empty)"
         elif isinstance(value, dict):
-            return {k: self.format_console(v) for k, v in value.items()}
+            return "{" \
+                + ", ".join(f"{k}: {self.format_console(v, field)}" for k, v in value.items()) \
+                + "}"
         elif isinstance(value, (list, tuple, set)):
-            return [self.format_console(v) for v in value]
+            return "[" \
+                + ", ".join(self.format_console(v, field) for v in value) \
+                + "]"
         return str(value)
 
     def format_json(self, value: Any, field: FieldSpec) -> Any:
         if isinstance(value, decimal.Decimal):
             return str(value)
         elif isinstance(value, dict):
-            return {k: self.format_json(v) for k, v in value.items()}
+            return {k: self.format_json(v, field) for k, v in value.items()}
         elif isinstance(value, (list, tuple)):
-            return [self.format_json(v) for v in value]
+            return [self.format_json(v, field) for v in value]
         return value
 
 
@@ -104,11 +108,11 @@ class MiBytesOutputFormatter(OutputFormatter):
 
     def format_console(self, value: Any, field: FieldSpec) -> str:
         value = round(value / 2 ** 20, 1)
-        return super().format_console(value)
+        return super().format_console(value, field)
 
     def format_json(self, value: Any, field: FieldSpec) -> Any:
         value = round(value / 2 ** 20, 1)
-        return super().format_json(value)
+        return super().format_json(value, field)
 
 
 class SubFieldOutputFormatter(OutputFormatter):
@@ -117,10 +121,10 @@ class SubFieldOutputFormatter(OutputFormatter):
         self._subfield_name = subfield_name
 
     def format_console(self, value: Any, field: FieldSpec) -> str:
-        return super().format_console(value[self._subfield_name])
+        return super().format_console(value[self._subfield_name], field)
 
     def format_json(self, value: Any, field: FieldSpec) -> Any:
-        return super().format_json(value[self._subfield_name])
+        return super().format_json(value[self._subfield_name], field)
 
 
 class ResourceSlotFormatter(OutputFormatter):
@@ -204,7 +208,7 @@ class AgentStatFormatter(OutputFormatter):
 
     def format_json(self, value: Any, field: FieldSpec) -> Any:
         # TODO: improve
-        return self.format_console(value)
+        return self.format_console(value, field)
 
 
 class GroupListFormatter(OutputFormatter):
@@ -257,7 +261,7 @@ class ContainerListFormatter(NestedObjectFormatter):
                 text += f"+ {item['id']}\n"
                 text += "\n".join(
                     f"  - {f.humanized_name}: "
-                    f"{_fit_multiline_in_cell(f.formatter.format_console(item[f.field_name], f), '    ')}"
+                    f"{_fit_multiline_in_cell(f.formatter.format_console(item[f.field_name], f), '    ')}"  # noqa
                     for f in field.subfields.values()
                     if f.field_name != "id"
                 )
@@ -275,9 +279,8 @@ class DependencyListFormatter(NestedObjectFormatter):
             for item in value:
                 text += f"+ {item['name']} ({item['id']})\n"
                 text += "\n".join(
-                    # f"  - {f.humanized_name}: {f.formatter.format_console(item[f.field_name], f)}"
                     f"  - {f.humanized_name}: "
-                    f"{_fit_multiline_in_cell(f.formatter.format_console(item[f.field_name], f), '    ')}"
+                    f"{_fit_multiline_in_cell(f.formatter.format_console(item[f.field_name], f), '    ')}"  # noqa
                     for f in field.subfields.values()
                     if f.field_name not in ("id", "name")
                 )
