@@ -6,8 +6,7 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
-from typing import IO, Sequence
-from typing_extensions import Literal
+from typing import IO, Literal, Sequence
 import uuid
 
 import click

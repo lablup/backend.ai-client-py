@@ -12,13 +12,13 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
     Union,
     cast,
 )
-from typing_extensions import Literal  # for Python 3.7
 from uuid import UUID
 
 import aiohttp

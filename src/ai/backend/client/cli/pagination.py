@@ -5,10 +5,10 @@ from typing import (
     Callable,
     Iterator,
     List,
+    Literal,
     MutableMapping,
     Sequence,
 )
-from typing_extensions import Literal
 
 import click
 from tabulate import tabulate

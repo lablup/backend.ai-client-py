@@ -11,11 +11,11 @@ from typing import (
     Awaitable,
     Coroutine,
     Iterator,
+    Literal,
     Tuple,
     Union,
     TypeVar,
 )
-from typing_extensions import Literal  # for Python 3.7
 import queue
 import warnings
 

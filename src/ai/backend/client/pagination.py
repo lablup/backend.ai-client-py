@@ -4,12 +4,10 @@ import textwrap
 from typing import (
     Any,
     Dict,
+    Final,
     Sequence,
     Tuple,
     TypeVar,
-)
-from typing_extensions import (  # for Python 3.7
-    Final,
 )
 
 from .output.types import FieldSpec, PaginatedResult
