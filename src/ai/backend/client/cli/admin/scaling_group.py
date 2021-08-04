@@ -3,9 +3,15 @@ import sys
 import click
 from tabulate import tabulate
 
+from ai.backend.client.session import Session
+from ai.backend.client.func.scaling_group import (
+    _default_list_fields,
+    _default_detail_fields,
+)
+from ai.backend.client.output.fields import scaling_group_fields
 from . import admin
 from ..pretty import print_done, print_warn, print_error, print_fail
-from ...session import Session
+from ..types import CLIContext
 
 
 @admin.group()
@@ -16,83 +22,49 @@ def scaling_group() -> None:
 
 
 @scaling_group.command()
+@click.pass_obj
 @click.argument('group', type=str, metavar='GROUP_NAME')
-def list_scaling_groups(group):
+def get_available(ctx: CLIContext, group: str) -> None:
     with Session() as session:
         try:
-            resp = session.ScalingGroup.list_available(group)
+            items = session.ScalingGroup.list_available(group)
+            ctx.output.print_list(items, [scaling_group_fields['name']])
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(resp) < 1:
-            print_warn('There is no scaling group available.')
-            return
-        print(resp)
 
 
 @scaling_group.command()
-@click.option('-n', '--name', type=str, default=None,
-              help="Name of a scaling group.")
-def info(name):
+@click.pass_obj
+@click.argument('name', type=str)
+def info(ctx: CLIContext, name: str) -> None:
     """
     Show the information about the given scaling group.
     (superadmin privilege required)
     """
-    fields = [
-        ('Name', 'name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Driver', 'driver'),
-        ('Driver Opts', 'driver_opts'),
-        ('Scheduler', 'scheduler'),
-        ('Scheduler Opts', 'scheduler_opts'),
-    ]
     with Session() as session:
         try:
-            resp = session.ScalingGroup.detail(
-                name=name, fields=(item[1] for item in fields))
+            item = session.ScalingGroup.detail(name=name)
+            ctx.output.print_item(item, _default_detail_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        rows = []
-        for name, key in fields:
-            if key in resp:
-                rows.append((name, resp[key]))
-        print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @scaling_group.command()
-@click.pass_context
-def list(ctx):
+@click.pass_obj
+def list(ctx: CLIContext) -> None:
     """
     List and manage scaling groups.
     (superadmin privilege required)
     """
-    if ctx.invoked_subcommand is not None:
-        return
-    fields = [
-        ('Name', 'name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Driver', 'driver'),
-        ('Driver Opts', 'driver_opts'),
-        ('Scheduler', 'scheduler'),
-        ('Scheduler Opts', 'scheduler_opts'),
-    ]
     with Session() as session:
         try:
-            resp = session.ScalingGroup.list(fields=(item[1] for item in fields))
+            items = session.ScalingGroup.list()
+            ctx.output.print_list(items, _default_list_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(resp) < 1:
-            print('There is no scaling group.')
-            return
-        fields = [field for field in fields if field[1] in resp[0]]
-        print(tabulate((item.values() for item in resp),
-                        headers=(item[0] for item in fields)))
 
 
 @scaling_group.command()

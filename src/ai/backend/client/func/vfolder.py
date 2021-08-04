@@ -29,7 +29,7 @@ _default_list_fields = (
     vfolder_fields['name'],
     vfolder_fields['created_at'],
     vfolder_fields['creator'],
-    vfolder_fields['group'],
+    vfolder_fields['group_id'],
     vfolder_fields['permission'],
     vfolder_fields['ownership_type'],
 )

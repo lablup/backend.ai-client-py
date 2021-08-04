@@ -103,6 +103,18 @@ user_fields = FieldSet([
 ])
 
 
+scaling_group_fields = FieldSet([
+    FieldSpec('name'),
+    FieldSpec('description'),
+    FieldSpec('is_active'),
+    FieldSpec('created_at'),
+    FieldSpec('driver'),
+    FieldSpec('driver_opts', formatter=nested_dict_formatter),
+    FieldSpec('scheduler'),
+    FieldSpec('scheduler_opts', formatter=nested_dict_formatter),
+])
+
+
 session_fields = FieldSet([
     FieldSpec('id', "Kernel ID", alt_name='kernel_id'),
     FieldSpec('tag'),
