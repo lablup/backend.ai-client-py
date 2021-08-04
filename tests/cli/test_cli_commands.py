@@ -4,7 +4,7 @@ import re
 import pytest
 from click.testing import CliRunner
 
-from ai.backend.client.cli import main
+from ai.backend.client.cli.main import main
 from ai.backend.client.config import get_config, set_config
 
 

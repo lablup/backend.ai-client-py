@@ -113,9 +113,9 @@ class FieldSpec:
 class FieldSet(UserDict, Mapping[str, FieldSpec]):
 
     def __init__(self, fields: Sequence[FieldSpec]) -> None:
-        self.data = {
+        super().__init__({
             f.alt_name: f for f in fields
-        }
+        })
 
 
 T = TypeVar('T')
