@@ -65,6 +65,39 @@ class JsonOutputHandler(BaseOutputHandler):
             **_json_opts,
         ))
 
+    def print_list(
+        self,
+        items: Sequence[Mapping[str, Any]],
+        fields: Sequence[FieldSpec],
+        *,
+        is_scalar: bool = False,
+    ) -> None:
+        if is_scalar:
+            assert len(fields) == 1
+            item_list = [
+                {
+                    fields[0].alt_name: fields[0].formatter.format_json(item, fields[0])
+                }
+                for item in items
+            ]
+        else:
+            field_map = {f.field_name: f for f in fields}
+            item_list = [
+                {
+                    field_map[k].alt_name: field_map[k].formatter.format_json(v, field_map[k])
+                    for k, v in item.items()
+                }
+                for item in items
+            ]
+        print(json.dumps(
+            {
+                "count": len(items),
+                "total_count": len(items),
+                "items": item_list,
+            },
+            **_json_opts,
+        ))
+
     def print_paginated_list(
         self,
         fetch_func: Callable[[int, int], PaginatedResult],

@@ -150,6 +150,16 @@ class BaseOutputHandler(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    def print_list(
+        self,
+        items: Sequence[Mapping[str, Any]],
+        fields: Sequence[FieldSpec],
+        *,
+        is_scalar: bool = False,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     def print_paginated_list(
         self,
         fetch_func: Callable[[int, int], PaginatedResult[T]],
