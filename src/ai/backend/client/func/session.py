@@ -167,6 +167,7 @@ class ComputeSession(BaseFunction):
         scaling_group: str = None,
         owner_access_key: str = None,
         preopen_ports: List[int] = None,
+        agent_list: List[str] = None,
     ) -> ComputeSession:
         """
         Get-or-creates a compute session.

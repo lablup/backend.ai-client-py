@@ -387,6 +387,9 @@ def _prepare_mount_arg(
                    'User should be a member of the group to execute the code.')
 @click.option('--preopen',  default=None,
               help='Pre-open service ports')
+@click.option('--agent-list', default = None,
+              help='Show mapping list of tuple which mapped containers with agent.' 
+                   'When user role is Super Admin')
 def run(image, files, name,                                 # base args
         type, starts_at, enqueue_only, max_wait, no_reuse,  # job scheduling options
         code, terminal,                                     # query-mode options
@@ -397,7 +400,7 @@ def run(image, files, name,                                 # base args
         mount, scaling_group, resources,                    # resource spec
         cluster_size, cluster_mode,
         resource_opts,
-        domain, group, preopen):                            # resource grouping
+        domain, group, preopen, agent_list):                # resource grouping
     """
     Run the given code snippet or files in a session.
     Depending on the session ID you give (default is random),
@@ -598,7 +601,8 @@ def run(image, files, name,                                 # base args
                 scaling_group=scaling_group,
                 bootstrap_script=bootstrap_script.read() if bootstrap_script is not None else None,
                 tag=tag,
-                preopen_ports=preopen_ports)
+                preopen_ports=preopen_ports,
+                agent_list=agent_list)
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
