@@ -7,7 +7,7 @@ import appdirs
 
 # from .pretty import print_info
 
-from rich import print as rprint  #added, changed to rprint to not mess with linking
+from rich import print as rprint
 
 _printed_announcement = False
 
