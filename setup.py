@@ -20,6 +20,7 @@ install_requires = [
     'multidict~=4.7.4',
     'python-dateutil~=2.8.1',
     'PyYAML~=5.4.1',
+    'rich~=10.5.0'
     'tabulate~=0.8.6',
     'tqdm~=4.48',
     'yarl~=1.6.1',
