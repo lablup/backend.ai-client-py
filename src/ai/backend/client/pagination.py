@@ -1,32 +1,28 @@
+from __future__ import annotations
+
 import textwrap
 from typing import (
-    cast,
     Any,
-    AsyncIterator,
-    Mapping,
+    Dict,
+    Final,
     Sequence,
     Tuple,
-)
-from typing_extensions import (  # for Python 3.7
-    Final,
-    TypedDict,
+    TypeVar,
 )
 
-from .exceptions import NoItems
-from .request import Request
+from .output.types import FieldSpec, PaginatedResult
+from .exceptions import BackendAPIVersionError
+from .session import api_session
 
 MAX_PAGE_SIZE: Final = 100
 
-
-class PaginatedResult(TypedDict):
-    total_count: int
-    items: Sequence[Any]
+T = TypeVar('T')
 
 
 async def execute_paginated_query(
     root_field: str,
-    variables: Mapping[str, Tuple[Any, str]],
-    fields: Sequence[str],
+    variables: Dict[str, Tuple[Any, str]],
+    fields: Sequence[FieldSpec],
     *,
     limit: int,
     offset: int,
@@ -42,7 +38,7 @@ async def execute_paginated_query(
       }
     }'''
     query = query.replace('$root_field', root_field)
-    query = query.replace('$fields', ' '.join(fields))
+    query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
     query = query.replace(
         '$var_decls',
         ', '.join(f'${key}: {value[1]}'
@@ -57,27 +53,33 @@ async def execute_paginated_query(
     var_values = {key: value[0] for key, value in variables.items()}
     var_values['limit'] = limit
     var_values['offset'] = offset
-    rqst = Request('POST', '/admin/graphql')
-    rqst.set_json({
-        'query': query,
-        'variables': var_values,
-    })
-    async with rqst.fetch() as resp:
-        data = await resp.json()
-    return cast(PaginatedResult, data[root_field])
+    data = await api_session.get().Admin._query(query, var_values)
+    return PaginatedResult(
+        total_count=data[root_field]['total_count'],
+        items=data[root_field]['items'],
+        fields=fields,
+    )
 
 
 async def generate_paginated_results(
     root_field: str,
-    variables: Mapping[str, Tuple[Any, str]],
-    fields: Sequence[str],
+    variables: Dict[str, Tuple[Any, str]],
+    fields: Sequence[FieldSpec],
     *,
+    page_offset: int,
     page_size: int,
-) -> AsyncIterator[Any]:
+) -> PaginatedResult:
     if page_size > MAX_PAGE_SIZE:
         raise ValueError(f"The page size cannot exceed {MAX_PAGE_SIZE}")
-    offset = 0
-    total_count = -1
+    if api_session.get().api_version < (6, '20210815'):
+        if variables['filter'][0] is not None or variables['order'][0] is not None:
+            raise BackendAPIVersionError(
+                "filter and order arguments for paginated lists require v6.20210815 or later."
+            )
+        # should remove to work with older managers
+        variables.pop('filter')
+        variables.pop('order')
+    offset = page_offset
     while True:
         limit = page_size
         result = await execute_paginated_query(
@@ -85,10 +87,4 @@ async def generate_paginated_results(
             limit=limit, offset=offset,
         )
         offset += page_size
-        total_count = result['total_count']
-        if total_count == 0:
-            raise NoItems
-        for item in result['items']:
-            yield item
-        if offset >= total_count:
-            break
+        return result

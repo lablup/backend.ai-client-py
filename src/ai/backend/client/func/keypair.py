@@ -1,26 +1,40 @@
 from typing import (
     Any,
-    AsyncIterator,
     Dict,
-    Iterable,
     Sequence,
     Union,
 )
 
+from ai.backend.client.pagination import generate_paginated_results
+from ai.backend.client.session import api_session
+from ai.backend.client.output.fields import keypair_fields
+from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
-from ..request import Request
-from ..pagination import generate_paginated_results
 
 __all__ = (
     'KeyPair',
 )
 
 _default_list_fields = (
-    'access_key',
-    'secret_key',
-    'is_active',
-    'is_admin',
-    'created_at',
+    keypair_fields['user_id'],
+    keypair_fields['access_key'],
+    keypair_fields['secret_key'],
+    keypair_fields['is_active'],
+    keypair_fields['is_admin'],
+    keypair_fields['created_at'],
+)
+
+_default_detail_fields = (
+    keypair_fields['user_id'],
+    keypair_fields['access_key'],
+    keypair_fields['secret_key'],
+    keypair_fields['is_active'],
+    keypair_fields['is_admin'],
+)
+
+_default_result_fields = (
+    keypair_fields['access_key'],
+    keypair_fields['secret_key'],
 )
 
 
@@ -34,25 +48,26 @@ class KeyPair(BaseFunction):
 
     @api_function
     @classmethod
-    async def create(cls, user_id: Union[int, str],
-                     is_active: bool = True,
-                     is_admin: bool = False,
-                     resource_policy: str = None,
-                     rate_limit: int = None,
-                     fields: Iterable[str] = None) -> dict:
+    async def create(
+        cls,
+        user_id: Union[int, str],
+        is_active: bool = True,
+        is_admin: bool = False,
+        resource_policy: str = None,
+        rate_limit: int = None,
+        fields: Sequence[FieldSpec] = _default_result_fields,
+    ) -> dict:
         """
         Creates a new keypair with the given options.
         You need an admin privilege for this operation.
         """
-        if fields is None:
-            fields = ('access_key', 'secret_key')
         uid_type = 'Int!' if isinstance(user_id, int) else 'String!'
         q = 'mutation($user_id: {0}, $input: KeyPairInput!) {{'.format(uid_type) + \
             '  create_keypair(user_id: $user_id, props: $input) {' \
             '    ok msg keypair { $fields }' \
             '  }' \
             '}'
-        q = q.replace('$fields', ' '.join(fields))
+        q = q.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {
             'user_id': user_id,
             'input': {
@@ -62,22 +77,19 @@ class KeyPair(BaseFunction):
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['create_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['create_keypair']
 
     @api_function
     @classmethod
-    async def update(cls, access_key: str,
-                     is_active: bool = None,
-                     is_admin: bool = None,
-                     resource_policy: str = None,
-                     rate_limit: int = None) -> dict:
+    async def update(
+        cls,
+        access_key: str,
+        is_active: bool = None,
+        is_admin: bool = None,
+        resource_policy: str = None,
+        rate_limit: int = None,
+    ) -> dict:
         """
         Creates a new keypair with the given options.
         You need an admin privilege for this operation.
@@ -96,14 +108,8 @@ class KeyPair(BaseFunction):
                 'rate_limit': rate_limit,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['modify_keypair']
 
     @api_function
     @classmethod
@@ -119,21 +125,16 @@ class KeyPair(BaseFunction):
         variables = {
             'access_key': access_key,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['delete_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['delete_keypair']
 
     @api_function
     @classmethod
     async def list(
-        cls, user_id: Union[int, str] = None,
+        cls,
+        user_id: Union[int, str] = None,
         is_active: bool = None,
-        fields: Sequence[str] = _default_list_fields,
+        fields: Sequence[FieldSpec] = _default_list_fields,
     ) -> Sequence[dict]:
         """
         Lists the keypairs.
@@ -152,20 +153,14 @@ class KeyPair(BaseFunction):
                 '    $fields' \
                 '  }' \
                 '}'
-        q = q.replace('$fields', ' '.join(fields))
+        q = q.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables: Dict[str, Any] = {
             'is_active': is_active,
         }
         if user_id is not None:
             variables['email'] = user_id
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['keypairs']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['keypairs']
 
     @api_function
     @classmethod
@@ -175,9 +170,12 @@ class KeyPair(BaseFunction):
         domain_name: str = None,
         *,
         user_id: str = None,
-        fields: Sequence[str] = _default_list_fields,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+        page_offset: int = 0,
         page_size: int = 20,
-    ) -> AsyncIterator[dict]:
+        filter: str = None,
+        order: str = None,
+    ) -> PaginatedResult[dict]:
         """
         Lists the keypairs.
         You need an admin privilege for this operation.
@@ -185,19 +183,21 @@ class KeyPair(BaseFunction):
         variables = {
             'is_active': (is_active, 'Boolean'),
             'domain_name': (domain_name, 'String'),
+            'filter': (filter, 'String'),
+            'order': (order, 'String'),
         }
         if user_id is not None:
             variables['email'] = (user_id, 'String')
-        async for item in generate_paginated_results(
+        return await generate_paginated_results(
             'keypair_list',
             variables,
             fields,
+            page_offset=page_offset,
             page_size=page_size,
-        ):
-            yield item
+        )
 
     @api_function
-    async def info(self, fields: Iterable[str] = None) -> dict:
+    async def info(self, fields: Sequence[FieldSpec] = _default_detail_fields) -> dict:
         """
         Returns the keypair's information such as resource limits.
 
@@ -205,24 +205,14 @@ class KeyPair(BaseFunction):
 
         .. versionadded:: 18.12
         """
-        if fields is None:
-            fields = (
-                'access_key', 'secret_key',
-                'is_active', 'is_admin',
-            )
         q = 'query {' \
             '  keypair {' \
             '    $fields' \
             '  }' \
             '}'
-        q = q.replace('$fields', ' '.join(fields))
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['keypair']
+        q = q.replace('$fields', ' '.join(f.field_ref for f in fields))
+        data = await api_session.get().Admin._query(q)
+        return data['keypair']
 
     @api_function
     @classmethod
@@ -245,14 +235,8 @@ class KeyPair(BaseFunction):
                 'rate_limit': None,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['modify_keypair']
 
     @api_function
     @classmethod
@@ -277,11 +261,5 @@ class KeyPair(BaseFunction):
                 'rate_limit': None,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': q,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_keypair']
+        data = await api_session.get().Admin._query(q, variables)
+        return data['modify_keypair']

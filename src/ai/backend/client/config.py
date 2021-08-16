@@ -37,7 +37,8 @@ class Undefined(enum.Enum):
 _config = None
 _undefined = Undefined.token
 
-API_VERSION = (6, '20200815')
+API_VERSION = (6, '20210815')
+MIN_API_VERSION = (5, '20191215')
 
 DEFAULT_CHUNK_SIZE = 16 * (2**20)  # 16 MiB
 MAX_INFLIGHT_CHUNKS = 4

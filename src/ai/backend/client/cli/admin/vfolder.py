@@ -1,18 +1,17 @@
+from __future__ import annotations
+
 import sys
 
 import click
 import humanize
 from tabulate import tabulate
 
-from . import admin
-from ..pagination import (
-    get_preferred_page_size,
-    echo_via_pager,
-    tabulate_items,
-)
+from ai.backend.client.session import Session
+from ai.backend.client.func.vfolder import _default_list_fields
 from ..pretty import print_error
-from ...session import Session
-from ...exceptions import NoItems
+from ..types import CLIContext
+from ..vfolder import vfolder as user_vfolder
+from . import admin
 
 
 @admin.group()
@@ -22,50 +21,52 @@ def vfolder() -> None:
     """
 
 
-@vfolder.command()
-@click.pass_context
-@click.option('--access-key', type=str, default=None,
-              help='Get vfolders for the given access key '
-                   '(only works if you are a super-admin)')
-@click.option('-g', '--group', type=str, default=None,
-              help='Filter by group ID.')
-def list(ctx, access_key, group):
-    """
-    List and manage virtual folders.
-    """
-    if ctx.invoked_subcommand is not None:
-        return
+def _list_cmd(docs: str = None):
 
-    fields = [
-        ('Name', 'name'),
-        ('Host', 'host'),
-        ('Group', 'group'),
-        ('Creator', 'creator'),
-        ('Permission', 'permission'),
-        ('Usage Mode', 'usage_mode'),
-        ('Ownership Type', 'ownership_type'),
-        ('Created At', 'created_at'),
-        ('Last Used', 'last_used'),
-        ('Max Size', 'max_size'),
-    ]
-
-    try:
-        with Session() as session:
-            page_size = get_preferred_page_size()
-            try:
-                items = session.VFolder.paginated_list(
+    @click.pass_obj
+    @click.option('--access-key', type=str, default=None,
+                help='Get vfolders for the given access key '
+                    '(only works if you are a super-admin)')
+    @click.option('-g', '--group', type=str, default=None,
+                help='Filter by group ID.')
+    @click.option('--filter', 'filter_', default=None,
+                help='Set the query filter expression.')
+    @click.option('--order', default=None,
+                help='Set the query ordering expression.')
+    @click.option('--offset', default=0,
+                help='The index of the current page start for pagination.')
+    @click.option('--limit', default=None,
+                help='The page size for pagination.')
+    def list(ctx: CLIContext, access_key, group, filter_, order, offset, limit) -> None:
+        """
+        List virtual folders.
+        """
+        try:
+            with Session() as session:
+                fetch_func = lambda pg_offset, pg_size: session.VFolder.paginated_list(
                     group, access_key,
-                    fields=[f[1] for f in fields],
-                    page_size=page_size,
+                    fields=_default_list_fields,
+                    page_offset=pg_offset,
+                    page_size=pg_size,
+                    filter=filter_,
+                    order=order,
                 )
-                echo_via_pager(
-                    tabulate_items(items, fields)
+                ctx.output.print_paginated_list(
+                    fetch_func,
+                    initial_page_offset=offset,
+                    page_size=limit,
                 )
-            except NoItems:
-                print("There are no matching vfolders.")
-    except Exception as e:
-        print_error(e)
-        sys.exit(1)
+        except Exception as e:
+            ctx.output.print_error(e)
+            sys.exit(1)
+
+    if docs is not None:
+        list.__doc__ = docs
+    return list
+
+
+user_vfolder.command()(_list_cmd())
+vfolder.command()(_list_cmd())
 
 
 @vfolder.command()

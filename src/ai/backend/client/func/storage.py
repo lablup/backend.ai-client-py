@@ -1,30 +1,31 @@
 import textwrap
 from typing import (
-    AsyncIterator,
     Sequence,
 )
 
+from ai.backend.client.session import api_session
+from ai.backend.client.output.fields import storage_fields
+from ai.backend.client.output.types import FieldSpec, PaginatedResult
+from ai.backend.client.pagination import generate_paginated_results
 from .base import api_function, BaseFunction
-from ..request import Request
-from ..pagination import generate_paginated_results
 
 __all__ = (
     'Storage',
 )
 
 _default_list_fields = (
-    'id',
-    'backend',
-    'capabilities',
+    storage_fields['id'],
+    storage_fields['backend'],
+    storage_fields['capabilities'],
 )
 
 _default_detail_fields = (
-    'id',
-    'backend',
-    'path',
-    'fsprefix',
-    'capabilities',
-    'hardware_metadata',
+    storage_fields['id'],
+    storage_fields['backend'],
+    storage_fields['path'],
+    storage_fields['fsprefix'],
+    storage_fields['capabilities'],
+    storage_fields['hardware_metadata'],
 )
 
 
@@ -46,40 +47,40 @@ class Storage(BaseFunction):
         cls,
         status: str = 'ALIVE',
         *,
-        fields: Sequence[str] = _default_list_fields,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+        page_offset: int = 0,
         page_size: int = 20,
-    ) -> AsyncIterator[dict]:
+        filter: str = None,
+        order: str = None,
+    ) -> PaginatedResult[dict]:
         """
         Lists the keypairs.
         You need an admin privilege for this operation.
         """
-        async for item in generate_paginated_results(
+        return await generate_paginated_results(
             'storage_volume_list',
-            {},
+            {
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
+            },
             fields,
+            page_offset=page_offset,
             page_size=page_size,
-        ):
-            yield item
+        )
 
     @api_function
     @classmethod
     async def detail(
         cls,
         vfolder_host: str,
-        fields: Sequence[str] = _default_detail_fields,
+        fields: Sequence[FieldSpec] = _default_detail_fields,
     ) -> dict:
         query = textwrap.dedent("""\
             query($vfolder_host: String!) {
                 storage_volume(id: $vfolder_host) {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'vfolder_host': vfolder_host}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['storage_volume']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['storage_volume']

@@ -1,17 +1,12 @@
 import sys
 
 import click
-from tabulate import tabulate
 
+from ai.backend.client.session import Session
+from ai.backend.client.output.fields import keypair_fields
 from . import admin
-from ...session import Session
 from ..pretty import print_done, print_error, print_fail
-from ..pagination import (
-    get_preferred_page_size,
-    echo_via_pager,
-    tabulate_items,
-)
-from ...exceptions import NoItems
+from ..types import CLIContext
 
 
 @admin.group()
@@ -22,95 +17,88 @@ def keypair() -> None:
 
 
 @keypair.command()
-def info():
+@click.pass_obj
+def info(ctx: CLIContext) -> None:
     """
     Show the server-side information of the currently configured access key.
     """
     fields = [
-        ('Email', 'user_id'),
-        ('Full Name', 'user_info { full_name }'),
-        ('Access Key', 'access_key'),
-        ('Secret Key', 'secret_key'),
-        ('Active?', 'is_active'),
-        ('Admin?', 'is_admin'),
-        ('Created At', 'created_at'),
-        ('Last Used', 'last_used'),
-        ('Res.Policy', 'resource_policy'),
-        ('Rate Limit', 'rate_limit'),
-        ('Concur.Limit', 'concurrency_limit'),
-        ('Concur.Used', 'concurrency_used'),
+        keypair_fields['user_id'],
+        keypair_fields['full_name'],
+        keypair_fields['access_key'],
+        keypair_fields['secret_key'],
+        keypair_fields['is_active'],
+        keypair_fields['is_admin'],
+        keypair_fields['created_at'],
+        keypair_fields['last_used'],
+        keypair_fields['resource_policy'],
+        keypair_fields['rate_limit'],
+        keypair_fields['concurrency_limit'],
+        keypair_fields['concurrency_used'],
     ]
     with Session() as session:
         try:
             kp = session.KeyPair(session.config.access_key)
-            info = kp.info(fields=(item[1] for item in fields))
+            item = kp.info(fields=fields)
+            ctx.output.print_item(item, fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        rows = []
-        for name, key in fields:
-            if key.startswith('user_info '):
-                full_name = info['user_info'].get('full_name', '')
-                rows.append((name, full_name))
-            else:
-                rows.append((name, info[key]))
-        print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @keypair.command()
-@click.pass_context
+@click.pass_obj
 @click.option('-u', '--user-id', type=str, default=None,
               help='Show keypairs of this given user. [default: show all]')
 @click.option('--is-active', type=bool, default=None,
               help='Filter keypairs by activation.')
-def list(ctx, user_id, is_active):
+@click.option('--filter', 'filter_', default=None,
+              help='Set the query filter expression.')
+@click.option('--order', default=None,
+              help='Set the query ordering expression.')
+@click.option('--offset', default=0,
+              help='The index of the current page start for pagination.')
+@click.option('--limit', default=None,
+              help='The page size for pagination.')
+def list(ctx: CLIContext, user_id, is_active, filter_, order, offset, limit) -> None:
     """
-    List and manage keypairs.
+    List keypairs.
     To show all keypairs or other user's, your access key must have the admin
     privilege.
     (admin privilege required)
     """
-    if ctx.invoked_subcommand is not None:
-        return
     fields = [
-        ('Email', 'user_id'),
-        ('Full Name', 'user_info { full_name }'),
-        ('Access Key', 'access_key'),
-        ('Secret Key', 'secret_key'),
-        ('Active?', 'is_active'),
-        ('Admin?', 'is_admin'),
-        ('Created At', 'created_at'),
-        ('Last Used', 'last_used'),
-        ('Res.Policy', 'resource_policy'),
-        ('Rate Limit', 'rate_limit'),
-        ('Concur.Limit', 'concurrency_limit'),
-        ('Concur.Used', 'concurrency_used'),
+        keypair_fields['user_id'],
+        keypair_fields['full_name'],
+        keypair_fields['access_key'],
+        keypair_fields['secret_key'],
+        keypair_fields['is_active'],
+        keypair_fields['is_admin'],
+        keypair_fields['created_at'],
+        keypair_fields['last_used'],
+        keypair_fields['resource_policy'],
+        keypair_fields['rate_limit'],
+        keypair_fields['concurrency_limit'],
+        keypair_fields['concurrency_used'],
     ]
     try:
-        user_id = int(user_id)
-    except (TypeError, ValueError):
-        pass  # string-based user ID for Backend.AI v1.4+
-
-    def format_item(item):
-        full_name = item['user_info'].get('full_name', '')
-        item['user_info'] = full_name
-
-    try:
         with Session() as session:
-            page_size = get_preferred_page_size()
-            try:
-                items = session.KeyPair.paginated_list(
-                    is_active,
-                    fields=[f[1] for f in fields],
-                    page_size=page_size,
-                )
-                echo_via_pager(
-                    tabulate_items(items, fields, item_formatter=format_item)
-                )
-            except NoItems:
-                print("There are no matching keypairs.")
+            fetch_func = lambda pg_offset, pg_size: session.KeyPair.paginated_list(
+                is_active,
+                user_id=user_id,
+                fields=fields,
+                page_offset=pg_offset,
+                page_size=pg_size,
+                filter=filter_,
+                order=order,
+            )
+            ctx.output.print_paginated_list(
+                fetch_func,
+                initial_page_offset=offset,
+                page_size=limit,
+            )
     except Exception as e:
-        print_error(e)
+        ctx.output.print_error(e)
         sys.exit(1)
 
 
@@ -130,10 +118,6 @@ def add(user_id, resource_policy, admin, inactive,  rate_limit):
     USER_ID: User ID of a new key pair.
     RESOURCE_POLICY: resource policy for new key pair.
     """
-    try:
-        user_id = int(user_id)
-    except ValueError:
-        pass  # string-based user ID for Backend.AI v1.4+
     with Session() as session:
         try:
             data = session.KeyPair.create(

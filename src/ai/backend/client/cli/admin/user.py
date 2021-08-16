@@ -1,18 +1,15 @@
+from __future__ import annotations
+
 import sys
 
 import click
-from tabulate import tabulate
 
-from . import admin
-from ...session import Session
+from ai.backend.client.session import Session
+from ai.backend.client.output.fields import user_fields
 from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
-from ..pagination import (
-    get_preferred_page_size,
-    echo_via_pager,
-    tabulate_items,
-)
-from ...exceptions import NoItems
+from ..types import CLIContext
+from . import admin
 
 
 @admin.group()
@@ -23,93 +20,85 @@ def user() -> None:
 
 
 @user.command()
+@click.pass_obj
 @click.option('-e', '--email', type=str, default=None,
               help='Email of a user to display.')
-def info(email):
+def info(ctx: CLIContext, email: str) -> None:
     """
     Show the information about the given user by email. If email is not give,
     requester's information will be displayed.
     """
     fields = [
-        ('UUID', 'uuid'),
-        ('Username', 'username'),
-        ('Role', 'role'),
-        ('Email', 'email'),
-        ('Name', 'full_name'),
-        ('Need Password Change', 'need_password_change'),
-        ('Status', 'status'),
-        ('Status Info', 'status_info'),
-        ('Created At', 'created_at'),
-        ('Domain Name', 'domain_name'),
-        ('Groups', 'groups { id name }'),
+        user_fields['uuid'],
+        user_fields['username'],
+        user_fields['role'],
+        user_fields['email'],
+        user_fields['full_name'],
+        user_fields['need_password_change'],
+        user_fields['status'],
+        user_fields['status_info'],
+        user_fields['created_at'],
+        user_fields['domain_name'],
+        user_fields['groups'],
     ]
     with Session() as session:
         try:
-            resp = session.User.detail(email=email, fields=(item[1] for item in fields))
+            item = session.User.detail(email=email, fields=fields)
+            ctx.output.print_item(item, fields=fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        rows = []
-        if resp is None:
-            print('There is no such user.')
-            sys.exit(1)
-        for name, key in fields:
-            if key.startswith('groups '):
-                group_list = [f"{g['name']} ({g['id']})" for g in resp['groups']]
-                rows.append((name, ",\n".join(group_list)))
-            else:
-                rows.append((name, resp[key]))
-        print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @user.command()
-@click.pass_context
+@click.pass_obj
 @click.option('-s', '--status', type=str, default=None,
               help='Filter users in a specific state (active, inactive, deleted, before-verification).')
 @click.option('-g', '--group', type=str, default=None,
               help='Filter by group ID.')
-def list(ctx, status, group) -> None:
+@click.option('--filter', 'filter_', default=None,
+              help='Set the query filter expression.')
+@click.option('--order', default=None,
+              help='Set the query ordering expression.')
+@click.option('--offset', default=0,
+              help='The index of the current page start for pagination.')
+@click.option('--limit', default=None,
+              help='The page size for pagination.')
+def list(ctx: CLIContext, status, group, filter_, order, offset, limit) -> None:
     """
-    List and manage users.
+    List users.
     (admin privilege required)
     """
-    if ctx.invoked_subcommand is not None:
-        return
     fields = [
-        ('UUID', 'uuid'),
-        ('Username', 'username'),
-        ('Role', 'role'),
-        ('Email', 'email'),
-        ('Name', 'full_name'),
-        ('Need Password Change', 'need_password_change'),
-        ('Status', 'status'),
-        ('Status Info', 'status_info'),
-        ('Created At', 'created_at'),
-        ('Domain Name', 'domain_name'),
-        ('Groups', 'groups { id name }'),
+        user_fields['uuid'],
+        user_fields['username'],
+        user_fields['role'],
+        user_fields['email'],
+        user_fields['full_name'],
+        user_fields['need_password_change'],
+        user_fields['status'],
+        user_fields['status_info'],
+        user_fields['created_at'],
+        user_fields['domain_name'],
+        user_fields['groups'],
     ]
-
-    def format_item(item):
-        group_list = [g['name'] for g in item['groups']]
-        item['groups'] = ", ".join(group_list)
-
     try:
         with Session() as session:
-            page_size = get_preferred_page_size()
-            try:
-                items = session.User.paginated_list(
-                    status, group,
-                    fields=[f[1] for f in fields],
-                    page_size=page_size,
-                )
-                echo_via_pager(
-                    tabulate_items(items, fields,
-                                   item_formatter=format_item)
-                )
-            except NoItems:
-                print("There are no matching users.")
+            fetch_func = lambda pg_offset, pg_size: session.User.paginated_list(
+                status, group,
+                fields=fields,
+                page_offset=pg_offset,
+                page_size=pg_size,
+                filter=filter_,
+                order=order,
+            )
+            ctx.output.print_paginated_list(
+                fetch_func,
+                initial_page_offset=offset,
+                page_size=limit,
+            )
     except Exception as e:
-        print_error(e)
+        ctx.output.print_error(e)
         sys.exit(1)
 
 

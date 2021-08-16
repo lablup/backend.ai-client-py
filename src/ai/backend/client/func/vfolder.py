@@ -1,7 +1,6 @@
 import asyncio
 from pathlib import Path
 from typing import (
-    AsyncIterator,
     Sequence,
     Union
 )
@@ -13,6 +12,8 @@ from tqdm import tqdm
 from yarl import URL
 from aiotusclient import client
 
+from ai.backend.client.output.fields import vfolder_fields
+from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
@@ -24,13 +25,13 @@ __all__ = (
 )
 
 _default_list_fields = (
-    'host',
-    'name',
-    'created_at',
-    'creator',
-    'group',
-    'permission',
-    'ownership_type',
+    vfolder_fields['host'],
+    vfolder_fields['name'],
+    vfolder_fields['created_at'],
+    vfolder_fields['creator'],
+    vfolder_fields['group_id'],
+    vfolder_fields['permission'],
+    vfolder_fields['ownership_type'],
 )
 
 
@@ -89,25 +90,30 @@ class VFolder(BaseFunction):
         group: str = None,
         access_key: str = None,
         *,
-        fields: Sequence[str] = _default_list_fields,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+        page_offset: int = 0,
         page_size: int = 20,
-    ) -> AsyncIterator[dict]:
+        filter: str = None,
+        order: str = None,
+    ) -> PaginatedResult[dict]:
         """
         Fetches the list of vfolders. Domain admins can only get domain vfolders.
 
         :param group: Fetch vfolders in a specific group.
         :param fields: Additional per-vfolder query fields to fetch.
         """
-        async for item in generate_paginated_results(
+        return await generate_paginated_results(
             'vfolder_list',
             {
                 'group_id': (group, 'UUID'),
                 'access_key': (access_key, 'String'),
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
             },
             fields,
+            page_offset=page_offset,
             page_size=page_size,
-        ):
-            yield item
+        )
 
     @api_function
     @classmethod
@@ -248,7 +254,7 @@ class VFolder(BaseFunction):
                 input_file = open(base_path / file_path, "rb")
             else:
                 input_file = open(str(Path(file_path).relative_to(base_path)), "rb")
-            print(f"Uploading {base_path / file_path} ...")
+            print(f"Uploading {base_path / file_path} via {upload_info['url']} ...")
             # TODO: refactor out the progress bar
             uploader = tus_client.async_uploader(
                 file_stream=input_file,

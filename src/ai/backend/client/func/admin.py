@@ -1,7 +1,9 @@
 from typing import Any, Mapping, Optional
 
 from .base import api_function, BaseFunction
+from ..exceptions import BackendAPIError
 from ..request import Request
+from ..session import api_session
 
 __all__ = (
     'Admin',
@@ -22,7 +24,8 @@ class Admin(BaseFunction):
     @api_function
     @classmethod
     async def query(
-        cls, query: str,
+        cls,
+        query: str,
         variables: Optional[Mapping[str, Any]] = None,
     ) -> Any:
         """
@@ -35,11 +38,38 @@ class Admin(BaseFunction):
 
         :returns: The object parsed from the response JSON string.
         """
+        return await cls._query(query, variables)
+
+    @classmethod
+    async def _query(
+        cls,
+        query: str,
+        variables: Optional[Mapping[str, Any]] = None,
+    ) -> Any:
+        """
+        Internal async implementation of the query() method,
+        which may be reused by other functional APIs to make GQL requests.
+        """
         gql_query = {
             'query': query,
             'variables': variables if variables else {},
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json(gql_query)
-        async with rqst.fetch() as resp:
-            return await resp.json()
+        if api_session.get().api_version >= (6, '20210815'):
+            rqst = Request('POST', '/admin/gql')
+            rqst.set_json(gql_query)
+            async with rqst.fetch() as resp:
+                response = await resp.json()
+                errors = response.get("errors", [])
+                if errors:
+                    raise BackendAPIError(400, reason="Bad request", data={
+                        'type': 'https://api.backend.ai/probs/graphql-error',
+                        'title': 'GraphQL-generated error',
+                        'data': errors,
+                    })
+                else:
+                    return response["data"]
+        else:
+            rqst = Request('POST', '/admin/graphql')
+            rqst.set_json(gql_query)
+            async with rqst.fetch() as resp:
+                return await resp.json()

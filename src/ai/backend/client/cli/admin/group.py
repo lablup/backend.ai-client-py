@@ -1,4 +1,5 @@
 import sys
+import uuid
 
 import click
 from tabulate import tabulate
@@ -17,13 +18,21 @@ def group() -> None:
 
 
 @group.command()
-@click.argument('gid', type=str)
-def info(gid):
+@click.pass_context
+@click.argument('id_or_name', type=str)
+def info(ctx, id_or_name: str) -> None:
     """
-    Show the information about the given group.
+    Show the information about the group(s) having the given name.
+    Two or more groups in different domains may have the same name,
+    so this may print out information of multiple groups if queried
+    by a superadmin.
+
+    When queried with a human-readable name by a super-admin,
+    it may return multiple results with the same name from
+    different domains.
 
     \b
-    GID: Group ID.
+    id_or_name: Group ID (UUID) or name.
     """
     fields = [
         ('ID', 'id'),
@@ -37,19 +46,47 @@ def info(gid):
     ]
     with Session() as session:
         try:
-            resp = session.Group.detail(gid=gid,
-                                        fields=(item[1] for item in fields))
-        except Exception as e:
-            print_error(e)
-            sys.exit(1)
-        rows = []
-        if resp is None:
-            print('There is no such group.')
-            sys.exit(1)
-        for name, key in fields:
-            if key in resp:
-                rows.append((name, resp[key]))
-        print(tabulate(rows, headers=('Field', 'Value')))
+            gid = uuid.UUID(id_or_name)
+        except ValueError:
+            # interpret as name
+            try:
+                items = session.Group.from_name(
+                    id_or_name,
+                    fields=(item[1] for item in fields),
+                )
+            except Exception as e:
+                print_error(e)
+                sys.exit(1)
+            rows = []
+            if not items:
+                print_fail('There is no such group.')
+                sys.exit(1)
+            show_splitter = (len(items) > 1)
+            for item_idx, item in enumerate(items):
+                if show_splitter and item_idx > 0:
+                    print("=" * 40)
+                for name, key in fields:
+                    if key in item:
+                        rows.append((name, item[key]))
+                print(tabulate(rows, headers=('Field', 'Value')))
+        else:
+            # interpret as UUID
+            try:
+                item = session.Group.detail(
+                    gid=str(gid),
+                    fields=(item[1] for item in fields),
+                )
+            except Exception as e:
+                print_error(e)
+                sys.exit(1)
+            rows = []
+            if item is None:
+                print_fail('There is no such group.')
+                sys.exit(1)
+            for name, key in fields:
+                if key in item:
+                    rows.append((name, item[key]))
+            print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @group.command()
@@ -58,11 +95,9 @@ def info(gid):
               help='Domain name to list groups belongs to it.')
 def list(ctx, domain_name):
     """
-    List and manage groups.
+    List groups in the given domain.
     (admin privilege required)
     """
-    if ctx.invoked_subcommand is not None:
-        return
     fields = [
         ('ID', 'id'),
         ('Name', 'name'),
@@ -72,6 +107,7 @@ def list(ctx, domain_name):
         ('Created At', 'created_at'),
         ('Total Resource Slots', 'total_resource_slots'),
         ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
+        ('Allowed scaling groups', 'scaling_groups'),
     ]
     with Session() as session:
         try:
@@ -81,7 +117,7 @@ def list(ctx, domain_name):
             print_error(e)
             sys.exit(1)
         if len(resp) < 1:
-            print('There is no group.')
+            print_fail('There is no group.')
             return
         fields = [field for field in fields if field[1] in resp[0]]
         print(tabulate((item.values() for item in resp),

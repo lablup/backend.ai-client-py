@@ -2,11 +2,11 @@ import warnings
 
 import click
 
-from .. import __version__
-from ..config import APIConfig, set_config
-from .types import CLIContext, OutputMode
-
 from ai.backend.cli.extensions import ExtendedCommandGroup
+from ai.backend.client import __version__
+from ai.backend.client.output import get_output_handler
+from ai.backend.client.config import APIConfig, set_config
+from ai.backend.client.cli.types import CLIContext, OutputMode
 
 
 @click.group(
@@ -33,10 +33,12 @@ def main(ctx: click.Context, skip_sslcert_validation: bool, output: str) -> None
     )
     set_config(config)
 
+    output_mode = OutputMode(output)
     cli_ctx = CLIContext(
         api_config=config,
-        output_mode=OutputMode(output),
+        output_mode=output_mode,
     )
+    cli_ctx.output = get_output_handler(cli_ctx, output_mode)
     ctx.obj = cli_ctx
 
     from .pretty import show_warning

@@ -7,6 +7,7 @@ import attr
 
 if TYPE_CHECKING:
     from ..config import APIConfig
+    from ..output import BaseOutputHandler
 
 
 class OutputMode(enum.Enum):
@@ -14,7 +15,8 @@ class OutputMode(enum.Enum):
     JSON = 'json'
 
 
-@attr.s(auto_attribs=True, slots=True)
+@attr.define(slots=True)
 class CLIContext:
-    api_config: APIConfig
-    output_mode: OutputMode
+    api_config: APIConfig = attr.field()
+    output_mode: OutputMode = attr.field()
+    output: BaseOutputHandler = attr.field(default=None)
