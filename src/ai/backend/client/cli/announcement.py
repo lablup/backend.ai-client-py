@@ -30,7 +30,7 @@ def announce(msg: str, only_once: bool = True) -> None:
     if not (last_state['hash'] == msg_hash and last_state['dismissed']):
         rprint('[bold cyan]The server has an announcement![/]', file=sys.stderr)
         rprint('[bold cyan]----------[/]', file=sys.stderr)
-        rprint(msg, file=sys.stderr)
+        rprint(f'[bold]{msg}[/]', file=sys.stderr)
         rprint('[bold cyan]----------[/]', file=sys.stderr)
     _printed_announcement = True
 
