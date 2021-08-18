@@ -115,7 +115,10 @@ async def web_handler(request):
         api_rqst = Request(
             request.method, path, request.content,
             params=request.query)
+        filtered_hdrs = {'Host', }
         for k, v in request.headers.items():
+            if k in filtered_hdrs:
+                continue
             api_rqst.headers[k] = v
         if 'Content-Type' in request.headers:
             api_rqst.content_type = request.content_type  # set for signing
