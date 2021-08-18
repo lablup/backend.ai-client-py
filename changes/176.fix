@@ -1,0 +1,1 @@
+Fix CORS errors when running `backend.ai proxy` in a non-localhost IP address due to missing HTTP headers in the upstream API requests
