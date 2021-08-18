@@ -272,6 +272,7 @@ class ComputeSession(BaseFunction):
             params['config'].update({
                 'mount_map': mount_map,
                 'preopen_ports': preopen_ports,
+                'agentList': agent_list,
             })
             params.update({
                 'starts_at': starts_at,

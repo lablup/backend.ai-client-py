@@ -451,6 +451,7 @@ def run(image, files, name,                                 # base args
     exec_template = string.Template(exec)
     env_templates = {k: string.Template(v) for k, v in envs.items()}
     preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
+    agent_lists = [] if agent_list is None else list(map(str, agent_list.split(',')))
     for env_vmap, build_vmap, exec_vmap in vmaps_product:
         interpolated_envs = tuple((k, vt.substitute(env_vmap))
                                   for k, vt in env_templates.items())
@@ -602,7 +603,7 @@ def run(image, files, name,                                 # base args
                 bootstrap_script=bootstrap_script.read() if bootstrap_script is not None else None,
                 tag=tag,
                 preopen_ports=preopen_ports,
-                agent_list=agent_list)
+                agent_list=agent_lists)
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
