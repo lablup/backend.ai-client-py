@@ -1,0 +1,1 @@
+Fix wrong type and default value of `status` argument for `User.create()` and `User.update()` functional APIs and let `role` and `status` arguments accept explicit enum types in addition to raw strings

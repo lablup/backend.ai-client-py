@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import enum
 import textwrap
 from typing import AsyncIterator, Iterable, Sequence, Union
 import uuid
@@ -10,6 +13,8 @@ from ..pagination import generate_paginated_results
 
 __all__ = (
     'User',
+    'UserStatus',
+    'UserRole',
 )
 
 _default_list_fields = (
@@ -22,6 +27,26 @@ _default_list_fields = (
     'domain_name',
     'groups',
 )
+
+
+class UserRole(str, enum.Enum):
+    """
+    The role (privilege level) of users.
+    """
+    SUPERADMIN = 'superadmin'
+    ADMIN = 'admin'
+    USER = 'user'
+    MONITOR = 'monitor'
+
+
+class UserStatus(enum.Enum):
+    """
+    The detailed status of users to represent the signup process and account lifecycles.
+    """
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+    DELETED = 'deleted'
+    BEFORE_VERIFICATION = 'before-verification'
 
 
 class User(BaseFunction):
@@ -81,14 +106,8 @@ class User(BaseFunction):
             'status': status,
             'group': group,
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['users']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['users']
 
     @api_function
     @classmethod
@@ -99,6 +118,8 @@ class User(BaseFunction):
         *,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
@@ -113,6 +134,8 @@ class User(BaseFunction):
             {
                 'status': (status, 'String'),
                 'group_id': (group, 'UUID'),
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
             },
             fields,
             page_size=page_size,
@@ -130,7 +153,7 @@ class User(BaseFunction):
         :param fields: Additional per-user query fields to fetch.
         """
         if fields is None:
-            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info'
+            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info',
                       'created_at', 'domain_name', 'role')
         if email is None:
             query = textwrap.dedent("""\
@@ -146,19 +169,8 @@ class User(BaseFunction):
             """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'email': email}
-        rqst = Request('POST', '/admin/graphql')
-        if email is None:
-            rqst.set_json({
-                'query': query,
-            })
-        else:
-            rqst.set_json({
-                'query': query,
-                'variables': variables,
-            })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['user']
+        data = await api_session.get().Admin._query(query, variables if email is not None else None)
+        return data['user']
 
     @api_function
     @classmethod
@@ -191,27 +203,20 @@ class User(BaseFunction):
             """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'user_id': str(user_uuid)}
-        rqst = Request('POST', '/admin/graphql')
-        if user_uuid is None:
-            rqst.set_json({
-                'query': query,
-            })
-        else:
-            rqst.set_json({
-                'query': query,
-                'variables': variables,
-            })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['user_from_uuid']
+        data = await api_session.get().Admin._query(query, variables if user_uuid is not None else None)
+        return data['user_from_uuid']
 
     @api_function
     @classmethod
     async def create(
         cls,
         domain_name: str,
-        email: str, password: str, username: str = None, full_name: str = None,
-        role: str = 'user', status: bool = True,
+        email: str,
+        password: str,
+        username: str = None,
+        full_name: str = None,
+        role: UserRole | str = UserRole.USER,
+        status: UserStatus | str = UserStatus.ACTIVE,
         need_password_change: bool = False,
         description: str = '',
         group_ids: Iterable[str] = None,
@@ -237,22 +242,16 @@ class User(BaseFunction):
                 'password': password,
                 'username': username,
                 'full_name': full_name,
-                'role': role,
-                'status': status,
+                'role': role.value if isinstance(role, UserRole) else role,
+                'status': status.value if isinstance(status, UserStatus) else status,
                 'need_password_change': need_password_change,
                 'description': description,
                 'domain_name': domain_name,
                 'group_ids': group_ids,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['create_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['create_user']
 
     @api_function
     @classmethod
@@ -262,7 +261,8 @@ class User(BaseFunction):
         password: str = None, username: str = None,
         full_name: str = None,
         domain_name: str = None,
-        role: str = None, status: bool = None,
+        role: UserRole | str = UserRole.USER,
+        status: UserStatus | str = UserStatus.ACTIVE,
         need_password_change: bool = None,
         description: str = None,
         group_ids: Iterable[str] = None,
@@ -286,21 +286,15 @@ class User(BaseFunction):
                 'username': username,
                 'full_name': full_name,
                 'domain_name': domain_name,
-                'role': role,
-                'status': status,
+                'role': role.value if isinstance(role, UserRole) else role,
+                'status': status.value if isinstance(status, UserStatus) else status,
                 'need_password_change': need_password_change,
                 'description': description,
                 'group_ids': group_ids,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['modify_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['modify_user']
 
     @api_function
     @classmethod
@@ -316,14 +310,8 @@ class User(BaseFunction):
             }
         """)
         variables = {'email': email}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['delete_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['delete_user']
 
     @api_function
     @classmethod
@@ -348,11 +336,5 @@ class User(BaseFunction):
                 'purge_shared_vfolders': purge_shared_vfolders,
             },
         }
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['purge_user']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['purge_user']

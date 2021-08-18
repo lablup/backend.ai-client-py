@@ -6,6 +6,7 @@ from typing import (
 
 from .base import api_function, BaseFunction
 from ..request import Request
+from ..session import api_session
 from ..pagination import generate_paginated_results
 
 __all__ = (
@@ -56,6 +57,8 @@ class Agent(BaseFunction):
         *,
         fields: Sequence[str] = _default_list_fields,
         page_size: int = 20,
+        filter: str = None,
+        order: str = None,
     ) -> AsyncIterator[dict]:
         """
         Lists the keypairs.
@@ -66,6 +69,8 @@ class Agent(BaseFunction):
             {
                 'status': (status, 'String'),
                 'scaling_group': (scaling_group, 'String'),
+                'filter': (filter, 'String'),
+                'order': (order, 'String'),
             },
             fields,
             page_size=page_size,
@@ -86,14 +91,8 @@ class Agent(BaseFunction):
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {'agent_id': agent_id}
-        rqst = Request('POST', '/admin/graphql')
-        rqst.set_json({
-            'query': query,
-            'variables': variables,
-        })
-        async with rqst.fetch() as resp:
-            data = await resp.json()
-            return data['agent']
+        data = await api_session.get().Admin._query(query, variables)
+        return data['agent']
 
 
 class AgentWatcher(BaseFunction):

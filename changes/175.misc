@@ -1,0 +1,1 @@
+Update dependencies and change the version ranges to specify the minimum to allow more flexibility in the components relying on this SDK
