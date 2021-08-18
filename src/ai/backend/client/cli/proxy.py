@@ -115,11 +115,12 @@ async def web_handler(request):
         api_rqst = Request(
             request.method, path, request.content,
             params=request.query)
-        filtered_hdrs = {'Host', }
         for k, v in request.headers.items():
-            if k in filtered_hdrs:
-                continue
             api_rqst.headers[k] = v
+        if api_rqst.config.endpoint.is_default_port():
+            api_rqst.headers['Host'] = api_rqst.config.endpoint.host
+        else:
+            api_rqst.headers['Host'] = f"{api_rqst.config.endpoint.host}:{api_rqst.config.endpoint.port}"
         if 'Content-Type' in request.headers:
             api_rqst.content_type = request.content_type  # set for signing
         # Uploading request body happens at the entering of the block,
