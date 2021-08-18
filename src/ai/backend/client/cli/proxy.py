@@ -118,7 +118,7 @@ async def web_handler(request):
         for k, v in request.headers.items():
             api_rqst.headers[k] = v
         if 'Content-Type' in request.headers:
-            api_rqst.content_type = request.content_type                        # set for signing
+            api_rqst.content_type = request.content_type  # set for signing
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
         async with api_rqst.fetch() as up_resp:
