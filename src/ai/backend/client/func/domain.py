@@ -46,44 +46,43 @@ class Domain(BaseFunction):
 
     @api_function
     @classmethod
-    async def list(cls, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def list(
+        cls,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+    ) -> Sequence[dict]:
         """
         Fetches the list of domains.
 
         :param fields: Additional per-domain query fields to fetch.
         """
-        if fields is None:
-            fields = ('name', 'description', 'is_active', 'created_at',
-                      'total_resource_slots', 'allowed_vfolder_hosts', 'allowed_docker_registries',
-                      'integration_id')
         query = textwrap.dedent("""\
             query {
                 domains {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         data = await api_session.get().Admin._query(query)
         return data['domains']
 
     @api_function
     @classmethod
-    async def detail(cls, name: str, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def detail(
+        cls,
+        name: str,
+        fields: Sequence[FieldSpec] = _default_detail_fields,
+    ) -> dict:
         """
         Fetch information of a domain with name.
 
         :param name: Name of the domain to fetch.
         :param fields: Additional per-domain query fields to fetch.
         """
-        if fields is None:
-            fields = ('name', 'description', 'is_active', 'created_at',
-                      'total_resource_slots', 'allowed_vfolder_hosts', 'allowed_docker_registries',
-                      'integration_id',)
         query = textwrap.dedent("""\
             query($name: String) {
                 domain(name: $name) {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'name': name}
         data = await api_session.get().Admin._query(query, variables)
         return data['domain']

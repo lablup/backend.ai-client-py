@@ -61,6 +61,17 @@ agent_fields = FieldSet([
     FieldSpec('mem_cur_bytes', 'Used Memory (MiB)', formatter=mibytes_output_formatter),
 ])
 
+domain_fields = FieldSet([
+    FieldSpec('name'),
+    FieldSpec('description'),
+    FieldSpec('is_active'),
+    FieldSpec('created_at'),
+    FieldSpec('total_resource_slots'),
+    FieldSpec('allowed_vfolder_hosts'),
+    FieldSpec('allowed_docker_registries'),
+    FieldSpec('integration_id'),
+])
+
 
 keypair_fields = FieldSet([
     FieldSpec('user_id', "Email"),
