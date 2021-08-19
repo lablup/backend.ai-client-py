@@ -3,10 +3,17 @@ import sys
 import click
 from tabulate import tabulate
 
+from ai.backend.client.session import Session
+from ai.backend.client.func.domain import (
+    _default_list_fields,
+    _default_detail_fields,
+)
+# from ai.backend.client.output.fields import domain_fields
 from . import admin
 from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
-from ...session import Session
+
+from ..types import CLIContext
 
 
 @admin.group()
@@ -17,68 +24,36 @@ def domain():
 
 
 @domain.command()
-@click.option('-n', '--name', type=str, default=None,
-              help="Domain name to get information.")
-def info(name):
+@click.pass_obj
+@click.argument('name', type=str)
+def info(ctx: CLIContext, name: str) -> None:
     """
     Show the information about the given domain.
     If name is not give, user's own domain information will be retrieved.
     """
-    fields = [
-        ('Name', 'name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Total Resource Slots', 'total_resource_slots'),
-        ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
-        ('Allowed Docker Registries', 'allowed_docker_registries'),
-        ('Scaling Groups', 'scaling_groups'),
-    ]
     with Session() as session:
         try:
-            resp = session.Domain.detail(name=name,
-                                         fields=(item[1] for item in fields))
+            item = session.Domain.detail(name=name)
+            ctx.output.print_item(item, _default_detail_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        rows = []
-        for name, key in fields:
-            if key in resp:
-                rows.append((name, resp[key]))
-        print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @domain.command()
-@click.pass_context
-def list(ctx):
+@click.pass_obj
+def list(ctx: CLIContext) -> None:
     """
     List and manage domains.
     (admin privilege required)
     """
-    if ctx.invoked_subcommand is not None:
-        return
-    fields = [
-        ('Name', 'name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Total Resource Slots', 'total_resource_slots'),
-        ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
-        ('Allowed Docker Registries', 'allowed_docker_registries'),
-        ('Scaling Groups', 'scaling_groups'),
-    ]
     with Session() as session:
         try:
-            resp = session.Domain.list(fields=(item[1] for item in fields))
+            items = session.Domain.list()
+            ctx.output.print_list(items, _default_list_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(resp) < 1:
-            print('There is no domain.')
-            return
-        fields = [field for field in fields if field[1] in resp[0]]
-        print(tabulate((item.values() for item in resp),
-                        headers=(item[0] for item in fields)))
 
 
 @domain.command()

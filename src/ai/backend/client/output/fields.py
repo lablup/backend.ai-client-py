@@ -84,25 +84,6 @@ keypair_fields = FieldSet([
 ])
 
 
-user_fields = FieldSet([
-    FieldSpec('uuid'),
-    FieldSpec('username'),
-    FieldSpec('email'),
-    # password is not queriable!
-    FieldSpec('need_password_change'),
-    FieldSpec('full_name'),
-    FieldSpec('description'),
-    FieldSpec('is_active'),
-    FieldSpec('status'),
-    FieldSpec('status_info'),
-    FieldSpec('created_at'),
-    FieldSpec('modified_at'),
-    FieldSpec('domain_name'),
-    FieldSpec('role'),
-    FieldSpec('groups { id name }', formatter=GroupListFormatter()),
-])
-
-
 scaling_group_fields = FieldSet([
     FieldSpec('name'),
     FieldSpec('description'),
@@ -181,6 +162,37 @@ session_fields_v5 = FieldSet([
 ])
 
 
+storage_fields = FieldSet([
+    FieldSpec('id'),
+    FieldSpec('backend'),
+    FieldSpec('fsprefix'),
+    FieldSpec('path'),
+    FieldSpec('capabilities'),
+    FieldSpec('hardware_metadata', formatter=nested_dict_formatter),
+    FieldSpec('performance_metric', formatter=nested_dict_formatter),
+    FieldSpec('usage', formatter=nested_dict_formatter),
+])
+
+
+user_fields = FieldSet([
+    FieldSpec('uuid'),
+    FieldSpec('username'),
+    FieldSpec('email'),
+    # password is not queriable!
+    FieldSpec('need_password_change'),
+    FieldSpec('full_name'),
+    FieldSpec('description'),
+    FieldSpec('is_active'),
+    FieldSpec('status'),
+    FieldSpec('status_info'),
+    FieldSpec('created_at'),
+    FieldSpec('modified_at'),
+    FieldSpec('domain_name'),
+    FieldSpec('role'),
+    FieldSpec('groups { id name }', formatter=GroupListFormatter()),
+])
+
+
 vfolder_fields = FieldSet([
     FieldSpec('id'),
     FieldSpec('host'),
@@ -199,16 +211,4 @@ vfolder_fields = FieldSet([
     FieldSpec('num_files'),
     FieldSpec('cur_size'),
     FieldSpec('cloneable'),
-])
-
-
-storage_fields = FieldSet([
-    FieldSpec('id'),
-    FieldSpec('backend'),
-    FieldSpec('fsprefix'),
-    FieldSpec('path'),
-    FieldSpec('capabilities'),
-    FieldSpec('hardware_metadata', formatter=nested_dict_formatter),
-    FieldSpec('performance_metric', formatter=nested_dict_formatter),
-    FieldSpec('usage', formatter=nested_dict_formatter),
 ])
