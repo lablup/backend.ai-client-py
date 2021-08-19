@@ -1,6 +1,8 @@
 import textwrap
 from typing import Iterable, Sequence
 
+from ai.backend.client.output.fields import group_fields
+from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..session import api_session
 
@@ -9,22 +11,22 @@ __all__ = (
 )
 
 _default_list_fields = (
-    'id',
-    'name',
-    'is_active',
-    'created_at',
-    'integration_id',
+    group_fields['id'],
+    group_fields['name'],
+    group_fields['is_active'],
+    group_fields['created_at'],
+    group_fields['integration_id'],
 )
 _default_detail_fields = (
-    'id',
-    'name',
-    'description',
-    'is_active',
-    'created_at',
-    'domain_name',
-    'total_resource_slots',
-    'allowed_vfolder_hosts',
-    'integration_id',
+    group_fields['id'],
+    group_fields['name'],
+    group_fields['description'],
+    group_fields['is_active'],
+    group_fields['created_at'],
+    group_fields['domain_name'],
+    group_fields['total_resource_slots'],
+    group_fields['allowed_vfolder_hosts'],
+    group_fields['integration_id'],
 )
 
 
@@ -77,7 +79,7 @@ class Group(BaseFunction):
     async def list(
         cls,
         domain_name: str,
-        fields: Iterable[str] = None,
+        fields: Sequence[FieldSpec] = _default_list_fields,
     ) -> Sequence[dict]:
         """
         Fetches the list of groups.
@@ -92,14 +94,18 @@ class Group(BaseFunction):
                 groups(domain_name: $domain_name) {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'domain_name': domain_name}
         data = await api_session.get().Admin._query(query, variables)
         return data['groups']
 
     @api_function
     @classmethod
-    async def detail(cls, gid: str, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def detail(
+        cls,
+        gid: str,
+        fields: Sequence[FieldSpec] = _default_detail_fields,
+    ) -> dict:
         """
         Fetch information of a group with group ID.
 
@@ -113,7 +119,7 @@ class Group(BaseFunction):
                 group(id: $gid) {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'gid': gid}
         data = await api_session.get().Admin._query(query, variables)
         return data['group']

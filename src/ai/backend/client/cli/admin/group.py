@@ -4,10 +4,18 @@ import uuid
 import click
 from tabulate import tabulate
 
+from ai.backend.client.session import Session
+from ai.backend.client.func.group import (
+    _default_list_fields,
+    _default_detail_fields,
+)
+# from ai.backend.client.output.fields import group_fields
 from . import admin
 from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
 from ...session import Session
+
+from ..types import CLIContext
 
 
 @admin.group()
@@ -18,9 +26,9 @@ def group() -> None:
 
 
 @group.command()
-@click.pass_context
+@click.pass_obj
 @click.argument('id_or_name', type=str)
-def info(ctx, id_or_name: str) -> None:
+def info(ctx: CLIContext, id_or_name: str) -> None:
     """
     Show the information about the group(s) having the given name.
     Two or more groups in different domains may have the same name,
@@ -34,94 +42,43 @@ def info(ctx, id_or_name: str) -> None:
     \b
     id_or_name: Group ID (UUID) or name.
     """
-    fields = [
-        ('ID', 'id'),
-        ('Name', 'name'),
-        ('Domain', 'domain_name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Total Resource Slots', 'total_resource_slots'),
-        ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
-    ]
     with Session() as session:
         try:
             gid = uuid.UUID(id_or_name)
         except ValueError:
             # interpret as name
             try:
-                items = session.Group.from_name(
-                    id_or_name,
-                    fields=(item[1] for item in fields),
-                )
+                item = session.Group.from_name(id_or_name)
+                ctx.output.print_item(item, _default_detail_fields)
             except Exception as e:
-                print_error(e)
+                ctx.output.print_error(e)
                 sys.exit(1)
-            rows = []
-            if not items:
-                print_fail('There is no such group.')
-                sys.exit(1)
-            show_splitter = (len(items) > 1)
-            for item_idx, item in enumerate(items):
-                if show_splitter and item_idx > 0:
-                    print("=" * 40)
-                for name, key in fields:
-                    if key in item:
-                        rows.append((name, item[key]))
-                print(tabulate(rows, headers=('Field', 'Value')))
         else:
             # interpret as UUID
             try:
-                item = session.Group.detail(
-                    gid=str(gid),
-                    fields=(item[1] for item in fields),
-                )
+                item = session.Group.detail(gid=str(gid))
+                ctx.output.print_item(item, _default_detail_fields)
             except Exception as e:
-                print_error(e)
+                ctx.output.print_error(e)
                 sys.exit(1)
-            rows = []
-            if item is None:
-                print_fail('There is no such group.')
-                sys.exit(1)
-            for name, key in fields:
-                if key in item:
-                    rows.append((name, item[key]))
-            print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @group.command()
-@click.pass_context
+@click.pass_obj
 @click.option('-d', '--domain-name', type=str, default=None,
               help='Domain name to list groups belongs to it.')
-def list(ctx, domain_name):
+def list(ctx: CLIContext, domain_name) -> None:
     """
     List groups in the given domain.
     (admin privilege required)
     """
-    fields = [
-        ('ID', 'id'),
-        ('Name', 'name'),
-        ('Domain', 'domain_name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Total Resource Slots', 'total_resource_slots'),
-        ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
-        ('Allowed scaling groups', 'scaling_groups'),
-    ]
     with Session() as session:
         try:
-            resp = session.Group.list(domain_name=domain_name,
-                                      fields=(item[1] for item in fields))
+            items = session.Group.list(domain_name=domain_name)
+            ctx.output.print_list(items, _default_list_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(resp) < 1:
-            print_fail('There is no group.')
-            return
-        fields = [field for field in fields if field[1] in resp[0]]
-        print(tabulate((item.values() for item in resp),
-                        headers=(item[0] for item in fields)))
 
 
 @group.command()

@@ -72,6 +72,18 @@ domain_fields = FieldSet([
     FieldSpec('integration_id'),
 ])
 
+group_fields = FieldSet([
+    FieldSpec('id'),
+    FieldSpec('name'),
+    FieldSpec('description'),
+    FieldSpec('is_active'),
+    FieldSpec('created_at'),
+    FieldSpec('domain_name'),
+    FieldSpec('total_resource_slots'),
+    FieldSpec('allowed_vfolder_hosts'),
+    FieldSpec('integration_id'),
+])
+
 
 keypair_fields = FieldSet([
     FieldSpec('user_id', "Email"),
