@@ -22,7 +22,9 @@ class Manager(BaseFunction):
             'status': 'running',
         })
         async with rqst.fetch() as resp:
-            return await resp.json()
+            data = await resp.json()
+            print(data)
+            return data['manager']
 
     @api_function
     @classmethod
