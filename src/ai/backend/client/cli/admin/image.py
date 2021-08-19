@@ -5,10 +5,18 @@ import click
 from tabulate import tabulate
 from tqdm import tqdm
 
+from ai.backend.client.session import Session
+from ai.backend.client.func.image import (
+    _default_list_fields_admin,
+    _default_list_fields_func,
+)
+# from ai.backend.client.output.fields import image_fields
 from . import admin
 from ...compat import asyncio_run
 from ...session import Session, AsyncSession
 from ..pretty import print_done, print_warn, print_fail, print_error
+
+from ..types import CLIContext
 
 
 @admin.group()
@@ -19,32 +27,19 @@ def image() -> None:
 
 
 @image.command()
+@click.pass_obj
 @click.option('--operation', is_flag=True, help='Get operational images only')
-def list(operation: bool) -> None:
+def list(ctx: CLIContext, operation: bool) -> None:
     """
     Show the list of registered images in this cluster.
     """
-    fields = [
-        ('Name', 'name'),
-        ('Registry', 'registry'),
-        ('Tag', 'tag'),
-        ('Digest', 'digest'),
-        ('Size', 'size_bytes'),
-        ('Aliases', 'aliases'),
-    ]
     with Session() as session:
         try:
-            items = session.Image.list(operation=operation,
-                                       fields=(item[1] for item in fields))
+            items = session.Image.list(operation=operation)
+            ctx.output.print_list(items, _default_list_fields_admin)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(items) == 0:
-            print_warn('There are no registered images.')
-            return
-        print(tabulate((item.values() for item in items),
-                       headers=[item[0] for item in fields],
-                       floatfmt=',.0f'))
 
 
 @image.command()

@@ -1,5 +1,7 @@
 from typing import Iterable, Sequence
 
+from ai.backend.client.output.fields import image_fields
+from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session
@@ -8,6 +10,20 @@ __all__ = (
     'Image',
 )
 
+_default_list_fields_admin = (
+    image_fields['name'],
+    image_fields['registry'],
+    image_fields['tag'],
+    image_fields['digest'],
+    image_fields['size_bytes'],
+    image_fields['aliases'],
+)
+
+_default_list_fields_func = (
+    image_fields['name'],
+    image_fields['tag'],
+    image_fields['hash'],
+)
 
 class Image(BaseFunction):
     """
@@ -21,23 +37,17 @@ class Image(BaseFunction):
     async def list(
         cls,
         operation: bool = False,
-        fields: Iterable[str] = None,
+        fields: Sequence[FieldSpec] = _default_list_fields_func,
     ) -> Sequence[dict]:
         """
         Fetches the list of registered images in this cluster.
         """
-        if fields is None:
-            fields = (
-                'name',
-                'tag',
-                'hash',
-            )
         q = 'query($is_operation: Boolean) {' \
             '  images(is_operation: $is_operation) {' \
             '    $fields' \
             '  }' \
             '}'
-        q = q.replace('$fields', ' '.join(fields))
+        q = q.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {
             'is_operation': operation,
         }

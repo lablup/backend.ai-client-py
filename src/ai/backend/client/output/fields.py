@@ -85,6 +85,17 @@ group_fields = FieldSet([
 ])
 
 
+image_fields = FieldSet([
+    FieldSpec('name'),
+    FieldSpec('registry'),
+    FieldSpec('tag'),
+    FieldSpec('digest'),
+    FieldSpec('size_bytes'),
+    FieldSpec('aliases'),
+    FieldSpec('hash'),
+])
+
+
 keypair_fields = FieldSet([
     FieldSpec('user_id', "Email"),
     FieldSpec('user_info { full_name }', "Full Name", alt_name='full_name',
