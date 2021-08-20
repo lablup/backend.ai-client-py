@@ -117,6 +117,19 @@ keypair_fields = FieldSet([
 ])
 
 
+keypair_resource_policy_fields = FieldSet([
+    FieldSpec('name'),
+    FieldSpec('created_at'),
+    FieldSpec('total_resource_slots'),
+    FieldSpec('max_concurrent_sessions'),
+    FieldSpec('max_vfolder_count'),
+    FieldSpec('max_vfolder_size'),
+    FieldSpec('idle_timeout'),
+    FieldSpec('max_containers_per_session'),
+    FieldSpec('allowed_vfolder_hosts'),
+])
+
+
 scaling_group_fields = FieldSet([
     FieldSpec('name'),
     FieldSpec('description'),

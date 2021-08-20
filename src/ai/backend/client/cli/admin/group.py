@@ -13,7 +13,6 @@ from ai.backend.client.func.group import (
 from . import admin
 from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
-from ...session import Session
 
 from ..types import CLIContext
 

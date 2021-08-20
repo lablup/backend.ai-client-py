@@ -3,10 +3,17 @@ import sys
 import click
 from tabulate import tabulate
 
+from ai.backend.client.session import Session
+from ai.backend.client.func.keypair_resource_policy import (
+    _default_list_fields,
+    _default_detail_fields,
+)
+from ai.backend.client.output.fields import keypair_resource_policy_fields
 from . import admin
-from ...session import Session
 from ..interaction import ask_yn
 from ..pretty import print_done, print_error, print_fail, print_info, print_warn
+
+from ..types import CLIContext
 
 
 @admin.group()
@@ -17,73 +24,37 @@ def keypair_resource_policy() -> None:
 
 
 @keypair_resource_policy.command()
-@click.option('-n', '--name', type=str, default=None,
-              help='Name of the resource policy.')
-def info(name):
+@click.pass_obj
+@click.argument('name', type=str)
+def info(ctx: CLIContext, name: str) -> None:
     """
     Show details about a keypair resource policy. When `name` option is omitted, the
     resource policy for the current access_key will be returned.
     """
-    fields = [
-        ('Name', 'name'),
-        ('Created At', 'created_at'),
-        ('Default for Unspecified', 'default_for_unspecified'),
-        ('Total Resource Slot', 'total_resource_slots'),
-        ('Max Concurrent Sessions', 'max_concurrent_sessions'),
-        ('Max Containers per Session', 'max_containers_per_session'),
-        ('Max vFolder Count', 'max_vfolder_count'),
-        ('Max vFolder Size', 'max_vfolder_size'),
-        ('Idle Timeeout', 'idle_timeout'),
-        ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
-    ]
     with Session() as session:
         try:
             rp = session.KeypairResourcePolicy(session.config.access_key)
-            info = rp.info(name, fields=(item[1] for item in fields))
+            item = rp.info(name)
+            ctx.output.print_item(item, _default_detail_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        rows = []
-        if info is None:
-            print_warn('No such resource policy.')
-            sys.exit(1)
-        for name, key in fields:
-            rows.append((name, info[key]))
-        print(tabulate(rows, headers=('Field', 'Value')))
 
 
 @keypair_resource_policy.command()
-@click.pass_context
+@click.pass_obj
 def list(ctx):
     """
     List and manage keypair resource policies.
     (admin privilege required)
     """
-    if ctx.invoked_subcommand is not None:
-        return
-    fields = [
-        ('Name', 'name'),
-        ('Created At', 'created_at'),
-        ('Default for Unspecified', 'default_for_unspecified'),
-        ('Total Resource Slot', 'total_resource_slots'),
-        ('Max Concurrent Sessions', 'max_concurrent_sessions'),
-        ('Max Containers per Session', 'max_containers_per_session'),
-        ('Max vFolder Count', 'max_vfolder_count'),
-        ('Max vFolder Size', 'max_vfolder_size'),
-        ('Idle Timeeout', 'idle_timeout'),
-        ('Allowed vFolder Hosts', 'allowed_vfolder_hosts'),
-    ]
     with Session() as session:
         try:
-            items = session.KeypairResourcePolicy.list(fields=(item[1] for item in fields))
+            items = session.KeypairResourcePolicy.list()
+            ctx.output.print_list(items, _default_list_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(items) == 0:
-            print_warn('There are no keypair resource policies.')
-            return
-        print(tabulate((item.values() for item in items),
-                       headers=(item[0] for item in fields)))
 
 
 @keypair_resource_policy.command()

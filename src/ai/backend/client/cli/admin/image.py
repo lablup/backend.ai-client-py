@@ -12,7 +12,7 @@ from ai.backend.client.func.image import (
 # from ai.backend.client.output.fields import image_fields
 from . import admin
 from ...compat import asyncio_run
-from ...session import Session, AsyncSession
+from ...session import AsyncSession
 from ..pretty import print_done, print_warn, print_fail, print_error
 
 from ..types import CLIContext
