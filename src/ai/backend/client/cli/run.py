@@ -387,8 +387,8 @@ def _prepare_mount_arg(
                    'User should be a member of the group to execute the code.')
 @click.option('--preopen',  default=None,
               help='Pre-open service ports')
-@click.option('--agent-list', default = None,
-              help='Show mapping list of tuple which mapped containers with agent.' 
+@click.option('--agent-list', default=None,
+              help='Show mapping list of tuple which mapped containers with agent.'
                    'When user role is Super Admin')
 def run(image, files, name,                                 # base args
         type, starts_at, enqueue_only, max_wait, no_reuse,  # job scheduling options
