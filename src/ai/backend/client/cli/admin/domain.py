@@ -1,7 +1,6 @@
 import sys
 
 import click
-from tabulate import tabulate
 
 from ai.backend.client.session import Session
 from ai.backend.client.func.domain import (

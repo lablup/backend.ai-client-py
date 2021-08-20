@@ -1,4 +1,4 @@
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from ai.backend.client.output.fields import image_fields
 from ai.backend.client.output.types import FieldSpec
@@ -18,6 +18,7 @@ _default_list_fields_admin = (
     image_fields['size_bytes'],
     image_fields['aliases'],
 )
+
 
 class Image(BaseFunction):
     """

@@ -32,6 +32,7 @@ _default_detail_fields = (
     domain_fields['integration_id'],
 )
 
+
 class Domain(BaseFunction):
     """
     Provides a shortcut of :func:`Admin.query()

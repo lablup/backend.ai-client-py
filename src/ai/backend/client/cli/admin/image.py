@@ -2,7 +2,6 @@ import json
 import sys
 
 import click
-from tabulate import tabulate
 from tqdm import tqdm
 
 from ai.backend.client.session import Session

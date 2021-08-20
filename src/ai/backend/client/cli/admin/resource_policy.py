@@ -1,17 +1,16 @@
 import sys
 
 import click
-from tabulate import tabulate
 
 from ai.backend.client.session import Session
 from ai.backend.client.func.keypair_resource_policy import (
     _default_list_fields,
     _default_detail_fields,
 )
-from ai.backend.client.output.fields import keypair_resource_policy_fields
+# from ai.backend.client.output.fields import keypair_resource_policy_fields
 from . import admin
 from ..interaction import ask_yn
-from ..pretty import print_done, print_error, print_fail, print_info, print_warn
+from ..pretty import print_done, print_error, print_fail, print_info
 
 from ..types import CLIContext
 

@@ -33,6 +33,7 @@ _default_detail_fields = (
     keypair_resource_policy_fields['allowed_vfolder_hosts'],
 )
 
+
 class KeypairResourcePolicy(BaseFunction):
     """
     Provides interactions with keypair resource policy.
