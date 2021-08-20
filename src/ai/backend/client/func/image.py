@@ -19,12 +19,6 @@ _default_list_fields_admin = (
     image_fields['aliases'],
 )
 
-_default_list_fields_func = (
-    image_fields['name'],
-    image_fields['tag'],
-    image_fields['hash'],
-)
-
 class Image(BaseFunction):
     """
     Provides a shortcut of :func:`Admin.query()
@@ -37,7 +31,7 @@ class Image(BaseFunction):
     async def list(
         cls,
         operation: bool = False,
-        fields: Sequence[FieldSpec] = _default_list_fields_func,
+        fields: Sequence[FieldSpec] = _default_list_fields_admin,
     ) -> Sequence[dict]:
         """
         Fetches the list of registered images in this cluster.

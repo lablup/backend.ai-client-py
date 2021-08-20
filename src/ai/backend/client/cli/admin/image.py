@@ -8,7 +8,6 @@ from tqdm import tqdm
 from ai.backend.client.session import Session
 from ai.backend.client.func.image import (
     _default_list_fields_admin,
-    _default_list_fields_func,
 )
 # from ai.backend.client.output.fields import image_fields
 from . import admin

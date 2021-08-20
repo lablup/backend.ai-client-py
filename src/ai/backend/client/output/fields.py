@@ -92,7 +92,6 @@ image_fields = FieldSet([
     FieldSpec('digest'),
     FieldSpec('size_bytes'),
     FieldSpec('aliases'),
-    FieldSpec('hash'),
 ])
 
 
