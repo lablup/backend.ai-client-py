@@ -16,6 +16,14 @@ Changes
 
 .. towncrier release notes start
 
+
+21.03.7 (2021-08-23)
+--------------------
+
+### Fixes
+* Fix CORS errors when running `backend.ai proxy` in a non-localhost IP address due to missing HTTP headers in the upstream API requests ([#176](https://github.com/lablup/backend.ai-client-py/issues/176))
+
+
 21.03.6 (2021-07-30)
 --------------------
 
