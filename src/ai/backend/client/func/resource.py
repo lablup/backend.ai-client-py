@@ -36,6 +36,26 @@ class Resource(BaseFunction):
 
     @api_function
     @classmethod
+    async def check_group(cls, group_name: str):
+        """
+        Lists available resources from the scaling groups.
+        """
+        rqst = Request('GET', '/resource/group', params={"name": group_name})
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    @classmethod
+    async def check_scaling_group(cls, sgroup_name: str):
+        """
+        Lists available resources from the scaling groups.
+        """
+        rqst = Request('GET', '/resource/scaling-group', params={"name": sgroup_name})
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    @classmethod
     async def get_docker_registries(cls):
         """
         Lists all registered docker registries.

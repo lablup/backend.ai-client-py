@@ -39,6 +39,7 @@ def _attach_command():
     from . import session_template  # noqa
     from . import dotfile  # noqa
     from . import server_log  # noqa
+    from . import resource  # noqa
 
 
 _attach_command()

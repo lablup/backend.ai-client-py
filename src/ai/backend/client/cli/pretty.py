@@ -1,8 +1,11 @@
+from decimal import Decimal
 import enum
 import functools
+import math
 import sys
 import textwrap
 import traceback
+from typing import TextIO
 
 from click import echo, style
 
@@ -175,3 +178,23 @@ def show_warning(message, category, filename, lineno, file=None, line=None):
         style(str(category.__name__), fg='yellow', bold=True),
         style(str(message), fg='yellow'),
     ), file=file)
+
+
+def print_resource(
+    slots: dict,
+    slot_types: dict,
+    *,
+    prefix: str = "",
+    file: TextIO = sys.stdout,
+    nan_as_infinite: bool = False
+) -> None:
+    for key in slot_types.keys():
+        value = Decimal(slots[key])
+        value_expr: str
+        if math.isnan(value):
+            value_expr = "Unlimited" if nan_as_infinite else "Unavailable"
+        elif math.isinf(value):
+            value_expr = "Unlimited"
+        else:
+            value_expr = str(value)
+        print(f"{prefix}{key}: {value_expr}", file=file)
