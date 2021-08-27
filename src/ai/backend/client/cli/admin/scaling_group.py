@@ -10,6 +10,7 @@ from ai.backend.client.func.scaling_group import (
 from ai.backend.client.output.fields import scaling_group_fields
 from . import admin
 from ..pretty import print_done, print_error, print_fail
+from ..params import JSONParamType
 from ..types import CLIContext
 
 
@@ -74,12 +75,12 @@ def list(ctx: CLIContext) -> None:
               help='New scaling group will be inactive.')
 @click.option('--driver', type=str, default='static',
               help='Set driver.')
-@click.option('--driver_opts', type=str, default={},
-              help='Set driver options.')
+@click.option('--driver-opts', type=JSONParamType(), default={},
+              help='Set driver options as a JSON string.')
 @click.option('--scheduler', type=str, default='fifo',
               help='Set scheduler.')
-@click.option('--scheduler_opts', type=str, default={},
-              help='Set scheduler options.')
+@click.option('--scheduler-opts', type=JSONParamType(), default={},
+              help='Set scheduler options as a JSON string.')
 def add(name, description, inactive,
         driver, driver_opts, scheduler, scheduler_opts):
     """
@@ -116,12 +117,12 @@ def add(name, description, inactive,
               help='New scaling group will be inactive.')
 @click.option('--driver', type=str, default='static',
               help='Set driver.')
-@click.option('--driver_opts', type=str, default={},
-              help='Set driver options.')
+@click.option('--driver-opts', type=JSONParamType(), default=None,
+              help='Set driver options as a JSON string.')
 @click.option('--scheduler', type=str, default='fifo',
               help='Set scheduler.')
-@click.option('--scheduler_opts', type=str, default={},
-              help='Set scheduler options.')
+@click.option('--scheduler-opts', type=JSONParamType(), default=None,
+              help='Set scheduler options as a JSON string.')
 def update(name, description, inactive,
            driver, driver_opts, scheduler, scheduler_opts):
     """

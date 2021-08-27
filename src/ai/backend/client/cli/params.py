@@ -1,4 +1,9 @@
+import json
 import re
+from typing import (
+    Any,
+    Optional,
+)
 
 import click
 
@@ -20,7 +25,10 @@ class ByteSizeParamType(click.ParamType):
         if isinstance(value, int):
             return value
         if not isinstance(value, str):
-            self.fail(f"expected string, got {value!r} of type {type(value).__name__}", param, ctx)
+            self.fail(
+                f"expected string, got {value!r} of type {type(value).__name__}",
+                param, ctx,
+            )
         m = self._rx_digits.search(value)
         if m is None:
             self.fail(f"{value!r} is not a valid byte-size expression", param, ctx)
@@ -36,8 +44,27 @@ class ByteSizeParamCheckType(ByteSizeParamType):
         if isinstance(value, int):
             return value
         if not isinstance(value, str):
-            self.fail(f"expected string, got {value!r} of type {type(value).__name__}", param, ctx)
+            self.fail(
+                f"expected string, got {value!r} of type {type(value).__name__}",
+                param, ctx,
+            )
         m = self._rx_digits.search(value)
         if m is None:
             self.fail(f"{value!r} is not a valid byte-size expression", param, ctx)
+        return value
+
+
+class JSONParamType(click.ParamType):
+    name = "json-string"
+
+    def convert(
+        self,
+        value: str,
+        param: Optional[click.Parameter],
+        ctx: Optional[click.Context],
+    ) -> Any:
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            self.fail(f"cannot parse {value!r} as JSON", param, ctx)
         return value
