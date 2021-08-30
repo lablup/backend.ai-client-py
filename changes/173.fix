@@ -1,1 +1,0 @@
-Fix a missing comman that breaks `User.detail()` functional API when called without an explicit field list

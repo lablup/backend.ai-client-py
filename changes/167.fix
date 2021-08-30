@@ -1,1 +1,0 @@
-Fix a wrong field name (`last_updated`) for `status_changed` when `ComputeSession.paginated_list()` is executed without the explicit field list.
