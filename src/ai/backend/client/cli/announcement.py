@@ -5,8 +5,6 @@ import sys
 
 import appdirs
 
-# from .pretty import print_info
-
 from rich import print as rprint
 
 _printed_announcement = False
