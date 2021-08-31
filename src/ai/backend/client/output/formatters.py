@@ -114,6 +114,7 @@ class MiBytesOutputFormatter(OutputFormatter):
         value = round(value / 2 ** 20, 1)
         return super().format_json(value, field)
 
+
 class SizeBytesOutputFormatter(OutputFormatter):
 
     def format_console(self, value: Any, field: FieldSpec) -> str:
