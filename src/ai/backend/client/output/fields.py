@@ -66,7 +66,7 @@ domain_fields = FieldSet([
     FieldSpec('description'),
     FieldSpec('is_active'),
     FieldSpec('created_at'),
-    FieldSpec('total_resource_slots'),
+    FieldSpec('total_resource_slots', formatter=resource_slot_formatter),
     FieldSpec('allowed_vfolder_hosts'),
     FieldSpec('allowed_docker_registries'),
     FieldSpec('integration_id'),
@@ -79,7 +79,7 @@ group_fields = FieldSet([
     FieldSpec('is_active'),
     FieldSpec('created_at'),
     FieldSpec('domain_name'),
-    FieldSpec('total_resource_slots'),
+    FieldSpec('total_resource_slots', formatter=resource_slot_formatter),
     FieldSpec('allowed_vfolder_hosts'),
     FieldSpec('integration_id'),
 ])
