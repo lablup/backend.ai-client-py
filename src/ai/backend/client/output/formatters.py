@@ -114,6 +114,16 @@ class MiBytesOutputFormatter(OutputFormatter):
         value = round(value / 2 ** 20, 1)
         return super().format_json(value, field)
 
+class SizeBytesOutputFormatter(OutputFormatter):
+
+    def format_console(self, value: Any, field: FieldSpec) -> str:
+        value = humanize.naturalsize(value, binary=True)
+        return super().format_console(value, field)
+
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
+        value = humanize.naturalsize(value, binary=True)
+        return super().format_json(value, field)
+
 
 class SubFieldOutputFormatter(OutputFormatter):
 
@@ -145,6 +155,7 @@ default_output_formatter = OutputFormatter()
 nested_dict_formatter = NestedDictOutputFormatter()
 mibytes_output_formatter = MiBytesOutputFormatter()
 resource_slot_formatter = ResourceSlotFormatter()
+sizebytes_output_formatter = SizeBytesOutputFormatter()
 
 
 class AgentStatFormatter(OutputFormatter):
