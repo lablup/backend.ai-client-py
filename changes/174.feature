@@ -1,0 +1,1 @@
+Utilize Rich as a formatting library for server announcements
