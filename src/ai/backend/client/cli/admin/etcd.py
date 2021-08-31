@@ -8,15 +8,12 @@ from ..pretty import print_pretty, print_error, print_fail
 from ...session import Session
 
 
-@admin.group(invoke_without_command=False)
-@click.pass_context
-def etcd(ctx):
-    '''
-    List and manage ETCD configurations.
+@admin.group()
+def etcd() -> None:
+    """
+    etcd query and manipulation commands.
     (admin privilege required)
-    '''
-    if ctx.invoked_subcommand is not None:
-        return
+    """
 
 
 @etcd.command()
@@ -24,11 +21,11 @@ def etcd(ctx):
 @click.option('-p', '--prefix', is_flag=True, default=False,
               help='Get all keys prefixed with the given key.')
 def get(key, prefix):
-    '''
+    """
     Get a ETCD value(s).
 
     KEY: Name of ETCD key.
-    '''
+    """
     with Session() as session:
         try:
             data = session.EtcdConfig.get(key, prefix)
@@ -43,12 +40,12 @@ def get(key, prefix):
 @click.argument('key', type=str, metavar='KEY')
 @click.argument('value', type=str, metavar='VALUE')
 def set(key, value):
-    '''
+    """
     Set new key and value on ETCD.
 
     KEY: Name of ETCD key.
     VALUE: Value to set.
-    '''
+    """
     with Session() as session:
         try:
             value = json.loads(value)
@@ -71,11 +68,11 @@ def set(key, value):
 @click.option('-p', '--prefix', is_flag=True, default=False,
               help='Delete all keys prefixed with the given key.')
 def delete(key, prefix):
-    '''
+    """
     Delete key(s) from ETCD.
 
     KEY: Name of ETCD key.
-    '''
+    """
     with Session() as session:
         try:
             data = session.EtcdConfig.delete(key, prefix)

@@ -2,14 +2,20 @@ from __future__ import annotations
 
 import enum
 import textwrap
-from typing import AsyncIterator, Iterable, Sequence, Union
+from typing import (
+    Iterable,
+    Sequence,
+    Union,
+)
 import uuid
 
+from ai.backend.client.auth import AuthToken, AuthTokenTypes
+from ai.backend.client.request import Request
+from ai.backend.client.session import api_session
+from ai.backend.client.output.fields import user_fields
+from ai.backend.client.output.types import FieldSpec, PaginatedResult
+from ai.backend.client.pagination import generate_paginated_results
 from .base import api_function, BaseFunction
-from ..auth import AuthToken, AuthTokenTypes
-from ..request import Request
-from ..session import api_session
-from ..pagination import generate_paginated_results
 
 __all__ = (
     'User',
@@ -17,15 +23,29 @@ __all__ = (
     'UserRole',
 )
 
+
 _default_list_fields = (
-    'uuid',
-    'role',
-    'username',
-    'email',
-    'is_active',
-    'created_at',
-    'domain_name',
-    'groups',
+    user_fields['uuid'],
+    user_fields['role'],
+    user_fields['username'],
+    user_fields['email'],
+    user_fields['is_active'],
+    user_fields['created_at'],
+    user_fields['domain_name'],
+    user_fields['groups'],
+)
+
+_default_detail_fields = (
+    user_fields['uuid'],
+    user_fields['username'],
+    user_fields['email'],
+    user_fields['need_password_change'],
+    user_fields['status'],
+    user_fields['status_info'],
+    user_fields['created_at'],
+    user_fields['domain_name'],
+    user_fields['role'],
+    user_fields['groups'],
 )
 
 
@@ -86,7 +106,7 @@ class User(BaseFunction):
         cls,
         status: str = None,
         group: str = None,
-        fields: Sequence[str] = _default_list_fields,
+        fields: Sequence[FieldSpec] = _default_list_fields,
     ) -> Sequence[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
@@ -101,7 +121,7 @@ class User(BaseFunction):
                 users(status: $status, group_id: $group) {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {
             'status': status,
             'group': group,
@@ -116,11 +136,12 @@ class User(BaseFunction):
         status: str = None,
         group: str = None,
         *,
-        fields: Sequence[str] = _default_list_fields,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+        page_offset: int = 0,
         page_size: int = 20,
         filter: str = None,
         order: str = None,
-    ) -> AsyncIterator[dict]:
+    ) -> PaginatedResult[dict]:
         """
         Fetches the list of users. Domain admins can only get domain users.
 
@@ -129,7 +150,7 @@ class User(BaseFunction):
         :param group: Fetch users in a specific group.
         :param fields: Additional per-user query fields to fetch.
         """
-        async for item in generate_paginated_results(
+        return await generate_paginated_results(
             'user_list',
             {
                 'status': (status, 'String'),
@@ -138,13 +159,17 @@ class User(BaseFunction):
                 'order': (order, 'String'),
             },
             fields,
+            page_offset=page_offset,
             page_size=page_size,
-        ):
-            yield item
+        )
 
     @api_function
     @classmethod
-    async def detail(cls, email: str = None, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def detail(
+        cls,
+        email: str = None,
+        fields: Sequence[FieldSpec] = _default_detail_fields,
+    ) -> Sequence[dict]:
         """
         Fetch information of a user. If email is not specified,
         requester's information will be returned.
@@ -152,9 +177,6 @@ class User(BaseFunction):
         :param email: Email of the user to fetch.
         :param fields: Additional per-user query fields to fetch.
         """
-        if fields is None:
-            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info',
-                      'created_at', 'domain_name', 'role')
         if email is None:
             query = textwrap.dedent("""\
                 query {
@@ -167,7 +189,7 @@ class User(BaseFunction):
                     user(email: $email) {$fields}
                 }
             """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'email': email}
         data = await api_session.get().Admin._query(query, variables if email is not None else None)
         return data['user']
@@ -177,7 +199,7 @@ class User(BaseFunction):
     async def detail_by_uuid(
         cls,
         user_uuid: Union[str, uuid.UUID] = None,
-        fields: Iterable[str] = None,
+        fields: Sequence[FieldSpec] = _default_detail_fields,
     ) -> Sequence[dict]:
         """
         Fetch information of a user by user's uuid. If user_uuid is not specified,
@@ -186,9 +208,6 @@ class User(BaseFunction):
         :param user_uuid: UUID of the user to fetch.
         :param fields: Additional per-user query fields to fetch.
         """
-        if fields is None:
-            fields = ('uuid', 'username', 'email', 'need_password_change', 'status', 'status_info',
-                      'created_at', 'domain_name', 'role')
         if user_uuid is None:
             query = textwrap.dedent("""\
                 query {
@@ -201,7 +220,7 @@ class User(BaseFunction):
                     user_from_uuid(user_id: $user_id) {$fields}
                 }
             """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'user_id': str(user_uuid)}
         data = await api_session.get().Admin._query(query, variables if user_uuid is not None else None)
         return data['user_from_uuid']

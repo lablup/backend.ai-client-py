@@ -1,4 +1,13 @@
+from __future__ import annotations
+
 import enum
+
+__all__ = (
+    "Sentinel",
+    "Undefined",
+    "sentinel",
+    "undefined",
+)
 
 
 class Sentinel(enum.Enum):

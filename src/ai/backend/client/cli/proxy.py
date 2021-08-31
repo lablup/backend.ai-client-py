@@ -13,7 +13,7 @@ import aiohttp
 from aiohttp import web
 import click
 
-from . import main
+from .main import main
 from .pretty import print_info, print_error, print_fail
 from ..exceptions import BackendAPIError, BackendClientError
 from ..request import Request

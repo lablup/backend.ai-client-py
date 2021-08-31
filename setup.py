@@ -22,7 +22,6 @@ install_requires = [
     'rich~=10.5.0',
     'tabulate>=0.8.9',
     'tqdm>=4.61',
-    'typing-extensions>=3.10.0',
     'yarl>=1.6.3',
     'backend.ai-cli~=0.5.0.post1',
 ]
@@ -37,7 +36,6 @@ test_requires = [
     'pytest-mock',
     'pytest-asyncio>=0.15.1',
     'aioresponses>=0.7.2',
-    'asynctest>=0.13; python_version<"3.8"',
     'codecov',
 ]
 lint_requires = [
@@ -90,7 +88,6 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Operating System :: POSIX',
@@ -102,7 +99,7 @@ setup(
     ],
     package_dir={'': 'src'},
     packages=find_namespace_packages(where='src', include='ai.backend.*'),
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     setup_requires=setup_requires,
     install_requires=install_requires,
     extras_require={
@@ -119,7 +116,7 @@ setup(
     },
     entry_points={
         'backendai_cli_v10': [
-            '_ = ai.backend.client.cli:main',
+            '_ = ai.backend.client.cli.main:main',
         ]
     },
 )

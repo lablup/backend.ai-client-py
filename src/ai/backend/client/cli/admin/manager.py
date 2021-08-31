@@ -7,15 +7,15 @@ import appdirs
 import click
 from tabulate import tabulate
 
-from . import main
-from .interaction import ask_yn
-from .pretty import print_done, print_error, print_fail, print_info, print_wait
+from . import admin
+from ..interaction import ask_yn
+from ..pretty import print_done, print_error, print_fail, print_info, print_wait
 from ..session import Session
 
 
-@main.group()
+@admin.group()
 def manager():
-    """Provides manager-related operations."""
+    """Set of manager control operations."""
 
 
 @manager.command()
@@ -83,7 +83,7 @@ def unfreeze():
         sys.exit(1)
 
 
-@main.group()
+@admin.group()
 def announcement():
     """Global announcement related commands"""
 
