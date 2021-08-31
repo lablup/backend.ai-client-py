@@ -9,7 +9,8 @@ from .formatters import (
     KernelStatFormatter,
     nested_dict_formatter,
     mibytes_output_formatter,
-    resource_slot_formatter
+    resource_slot_formatter,
+    sizebytes_output_formatter,
 )
 from .types import (
     FieldSet,
@@ -90,7 +91,7 @@ image_fields = FieldSet([
     FieldSpec('registry'),
     FieldSpec('tag'),
     FieldSpec('digest'),
-    FieldSpec('size_bytes'),
+    FieldSpec('size_bytes', formatter=sizebytes_output_formatter),
     FieldSpec('aliases'),
 ])
 
@@ -123,7 +124,7 @@ keypair_resource_policy_fields = FieldSet([
     FieldSpec('total_resource_slots'),
     FieldSpec('max_concurrent_sessions'),
     FieldSpec('max_vfolder_count'),
-    FieldSpec('max_vfolder_size'),
+    FieldSpec('max_vfolder_size', formatter=sizebytes_output_formatter),
     FieldSpec('idle_timeout'),
     FieldSpec('max_containers_per_session'),
     FieldSpec('allowed_vfolder_hosts'),
