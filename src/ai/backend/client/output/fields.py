@@ -10,7 +10,7 @@ from .formatters import (
     nested_dict_formatter,
     mibytes_output_formatter,
     resource_slot_formatter,
-    sizebytes_output_formatter
+    sizebytes_output_formatter,
 )
 from .types import (
     FieldSet,
