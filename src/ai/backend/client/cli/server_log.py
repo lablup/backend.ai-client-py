@@ -3,14 +3,14 @@ import sys
 
 import click
 
-from . import main
+from .main import main
 from .pretty import print_error
 from ..session import Session
 
 
 @main.group()
 def server_logs():
-    '''Provides operations related to server logs.'''
+    """Provides operations related to server logs."""
 
 
 @server_logs.command()
@@ -21,7 +21,7 @@ def server_logs():
 @click.option('-n', '--page-number', type=int, default=1,
               help='Page number to fetch.')
 def list(mark_read, page_size, page_number):
-    '''Fetch server (error) logs.'''
+    """Fetch server (error) logs."""
     with Session() as session:
         try:
             resp = session.ServerLog.list(mark_read, page_size, page_number)

@@ -2,12 +2,34 @@ import json
 import textwrap
 from typing import Iterable, Mapping, Sequence
 
+from ai.backend.client.output.fields import scaling_group_fields
+from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session
 
 __all__ = (
     'ScalingGroup',
+)
+
+_default_list_fields = (
+    scaling_group_fields['name'],
+    scaling_group_fields['description'],
+    scaling_group_fields['is_active'],
+    scaling_group_fields['created_at'],
+    scaling_group_fields['driver'],
+    scaling_group_fields['scheduler'],
+)
+
+_default_detail_fields = (
+    scaling_group_fields['name'],
+    scaling_group_fields['description'],
+    scaling_group_fields['is_active'],
+    scaling_group_fields['created_at'],
+    scaling_group_fields['driver'],
+    scaling_group_fields['driver_opts'],
+    scaling_group_fields['scheduler'],
+    scaling_group_fields['scheduler_opts'],
 )
 
 
@@ -35,20 +57,20 @@ class ScalingGroup(BaseFunction):
             params={'group': group},
         )
         async with rqst.fetch() as resp:
-            return await resp.json()
+            data = await resp.json()
+            print(data)
+            return data['scaling_groups']
 
     @api_function
     @classmethod
-    async def list(cls, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def list(
+        cls,
+        fields: Sequence[FieldSpec] = _default_list_fields,
+    ) -> Sequence[dict]:
         """
         List available scaling groups for the current user,
         considering the user, the user's domain, and the designated user group.
         """
-        if fields is None:
-            fields = ('name', 'description', 'is_active',
-                      'created_at',
-                      'driver', 'driver_opts',
-                      'scheduler', 'scheduler_opts',)
         query = textwrap.dedent("""\
             query($is_active: Boolean) {
                 scaling_groups(is_active: $is_active) {
@@ -56,31 +78,30 @@ class ScalingGroup(BaseFunction):
                 }
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'is_active': None}
         data = await api_session.get().Admin._query(query, variables)
         return data['scaling_groups']
 
     @api_function
     @classmethod
-    async def detail(cls, name: str, fields: Iterable[str] = None) -> Sequence[dict]:
+    async def detail(
+        cls,
+        name: str,
+        fields: Sequence[FieldSpec] = _default_detail_fields,
+    ) -> dict:
         """
         Fetch information of a scaling group by name.
 
         :param name: Name of the scaling group.
         :param fields: Additional per-scaling-group query fields.
         """
-        if fields is None:
-            fields = ('name', 'description', 'is_active',
-                      'created_at',
-                      'driver', 'driver_opts',
-                      'scheduler', 'scheduler_opts',)
         query = textwrap.dedent("""\
             query($name: String) {
                 scaling_group(name: $name) {$fields}
             }
         """)
-        query = query.replace('$fields', ' '.join(fields))
+        query = query.replace('$fields', ' '.join(f.field_ref for f in fields))
         variables = {'name': name}
         data = await api_session.get().Admin._query(query, variables)
         return data['scaling_group']

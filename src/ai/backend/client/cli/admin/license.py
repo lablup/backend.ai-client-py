@@ -9,11 +9,18 @@ from ..pretty import print_done, print_error, print_warn
 from . import admin
 
 
-@admin.command()
-def show_license():
-    '''
+@admin.group()
+def license() -> None:
+    """
+    License administration commands.
+    """
+
+
+@license.command()
+def show():
+    """
     Show the license information (enterprise editions only).
-    '''
+    """
     async def _show_license():
         async with AsyncSession():
             rqst = Request('GET', '/license')

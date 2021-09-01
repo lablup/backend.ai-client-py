@@ -1,30 +1,27 @@
-from .. import main
+from ..main import main
 
 
 @main.group()
 def admin():
-    '''
-    Provides the admin API access.
-    '''
+    """
+    Administrative command set
+    """
 
 
-def _attach_command():
-    from . import (  # noqa
-        agents,
-        domains,
-        etcd,
-        groups,
-        images,
-        keypairs,
-        license,
-        resources,
-        resource_policies,
-        scaling_groups,
-        sessions,
-        storage,
-        users,
-        vfolders,
-    )
-
-
-_attach_command()
+from . import (  # noqa
+    agent,
+    domain,
+    etcd,
+    group,
+    image,
+    keypair,
+    manager,
+    license,
+    resource,
+    resource_policy,
+    scaling_group,
+    session,
+    storage,
+    user,
+    vfolder,
+)

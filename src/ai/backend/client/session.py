@@ -11,18 +11,17 @@ from typing import (
     Awaitable,
     Coroutine,
     Iterator,
+    Literal,
     Tuple,
     Union,
     TypeVar,
 )
-from typing_extensions import Literal  # for Python 3.7
 import queue
 import warnings
 
 import aiohttp
 from multidict import CIMultiDict
-
-from .config import APIConfig, get_config, parse_api_version
+from .config import APIConfig, MIN_API_VERSION, get_config, parse_api_version
 from .exceptions import APIVersionWarning, BackendAPIError, BackendClientError
 from .types import Sentinel, sentinel
 
@@ -36,19 +35,6 @@ __all__ = (
 
 
 api_session: ContextVar[BaseSession] = ContextVar('api_session')
-
-
-def is_legacy_server() -> bool:
-    """
-    Determine execution mode.
-
-    Legacy mode: <= v4.20181215
-    """
-    with Session() as session:
-        ret = session.ComputeSession.hello()
-    bai_version = ret['version']
-    legacy = True if bai_version <= 'v4.20181215' else False
-    return legacy
 
 
 async def _negotiate_api_version(
@@ -72,8 +58,16 @@ async def _negotiate_api_version(
             server_version = parse_api_version(server_info['version'])
             if server_version > client_version:
                 warnings.warn(
-                    'The server API version is higher than the client. '
-                    'Please upgrade the client package.',
+                    "The server API version is higher than the client. "
+                    "Please upgrade the client package.",
+                    category=APIVersionWarning,
+                )
+            if server_version < MIN_API_VERSION:
+                warnings.warn(
+                    f"The server is too old and does not meet the minimum API version requirement: "
+                    f"v{MIN_API_VERSION[0]}.{MIN_API_VERSION[1]}\n"
+                    f"Please upgrade the server or downgrade/reinstall the client SDK with "
+                    f"the same major.minor release of the server.",
                     category=APIVersionWarning,
                 )
             return min(server_version, client_version)
