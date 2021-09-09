@@ -1,1 +1,1 @@
-Display kernel-pull-progress from background-task-reporter
+Display the progress of pulling kernel from reporter of the background task.
