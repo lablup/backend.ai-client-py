@@ -164,9 +164,9 @@ class ScalingGroup(BaseFunction):
                 'description': description,
                 'is_active': is_active,
                 'driver': driver,
-                'driver_opts': json.dumps(driver_opts),
+                'driver_opts': None if driver_opts is None else json.dumps(driver_opts),
                 'scheduler': scheduler,
-                'scheduler_opts': json.dumps(scheduler_opts),
+                'scheduler_opts': None if scheduler_opts is None else json.dumps(scheduler_opts),
             },
         }
         data = await api_session.get().Admin._query(query, variables)

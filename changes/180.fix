@@ -1,0 +1,1 @@
+Fix handling of default values for JSON string CLI arugments (`client.cli.params.JSONParamType`)
