@@ -1,94 +1,73 @@
 import sys
 
 import click
-from tabulate import tabulate
 
+from ai.backend.client.session import Session
+from ai.backend.client.func.scaling_group import (
+    _default_list_fields,
+    _default_detail_fields,
+)
+from ai.backend.client.output.fields import scaling_group_fields
 from . import admin
-from ..pretty import print_done, print_warn, print_error, print_fail
-from ...session import Session
+from ..pretty import print_done, print_error, print_fail
+from ..params import JSONParamType
+from ..types import CLIContext
 
 
-@admin.command()
+@admin.group()
+def scaling_group() -> None:
+    """
+    Scaling group (resource group) administration commands.
+    """
+
+
+@scaling_group.command()
+@click.pass_obj
 @click.argument('group', type=str, metavar='GROUP_NAME')
-def list_scaling_groups(group):
+def get_available(ctx: CLIContext, group: str) -> None:
     with Session() as session:
         try:
-            resp = session.ScalingGroup.list_available(group)
+            items = session.ScalingGroup.list_available(group)
+            ctx.output.print_list(items, [scaling_group_fields['name']])
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(resp) < 1:
-            print_warn('There is no scaling group available.')
-            return
-        print(resp)
 
 
-@admin.command()
-@click.option('-n', '--name', type=str, default=None,
-              help="Name of a scaling group.")
-def scaling_group(name):
-    '''
+@scaling_group.command()
+@click.pass_obj
+@click.argument('name', type=str)
+def info(ctx: CLIContext, name: str) -> None:
+    """
     Show the information about the given scaling group.
     (superadmin privilege required)
-    '''
-    fields = [
-        ('Name', 'name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Driver', 'driver'),
-        ('Driver Opts', 'driver_opts'),
-        ('Scheduler', 'scheduler'),
-        ('Scheduler Opts', 'scheduler_opts'),
-    ]
+    """
     with Session() as session:
         try:
-            resp = session.ScalingGroup.detail(
-                name=name, fields=(item[1] for item in fields))
+            item = session.ScalingGroup.detail(name=name)
+            ctx.output.print_item(item, _default_detail_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        rows = []
-        for name, key in fields:
-            if key in resp:
-                rows.append((name, resp[key]))
-        print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.group(invoke_without_command=True)
-@click.pass_context
-def scaling_groups(ctx):
-    '''
+@scaling_group.command()
+@click.pass_obj
+def list(ctx: CLIContext) -> None:
+    """
     List and manage scaling groups.
     (superadmin privilege required)
-    '''
-    if ctx.invoked_subcommand is not None:
-        return
-    fields = [
-        ('Name', 'name'),
-        ('Description', 'description'),
-        ('Active?', 'is_active'),
-        ('Created At', 'created_at'),
-        ('Driver', 'driver'),
-        ('Driver Opts', 'driver_opts'),
-        ('Scheduler', 'scheduler'),
-        ('Scheduler Opts', 'scheduler_opts'),
-    ]
+    """
     with Session() as session:
         try:
-            resp = session.ScalingGroup.list(fields=(item[1] for item in fields))
+            items = session.ScalingGroup.list()
+            ctx.output.print_list(items, _default_list_fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        if len(resp) < 1:
-            print('There is no scaling group.')
-            return
-        fields = [field for field in fields if field[1] in resp[0]]
-        print(tabulate((item.values() for item in resp),
-                        headers=(item[0] for item in fields)))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new scaling group')
@@ -96,19 +75,19 @@ def scaling_groups(ctx):
               help='New scaling group will be inactive.')
 @click.option('--driver', type=str, default='static',
               help='Set driver.')
-@click.option('--driver_opts', type=str, default={},
-              help='Set driver options.')
+@click.option('--driver-opts', type=JSONParamType(), default='{}',
+              help='Set driver options as a JSON string.')
 @click.option('--scheduler', type=str, default='fifo',
               help='Set scheduler.')
-@click.option('--scheduler_opts', type=str, default={},
-              help='Set scheduler options.')
+@click.option('--scheduler-opts', type=JSONParamType(), default='{}',
+              help='Set scheduler options as a JSON string.')
 def add(name, description, inactive,
         driver, driver_opts, scheduler, scheduler_opts):
-    '''
+    """
     Add a new scaling group.
 
     NAME: Name of new scaling group.
-    '''
+    """
     with Session() as session:
         try:
             data = session.ScalingGroup.create(
@@ -130,7 +109,7 @@ def add(name, description, inactive,
         print_done('Scaling group name {0} is created.'.format(item['name']))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new scaling group')
@@ -138,19 +117,19 @@ def add(name, description, inactive,
               help='New scaling group will be inactive.')
 @click.option('--driver', type=str, default='static',
               help='Set driver.')
-@click.option('--driver_opts', type=str, default={},
-              help='Set driver options.')
+@click.option('--driver-opts', type=JSONParamType(), default=None,
+              help='Set driver options as a JSON string.')
 @click.option('--scheduler', type=str, default='fifo',
               help='Set scheduler.')
-@click.option('--scheduler_opts', type=str, default={},
-              help='Set scheduler options.')
+@click.option('--scheduler-opts', type=JSONParamType(), default=None,
+              help='Set scheduler options as a JSON string.')
 def update(name, description, inactive,
            driver, driver_opts, scheduler, scheduler_opts):
-    '''
+    """
     Update existing scaling group.
 
     NAME: Name of new scaling group.
-    '''
+    """
     with Session() as session:
         try:
             data = session.ScalingGroup.update(
@@ -171,7 +150,7 @@ def update(name, description, inactive,
         print_done('Scaling group {0} is updated.'.format(name))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('name', type=str, metavar='NAME')
 def delete(name):
     """
@@ -191,7 +170,7 @@ def delete(name):
         print_done('Scaling group is deleted: ' + name + '.')
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('scaling_group', type=str, metavar='SCALING_GROUP')
 @click.argument('domain', type=str, metavar='DOMAIN')
 def associate_scaling_group(scaling_group, domain):
@@ -214,7 +193,7 @@ def associate_scaling_group(scaling_group, domain):
         print_done('Scaling group {} is assocatiated with domain {}.'.format(scaling_group, domain))
 
 
-@scaling_groups.command()
+@scaling_group.command()
 @click.argument('scaling_group', type=str, metavar='SCALING_GROUP')
 @click.argument('domain', type=str, metavar='DOMAIN')
 def dissociate_scaling_group(scaling_group, domain):

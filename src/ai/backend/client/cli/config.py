@@ -5,7 +5,7 @@ import warnings
 
 import click
 
-from . import main
+from .main import main
 from .pretty import print_done, print_error, print_fail, print_warn
 from .. import __version__
 from ..config import get_config, local_state_path

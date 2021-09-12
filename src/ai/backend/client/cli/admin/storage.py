@@ -1,85 +1,85 @@
-import json
+from __future__ import annotations
+
 import sys
 
 import click
-from tabulate import tabulate
 
+from ai.backend.client.session import Session
+from ai.backend.client.output.fields import storage_fields
 from . import admin
-from ...session import Session
-from ..pretty import print_error
-from ..pagination import (
-    get_preferred_page_size,
-    echo_via_pager,
-    tabulate_items,
-)
-from ..utils import format_nested_dicts, format_value
-from ...exceptions import NoItems
+from ..types import CLIContext
 
 
-@admin.command()
+@admin.group()
+def storage() -> None:
+    """
+    Storage proxy administration commands.
+    """
+
+
+@storage.command()
+@click.pass_obj
 @click.argument('vfolder_host')
-def storage(vfolder_host):
+def info(ctx: CLIContext, vfolder_host: str) -> None:
     """
     Show the information about the given storage volume.
     (super-admin privilege required)
     """
     fields = [
-        ('ID', 'id'),
-        ('Backend', 'backend'),
-        ('Capabilities', 'capabilities'),
-        ('Path', 'path'),
-        ('FS prefix', 'fsprefix'),
-        ('Hardware Metadata', 'hardware_metadata'),
-        ('Perf. Metric', 'performance_metric'),
+        storage_fields['id'],
+        storage_fields['backend'],
+        storage_fields['capabilities'],
+        storage_fields['path'],
+        storage_fields['fsprefix'],
+        storage_fields['hardware_metadata'],
+        storage_fields['performance_metric'],
     ]
     with Session() as session:
         try:
-            resp = session.Storage.detail(
+            item = session.Storage.detail(
                 vfolder_host=vfolder_host,
-                fields=(item[1] for item in fields))
+                fields=fields,
+            )
+            ctx.output.print_item(item, fields)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_error(e)
             sys.exit(1)
-        rows = []
-        for name, key in fields:
-            if key in resp:
-                if key in ('hardware_metadata', 'performance_metric'):
-                    rows.append((name, format_nested_dicts(json.loads(resp[key]))))
-                else:
-                    rows.append((name, format_value(resp[key])))
-        print(tabulate(rows, headers=('Field', 'Value')))
 
 
-@admin.command()
+@storage.command()
+@click.pass_obj
 @click.option('--filter', 'filter_', default=None,
               help='Set the query filter expression.')
 @click.option('--order', default=None,
               help='Set the query ordering expression.')
-def storage_list(filter_, order):
+@click.option('--offset', default=0,
+              help='The index of the current page start for pagination.')
+@click.option('--limit', default=None,
+              help='The page size for pagination.')
+def list(ctx: CLIContext, filter_, order, offset, limit) -> None:
     """
     List storage volumes.
     (super-admin privilege required)
     """
     fields = [
-        ('ID', 'id'),
-        ('Backend', 'backend'),
-        ('Capabilities', 'capabilities'),
+        storage_fields['id'],
+        storage_fields['backend'],
+        storage_fields['capabilities'],
     ]
     try:
         with Session() as session:
-            page_size = get_preferred_page_size()
-            try:
-                items = session.Storage.paginated_list(
-                    fields=[f[1] for f in fields],
-                    page_size=page_size,
-                    filter=filter_,
-                    order=order,
-                )
-                echo_via_pager(
-                    tabulate_items(items, fields)
-                )
-            except NoItems:
-                print("There are no storage volumes.")
+            fetch_func = lambda pg_offset, pg_size: session.Storage.paginated_list(
+                fields=fields,
+                page_offset=pg_offset,
+                page_size=pg_size,
+                filter=filter_,
+                order=order,
+            )
+            ctx.output.print_paginated_list(
+                fetch_func,
+                initial_page_offset=offset,
+                page_size=limit,
+            )
     except Exception as e:
-        print_error(e)
+        ctx.output.print_error(e)
         sys.exit(1)

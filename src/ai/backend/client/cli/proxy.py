@@ -13,7 +13,7 @@ import aiohttp
 from aiohttp import web
 import click
 
-from . import main
+from .main import main
 from .pretty import print_info, print_error, print_fail
 from ..exceptions import BackendAPIError, BackendClientError
 from ..request import Request
@@ -107,6 +107,17 @@ class WebSocketProxy:
             await self.up_conn.close()
 
 
+def _translate_headers(upstream_request: Request, client_request: Request) -> None:
+    for k, v in client_request.headers.items():
+        upstream_request.headers[k] = v
+    api_endpoint = upstream_request.config.endpoint
+    assert api_endpoint.host is not None
+    if api_endpoint.is_default_port():
+        upstream_request.headers['Host'] = api_endpoint.host
+    else:
+        upstream_request.headers['Host'] = f"{api_endpoint.host}:{api_endpoint.port}"
+
+
 async def web_handler(request):
     path = re.sub(r'^/?v(\d+)/', '/', request.path)
     try:
@@ -114,12 +125,11 @@ async def web_handler(request):
         # to be a transparent proxy.
         api_rqst = Request(
             request.method, path, request.content,
-            params=request.query)
+            params=request.query,
+        )
+        _translate_headers(api_rqst, request)
         if 'Content-Type' in request.headers:
-            api_rqst.content_type = request.content_type                        # set for signing
-            api_rqst.headers['Content-Type'] = request.headers['Content-Type']  # preserve raw value
-        if 'Content-Length' in request.headers:
-            api_rqst.headers['Content-Length'] = request.headers['Content-Length']
+            api_rqst.content_type = request.content_type  # set for signing
         # Uploading request body happens at the entering of the block,
         # and downloading response body happens in the read loop inside.
         async with api_rqst.fetch() as up_resp:
@@ -161,7 +171,9 @@ async def websocket_handler(request):
         api_rqst = Request(
             request.method, path, request.content,
             params=request.query,
-            content_type=request.content_type)
+            content_type=request.content_type,
+        )
+        _translate_headers(api_rqst, request)
         async with api_rqst.connect_websocket() as up_conn:
             down_conn = web.WebSocketResponse()
             await down_conn.prepare(request)

@@ -11,7 +11,7 @@ from typing import (
 import aiohttp
 import click
 
-from . import main
+from .main import main
 from .pretty import print_info, print_warn, print_fail, print_error
 from ..config import DEFAULT_CHUNK_SIZE
 from ..request import Request
