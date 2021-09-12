@@ -15,6 +15,7 @@ from typing import (
     Sequence,
     Tuple,
 )
+from tqdm import tqdm
 
 import aiohttp
 import click
@@ -599,10 +600,45 @@ def run(image, files, name,                                 # base args
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
+
+        async def display_kernel_pulling(compute_session: AsyncSession.ComputeSession) -> bool:
+            try:
+                bgtask = compute_session.backgroundtask
+            except Exception as e:
+                print_error(e)
+                return False
+            else:
+                with tqdm(total=100, unit='%') as pbar:
+                    async with bgtask.listen_events() as response:
+                        async for ev in response:
+                            progress = json.loads(ev.data)
+                            if ev.event == 'bgtask_updated':
+                                current = progress['current_progress']
+                                total = progress['total_progress']
+                                if total == 0:
+                                    pbar.n = 0
+                                else:
+                                    pbar.n = round(current / total * 100, 2)
+                                pbar.update(0)
+                                pbar.refresh()
+                            elif ev.event == 'bgtask_done':
+                                pbar.n = 100
+                                pbar.update(0)
+                                pbar.refresh()
+                                pbar.clear()
+                                compute_session = await session.ComputeSession.get_or_create(
+                                    image,
+                                    name=name,
+                                )
+                await asyncio.sleep(0.1)
+                return True
+
         if compute_session.status == 'PENDING':
             print_info('Session ID {0} is enqueued for scheduling.'
                        .format(name))
-            return
+            result = await display_kernel_pulling(compute_session)
+            if not result:
+                return
         elif compute_session.status == 'SCHEDULED':
             print_info('Session ID {0} is scheduled and about to be started.'
                        .format(name))
@@ -623,7 +659,9 @@ def run(image, files, name,                                 # base args
         elif compute_session.status == 'TIMEOUT':
             print_info('Session ID {0} is still on the job queue.'
                        .format(name))
-            return
+            result = await display_kernel_pulling(compute_session)
+            if not result:
+                return
         elif compute_session.status in ('ERROR', 'CANCELLED'):
             print_fail('Session ID {0} has an error during scheduling/startup or cancelled.'
                        .format(name))
