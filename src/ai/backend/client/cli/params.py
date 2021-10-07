@@ -55,14 +55,31 @@ class ByteSizeParamCheckType(ByteSizeParamType):
 
 
 class JSONParamType(click.ParamType):
+    """
+    A JSON string parameter type.
+    The default value must be given as a valid JSON-parsable string,
+    not the Python objects.
+    """
+
     name = "json-string"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._parsed = False
 
     def convert(
         self,
-        value: str,
+        value: Optional[str],
         param: Optional[click.Parameter],
         ctx: Optional[click.Context],
     ) -> Any:
+        if self._parsed:
+            # Click invokes this method TWICE
+            # for a default value given as string.
+            return value
+        self._parsed = True
+        if value is None:
+            return None
         try:
             return json.loads(value)
         except json.JSONDecodeError:

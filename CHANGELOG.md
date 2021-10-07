@@ -16,6 +16,23 @@ Changes
 
 .. towncrier release notes start
 
+## 21.09.0a2 (2021-09-28)
+
+### Breaking Changes
+* Multiple breaking changes related to pagination and CLI outputs:
+  - The CLI command hierarchy and arguments are revamped to be much more consistent with enumeration and item queries, and to support global options such as `--output=json` and `-y`/`--yes` flags. This is not backward-compatible due to parsing ambiguity.
+  - When invoking the functional APIs to retrieve the details and lists, you need to change your `fields` arguments to be a list of `FieldSpec` objects instead of strings.  You may refer `ai.backend.client.output.fields` for predefined field definitions and individual functional API modules for their default list/detail field sets.
+    You may also define and pass your own `FieldSpec` and `OutputFormatter` objects as well.
+  - It requires the Backend.AI Manager API v5.20191215 (release 20.03) or later.  If used with older managers, it will show a warning.
+  - It requires Python 3.8 or higher to run. ([#163](https://github.com/lablup/backend.ai-client-py/issues/163))
+
+### Features
+* Utilize Rich as a formatting library for server announcements ([#174](https://github.com/lablup/backend.ai-client-py/issues/174))
+
+### Fixes
+* Fix handling of default values for JSON string CLI arugments (`client.cli.params.JSONParamType`) ([#180](https://github.com/lablup/backend.ai-client-py/issues/180))
+
+
 ## 21.09.0a1 (2021-08-25)
 
 ### Features

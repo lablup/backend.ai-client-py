@@ -75,11 +75,11 @@ def list(ctx: CLIContext) -> None:
               help='New scaling group will be inactive.')
 @click.option('--driver', type=str, default='static',
               help='Set driver.')
-@click.option('--driver-opts', type=JSONParamType(), default={},
+@click.option('--driver-opts', type=JSONParamType(), default='{}',
               help='Set driver options as a JSON string.')
 @click.option('--scheduler', type=str, default='fifo',
               help='Set scheduler.')
-@click.option('--scheduler-opts', type=JSONParamType(), default={},
+@click.option('--scheduler-opts', type=JSONParamType(), default='{}',
               help='Set scheduler options as a JSON string.')
 def add(name, description, inactive,
         driver, driver_opts, scheduler, scheduler_opts):
