@@ -385,9 +385,9 @@ def prepare_mount_arg(
 @click.option('--preopen',  default=None,
               help='Pre-open service ports')
 @click.option('--agent-list', default=None,
-                  help='Show mapping list of tuple which mapped containers with agent. '
-                       'When user role is Super Admin. '
-                       '(e.g --agent-list agent_id_1, agent_id_2, ...)')
+              help='Show mapping list of tuple which mapped containers with agent. '
+                   'When user role is Super Admin. '
+                   '(e.g --agent-list agent_id_1, agent_id_2, ...)')
 def run(image, files, name,                                 # base args
         type, starts_at, enqueue_only, max_wait, no_reuse,  # job scheduling options
         code, terminal,                                     # query-mode options
