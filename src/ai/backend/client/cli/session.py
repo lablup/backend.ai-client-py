@@ -90,10 +90,10 @@ def _create_cmd(docs: str = None):
     @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
                   help='Group name where the session is spawned. '
                        'User should be a member of the group to execute the code.')
-    @click.option('--agent-list', default=None,
+    @click.option('--assign-agent', default=None,
                   help='Show mapping list of tuple which mapped containers with agent. '
                        'When user role is Super Admin. '
-                       '(e.g --agent-list agent_id_1, agent_id_2, ...)')
+                       '(e.g --assign-agent agent_id_1, agent_id_2, ...)')
     def create(
         # base args
         image: str,
@@ -119,7 +119,7 @@ def _create_cmd(docs: str = None):
         cluster_mode: Literal['single-node', 'multi-node'],
         resource_opts: Sequence[str],
         preopen: str | None,
-        agent_list: str | None,
+        assign_agent: str | None,
         # resource grouping
         domain: str | None,
         group: str | None,
@@ -146,7 +146,7 @@ def _create_cmd(docs: str = None):
         resource_opts = prepare_resource_arg(resource_opts)
         mount, mount_map = prepare_mount_arg(mount)
         preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
-        agent_lists = [] if agent_list is None else list(map(str, agent_list.split(',')))
+        assigned_agent_list = [] if assign_agent is None else list(map(str, assign_agent.split(',')))
         with Session() as session:
             try:
                 compute_session = session.ComputeSession.get_or_create(
@@ -172,7 +172,7 @@ def _create_cmd(docs: str = None):
                     bootstrap_script=bootstrap_script.read() if bootstrap_script is not None else None,
                     tag=tag,
                     preopen_ports=preopen_ports,
-                    agent_list=agent_lists
+                    assign_agent=assigned_agent_list
                 )
             except Exception as e:
                 print_error(e)
