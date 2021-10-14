@@ -149,9 +149,6 @@ def _create_cmd(docs: str = None):
         resource_opts = prepare_resource_arg(resource_opts)
         mount, mount_map = prepare_mount_arg(mount)
 
-        if preopen is None: preopen = []            # noqa
-        if assign_agent is None: assign_agent = []  # noqa
-
         preopen_ports = preopen
         assigned_agent_list = assign_agent
         with Session() as session:
