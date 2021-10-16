@@ -40,6 +40,7 @@ test_requires = [
 ]
 lint_requires = [
     'flake8>=3.9.2',
+    'flake8-commas>=2.1',
 ]
 typecheck_requires = [
     'mypy>=0.910',
