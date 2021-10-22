@@ -434,7 +434,7 @@ def invitations():
                         msg = (
                             'You can now access vfolder {} ({})'.format(
                                 invitations[selection]['vfolder_name'],
-                                invitations[selection]['id']
+                                invitations[selection]['id'],
                             )
                         )
                         print(msg)
@@ -444,7 +444,7 @@ def invitations():
                         msg = (
                             'vfolder invitation rejected: {} ({})'.format(
                                 invitations[selection]['vfolder_name'],
-                                invitations[selection]['id']
+                                invitations[selection]['id'],
                             )
                         )
                         print(msg)

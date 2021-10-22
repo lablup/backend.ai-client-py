@@ -426,26 +426,26 @@ class SyncResponseMixin:
     def text(self) -> str:
         sync_session = cast(SyncSession, self._session)
         return sync_session.worker_thread.execute(
-            self._raw_response.text()
+            self._raw_response.text(),
         )
 
     def json(self, *, loads=modjson.loads) -> Any:
         loads = functools.partial(loads, object_pairs_hook=OrderedDict)
         sync_session = cast(SyncSession, self._session)
         return sync_session.worker_thread.execute(
-            self._raw_response.json(loads=loads)
+            self._raw_response.json(loads=loads),
         )
 
     def read(self, n: int = -1) -> bytes:
         sync_session = cast(SyncSession, self._session)
         return sync_session.worker_thread.execute(
-            self._raw_response.content.read(n)
+            self._raw_response.content.read(n),
         )
 
     def readall(self) -> bytes:
         sync_session = cast(SyncSession, self._session)
         return sync_session.worker_thread.execute(
-            self._raw_response.content.read(-1)
+            self._raw_response.content.read(-1),
         )
 
 

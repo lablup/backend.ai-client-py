@@ -54,7 +54,7 @@ def generate_signature(
         hostname,
         content_type.lower(),
         version,
-        body_hash
+        body_hash,
     )
     sign_bytes = sign_str.encode()
 
@@ -67,7 +67,7 @@ def generate_signature(
         'Authorization': 'BackendAI signMethod=HMAC-{}, credential={}:{}'.format(
             hash_type.upper(),
             access_key,
-            signature
+            signature,
         ),
     }
     return headers, signature
