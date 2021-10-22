@@ -235,7 +235,7 @@ class ProxyRunnerContext:
             print_info(
                 "A local proxy to the application \"{0}\" ".format(self.app_name) +
                 "provided by the session \"{0}\" ".format(self.session_name) +
-                "is available at:\n{0}".format(user_url)
+                "is available at:\n{0}".format(user_url),
             )
             if self.host == '0.0.0.0':
                 print_warn('NOTE: Replace "0.0.0.0" with the actual hostname you use '

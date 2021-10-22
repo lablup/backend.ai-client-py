@@ -160,7 +160,7 @@ def _list_cmd(name: str = "list", docs: str = None):
                 "SUSPENDED",
                 "ERROR",
                 "CANCELLED",
-                "TERMINATED"
+                "TERMINATED",
             ])
             no_match_name = 'in any status'
         if no_match_name is None:

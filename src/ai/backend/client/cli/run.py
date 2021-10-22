@@ -233,7 +233,7 @@ def prepare_env_arg(env):
 
 
 def prepare_mount_arg(
-    mount_args: Optional[Sequence[str]]
+    mount_args: Optional[Sequence[str]],
 ) -> Tuple[Sequence[str], Mapping[str, str]]:
     """
     Parse the list of mount arguments into a list of

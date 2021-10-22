@@ -34,7 +34,7 @@ async def test_create_kernel_url(mocker):
                 'sessionId': str(uuid.uuid4()),
                 'created': True,
             },
-        )
+        ),
     )
     mock_req_cls = mocker.patch('ai.backend.client.func.session.Request',
                                 return_value=mock_req_obj)

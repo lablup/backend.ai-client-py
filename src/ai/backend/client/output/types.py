@@ -34,7 +34,7 @@ _predefined_humanized_field_names = {
 
 def _make_camel_case(name: str) -> str:
     return " ".join(
-        map(lambda s: s[0].upper() + s[1:], name.split("_"))
+        map(lambda s: s[0].upper() + s[1:], name.split("_")),
     )
 
 

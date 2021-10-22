@@ -33,7 +33,7 @@ println("wow")
 
 def print_stat(msg, times_taken):
     print('{}: mean {:.2f} secs, median {:.2f} secs, stdev {:.2f}'.format(
-        msg, mean(times_taken), median(times_taken), stdev(times_taken)
+        msg, mean(times_taken), median(times_taken), stdev(times_taken),
     ))
 
 

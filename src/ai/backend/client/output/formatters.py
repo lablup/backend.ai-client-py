@@ -208,12 +208,12 @@ class AgentStatFormatter(OutputFormatter):
             dev_metric_bufs.append(f"+ {stat_key}")
             if stat_key == 'cpu_util' and len(per_dev_metric) > 8:
                 dev_metric_bufs.append(
-                    "  - (per-core stats hidden for large CPUs with more than 8 cores)"
+                    "  - (per-core stats hidden for large CPUs with more than 8 cores)",
                 )
             else:
                 for dev_id, metric in per_dev_metric.items():
                     dev_metric_bufs.append(
-                        f"  - {dev_id}: {format_value(metric)}"
+                        f"  - {dev_id}: {format_value(metric)}",
                     )
         bufs.append("\n".join(dev_metric_bufs))
         return '\n'.join(bufs)

@@ -66,7 +66,7 @@ def test_list_vfolders():
                 'host': 'fake-vfolder2-host',
                 'is_owner': True,
                 'permissions': 'wd',
-            }
+            },
         ]
         m.get(build_url(session.config, '/folders'), status=200,
               payload=payload)
@@ -132,7 +132,7 @@ def test_vfolder_list_files():
                     "mtime": 1528288069.625786,
                     "atime": 1528332829.692922,
                     "filename": "200000",
-                }
+                },
             ],
             "folder_path": "/mnt/local/1f6bd27fde1248cabfb50306ea83fc0a",
         }
@@ -164,8 +164,8 @@ def test_vfolder_invitations():
                     'inviter': 'inviter@lablup.com',
                     'perm': 'ro',
                     'vfolder_id': 'fake-vfolder-id',
-                }
-            ]
+                },
+            ],
         }
         m.get(build_url(session.config, '/folders/invitations/list'),
               status=200, payload=payload)
@@ -202,7 +202,7 @@ def test_vfolder_clone():
             'target_name': target_vfolder_name,
             'target_host': 'local',
             'permission': 'rw',
-            'usage_mode': 'general'
+            'usage_mode': 'general',
         }
         m.post(build_url(session.config, '/folders/{}/clone'.format(source_vfolder_name)),
                status=201, payload=payload)
