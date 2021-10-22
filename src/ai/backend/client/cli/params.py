@@ -126,14 +126,14 @@ class RangeExprOptionType(click.ParamType):
             self.fail(str(e), param, ctx)
 
 
-class ListExprOptionType(click.ParamType):
+class CommaSeparatedListType(click.ParamType):
 
     name = 'List Expression'
 
     def convert(self, arg, param, ctx):
         try:
             if isinstance(arg, int):
-                return arg.split(',')
+                return arg
             elif isinstance(arg, str):
                 return arg.split(',')
         except ValueError as e:

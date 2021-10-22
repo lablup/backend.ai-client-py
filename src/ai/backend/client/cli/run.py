@@ -30,11 +30,11 @@ from .pretty import (
     print_info, print_wait, print_done, print_error, print_fail, print_warn,
     format_info,
 )
-from .params import RangeExprOptionType, ListExprOptionType
+from .params import RangeExprOptionType, CommaSeparatedListType
 
 tabulate_mod.PRESERVE_WHITESPACE = True
 range_expr = RangeExprOptionType()
-list_expr = ListExprOptionType()
+list_expr = CommaSeparatedListType()
 
 
 async def exec_loop(stdout, stderr, compute_session, mode, code, *, opts=None,
@@ -346,7 +346,7 @@ def prepare_mount_arg(
 @click.option('--assign-agent', default=None, type=list_expr,
               help='Show mapping list of tuple which mapped containers with agent. '
                    'When user role is Super Admin. '
-                   '(e.g. --assign-agent "agent_id_1","agent_id_2",...)')
+                   '(e.g., --assign-agent agent_id_1,agent_id_2,...)')
 def run(image, files, name,                                 # base args
         type, starts_at, enqueue_only, max_wait, no_reuse,  # job scheduling options
         code, terminal,                                     # query-mode options

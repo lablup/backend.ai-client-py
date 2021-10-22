@@ -21,9 +21,9 @@ from ..compat import asyncio_run
 from ..exceptions import BackendAPIError
 from ..session import Session, AsyncSession
 from ..types import Undefined, undefined
-from .params import ListExprOptionType
+from .params import CommaSeparatedListType
 
-list_expr = ListExprOptionType()
+list_expr = CommaSeparatedListType()
 
 
 @main.group()
@@ -96,7 +96,7 @@ def _create_cmd(docs: str = None):
     @click.option('--assign-agent', default=None, type=list_expr,
                   help='Show mapping list of tuple which mapped containers with agent. '
                        'When user role is Super Admin. '
-                       '(e.g. --assign-agent "agent_id_1","agent_id_2",...)')
+                       '(e.g., --assign-agent agent_id_1,agent_id_2,...)')
     def create(
         # base args
         image: str,
