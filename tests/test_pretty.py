@@ -1,6 +1,6 @@
 from ai.backend.client.cli.pretty import (
     bold, italic, underline, inverse,
-    print_pretty, PrintStatus
+    print_pretty, PrintStatus,
 )
 from click import unstyle
 import time

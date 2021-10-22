@@ -135,7 +135,7 @@ class ComputeSession(BaseFunction):
     @classmethod
     async def get_task_logs(
         cls, task_id: str, *,
-        chunk_size: int = 8192
+        chunk_size: int = 8192,
     ) -> AsyncIterator[bytes]:
         prefix = get_naming(api_session.get().api_version, 'path')
         rqst = Request('GET', f'/{prefix}/_/logs', params={
@@ -861,7 +861,7 @@ class ComputeSession(BaseFunction):
                 params={
                     **self.get_session_identity_params(),
                     'scope': scope,
-                }
+                },
             )
         else:
             assert self.name is not None

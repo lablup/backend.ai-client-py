@@ -396,7 +396,7 @@ def _create_from_template_cmd(docs: str = None):
 
 
 main.command(aliases=['start-from-template'])(
-    _create_from_template_cmd(docs="Alias of \"session create-from-template\"")
+    _create_from_template_cmd(docs="Alias of \"session create-from-template\""),
 )
 session.command()(_create_from_template_cmd())
 

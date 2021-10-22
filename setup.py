@@ -118,6 +118,6 @@ setup(
     entry_points={
         'backendai_cli_v10': [
             '_ = ai.backend.client.cli.main:main',
-        ]
+        ],
     },
 )

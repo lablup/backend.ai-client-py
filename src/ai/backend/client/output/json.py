@@ -39,7 +39,7 @@ class JsonOutputHandler(BaseOutputHandler):
                     {
                         field_map[k].alt_name: field_map[k].formatter.format_json(v, field_map[k])
                         for k, v in item.items()
-                    }
+                    },
                 ],
             },
             **_json_opts,
@@ -76,7 +76,7 @@ class JsonOutputHandler(BaseOutputHandler):
             assert len(fields) == 1
             item_list = [
                 {
-                    fields[0].alt_name: fields[0].formatter.format_json(item, fields[0])
+                    fields[0].alt_name: fields[0].formatter.format_json(item, fields[0]),
                 }
                 for item in items
             ]
@@ -117,7 +117,7 @@ class JsonOutputHandler(BaseOutputHandler):
                         for k, v in item.items()
                     }
                     for item in result.items
-                ]
+                ],
             },
             **_json_opts,
         ))

@@ -150,7 +150,7 @@ def test_execute_code_url(mocker):
         cs.execute(run_id, 'hello')
         mock_req.assert_called_once_with(
             'POST', f'/{prefix}/{session_name}',
-            params={}
+            params={},
         )
         mock_req_obj.fetch.assert_called_once_with()
         mock_req_obj.fetch.return_value.json.assert_called_once_with()

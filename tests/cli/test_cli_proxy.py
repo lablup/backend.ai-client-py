@@ -59,7 +59,7 @@ async def proxy_app_fixture(unused_tcp_port_factory):
 
 
 @pytest.mark.xfail(
-    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working"
+    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working",
 )
 @pytest.mark.asyncio
 async def test_proxy_web(
@@ -87,7 +87,7 @@ async def test_proxy_web(
 
 
 @pytest.mark.xfail(
-    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working"
+    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working",
 )
 @pytest.mark.asyncio
 async def test_proxy_web_502(
@@ -114,7 +114,7 @@ async def test_proxy_web_502(
 
 
 @pytest.mark.xfail(
-    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working"
+    reason="pytest-dev/pytest-asyncio#153 should be resolved to make this test working",
 )
 @pytest.mark.asyncio
 async def test_proxy_websocket(

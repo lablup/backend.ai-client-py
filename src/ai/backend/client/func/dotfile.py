@@ -19,12 +19,12 @@ class Dotfile(BaseFunction):
                      permission: str,
                      owner_access_key: str = None,
                      domain: str = None,
-                     group: str = None
+                     group: str = None,
                      ) -> 'Dotfile':
         body = {
             'data': data,
             'path': path,
-            'permission': permission
+            'permission': permission,
         }
         if group:
             body['group'] = group
@@ -50,7 +50,7 @@ class Dotfile(BaseFunction):
     async def list_dotfiles(cls,
                             owner_access_key: str = None,
                             domain: str = None,
-                            group: str = None
+                            group: str = None,
                             ) -> 'List[Mapping[str, str]]':
         params = {}
         if group:
@@ -102,7 +102,7 @@ class Dotfile(BaseFunction):
         body = {
             'data': data,
             'path': self.path,
-            'permission': permission
+            'permission': permission,
         }
         if self.group:
             body['group'] = self.group

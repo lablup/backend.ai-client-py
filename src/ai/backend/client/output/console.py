@@ -98,7 +98,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
                     tabulate_items(
                         infinite_fetch(),
                         fields,
-                    )
+                    ),
                 )
             except NoItems:
                 print("No matching items.")
@@ -145,7 +145,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
                     tabulate_items(
                         infinite_fetch(),
                         fields,
-                    )
+                    ),
                 )
             except NoItems:
                 print("No matching items.")

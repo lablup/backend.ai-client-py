@@ -29,7 +29,7 @@ class SessionTemplate(BaseFunction):
             'payload': template,
             'group_name': group_name,
             'domain_name': domain_name,
-            'owner_access_key': owner_access_key
+            'owner_access_key': owner_access_key,
         }
         rqst.set_json(body)
         async with rqst.fetch() as resp:
@@ -62,7 +62,7 @@ class SessionTemplate(BaseFunction):
     @api_function
     async def put(self, template: str) -> Any:
         body = {
-            'payload': template
+            'payload': template,
         }
         if self.owner_access_key:
             body['owner_access_key'] = self.owner_access_key
