@@ -73,11 +73,8 @@ Command-line Interface
    :caption: CLI
 
    cli/config
-   cli/sessions
-   cli/apps
-   cli/storage
    cli/code-execution
-   cli/session-templates
+   cli/storage
 
 Developer Reference
 -------------------

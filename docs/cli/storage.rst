@@ -11,11 +11,19 @@ called **"virtual folders"** (aka **"vfolders"**), which can be shared
 between users and user group members.
 
 
+Vfolder Basics
+--------------
+
+
 Creating vfolders and managing them
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The command-line interface provides a set of subcommands under ``backend.ai
 vfolder`` to manage vfolders and files inside them.
+
+.. code-block:: console
+
+  $ backend.ai vfolder [subcommands]
 
 To list accessible vfolders including your own ones and those shared by
 other users:
@@ -45,7 +53,7 @@ To delete the vfolder completey:
 
 
 File transfers and management
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To upload a file from the current working directory into the vfolder:
 
@@ -78,7 +86,7 @@ To delete files in the vfolder:
 
 
 Running sessions with storages
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following command spawns a Python session where the virtual folder
 "mydata1" is mounted.  The execution options are omitted in this example.
@@ -101,7 +109,7 @@ keeping them in the storage.
 
 
 Creating default files for kernels
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Backend.AI has a feature called 'dotfile', created to all the kernels
 user spawns. As you can guess, dotfile's path should start with ``.``.
@@ -113,3 +121,111 @@ Backend.AI kernel.
 .. code-block:: console
 
   $ backend.ai dotfile create .aws/config < ~/.aws/config
+
+
+Vfolder Sharing
+---------------
+
+Backend.AI also supports vfolder sharing feature. 
+You can invite other users to share your vfolder.
+
+Also you can use ``-p`` option to give privilege which gives 'read-only' or 'read and write'. 
+
+.. code-block:: console
+
+  $ backend.ai vfoleder invite [OPTIONS] NAME EMAILS
+
+.. list-table::
+  :widths: 15 85 
+  :header-rows: 1
+
+  * - Parameter
+    - Description
+    
+  * - ``NAME``
+    - Name of a virtual folder.
+
+  * - ``EMAILS``
+    - Emails to invite.
+
+.. list-table::
+  :widths: 15 85 
+  :header-rows: 1
+
+  * - Option
+    - Description
+
+  * - ``-p, --perm PERMISSION``
+    - Permission to give. "ro" (read-only) / "rw" (read-write).
+
+Command Reference
+-----------------
+
+.. list-table::
+  :widths: 15 85 
+  :header-rows: 1
+
+  * - Command
+    - Description
+
+  * - ``clone``
+    - Clone a virtual folder.
+
+  * - ``cp``
+    - An scp-like shortcut for download/upload commands.
+
+  * - ``create``
+    - Create a new virtual folder.
+  
+  * - ``delete``
+    - Delete the given virtual folder.
+  
+  * - ``download`` 
+    - Download a file form the virtual folder to the current working directory. 
+      
+      The Files with the same names will be overwritten.
+  
+  * - ``info``
+    - Show the information of the given virtual folder.
+  
+  * - ``invitations``
+    - List and manage received invitations.
+
+  * - ``invite``
+    - Invite other users to access the virtual folder.
+
+  * - ``leave``
+    - Leave the shared virtual folder.
+
+  * - ``list``
+    - List virtual folders that belongs to the current user.
+
+  * - ``list-allowed-types``
+    - List allowed vfolder types.
+
+  * - ``list-hosts``
+    - List the hosts of virtual folders that is accessible to the current user. 
+  
+  * - ``ls``
+    - List files in a path of a virtual folder.
+  
+  * - ``mkdir``
+    - Create an empty directory in the virtual folder.
+  
+  * - ``rename``
+    - Rename the given virtual folder.
+  
+  * - ``rename-file`` 
+    - Rename a file or directory in a virtual folder.
+  
+  * - ``rm (delete-file)``
+    - Delete files in a  virtual folder.
+  
+  * - ``update-options`` 
+    - Update an existing virtual folder.
+  
+  * - ``upload``
+    - TUS Upload a file to the virtual folder from the current working directory. 
+      
+      The files with the same names will be overwritten.
+
