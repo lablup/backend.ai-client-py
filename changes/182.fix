@@ -1,0 +1,1 @@
+Fix a regression of progress display in the `admin image rescan` command
