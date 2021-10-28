@@ -5,7 +5,7 @@ import pytest
 from yarl import URL
 
 from ai.backend.client.config import (
-    get_env, bool_env, APIConfig, get_config, set_config
+    get_env, bool_env, APIConfig, get_config, set_config,
 )
 
 
@@ -108,7 +108,7 @@ def test_get_config_return_default_config_when_config_is_none(mocker, cfg_params
     mocker.patch('ai.backend.client.config._config', None)
     mocker.patch('os.environ', {
         'BACKEND_ACCESS_KEY': cfg_params['access_key'],
-        'BACKEND_SECRET_KEY': cfg_params['secret_key']
+        'BACKEND_SECRET_KEY': cfg_params['secret_key'],
     })
 
     cfg = get_config()

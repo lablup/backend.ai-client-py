@@ -27,7 +27,7 @@ async def test_manipulate_resource_policy(self):
                 total_resource_slots='{}', max_concurrent_sessions=1,
                 max_containers_per_session=1, max_vfolder_count=1,
                 max_vfolder_size=1, idle_timeout=1,
-                allowed_vfolder_hosts=['local']
+                allowed_vfolder_hosts=['local'],
             )
             rps = sess.ResourcePolicy.list()
             assert len(rps) == original_count + 1
@@ -46,7 +46,7 @@ async def test_manipulate_resource_policy(self):
                 max_concurrent_sessions=2,
                 max_containers_per_session=2, max_vfolder_count=2,
                 max_vfolder_size=2, idle_timeout=2,
-                allowed_vfolder_hosts=['local']
+                allowed_vfolder_hosts=['local'],
             )
             rps = sess.ResourcePolicy.list()
             assert len(rps) == original_count + 1
@@ -77,5 +77,5 @@ async def test_user_cannot_create_resource_policy(self, userconfig):
                 total_resource_slots='{}', max_concurrent_sessions=1,
                 max_containers_per_session=1, max_vfolder_count=1,
                 max_vfolder_size=1, idle_timeout=1,
-                allowed_vfolder_hosts=['local']
+                allowed_vfolder_hosts=['local'],
             )

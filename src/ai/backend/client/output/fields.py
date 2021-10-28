@@ -205,7 +205,7 @@ session_fields_v5 = FieldSet([
             FieldSpec('last_stat', formatter=KernelStatFormatter()),
         ]),
         formatter=ContainerListFormatter(),
-    )
+    ),
 ])
 
 

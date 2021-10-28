@@ -2,7 +2,7 @@ import asyncio
 from pathlib import Path
 from typing import (
     Sequence,
-    Union
+    Union,
 )
 
 import aiohttp
@@ -51,7 +51,7 @@ class VFolder(BaseFunction):
         usage_mode: str = 'general',
         permission: str = 'rw',
         quota: str = '0',
-        cloneable: bool = False
+        cloneable: bool = False,
     ):
         rqst = Request('POST', '/folders')
         rqst.set_json({
@@ -423,7 +423,7 @@ class VFolder(BaseFunction):
             'target_name': target_name,
             'target_host': target_host,
             'usage_mode': usage_mode,
-            'permission': permission
+            'permission': permission,
         })
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -434,7 +434,7 @@ class VFolder(BaseFunction):
         rqst = Request('POST', '/folders/{}/update-options'.format(self.name))
         rqst.set_json({
             'cloneable': cloneable,
-            'permission': permission
+            'permission': permission,
         })
         async with rqst.fetch() as resp:
             return await resp.text()

@@ -116,7 +116,7 @@ def update(message):
         with Session() as session:
             if message is None:
                 message = click.edit(
-                    "<!-- Use Markdown format to edit the announcement message -->"
+                    "<!-- Use Markdown format to edit the announcement message -->",
                 )
             if message is None:
                 print_info('Cancelled')

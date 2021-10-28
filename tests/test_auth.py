@@ -15,7 +15,7 @@ def test_generate_signature(defconfig):
         content_type='plain/text',
         access_key=defconfig.access_key,
         secret_key=defconfig.secret_key,
-        hash_type='md5'
+        hash_type='md5',
     )
     headers, signature = generate_signature(**kwargs)
 

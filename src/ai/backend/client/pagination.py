@@ -47,7 +47,7 @@ async def execute_paginated_query(
     query = query.replace(
         '$var_args',
         ', '.join(f'{key}:${key}'
-                  for key in variables.keys())
+                  for key in variables.keys()),
     )
     query = textwrap.dedent(query).strip()
     var_values = {key: value[0] for key, value in variables.items()}
@@ -74,7 +74,7 @@ async def generate_paginated_results(
     if api_session.get().api_version < (6, '20210815'):
         if variables['filter'][0] is not None or variables['order'][0] is not None:
             raise BackendAPIVersionError(
-                "filter and order arguments for paginated lists require v6.20210815 or later."
+                "filter and order arguments for paginated lists require v6.20210815 or later.",
             )
         # should remove to work with older managers
         variables.pop('filter')
