@@ -40,3 +40,6 @@ env_*.sh
 .vscode/
 .mypy_cache/
 .DS_Store
+
+my-backend-ai.sh
+my-backend-ai-session.sh
