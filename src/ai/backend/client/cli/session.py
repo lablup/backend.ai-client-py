@@ -21,6 +21,9 @@ from ..compat import asyncio_run
 from ..exceptions import BackendAPIError
 from ..session import Session, AsyncSession
 from ..types import Undefined, undefined
+from .params import CommaSeparatedListType
+
+list_expr = CommaSeparatedListType()
 
 
 @main.group()
@@ -81,7 +84,7 @@ def _create_cmd(docs: str = None):
     @click.option('--resource-opts', metavar='KEY=VAL', type=str, multiple=True,
                   help='Resource options for creating compute session '
                        '(e.g: shmem=64m)')
-    @click.option('--preopen', default=None,
+    @click.option('--preopen', default=None, type=list_expr,
                   help='Pre-open service ports')
     # resource grouping
     @click.option('-d', '--domain', metavar='DOMAIN_NAME', default=None,
@@ -90,6 +93,10 @@ def _create_cmd(docs: str = None):
     @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
                   help='Group name where the session is spawned. '
                        'User should be a member of the group to execute the code.')
+    @click.option('--assign-agent', default=None, type=list_expr,
+                  help='Show mapping list of tuple which mapped containers with agent. '
+                       'When user role is Super Admin. '
+                       '(e.g., --assign-agent agent_id_1,agent_id_2,...)')
     def create(
         # base args
         image: str,
@@ -115,6 +122,7 @@ def _create_cmd(docs: str = None):
         cluster_mode: Literal['single-node', 'multi-node'],
         resource_opts: Sequence[str],
         preopen: str | None,
+        assign_agent: str | None,
         # resource grouping
         domain: str | None,
         group: str | None,
@@ -140,7 +148,9 @@ def _create_cmd(docs: str = None):
         resources = prepare_resource_arg(resources)
         resource_opts = prepare_resource_arg(resource_opts)
         mount, mount_map = prepare_mount_arg(mount)
-        preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
+
+        preopen_ports = preopen
+        assigned_agent_list = assign_agent
         with Session() as session:
             try:
                 compute_session = session.ComputeSession.get_or_create(
@@ -166,6 +176,7 @@ def _create_cmd(docs: str = None):
                     bootstrap_script=bootstrap_script.read() if bootstrap_script is not None else None,
                     tag=tag,
                     preopen_ports=preopen_ports,
+                    assign_agent=assigned_agent_list,
                 )
             except Exception as e:
                 print_error(e)

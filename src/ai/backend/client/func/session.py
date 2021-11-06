@@ -174,6 +174,7 @@ class ComputeSession(BaseFunction):
         scaling_group: str = None,
         owner_access_key: str = None,
         preopen_ports: List[int] = None,
+        assign_agent: List[str] = None,
     ) -> ComputeSession:
         """
         Get-or-creates a compute session.
@@ -278,6 +279,7 @@ class ComputeSession(BaseFunction):
             params['config'].update({
                 'mount_map': mount_map,
                 'preopen_ports': preopen_ports,
+                'agentList': assign_agent,
             })
             params.update({
                 'starts_at': starts_at,
