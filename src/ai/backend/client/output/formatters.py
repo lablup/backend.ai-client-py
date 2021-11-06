@@ -85,6 +85,8 @@ class OutputFormatter(AbstractOutputFormatter):
         return str(value)
 
     def format_json(self, value: Any, field: FieldSpec) -> Any:
+        if value is None:
+            return None
         if isinstance(value, decimal.Decimal):
             return str(value)
         elif isinstance(value, dict):
@@ -97,10 +99,14 @@ class OutputFormatter(AbstractOutputFormatter):
 class NestedDictOutputFormatter(OutputFormatter):
 
     def format_console(self, value: Any, field: FieldSpec) -> str:
+        if value is None:
+            return "(null)"
         value = json.loads(value)
         return format_nested_dicts(value)
 
     def format_json(self, value: Any, field: FieldSpec) -> Any:
+        if value is None:
+            return None
         return json.loads(value)
 
 
