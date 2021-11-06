@@ -4,7 +4,6 @@ from decimal import Decimal
 import getpass
 import itertools
 import json
-import re
 import secrets
 import string
 import sys
@@ -34,51 +33,11 @@ from .pretty import (
     print_info, print_wait, print_done, print_error, print_fail, print_warn,
     format_info,
 )
-
-_rx_range_key = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+from .params import RangeExprOptionType, CommaSeparatedListType
 
 tabulate_mod.PRESERVE_WHITESPACE = True
-
-
-def drange(start: Decimal, stop: Decimal, num: int):
-    """
-    A simplified version of numpy.linspace with default options
-    """
-    delta = stop - start
-    step = delta / (num - 1)
-    yield from (start + step * Decimal(tick) for tick in range(0, num))
-
-
-class RangeExprOptionType(click.ParamType):
-    """
-    Accepts a range expression which generates a range of values for a variable.
-
-    Linear space range: "linspace:1,2,10" (start, stop, num) as in numpy.linspace
-    Pythonic range: "range:1,10,2" (start, stop[, step]) as in Python's range
-    Case range: "case:a,b,c" (comma-separated strings)
-    """
-
-    name = 'Range Expression'
-
-    def convert(self, arg, param, ctx):
-        key, value = arg.split('=', maxsplit=1)
-        assert _rx_range_key.match(key), 'The key must be a valid slug string.'
-        try:
-            if value.startswith('case:'):
-                return key, value[5:].split(',')
-            elif value.startswith('linspace:'):
-                start, stop, num = value[9:].split(',')
-                return key, tuple(drange(Decimal(start), Decimal(stop), int(num)))
-            elif value.startswith('range:'):
-                range_args = map(int, value[6:].split(','))
-                return key, tuple(range(*range_args))
-            else:
-                self.fail('Unrecognized range expression type', param, ctx)
-        except ValueError as e:
-            self.fail(str(e), param, ctx)
-
-
 range_expr = RangeExprOptionType()
+list_expr = CommaSeparatedListType()
 
 
 async def exec_loop(stdout, stderr, compute_session, mode, code, *, opts=None,
@@ -385,8 +344,12 @@ def _prepare_mount_arg(
 @click.option('-g', '--group', metavar='GROUP_NAME', default=None,
               help='Group name where the session is spawned. '
                    'User should be a member of the group to execute the code.')
-@click.option('--preopen',  default=None,
+@click.option('--preopen',  default=None, type=list_expr,
               help='Pre-open service ports')
+@click.option('--assign-agent', default=None, type=list_expr,
+              help='Show mapping list of tuple which mapped containers with agent. '
+                   'When user role is Super Admin. '
+                   '(e.g., --assign-agent agent_id_1,agent_id_2,...)')
 def run(image, files, name,                                 # base args
         type, starts_at, enqueue_only, max_wait, no_reuse,  # job scheduling options
         code, terminal,                                     # query-mode options
@@ -397,7 +360,8 @@ def run(image, files, name,                                 # base args
         mount, scaling_group, resources,                    # resource spec
         cluster_size, cluster_mode,
         resource_opts,
-        domain, group, preopen):                            # resource grouping
+        domain, group, preopen, assign_agent,               # resource grouping
+        ):
     """
     Run the given code snippet or files in a session.
     Depending on the session ID you give (default is random),
@@ -447,7 +411,12 @@ def run(image, files, name,                                 # base args
     build_template = string.Template(build)
     exec_template = string.Template(exec)
     env_templates = {k: string.Template(v) for k, v in envs.items()}
-    preopen_ports = [] if preopen is None else list(map(int, preopen.split(',')))
+
+    if preopen is None: preopen = []            # noqa
+    if assign_agent is None: assign_agent = []  # noqa
+
+    preopen_ports = preopen
+    assigned_agent_list = assign_agent
     for env_vmap, build_vmap, exec_vmap in vmaps_product:
         interpolated_envs = tuple((k, vt.substitute(env_vmap))
                                   for k, vt in env_templates.items())
@@ -497,7 +466,8 @@ def run(image, files, name,                                 # base args
                 domain_name=domain,
                 group_name=group,
                 scaling_group=scaling_group,
-                tag=tag)
+                tag=tag,
+            )
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -598,7 +568,9 @@ def run(image, files, name,                                 # base args
                 scaling_group=scaling_group,
                 bootstrap_script=bootstrap_script.read() if bootstrap_script is not None else None,
                 tag=tag,
-                preopen_ports=preopen_ports)
+                preopen_ports=preopen_ports,
+                assign_agent=assigned_agent_list,
+            )
         except Exception as e:
             print_fail('[{0}] {1}'.format(idx, e))
             return
