@@ -7,10 +7,10 @@ setup_requires = [
     'setuptools>=54.2.0',
 ]
 install_requires = [
-    'aiohttp~=3.7.4',
+    'aiohttp~=3.8.0',
     'aiotusclient~=0.1.4',
     'appdirs~=1.4.4',
-    'async_timeout>=3.0',
+    'async_timeout>=4.0',
     'attrs>=21.2',
     'click>=8.0.1',
     'colorama>=0.4.4',
@@ -31,7 +31,7 @@ build_requires = [
     'towncrier>=21.3.0',
 ]
 test_requires = [
-    'pytest~=6.2.4',
+    'pytest~=6.2.5',
     'pytest-cov',
     'pytest-mock',
     'pytest-asyncio>=0.15.1',
@@ -39,7 +39,7 @@ test_requires = [
     'codecov',
 ]
 lint_requires = [
-    'flake8>=3.9.2',
+    'flake8>=4.0.1',
     'flake8-commas>=2.1',
 ]
 typecheck_requires = [
