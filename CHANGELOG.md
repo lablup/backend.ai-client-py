@@ -16,6 +16,15 @@ Changes
 
 .. towncrier release notes start
 
+21.03.8 (2021-11-08)
+--------------------
+
+### Features
+* Add `--agent-list` option to `run` and `create` commands so that superadmins can manually assign the agent(s) for new sessions to debug and diagnose the cluster and scheduler. ([#178](https://github.com/lablup/backend.ai-client-py/issues/178))
+
+### Fixes
+* Fix a regression of progress display in the `admin image rescan` command ([#182](https://github.com/lablup/backend.ai-client-py/issues/182))
+
 
 21.03.7 (2021-08-23)
 --------------------
