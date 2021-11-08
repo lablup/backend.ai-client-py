@@ -1,1 +1,0 @@
-Fix handling of null values in some output formatters, which caused regression of `backend.ai info` command
