@@ -16,6 +16,11 @@ Changes
 
 .. towncrier release notes start
 
+## 21.09.0.post1 (2021-11-08)
+
+* A hotfix release to apply missing updates of package dependencies
+
+
 ## 21.09.0 (2021-11-08)
 
 ### Features
