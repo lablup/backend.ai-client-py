@@ -16,6 +16,7 @@ def announce(msg: str, only_once: bool = True) -> None:
     if only_once and _printed_announcement:
         return
     local_state_path = Path(appdirs.user_state_dir('backend.ai', 'Lablup'))
+    local_state_path.mkdir(parents=True, exist_ok=True)
     try:
         with open(local_state_path / 'announcement.json', 'rb') as f_current:
             last_state = json.load(f_current)
