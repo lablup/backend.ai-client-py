@@ -1,11 +1,12 @@
 import hashlib
 import json
 from pathlib import Path
-import sys
 
 import appdirs
-
-from rich import print as rprint
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.style import Style
 
 _printed_announcement = False
 
@@ -27,10 +28,16 @@ def announce(msg: str, only_once: bool = True) -> None:
     msg_hash = hasher.hexdigest()
 
     if not (last_state['hash'] == msg_hash and last_state['dismissed']):
-        rprint('[bold cyan]The server has an announcement![/]', file=sys.stderr)
-        rprint('[bold cyan]----------[/]', file=sys.stderr)
-        rprint(f'[bold]{msg}[/]', file=sys.stderr)
-        rprint('[bold cyan]----------[/]', file=sys.stderr)
+        console = Console(stderr=True)
+        doc = Markdown(msg)
+        console.print(
+            Panel(
+                doc,
+                title="Server Announcement",
+                border_style=Style(color='cyan', bold=True),
+                width=min(console.size.width, 82),
+            ),
+        )
     _printed_announcement = True
 
     last_state['hash'] = msg_hash
