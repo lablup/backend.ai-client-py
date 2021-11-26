@@ -1,0 +1,1 @@
+Fix missing auto-creation of local-state directory when storing server announcements
