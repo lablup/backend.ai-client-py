@@ -1,0 +1,1 @@
+Fix agent_list key error when user did not use assign_agent command
