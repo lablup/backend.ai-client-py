@@ -276,11 +276,17 @@ class ComputeSession(BaseFunction):
         else:
             params['config']['clusterSize'] = cluster_size
         if api_session.get().api_version >= (5, '20191215'):
-            params['config'].update({
-                'mount_map': mount_map,
-                'preopen_ports': preopen_ports,
-                'agentList': assign_agent,
-            })
+            if assign_agent is not None:
+                params['config'].update({
+                    'mount_map': mount_map,
+                    'preopen_ports': preopen_ports,
+                    'agentList': assign_agent,
+                })
+            else:
+                params['config'].update({
+                    'mount_map': mount_map,
+                    'preopen_ports': preopen_ports,
+                })
             params.update({
                 'starts_at': starts_at,
                 'bootstrap_script': bootstrap_script,
