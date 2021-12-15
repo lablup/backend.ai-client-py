@@ -16,6 +16,13 @@ Changes
 
 .. towncrier release notes start
 
+21.03.9 (2021-12-15)
+--------------------
+
+### Fixes
+* Fix missing auto-creation of local-state directory when storing server announcements ([#185](https://github.com/lablup/backend.ai-client-py/issues/185))
+
+
 21.03.8 (2021-11-08)
 --------------------
 
