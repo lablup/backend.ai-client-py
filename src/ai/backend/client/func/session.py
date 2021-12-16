@@ -528,7 +528,7 @@ class ComputeSession(BaseFunction):
         )
         async with rqst.fetch():
             pass
-    
+
     @api_function
     async def rename(self, new_id):
         """
