@@ -637,6 +637,28 @@ def logs(session_id):
             sys.exit(1)
 
 
+@session.command()
+@click.argument('session_id', metavar='SESSID')
+@click.argument('new_id', metavar='NEWID')
+def rename(session_id, new_id):
+    '''
+    Renames session name of running session.
+
+    \b
+    SESSID: Session ID or its alias given when creating the session.
+    NEWID: New Session ID to rename to.
+    '''
+
+    with Session() as session:
+        try:
+            kernel = session.ComputeSession(session_id)
+            kernel.rename(new_id)
+            print_done(f'Session renamed to {new_id}.')
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
 def _ssh_cmd(docs: str = None):
 
     @click.argument("session_ref",  type=str, metavar='SESSION_REF')
