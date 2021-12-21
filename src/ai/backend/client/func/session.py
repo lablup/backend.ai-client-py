@@ -530,6 +530,22 @@ class ComputeSession(BaseFunction):
             pass
 
     @api_function
+    async def rename(self, new_id):
+        """
+        Renames Session ID of running compute session.
+        """
+        params = {'name': new_id}
+        if self.owner_access_key:
+            params['owner_access_key'] = self.owner_access_key
+        prefix = get_naming(api_session.get().api_version, 'path')
+        rqst = Request(
+            'POST', f'/{prefix}/{self.name}/rename',
+            params=params,
+        )
+        async with rqst.fetch():
+            pass
+
+    @api_function
     async def interrupt(self):
         """
         Tries to interrupt the current ongoing code execution.
