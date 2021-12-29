@@ -681,6 +681,8 @@ def _ssh_cmd(docs: str = None):
                     [
                         "ssh",
                         "-o", "StrictHostKeyChecking=no",
+                        "-o", "UserKnownHostsFile=/dev/null",
+                        "-o", "NoHostAuthenticationForLocalhost=yes",
                         "-i", key_path,
                         "work@localhost",
                         "-p", str(port),
@@ -765,6 +767,8 @@ def _scp_cmd(docs: str = None):
                     [
                         "scp",
                         "-o", "StrictHostKeyChecking=no",
+                        "-o", "UserKnownHostsFile=/dev/null",
+                        "-o", "NoHostAuthenticationForLocalhost=yes",
                         "-i", key_path,
                         "-P", str(port),
                         *recursive_args,

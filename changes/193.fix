@@ -1,0 +1,1 @@
+Remove bogus known-host checks when using `ssh` and `scp` commands
