@@ -563,6 +563,7 @@ def download(session_id, files, dest):
     FILES: One or more paths inside compute session.
     """
     if len(files) < 1:
+        print_warn("Please specify one or more file paths.")
         return
     with Session() as session:
         try:
