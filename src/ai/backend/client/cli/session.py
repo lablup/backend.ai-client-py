@@ -531,6 +531,7 @@ def upload(session_id, files):
     FILES: One or more paths to upload.
     """
     if len(files) < 1:
+        print_warn("Please specify one or more file paths after session ID or name.")
         return
     with Session() as session:
         try:
@@ -563,6 +564,7 @@ def download(session_id, files, dest):
     FILES: One or more paths inside compute session.
     """
     if len(files) < 1:
+        print_warn("Please specify one or more file paths after session ID or name.")
         return
     with Session() as session:
         try:
