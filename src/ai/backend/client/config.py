@@ -175,6 +175,7 @@ class APIConfig:
     _endpoints: List[URL]
     _group: str
     _hash_type: str
+    _skip_sslcert_validation: bool
 
     def __init__(
         self, *,
@@ -222,12 +223,15 @@ class APIConfig:
         env_vfolders = set(get_env('VFOLDER_MOUNTS', '', clean=_clean_tokens))
         self._vfolder_mounts = [*(arg_vfolders | env_vfolders)]
         # prefer the argument flag and fallback to env if the flag is not set.
-        self._skip_sslcert_validation = (skip_sslcert_validation
-             if skip_sslcert_validation else
-             get_env('SKIP_SSLCERT_VALIDATION', 'no', clean=bool_env))
-        self._connection_timeout = connection_timeout if connection_timeout else \
+        if skip_sslcert_validation:
+            self._skip_sslcert_validation = True
+        else:
+            self._skip_sslcert_validation = get_env(
+                'SKIP_SSLCERT_VALIDATION', 'no', clean=bool_env,
+            )
+        self._connection_timeout = connection_timeout if connection_timeout is not None else \
             get_env('CONNECTION_TIMEOUT', self.DEFAULTS['connection_timeout'], clean=float)
-        self._read_timeout = read_timeout if read_timeout else \
+        self._read_timeout = read_timeout if read_timeout is not None else \
             get_env('READ_TIMEOUT', self.DEFAULTS['read_timeout'], clean=float)
         self._announcement_handler = announcement_handler
 
