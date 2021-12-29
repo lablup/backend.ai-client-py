@@ -88,6 +88,8 @@ def ssh(ctx: click.Context, session_ref: str, port: int) -> None:
                 [
                     "ssh",
                     "-o", "StrictHostKeyChecking=no",
+                    "-o", "UserKnownHostsFile=/dev/null",
+                    "-o", "NoHostAuthenticationForLocalhost=yes",
                     "-i", key_path,
                     "work@localhost",
                     "-p", str(port),
@@ -148,6 +150,8 @@ def scp(ctx: click.Context, session_ref: str, src: str, dst: str, port: int, rec
                 [
                     "scp",
                     "-o", "StrictHostKeyChecking=no",
+                    "-o", "UserKnownHostsFile=/dev/null",
+                    "-o", "NoHostAuthenticationForLocalhost=yes",
                     "-i", key_path,
                     "-P", str(port),
                     *recursive_args,
