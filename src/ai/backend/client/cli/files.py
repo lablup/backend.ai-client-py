@@ -8,7 +8,7 @@ from humanize import naturalsize
 from tabulate import tabulate
 
 from . import main
-from .pretty import print_wait, print_done, print_error, print_fail
+from .pretty import print_wait, print_done, print_error, print_fail, print_warn
 from ..session import Session
 
 
@@ -24,6 +24,7 @@ def upload(session_id, files):
     FILES: Path to upload.
     """
     if len(files) < 1:
+        print_warn("Please specify one or more file paths after session ID or name.")
         return
     with Session() as session:
         try:
@@ -50,6 +51,7 @@ def download(session_id, files, dest):
     FILES: Paths inside container.
     """
     if len(files) < 1:
+        print_warn("Please specify one or more file paths after session ID or name.")
         return
     with Session() as session:
         try:
