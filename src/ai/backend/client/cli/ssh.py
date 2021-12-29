@@ -28,18 +28,18 @@ def container_ssh_ctx(session_ref: str, port: int) -> Iterator[Path]:
         print(e.stdout.decode())
         sys.exit(1)
     os.rename(key_filename, key_path)
+    print_info(f"running a temporary sshd proxy at localhost:{port} ...", file=sys.stderr)
+    # proxy_proc is a background process
+    proxy_proc = subprocess.Popen(
+        [
+            "backend.ai", "app", session_ref,
+            "sshd", "-b", f"127.0.0.1:{port}",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    assert proxy_proc.stdout is not None
     try:
-        print_info(f"running a temporary sshd proxy at localhost:{port} ...", file=sys.stderr)
-        # proxy_proc is a background process
-        proxy_proc = subprocess.Popen(
-            [
-                "backend.ai", "session", "app", session_ref,
-                "sshd", "-b", f"127.0.0.1:{port}",
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        assert proxy_proc.stdout is not None
         lines: List[bytes] = []
         while True:
             line = proxy_proc.stdout.readline(1024)
