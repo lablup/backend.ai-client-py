@@ -3,6 +3,7 @@ import re
 from decimal import Decimal
 from typing import (
     Any,
+    Mapping,
     Optional,
 )
 
@@ -53,6 +54,21 @@ class ByteSizeParamCheckType(ByteSizeParamType):
         if m is None:
             self.fail(f"{value!r} is not a valid byte-size expression", param, ctx)
         return value
+
+
+class StorageProxyAddressParamCheckType(click.ParamType):
+    name = "storage-proxy-address-check"
+
+    def convert(self, value: str, param, ctx) -> Mapping[str, str]:
+        override_map = {}
+        for assignment in value.split(","):
+            try:
+                x, y = assignment.split("=")
+            except ValueError:
+                self.fail(f"{value!r} is not a valid mapping expression", param, ctx)
+            else:
+                override_map[x] = y
+        return override_map
 
 
 class JSONParamType(click.ParamType):

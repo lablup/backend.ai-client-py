@@ -164,6 +164,7 @@ class APIConfig:
         'hash_type': 'sha256',
         'domain': 'default',
         'group': 'default',
+        'address_map': 'default',
         'connection_timeout': '10.0',
         'read_timeout': '0',
     }
@@ -183,6 +184,7 @@ class APIConfig:
         endpoint_type: str = None,
         domain: str = None,
         group: str = None,
+        address_map: Mapping[str, str] = None,
         version: str = None,
         user_agent: str = None,
         access_key: str = None,
@@ -206,6 +208,14 @@ class APIConfig:
             get_env('DOMAIN', self.DEFAULTS['domain'], clean=str)
         self._group = group if group is not None else \
             get_env('GROUP', self.DEFAULTS['group'], clean=str)
+        self._address_map = address_map if address_map is not None else \
+            get_env(
+                'OVERRIDE_STORAGE_PROXY',
+                self.DEFAULTS['address_map'],
+                # The shape of this env var must be like "X1=Y1,X2=Y2"
+                clean=lambda x: {mtch.split('=')[0]: mtch.split('=')[1] for mtch in x.split(',') \
+                    if x != self.DEFAULTS['address_map']}
+            ) 
         self._version = version if version is not None else \
             self.DEFAULTS['version']
         self._user_agent = user_agent if user_agent is not None else get_user_agent()
@@ -277,6 +287,13 @@ class APIConfig:
     def group(self) -> str:
         """The configured group."""
         return self._group
+
+    @property
+    def address_map(self) -> Optional[Mapping[str, str]]:
+        """The storage proxy address map for overriding."""
+        if self._address_map == self.DEFAULTS['address_map']:
+            return None
+        return self._address_map
 
     @property
     def user_agent(self) -> str:
