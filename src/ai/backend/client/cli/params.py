@@ -10,6 +10,7 @@ from typing import (
 
 import click
 
+
 class ByteSizeParamType(click.ParamType):
     name = "byte"
 
@@ -62,6 +63,11 @@ class StorageProxyAddressParamCheckType(click.ParamType):
     def convert(self, value: Union[str, Mapping[str, str]], param, ctx) -> Mapping[str, str]:
         if isinstance(value, dict):
             return value
+        if not isinstance(value, str):
+            self.fail(
+                f"expected string, got {value!r} of type {type(value).__name__}",
+                param, ctx,
+            )
         override_map = {}
         for assignment in value.split(","):
             try:

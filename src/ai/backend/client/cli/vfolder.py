@@ -176,9 +176,11 @@ def info(name):
               help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
-@click.option('--override-storage-proxy', type=StorageProxyAddressParamCheckType(), default=get_config().address_map,
+@click.option('--override-storage-proxy',
+              type=StorageProxyAddressParamCheckType(), default=get_config().address_map,
               help='Overrides storage proxy address. '
-                   'The value must shape like "X1=Y1,X2=Y2...". Each Yn address must at least include the IP address '
+                   'The value must shape like "X1=Y1,X2=Y2...". '
+                   'Each Yn address must at least include the IP address '
                    'or the hostname and may include the protocol part and the port number to replace.')
 def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
     '''
@@ -215,9 +217,11 @@ def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
               help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
-@click.option('--override-storage-proxy', type=StorageProxyAddressParamCheckType(), default=get_config().address_map,
+@click.option('--override-storage-proxy',
+              type=StorageProxyAddressParamCheckType(), default=get_config().address_map,
               help='Overrides storage proxy address. '
-                   'The value must shape like "X1=Y1,X2=Y2...". Each Yn address must at least include the IP address '
+                   'The value must shape like "X1=Y1,X2=Y2...". '
+                   'Each Yn address must at least include the IP address '
                    'or the hostname and may include the protocol part and the port number to replace.')
 def download(name, filenames, base_dir, chunk_size, address_map):
     '''

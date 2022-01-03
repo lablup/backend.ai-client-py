@@ -214,8 +214,8 @@ class APIConfig:
                 self.DEFAULTS['address_map'],
                 # The shape of this env var must be like "X1=Y1,X2=Y2"
                 clean=lambda x: {mtch.split('=')[0]: mtch.split('=')[1] for mtch in x.split(',') \
-                    if x != self.DEFAULTS['address_map']}
-            ) 
+                    if x != self.DEFAULTS['address_map']},
+            )
         self._version = version if version is not None else \
             self.DEFAULTS['version']
         self._user_agent = user_agent if user_agent is not None else get_user_agent()
