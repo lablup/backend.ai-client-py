@@ -73,7 +73,9 @@ class StorageProxyAddressParamCheckType(click.ParamType):
             try:
                 x, y = assignment.split("=")
             except ValueError:
-                self.fail(f"{value!r} is not a valid mapping expression", param, ctx)
+                self.fail(
+                    f"{value!r} is not a valid mapping expression", param, ctx,
+                )
             else:
                 override_map[x] = y
         return override_map
