@@ -4,11 +4,11 @@ from decimal import Decimal
 from typing import (
     Any,
     Mapping,
+    Union,
     Optional,
 )
 
 import click
-
 
 class ByteSizeParamType(click.ParamType):
     name = "byte"
@@ -59,7 +59,9 @@ class ByteSizeParamCheckType(ByteSizeParamType):
 class StorageProxyAddressParamCheckType(click.ParamType):
     name = "storage-proxy-address-check"
 
-    def convert(self, value: str, param, ctx) -> Mapping[str, str]:
+    def convert(self, value: Union[str, Mapping[str, str]], param, ctx) -> Mapping[str, str]:
+        if isinstance(value, dict):
+            return value
         override_map = {}
         for assignment in value.split(","):
             try:

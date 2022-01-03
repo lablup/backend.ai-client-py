@@ -180,7 +180,7 @@ def info(name):
               help='Overrides storage proxy address. '
                    'The value must shape like "X1=Y1,X2=Y2...". Each Yn address must at least include the IP address '
                    'or the hostname and may include the protocol part and the port number to replace.')
-def upload(name, filenames, base_dir, chunk_size, address_map):
+def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
     '''
     TUS Upload a file to the virtual folder from the current working directory.
     The files with the same names will be overwirtten.
@@ -196,7 +196,7 @@ def upload(name, filenames, base_dir, chunk_size, address_map):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
-                address_map=address_map,
+                address_map=override_storage_proxy,
             )
             print_done('Done.')
         except Exception as e:
