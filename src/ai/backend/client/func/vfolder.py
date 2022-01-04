@@ -179,8 +179,9 @@ class VFolder(BaseFunction):
             })
             async with rqst.fetch() as resp:
                 download_info = await resp.json()
-                overriden_url = address_map[download_info['url']] if address_map is not None else \
-                    download_info['url']
+                overriden_url = download_info['url']
+                if address_map is not None and download_info['url'] in address_map:
+                    overriden_url = address_map[download_info['url']]
                 download_url = URL(overriden_url).with_query({
                     'token': download_info['token'],
                 })
@@ -251,8 +252,9 @@ class VFolder(BaseFunction):
             })
             async with rqst.fetch() as resp:
                 upload_info = await resp.json()
-                overriden_url = address_map[upload_info['url']] if address_map is not None else \
-                    upload_info['url']
+                overriden_url = upload_info['url']
+                if address_map is not None and upload_info['url'] in address_map:
+                    overriden_url = address_map[upload_info['url']]
                 upload_url = URL(overriden_url).with_query({
                     'token': upload_info['token'],
                 })
