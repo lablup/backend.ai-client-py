@@ -1,5 +1,6 @@
 import asyncio
 from pathlib import Path
+from sys import modules
 from typing import (
     Sequence,
     Union,
@@ -166,10 +167,13 @@ class VFolder(BaseFunction):
         basedir: Union[str, Path] = None,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         show_progress: bool = False,
+        max_retry: int = 3,
     ) -> None:
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
         for relpath in relative_paths:
             file_path = base_path / relpath
+            if file_path.exists():
+                raise RuntimeError('The target file already exists', file_path.name)
             rqst = Request('POST',
                            '/folders/{}/request-download'.format(self.name))
             rqst.set_json({
@@ -181,46 +185,78 @@ class VFolder(BaseFunction):
                     'token': download_info['token'],
                 })
 
-            def _write_file(file_path: Path, q: janus._SyncQueueProxy[bytes]):
-                with open(file_path, 'wb') as f:
-                    while True:
-                        chunk = q.get()
-                        if not chunk:
-                            return
-                        f.write(chunk)
-                        q.task_done()
-
             if show_progress:
                 print(f"Downloading to {file_path} ...")
             async with aiohttp.ClientSession() as client:
-                # TODO: ranged requests to continue interrupted downloads with automatic retries
-                async with client.get(download_url, ssl=False) as raw_resp:
-                    size = int(raw_resp.headers['Content-Length'])
-                    if file_path.exists():
-                        raise RuntimeError('The target file already exists', file_path.name)
-                    q: janus.Queue[bytes] = janus.Queue(MAX_INFLIGHT_CHUNKS)
-                    try:
-                        with tqdm(
-                            total=size,
-                            unit='bytes',
-                            unit_scale=True,
-                            unit_divisor=1024,
-                            disable=not show_progress,
-                        ) as pbar:
-                            loop = current_loop()
-                            writer_fut = loop.run_in_executor(None, _write_file, file_path, q.sync_q)
-                            await asyncio.sleep(0)
-                            while True:
-                                chunk = await raw_resp.content.read(chunk_size)
-                                pbar.update(len(chunk))
-                                if not chunk:
-                                    break
-                                await q.async_q.put(chunk)
-                    finally:
-                        await q.async_q.put(b'')
-                        await writer_fut
-                        q.close()
-                        await q.wait_closed()
+                retry_config = {
+                    'retry_cnt': 0,
+                    'retry_available': False,
+                    'is_retry': False,
+                    'content_range': 0,
+                    'range_unit': None,
+                    'ir_validator': None,
+                }
+                retry_hdrs = {
+                    'If-Range': None,
+                    'Range': None
+                }
+                async def try_download(client, download_url, rqst_hdrs, retry_config):
+                    async with client.get(download_url, ssl=False, headers=rqst_hdrs) as raw_resp:
+                        size = int(raw_resp.headers['Content-Length'])
+                        range_unit = raw_resp.headers.get('Accept-Ranges')
+                        last_modified = raw_resp.headers.get('Last-Modified')
+                        etag = raw_resp.headers.get('Etag')
+                        ir_validator = last_modified if last_modified is not None else etag
+                        if not retry_config['is_retry'] and range_unit is not None and \
+                            ir_validator is not None:
+                            retry_config['range_unit'] = range_unit
+                            retry_config['ir_validator'] = ir_validator
+                            retry_config['retry_available'] = True
+                        q: janus.Queue[bytes] = janus.Queue(MAX_INFLIGHT_CHUNKS)
+
+                        def _write_file(file_path: Path, q: janus._SyncQueueProxy[bytes], mode: str):
+                            with open(file_path, mode) as f:
+                                while True:
+                                    chunk = q.get()
+                                    if not chunk:
+                                        return
+                                    f.write(chunk)
+                                    q.task_done()
+
+                        try:
+                            with tqdm(
+                                total=size,
+                                unit=range_unit,
+                                unit_scale=True,
+                                unit_divisor=1024,
+                                disable=not show_progress,
+                            ) as pbar:
+                                loop = current_loop()
+                                mode = 'wb' if not retry_config['is_retry'] else 'ab'
+                                writer_fut = loop.run_in_executor(None, _write_file, file_path, q.sync_q, mode)
+                                await asyncio.sleep(0)
+                                while True:
+                                    chunk = await raw_resp.content.read(chunk_size)
+                                    retry_config['content_range'] += len(chunk)
+                                    pbar.update(len(chunk))
+                                    if not chunk:
+                                        break
+                                    await q.async_q.put(chunk)
+                        finally:
+                            await q.async_q.put(b'')
+                            await writer_fut
+                            q.close()
+                            await q.wait_closed()
+                try:
+                    await try_download(client, download_url, client.headers, retry_config)
+                except Exception as e:
+                    if retry_config['retry_cnt'] >= max_retry or not retry_config['retry_available']:
+                        raise e
+                    while retry_config['retry_cnt'] < max_retry:
+                        retry_config['retry_cnt'] += 1
+                        retry_hdrs['If-Range'] = retry_config['ir_validator']
+                        retry_hdrs['Range'] = f"{retry_config['range_unit']}={retry_config['content_range']+1}-"
+                        await try_download(client, download_url, retry_hdrs, retry_config)
 
     @api_function
     async def upload(
