@@ -223,7 +223,7 @@ def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
                    'The value must shape like "X1=Y1,X2=Y2...". '
                    'Each Yn address must at least include the IP address '
                    'or the hostname and may include the protocol part and the port number to replace.')
-def download(name, filenames, base_dir, chunk_size, address_map):
+def download(name, filenames, base_dir, chunk_size, override_storage_proxy):
     '''
     Download a file from the virtual folder to the current working directory.
     The files with the same names will be overwirtten.
@@ -239,7 +239,7 @@ def download(name, filenames, base_dir, chunk_size, address_map):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
-                address_map=address_map,
+                address_map=override_storage_proxy,
             )
             print_done('Done.')
         except Exception as e:
