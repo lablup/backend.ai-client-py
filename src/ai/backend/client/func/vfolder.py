@@ -180,8 +180,14 @@ class VFolder(BaseFunction):
             async with rqst.fetch() as resp:
                 download_info = await resp.json()
                 overriden_url = download_info['url']
-                if address_map is not None and download_info['url'] in address_map:
-                    overriden_url = address_map[download_info['url']]
+                if address_map is not None:
+                    if download_info['url'] in address_map:
+                        overriden_url = address_map[download_info['url']]
+                    else:
+                        msg = 'Overriding storage proxy addresses are given, ' \
+                            'but no url matches with any of them.\n'
+                        print(msg)
+
                 download_url = URL(overriden_url).with_query({
                     'token': download_info['token'],
                 })
@@ -253,8 +259,13 @@ class VFolder(BaseFunction):
             async with rqst.fetch() as resp:
                 upload_info = await resp.json()
                 overriden_url = upload_info['url']
-                if address_map is not None and upload_info['url'] in address_map:
-                    overriden_url = address_map[upload_info['url']]
+                if address_map is not None:
+                    if upload_info['url'] in address_map:
+                        overriden_url = address_map[upload_info['url']]
+                    else:
+                        msg = 'Overriding storage proxy addresses are given, ' \
+                            'but no url matches with any of them.\n'
+                        print(msg)
                 upload_url = URL(overriden_url).with_query({
                     'token': upload_info['token'],
                 })
