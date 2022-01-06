@@ -1,11 +1,11 @@
 import asyncio
 from pathlib import Path
-from sys import modules
 from typing import (
-    Mapping,
+    Dict,
     Sequence,
     Union,
     Any,
+    cast,
 )
 
 import aiohttp
@@ -38,6 +38,7 @@ _default_list_fields = (
     vfolder_fields['permission'],
     vfolder_fields['ownership_type'],
 )
+
 
 class VFolder(BaseFunction):
 
@@ -196,27 +197,28 @@ class VFolder(BaseFunction):
                     'retry_available': False,
                     'is_retry': False,
                     'content_range': 0,
-                    'range_unit': None,
-                    'ir_validator': None,
+                    'range_unit': '',
+                    'ir_validator': '',
                 }
                 retry_hdrs = {
-                    'If-Range': None,
-                    'Range': None
+                    'If-Range': "",
+                    'Range': "",
                 }
+
                 async def try_download(
                     client: aiohttp.ClientSession,
                     download_url: URL,
                     rqst_hdrs: CIMultiDict,
-                    retry_config: Mapping[str, Any]
+                    retry_config: Dict[str, Any],
                 ) -> None:
                     async with client.get(download_url, ssl=False, headers=rqst_hdrs) as raw_resp:
                         size = int(raw_resp.headers['Content-Length'])
-                        range_unit = raw_resp.headers.get('Accept-Ranges')
-                        last_modified = raw_resp.headers.get('Last-Modified')
-                        etag = raw_resp.headers.get('Etag')
-                        ir_validator = last_modified if last_modified is not None else etag
-                        if not retry_config['is_retry'] and range_unit is not None and \
-                            ir_validator is not None:
+                        range_unit = raw_resp.headers.get('Accept-Ranges', '')
+                        last_modified = raw_resp.headers.get('Last-Modified', '')
+                        etag = raw_resp.headers.get('Etag', '')
+                        ir_validator = last_modified if last_modified != '' else etag
+                        if not retry_config['is_retry'] and range_unit != '' and \
+                                ir_validator != '':
                             retry_config['range_unit'] = range_unit
                             retry_config['ir_validator'] = ir_validator
                             retry_config['retry_available'] = True
@@ -241,7 +243,13 @@ class VFolder(BaseFunction):
                             ) as pbar:
                                 loop = current_loop()
                                 mode = 'wb' if not retry_config['is_retry'] else 'ab'
-                                writer_fut = loop.run_in_executor(None, _write_file, file_path, q.sync_q, mode)
+                                writer_fut = loop.run_in_executor(
+                                    None,
+                                    _write_file,
+                                    file_path,
+                                    q.sync_q,
+                                    mode,
+                                )
                                 await asyncio.sleep(0)
                                 while True:
                                     chunk = await raw_resp.content.read(chunk_size)
@@ -263,14 +271,16 @@ class VFolder(BaseFunction):
                         await try_download(client, download_url, rqst_hdrs, retry_config)
                         break
                     except aiohttp.ClientConnectionError as e:
-                        if retry_config['retry_cnt'] == max_retry or not retry_config['retry_available']:
+                        if retry_config['retry_cnt'] == max_retry or \
+                                not retry_config['retry_available']:
                             msg = 'Request to the API endpoint has failed.\n' \
                                 'Check your network connection and/or the server status.\n' \
                                 '\u279c {!r}'.format(e)
                             raise BackendClientError(msg) from e
-                        retry_config['retry_cnt'] += 1
-                        retry_hdrs['If-Range'] = retry_config['ir_validator']
-                        retry_hdrs['Range'] = f'{retry_config["range_unit"]}={retry_config["content_range"]}-'
+                        retry_config['retry_cnt'] = cast(int, retry_config['retry_cnt']) + 1
+                        retry_hdrs['If-Range'] = cast(str, retry_config['ir_validator'])
+                        retry_hdrs['Range'] = f'{retry_config["range_unit"]}'
+                        '={retry_config["content_range"]}-'
                         retry_config['is_retry'] = True
                         continue
                     except aiohttp.ClientResponseError as e:
@@ -280,7 +290,6 @@ class VFolder(BaseFunction):
                     except InterruptedError as e:
                         # Handle something?
                         raise e
-
 
     @api_function
     async def upload(
