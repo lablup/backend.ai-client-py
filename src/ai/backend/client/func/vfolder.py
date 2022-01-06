@@ -2,13 +2,16 @@ import asyncio
 from pathlib import Path
 from sys import modules
 from typing import (
+    Mapping,
     Sequence,
     Union,
+    Any,
 )
 
 import aiohttp
 import janus
 from tqdm import tqdm
+from multidict import CIMultiDict
 
 from yarl import URL
 from aiotusclient import client
@@ -16,6 +19,7 @@ from aiotusclient import client
 from ai.backend.client.output.fields import vfolder_fields
 from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
+from ..exceptions import BackendClientError
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
 from ..pagination import generate_paginated_results
@@ -34,7 +38,6 @@ _default_list_fields = (
     vfolder_fields['permission'],
     vfolder_fields['ownership_type'],
 )
-
 
 class VFolder(BaseFunction):
 
@@ -200,7 +203,12 @@ class VFolder(BaseFunction):
                     'If-Range': None,
                     'Range': None
                 }
-                async def try_download(client, download_url, rqst_hdrs, retry_config):
+                async def try_download(
+                    client: aiohttp.ClientSession,
+                    download_url: URL,
+                    rqst_hdrs: CIMultiDict,
+                    retry_config: Mapping[str, Any]
+                ) -> None:
                     async with client.get(download_url, ssl=False, headers=rqst_hdrs) as raw_resp:
                         size = int(raw_resp.headers['Content-Length'])
                         range_unit = raw_resp.headers.get('Accept-Ranges')
@@ -247,16 +255,32 @@ class VFolder(BaseFunction):
                             await writer_fut
                             q.close()
                             await q.wait_closed()
-                try:
-                    await try_download(client, download_url, client.headers, retry_config)
-                except Exception as e:
-                    if retry_config['retry_cnt'] >= max_retry or not retry_config['retry_available']:
-                        raise e
-                    while retry_config['retry_cnt'] < max_retry:
+                while True:
+                    try:
+                        rqst_hdrs = client.headers
+                        if retry_config['is_retry']:
+                            rqst_hdrs.extend(retry_hdrs)
+                        await try_download(client, download_url, rqst_hdrs, retry_config)
+                        break
+                    except aiohttp.ClientConnectionError as e:
+                        if retry_config['retry_cnt'] == max_retry or not retry_config['retry_available']:
+                            msg = 'Request to the API endpoint has failed.\n' \
+                                'Check your network connection and/or the server status.\n' \
+                                '\u279c {!r}'.format(e)
+                            raise BackendClientError(msg) from e
                         retry_config['retry_cnt'] += 1
                         retry_hdrs['If-Range'] = retry_config['ir_validator']
-                        retry_hdrs['Range'] = f"{retry_config['range_unit']}={retry_config['content_range']+1}-"
-                        await try_download(client, download_url, retry_hdrs, retry_config)
+                        retry_hdrs['Range'] = f'{retry_config["range_unit"]}={retry_config["content_range"]}-'
+                        retry_config['is_retry'] = True
+                        continue
+                    except aiohttp.ClientResponseError as e:
+                        msg = 'API endpoint response error.\n' \
+                            '\u279c {!r}'.format(e)
+                        raise BackendClientError(msg) from e
+                    except InterruptedError as e:
+                        # Handle something?
+                        raise e
+
 
     @api_function
     async def upload(
