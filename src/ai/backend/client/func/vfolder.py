@@ -279,8 +279,8 @@ class VFolder(BaseFunction):
                             raise BackendClientError(msg) from e
                         retry_config['retry_cnt'] = cast(int, retry_config['retry_cnt']) + 1
                         retry_hdrs['If-Range'] = cast(str, retry_config['ir_validator'])
-                        retry_hdrs['Range'] = f'{retry_config["range_unit"]}'
-                        '={retry_config["content_range"]}-'
+                        retry_hdrs['Range'] = f'{retry_config["range_unit"]}' \
+                            f'={retry_config["content_range"]}-'
                         retry_config['is_retry'] = True
                         continue
                     except aiohttp.ClientResponseError as e:
