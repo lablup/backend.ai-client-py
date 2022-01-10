@@ -13,6 +13,7 @@ from typing import (
 )
 
 import attr
+from tqdm import tqdm
 
 if TYPE_CHECKING:
     from ai.backend.client.cli.types import CLIContext
@@ -180,4 +181,11 @@ class BaseOutputHandler(metaclass=ABCMeta):
         self,
         message: str,
     ) -> None:
+        raise NotImplementedError
+
+
+class BaseProgressReporter(metaclass=ABCMeta):
+
+    @abstractmethod
+    def update(self) -> None:
         raise NotImplementedError
