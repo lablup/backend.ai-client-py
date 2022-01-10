@@ -16,6 +16,17 @@ Changes
 
 .. towncrier release notes start
 
+21.03.10 (2022-01-10)
+---------------------
+
+### Fixes
+* Warn explicitly when there are missing args in the `session download` command ([#191](https://github.com/lablup/backend.ai-client-py/issues/191))
+* Remove bogus known-host checks when using `ssh` and `scp` commands ([#193](https://github.com/lablup/backend.ai-client-py/issues/193))
+
+### Miscellaneous
+* Update mypy to 0.930 ([#190](https://github.com/lablup/backend.ai-client-py/issues/190))
+
+
 21.03.9 (2021-12-15)
 --------------------
 
