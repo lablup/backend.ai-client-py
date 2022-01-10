@@ -1,1 +1,0 @@
-Fix a regression of "ssh" command due to command hierarchy reorganization

@@ -16,6 +16,20 @@ Changes
 
 .. towncrier release notes start
 
+## 21.09.2 (2022-01-10)
+
+### Features
+* Add support for session renaming ([#189](https://github.com/lablup/backend.ai-client-py/issues/189))
+
+### Fixes
+* Warn explicitly when there are missing args in the `session download` command ([#191](https://github.com/lablup/backend.ai-client-py/issues/191))
+* Fix a regression of "ssh" command due to command hierarchy reorganization ([#192](https://github.com/lablup/backend.ai-client-py/issues/192))
+* Remove bogus known-host checks when using `ssh` and `scp` commands ([#193](https://github.com/lablup/backend.ai-client-py/issues/193))
+
+### Miscellaneous
+* Update mypy to 0.930 ([#190](https://github.com/lablup/backend.ai-client-py/issues/190))
+
+
 ## 21.09.1 (2021-12-15)
 
 ### Features
