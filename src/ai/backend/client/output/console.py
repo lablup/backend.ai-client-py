@@ -5,6 +5,7 @@ from typing import (
     Any,
     Callable,
     Mapping,
+    Optional,
     Sequence,
 )
 
@@ -157,6 +158,23 @@ class ConsoleOutputHandler(BaseOutputHandler):
                 result.fields,
             ):
                 print(line, end="")
+
+    def print_mutation_result(
+        self,
+        item: Mapping[str, Any] | None,
+        item_name: Optional[str] = None,
+        add_info: Mapping = {},
+    ) -> None:
+        t = [
+            ['ok', item['ok']],
+            ['msg', item['msg']],
+            *[(k, v) for k, v in add_info.items()],
+        ]
+        if item_name is not None:
+            t += [(k, v) for k, v in item[item_name].items()]
+        print(tabulate(
+            t, headers=('Field', 'Value'),
+        ))
 
     def print_error(
         self,

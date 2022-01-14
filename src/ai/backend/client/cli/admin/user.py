@@ -103,6 +103,7 @@ def list(ctx: CLIContext, status, group, filter_, order, offset, limit) -> None:
 
 
 @user.command()
+@click.pass_obj
 @click.argument('domain_name', type=str, metavar='DOMAIN_NAME')
 @click.argument('email', type=str, metavar='EMAIL')
 @click.argument('password', type=str, metavar='PASSWORD')
@@ -116,7 +117,7 @@ def list(ctx: CLIContext, status, group, filter_, order, offset, limit) -> None:
               help='Flag indicate that user needs to change password. '
                    'Useful when admin manually create password.')
 @click.option('--description', type=str, default='', help='Description of the user.')
-def add(domain_name, email, password, username, full_name, role, status,
+def add(ctx: CLIContext, domain_name, email, password, username, full_name, role, status,
         need_password_change, description):
     """
     Add new user. A user must belong to a domain, so DOMAIN_NAME should be provided.
@@ -141,11 +142,18 @@ def add(domain_name, email, password, username, full_name, role, status,
         if not data['ok']:
             print_fail('User creation has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        item = data['user']
-        print('User {0} is created in domain {1}.'.format(item['email'], item['domain_name']))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='user',
+            add_info={
+                'detail_msg': 'User {0} is created in domain {1}.'
+                .format(data['user']['email'], data['user']['domain_name']),
+            },
+        )
 
 
 @user.command()
+@click.pass_obj
 @click.argument('email', type=str, metavar='EMAIL')
 @click.option('-p', '--password', type=str, help='Password.')
 @click.option('-u', '--username', type=str, help='Username.')
@@ -159,7 +167,7 @@ def add(domain_name, email, password, username, full_name, role, status,
               help='Flag indicate that user needs to change password. '
                    'Useful when admin manually create password.')
 @click.option('--description', type=str, default='', help='Description of the user.')
-def update(email, password, username, full_name, domain_name, role, status,
+def update(ctx: CLIContext, email, password, username, full_name, domain_name, role, status,
            need_password_change, description):
     """
     Update an existing user.
@@ -181,12 +189,18 @@ def update(email, password, username, full_name, domain_name, role, status,
         if not data['ok']:
             print_fail('User update has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('User {0} is updated.'.format(email))
+        ctx.output.print_mutation_result(
+            data,
+            add_info={
+                'detail_msg': 'User {0} is updated.'.format(email),
+            },
+        )
 
 
 @user.command()
+@click.pass_obj
 @click.argument('email', type=str, metavar='EMAIL')
-def delete(email):
+def delete(ctx: CLIContext, email):
     """
     Inactivate an existing user.
 
@@ -201,16 +215,22 @@ def delete(email):
         if not data['ok']:
             print_fail('User inactivation has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('User is inactivated: ' + email + '.')
+        ctx.output.print_mutation_result(
+            data,
+            add_info={
+                'detail_msg': 'User is inactivated: ' + email + '.',
+            },
+        )
 
 
 @user.command()
+@click.pass_obj
 @click.argument('email', type=str, metavar='EMAIL')
 @click.option('--purge-shared-vfolders', is_flag=True, default=False,
               help='Delete user\'s all virtual folders. '
                    'If False, shared folders will not be deleted '
                    'and migrated the ownership to the requested admin.')
-def purge(email, purge_shared_vfolders):
+def purge(ctx: CLIContext, email, purge_shared_vfolders):
     """
     Delete an existing user. This action cannot be undone.
 
@@ -228,4 +248,9 @@ def purge(email, purge_shared_vfolders):
         if not data['ok']:
             print_fail('User deletion has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('User is deleted: ' + email + '.')
+        ctx.output.print_mutation_result(
+            data,
+            add_info={
+                'detail_msg': 'User is deleted: ' + email + '.',
+            },
+        )

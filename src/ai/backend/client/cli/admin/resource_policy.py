@@ -10,7 +10,7 @@ from ai.backend.client.func.keypair_resource_policy import (
 # from ai.backend.client.output.fields import keypair_resource_policy_fields
 from . import admin
 from ..interaction import ask_yn
-from ..pretty import print_done, print_error, print_fail, print_info
+from ..pretty import print_error, print_fail, print_info
 
 from ..types import CLIContext
 
@@ -57,6 +57,7 @@ def list(ctx):
 
 
 @keypair_resource_policy.command()
+@click.pass_obj
 @click.argument('name', type=str, default=None, metavar='NAME')
 @click.option('--default-for-unspecified', type=str, default='UNLIMITED',
               help='Default behavior for unspecified resources: '
@@ -78,7 +79,7 @@ def list(ctx):
 #               help='Locations to create virtual folders.')
 @click.option('--allowed-vfolder-hosts', default=['local'],
               help='Locations to create virtual folders.')
-def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sessions,
+def add(ctx: CLIContext, name, default_for_unspecified, total_resource_slots, max_concurrent_sessions,
         max_containers_per_session, max_vfolder_count, max_vfolder_size,
         idle_timeout, allowed_vfolder_hosts):
     """
@@ -106,11 +107,18 @@ def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sess
             print_fail('KeyPair Resource Policy creation has failed: {0}'
                        .format(data['msg']))
             sys.exit(1)
-        item = data['resource_policy']
-        print_done('Keypair resource policy ' + item['name'] + ' is created.')
+        ctx.output.print_mutation_result(
+            data,
+            item_name='resource_policy',
+            add_info={
+                'detail_msg':
+                'Keypair resource policy ' + data['resource_policy']['name'] + ' is created.',
+            },
+        )
 
 
 @keypair_resource_policy.command()
+@click.pass_obj
 @click.argument('name', type=str, default=None, metavar='NAME')
 @click.option('--default-for-unspecified', type=str,
               help='Default behavior for unspecified resources: '
@@ -129,7 +137,7 @@ def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sess
               help='The maximum period of time allowed for kernels to wait '
                    'further requests.')
 @click.option('--allowed-vfolder-hosts', help='Locations to create virtual folders.')
-def update(name, default_for_unspecified, total_resource_slots,
+def update(ctx: CLIContext, name, default_for_unspecified, total_resource_slots,
            max_concurrent_sessions, max_containers_per_session, max_vfolder_count,
            max_vfolder_size, idle_timeout, allowed_vfolder_hosts):
     """
@@ -157,12 +165,19 @@ def update(name, default_for_unspecified, total_resource_slots,
             print_fail('KeyPair Resource Policy creation has failed: {0}'
                        .format(data['msg']))
             sys.exit(1)
-        print_done('Update succeeded.')
+        ctx.output.print_mutation_result(
+            data,
+            item_name='resource_policy',
+            add_info={
+                'detail_msg': 'Update succeeded.',
+            },
+        )
 
 
 @keypair_resource_policy.command()
+@click.pass_obj
 @click.argument('name', type=str, default=None, metavar='NAME')
-def delete(name):
+def delete(ctx: CLIContext, name):
     """
     Delete a keypair resource policy.
 
@@ -181,4 +196,10 @@ def delete(name):
             print_fail('KeyPair Resource Policy deletion has failed: {0}'
                        .format(data['msg']))
             sys.exit(1)
-        print_done('Resource policy ' + name + ' is deleted.')
+        ctx.output.print_mutation_result(
+            data,
+            item_name='resource_policy',
+            add_info={
+                'detail_msg': 'Resource policy ' + name + ' is deleted.',
+            },
+        )

@@ -56,6 +56,7 @@ def list(ctx: CLIContext) -> None:
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new domain')
@@ -67,7 +68,7 @@ def list(ctx: CLIContext) -> None:
               help='Allowed virtual folder hosts.')
 @click.option('--allowed-docker-registries', type=str, multiple=True,
               help='Allowed docker registries.')
-def add(name, description, inactive, total_resource_slots,
+def add(ctx: CLIContext, name, description, inactive, total_resource_slots,
         allowed_vfolder_hosts, allowed_docker_registries):
     """
     Add a new domain.
@@ -90,11 +91,17 @@ def add(name, description, inactive, total_resource_slots,
         if not data['ok']:
             print_fail('Domain creation has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        item = data['domain']
-        print('Domain name {0} is created.'.format(item['name']))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='domain',
+            add_info={
+                'detail_msg': 'Domain name {0} is created.'.format(data['domain']['name']),
+            },
+        )
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
 @click.option('--new-name', type=str, help='New name of the domain')
 @click.option('--description', type=str, help='Description of the domain')
@@ -105,7 +112,7 @@ def add(name, description, inactive, total_resource_slots,
               help='Allowed virtual folder hosts.')
 @click.option('--allowed-docker-registries', type=str, multiple=True,
               help='Allowed docker registries.')
-def update(name, new_name, description, is_active, total_resource_slots,
+def update(ctx: CLIContext, name, new_name, description, is_active, total_resource_slots,
            allowed_vfolder_hosts, allowed_docker_registries):
     """
     Update an existing domain.
@@ -129,12 +136,19 @@ def update(name, new_name, description, is_active, total_resource_slots,
         if not data['ok']:
             print_fail('Domain update has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Domain {0} is updated.'.format(name))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='domain',
+            add_info={
+                'detail_msg': 'Domain {0} is updated.'.format(name),
+            },
+        )
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
-def delete(name):
+def delete(ctx: CLIContext, name):
     """
     Inactive an existing domain.
 
@@ -149,12 +163,19 @@ def delete(name):
         if not data['ok']:
             print_fail('Domain inactivation has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Domain is inactivated: ' + name + '.')
+        ctx.output.print_mutation_result(
+            data,
+            item_name='domain',
+            add_info={
+                'detail_msg': 'Domain is inactivated: ' + name + '.',
+            },
+        )
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
-def purge(name):
+def purge(ctx: CLIContext, name):
     """
     Delete an existing domain.
 
@@ -172,4 +193,10 @@ def purge(name):
         if not data['ok']:
             print_fail('Domain deletion has failed: {0}'.format(data['msg']))
             sys.exit(1)
-        print('Domain is deleted: ' + name + '.')
+        ctx.output.print_mutation_result(
+            data,
+            item_name='domain',
+            add_info={
+                'detail_msg': 'Domain is deleted: ' + name + '.',
+            },
+        )
