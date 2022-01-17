@@ -137,6 +137,7 @@ def add(ctx: CLIContext, user_id, resource_policy, admin, inactive,  rate_limit)
             data,
             item_name='keypair',
             add_info={
+                'method': sys._getframe().f_code.co_name,
                 'access_key': data['keypair']['access_key'],
                 'secret_key': data['keypair']['secret_key'],
             },
@@ -172,9 +173,9 @@ def update(ctx: CLIContext, access_key, resource_policy, is_admin, is_active,  r
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='keypair',
             add_info={
-                'detail_msg': 'Key pair is updated: ' + access_key + '.',
+                'method': sys._getframe().f_code.co_name,
+                'access_key': access_key,
             },
         )
 
@@ -199,9 +200,9 @@ def delete(ctx: CLIContext, access_key):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='keypair',
             add_info={
-                'detail_msg': 'Key pair is deleted: ' + access_key + '.',
+                'method': sys._getframe().f_code.co_name,
+                'access_key': access_key,
             },
         )
 
@@ -226,9 +227,9 @@ def activate(ctx: CLIContext, access_key):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='keypair',
             add_info={
-                'detail_msg': 'Key pair is deleted: ' + access_key + '.',
+                'method': sys._getframe().f_code.co_name,
+                'access_key': access_key,
             },
         )
 
@@ -253,8 +254,8 @@ def deactivate(ctx: CLIContext, access_key):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='keypair',
             add_info={
-                'detail_msg': 'Key pair is deactivated: ' + access_key + '.',
+                'method': sys._getframe().f_code.co_name,
+                'access_key': access_key,
             },
         )

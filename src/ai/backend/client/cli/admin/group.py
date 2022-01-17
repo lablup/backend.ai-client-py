@@ -118,8 +118,9 @@ def add(ctx: CLIContext, domain_name, name, description, inactive, total_resourc
         ctx.output.print_mutation_result(
             data,
             item_name='group',
-            detail_msg='Group name {0} is created in domain {1}.'
-            .format(data['group']['name'], data['group']['domain_name']),
+            add_info={
+                'method': sys._getframe().f_code.co_name,
+            },
         )
 
 
@@ -157,8 +158,10 @@ def update(ctx: CLIContext, gid, name, description, is_active, total_resource_sl
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='group',
-            detail_msg='Group {0} is updated.'.format(gid),
+            add_info={
+                'method': sys._getframe().f_code.co_name,
+                'gid': gid,
+            },
         )
 
 
@@ -182,8 +185,10 @@ def delete(ctx: CLIContext, gid):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='group',
-            detail_msg='Group is inactivated: ' + gid + '.',
+            add_info={
+                'method': sys._getframe().f_code.co_name,
+                'gid': gid,
+            },
         )
 
 
@@ -210,8 +215,10 @@ def purge(ctx: CLIContext, gid):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='group',
-            detail_msg='Group is deleted: ' + gid + '.',
+            add_info={
+                'method': sys._getframe().f_code.co_name,
+                'gid': gid,
+            },
         )
 
 
@@ -238,8 +245,10 @@ def add_users(ctx: CLIContext, gid, user_uuids):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='group',
-            detail_msg='Users are added to the group',
+            add_info={
+                'method': sys._getframe().f_code.co_name,
+                'gid': gid,
+            },
         )
 
 
@@ -266,6 +275,8 @@ def remove_users(ctx: CLIContext, gid, user_uuids):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='group',
-            detail_msg='Users are removed from the group',
+            add_info={
+                'method': sys._getframe().f_code.co_name,
+                'gid': gid,
+            },
         )

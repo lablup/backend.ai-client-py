@@ -9,7 +9,7 @@ from ai.backend.client.func.scaling_group import (
 )
 from ai.backend.client.output.fields import scaling_group_fields
 from . import admin
-from ..pretty import print_done, print_error, print_fail
+from ..pretty import print_error, print_fail
 from ..params import JSONParamType
 from ..types import CLIContext
 
@@ -110,8 +110,7 @@ def add(ctx: CLIContext, name, description, inactive,
             data,
             item_name='scaling_group',
             add_info={
-                'detail_msg': 'Scaling group name {0} is created.'
-                .format(data['scaling_group']['name']),
+                'method': sys._getframe().f_code.co_name,
             },
         )
 
@@ -157,9 +156,9 @@ def update(ctx: CLIContext, name, description, inactive,
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='scaling_group',
             add_info={
-                'detail_msg': 'Scaling group {0} is updated.'.format(name),
+                'method': sys._getframe().f_code.co_name,
+                'name': name,
             },
         )
 
@@ -184,9 +183,9 @@ def delete(ctx: CLIContext, name):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='scaling_group',
             add_info={
-                'detail_msg': 'Scaling group is deleted: ' + name + '.',
+                'method': sys._getframe().f_code.co_name,
+                'name': name,
             },
         )
 
@@ -214,8 +213,8 @@ def associate_scaling_group(ctx: CLIContext, scaling_group, domain):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='scaling_group',
             add_info={
+                'method': sys._getframe().f_code.co_name,
                 'detail_msg': 'Scaling group {} is assocatiated with domain {}.'
                 .format(scaling_group, domain),
             },
@@ -247,8 +246,8 @@ def dissociate_scaling_group(ctx: CLIContext, scaling_group, domain):
             data,
             item_name='scaling_group',
             add_info={
+                'method': sys._getframe().f_code.co_name,
                 'detail_msg': 'Scaling group {} is dissociated from domain {}.'
                 .format(scaling_group, domain),
             },
         )
-        print_done('Scaling group {} is dissociated from domain {}.'.format(scaling_group, domain))

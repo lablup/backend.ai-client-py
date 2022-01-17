@@ -134,7 +134,7 @@ class JsonOutputHandler(BaseOutputHandler):
             'msg': item.get('msg', 'Failed'),
             **add_info,
         }
-        if item_name is not None:
+        if item_name is not None and item_name in item:
             t = {
                 **t,
                 item_name: {

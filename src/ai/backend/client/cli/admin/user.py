@@ -146,8 +146,7 @@ def add(ctx: CLIContext, domain_name, email, password, username, full_name, role
             data,
             item_name='user',
             add_info={
-                'detail_msg': 'User {0} is created in domain {1}.'
-                .format(data['user']['email'], data['user']['domain_name']),
+                'method': sys._getframe().f_code.co_name,
             },
         )
 
@@ -192,7 +191,8 @@ def update(ctx: CLIContext, email, password, username, full_name, domain_name, r
         ctx.output.print_mutation_result(
             data,
             add_info={
-                'detail_msg': 'User {0} is updated.'.format(email),
+                'method': sys._getframe().f_code.co_name,
+                'email': email,
             },
         )
 
@@ -218,7 +218,8 @@ def delete(ctx: CLIContext, email):
         ctx.output.print_mutation_result(
             data,
             add_info={
-                'detail_msg': 'User is inactivated: ' + email + '.',
+                'method': sys._getframe().f_code.co_name,
+                'email': email,
             },
         )
 
@@ -251,6 +252,7 @@ def purge(ctx: CLIContext, email, purge_shared_vfolders):
         ctx.output.print_mutation_result(
             data,
             add_info={
-                'detail_msg': 'User is deleted: ' + email + '.',
+                'method': sys._getframe().f_code.co_name,
+                'email': email,
             },
         )

@@ -111,8 +111,7 @@ def add(ctx: CLIContext, name, default_for_unspecified, total_resource_slots, ma
             data,
             item_name='resource_policy',
             add_info={
-                'detail_msg':
-                'Keypair resource policy ' + data['resource_policy']['name'] + ' is created.',
+                'method': sys._getframe().f_code.co_name,
             },
         )
 
@@ -167,9 +166,9 @@ def update(ctx: CLIContext, name, default_for_unspecified, total_resource_slots,
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='resource_policy',
             add_info={
-                'detail_msg': 'Update succeeded.',
+                'method': sys._getframe().f_code.co_name,
+                'name': name,
             },
         )
 
@@ -198,8 +197,8 @@ def delete(ctx: CLIContext, name):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            item_name='resource_policy',
             add_info={
-                'detail_msg': 'Resource policy ' + name + ' is deleted.',
+                'method': sys._getframe().f_code.co_name,
+                'name': name,
             },
         )
