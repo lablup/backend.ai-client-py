@@ -172,7 +172,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     @abstractmethod
     def print_mutation_result(
         self,
-        item: Mapping[str, Any] | None,
+        item: Mapping[str, Any],
         item_name: Optional[str] = None,
         add_info: Mapping = {},
     ) -> None:
