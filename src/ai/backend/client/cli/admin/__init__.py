@@ -24,4 +24,5 @@ from . import (  # noqa
     storage,
     user,
     vfolder,
+    filebrowser,
 )

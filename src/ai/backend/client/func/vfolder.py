@@ -120,7 +120,9 @@ class VFolder(BaseFunction):
     async def list_hosts(cls):
         rqst = Request('GET', '/folders/_/hosts')
         async with rqst.fetch() as resp:
-            return await resp.json()
+            res = await resp.json()
+            print(res)
+            return res
 
     @api_function
     @classmethod
