@@ -120,6 +120,20 @@ def _clean_tokens(v: str) -> Tuple[str, ...]:
     return tuple(v.split(','))
 
 
+def _clean_address_map(v: str) -> Mapping[str, str]:
+    override_map = {}
+    for assignment in v.split(","):
+        try:
+            k, _, v = assignment.partition("=")
+            if k == '' or v == '':
+                raise ValueError
+        except ValueError:
+            raise ValueError(f"{v} is not a valid mapping expression")
+        else:
+            override_map[k] = v
+    return override_map
+
+
 class APIConfig:
     """
     Represents a set of API client configurations.
@@ -164,7 +178,7 @@ class APIConfig:
         'hash_type': 'sha256',
         'domain': 'default',
         'group': 'default',
-        'address_map': 'default',
+        'address_map': '',
         'connection_timeout': '10.0',
         'read_timeout': '0',
     }
@@ -213,8 +227,7 @@ class APIConfig:
                 'OVERRIDE_STORAGE_PROXY',
                 self.DEFAULTS['address_map'],
                 # The shape of this env var must be like "X1=Y1,X2=Y2"
-                clean=lambda x: {mtch.split('=')[0]: mtch.split('=')[1] for mtch in x.split(',') \
-                    if x != self.DEFAULTS['address_map']},
+                clean=_clean_address_map,
             )
         self._version = version if version is not None else \
             self.DEFAULTS['version']
@@ -291,7 +304,7 @@ class APIConfig:
     @property
     def address_map(self) -> Optional[Mapping[str, str]]:
         """The storage proxy address map for overriding."""
-        if self._address_map == self.DEFAULTS['address_map']:
+        if not bool(self._address_map):
             return None
         return self._address_map
 

@@ -17,7 +17,7 @@ from ai.backend.client.output.fields import vfolder_fields
 from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
-from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS, get_config
+from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
 from ..pagination import generate_paginated_results
 from ..request import Request
 
@@ -167,7 +167,7 @@ class VFolder(BaseFunction):
         basedir: Union[str, Path] = None,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         show_progress: bool = False,
-        address_map: Mapping[str, str] = get_config().address_map,
+        address_map: Union[Mapping[str, str], None] = None,
     ) -> None:
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
         for relpath in relative_paths:
@@ -240,7 +240,7 @@ class VFolder(BaseFunction):
         *,
         basedir: Union[str, Path] = None,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
-        address_map: Mapping[str, str] = get_config().address_map,
+        address_map: Union[Mapping[str, str], None] = None,
         show_progress: bool = False,
     ) -> None:
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())

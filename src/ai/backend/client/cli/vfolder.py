@@ -12,7 +12,7 @@ from ai.backend.client.session import Session
 from .main import main
 from .interaction import ask_yn
 from .pretty import print_done, print_error, print_fail, print_info, print_wait
-from .params import ByteSizeParamType, ByteSizeParamCheckType, StorageProxyAddressParamCheckType
+from .params import ByteSizeParamType, ByteSizeParamCheckType, CommaSeparatedKVListParamType
 
 
 @main.group()
@@ -177,7 +177,7 @@ def info(name):
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
 @click.option('--override-storage-proxy',
-              type=StorageProxyAddressParamCheckType(), default=get_config().address_map,
+              type=CommaSeparatedKVListParamType(), default=None,
               help='Overrides storage proxy address. '
                    'The value must shape like "X1=Y1,X2=Y2...". '
                    'Each Yn address must at least include the IP address '
@@ -198,7 +198,7 @@ def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
-                address_map=override_storage_proxy,
+                address_map=override_storage_proxy or get_config().address_map,
             )
             print_done('Done.')
         except Exception as e:
@@ -218,7 +218,7 @@ def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
 @click.option('--override-storage-proxy',
-              type=StorageProxyAddressParamCheckType(), default=get_config().address_map,
+              type=CommaSeparatedKVListParamType(), default=None,
               help='Overrides storage proxy address. '
                    'The value must shape like "X1=Y1,X2=Y2...". '
                    'Each Yn address must at least include the IP address '
@@ -239,7 +239,7 @@ def download(name, filenames, base_dir, chunk_size, override_storage_proxy):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
-                address_map=override_storage_proxy,
+                address_map=override_storage_proxy or get_config().address_map,
             )
             print_done('Done.')
         except Exception as e:

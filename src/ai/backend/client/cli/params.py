@@ -57,7 +57,7 @@ class ByteSizeParamCheckType(ByteSizeParamType):
         return value
 
 
-class StorageProxyAddressParamCheckType(click.ParamType):
+class CommaSeparatedKVListParamType(click.ParamType):
     name = "storage-proxy-address-check"
 
     def convert(self, value: Union[str, Mapping[str, str]], param, ctx) -> Mapping[str, str]:
@@ -71,13 +71,15 @@ class StorageProxyAddressParamCheckType(click.ParamType):
         override_map = {}
         for assignment in value.split(","):
             try:
-                x, y = assignment.split("=")
+                k, _, v = assignment.partition("=")
+                if k == '' or v == '':
+                    raise ValueError
             except ValueError:
                 self.fail(
                     f"{value!r} is not a valid mapping expression", param, ctx,
                 )
             else:
-                override_map[x] = y
+                override_map[k] = v
         return override_map
 
 
