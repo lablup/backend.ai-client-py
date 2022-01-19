@@ -174,7 +174,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
         self,
         item: Mapping[str, Any],
         item_name: Optional[str] = None,
-        add_info: Mapping = {},
+        extra_info: Mapping = {},
     ) -> None:
         raise NotImplementedError
 

@@ -94,9 +94,6 @@ def add(ctx: CLIContext, name, description, inactive, total_resource_slots,
         ctx.output.print_mutation_result(
             data,
             item_name='domain',
-            add_info={
-                'method': sys._getframe().f_code.co_name,
-            },
         )
 
 
@@ -138,8 +135,7 @@ def update(ctx: CLIContext, name, new_name, description, is_active, total_resour
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'name': name,
             },
         )
@@ -165,8 +161,7 @@ def delete(ctx: CLIContext, name):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'name': name,
             },
         )
@@ -195,8 +190,7 @@ def purge(ctx: CLIContext, name):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'name': name,
             },
         )

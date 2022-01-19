@@ -127,12 +127,12 @@ class JsonOutputHandler(BaseOutputHandler):
         self,
         item: Mapping[str, Any],
         item_name: Optional[str] = None,
-        add_info: Mapping = {},
+        extra_info: Mapping = {},
     ) -> None:
         t = {
             'ok': item.get('ok', False),
             'msg': item.get('msg', 'Failed'),
-            **add_info,
+            **extra_info,
         }
         if item_name is not None and item_name in item:
             t = {

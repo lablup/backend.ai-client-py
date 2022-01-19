@@ -109,9 +109,6 @@ def add(ctx: CLIContext, name, description, inactive,
         ctx.output.print_mutation_result(
             data,
             item_name='scaling_group',
-            add_info={
-                'method': sys._getframe().f_code.co_name,
-            },
         )
 
 
@@ -156,8 +153,7 @@ def update(ctx: CLIContext, name, description, inactive,
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'name': name,
             },
         )
@@ -183,8 +179,7 @@ def delete(ctx: CLIContext, name):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'name': name,
             },
         )
@@ -213,8 +208,7 @@ def associate_scaling_group(ctx: CLIContext, scaling_group, domain):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'detail_msg': 'Scaling group {} is assocatiated with domain {}.'
                 .format(scaling_group, domain),
             },
@@ -245,8 +239,7 @@ def dissociate_scaling_group(ctx: CLIContext, scaling_group, domain):
         ctx.output.print_mutation_result(
             data,
             item_name='scaling_group',
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'detail_msg': 'Scaling group {} is dissociated from domain {}.'
                 .format(scaling_group, domain),
             },

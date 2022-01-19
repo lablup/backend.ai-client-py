@@ -118,9 +118,6 @@ def add(ctx: CLIContext, domain_name, name, description, inactive, total_resourc
         ctx.output.print_mutation_result(
             data,
             item_name='group',
-            add_info={
-                'method': sys._getframe().f_code.co_name,
-            },
         )
 
 
@@ -158,8 +155,7 @@ def update(ctx: CLIContext, gid, name, description, is_active, total_resource_sl
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'gid': gid,
             },
         )
@@ -185,8 +181,7 @@ def delete(ctx: CLIContext, gid):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'gid': gid,
             },
         )
@@ -215,8 +210,7 @@ def purge(ctx: CLIContext, gid):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'gid': gid,
             },
         )
@@ -245,8 +239,7 @@ def add_users(ctx: CLIContext, gid, user_uuids):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'gid': gid,
             },
         )
@@ -275,8 +268,7 @@ def remove_users(ctx: CLIContext, gid, user_uuids):
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
-            add_info={
-                'method': sys._getframe().f_code.co_name,
+            extra_info={
                 'gid': gid,
             },
         )
