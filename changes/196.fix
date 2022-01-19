@@ -1,0 +1,1 @@
+Fix a `KeyError` for `agent_list` when the user don't use the `--assign-agent` option against the managers without support for the option
