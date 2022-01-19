@@ -31,8 +31,8 @@ class FileBrowser(BaseFunction):
     async def create_or_update_browser(self):
         rqst = Request('POST', '/browser/create')
        
-        print(rqst.config.vfolder_mounts,rqst.headers, rqst.path, rqst.params, rqst._build_url())
-        rqst.headers['X-RateLimit-Limit'] = '1000'
+        print("DEBUG: ", rqst.config.vfolder_mounts,rqst.headers, rqst.path, rqst.params, rqst._build_url())
+        rqst.headers['X-RateLimit-Limit'] = "1000"
         
         async with rqst.fetch() as resp:
             return await resp.text()

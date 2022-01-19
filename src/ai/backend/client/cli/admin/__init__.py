@@ -8,15 +8,16 @@ def admin():
     """
 
 
-from . import (  # noqa
+from . import (
     agent,
     domain,
     etcd,
+    filebrowser,
     group,
     image,
     keypair,
-    manager,
     license,
+    manager,  # noqa
     resource,
     resource_policy,
     scaling_group,
@@ -24,5 +25,4 @@ from . import (  # noqa
     storage,
     user,
     vfolder,
-    filebrowser,
 )

@@ -1,7 +1,7 @@
-from datetime import datetime
 import json
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 
 import click
 import humanize
@@ -9,10 +9,11 @@ from tabulate import tabulate
 
 from ai.backend.client.config import DEFAULT_CHUNK_SIZE
 from ai.backend.client.session import Session
-from .main import main
+
 from .interaction import ask_yn
+from .main import main
+from .params import ByteSizeParamCheckType, ByteSizeParamType
 from .pretty import print_done, print_error, print_fail, print_info, print_wait
-from .params import ByteSizeParamType, ByteSizeParamCheckType
 
 
 @main.group()
@@ -21,9 +22,9 @@ def filebrowser():
 
 
 @filebrowser.command()
-@click.argument('vfolders', type=str)
+@click.argument("vfolders", type=str)
 def create(vfolders):
-    """ Create or update filebrowser session
+    """Create or update filebrowser session
 
     \b
     vfolders: List of virtual folders to add to FileBrowser session.
