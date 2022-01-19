@@ -1,1 +1,1 @@
-Fix agent_list key error when user did not use assign_agent command
+Fix a `KeyError` for `agent_list` when the user don't use the `--assign-agent` option against the managers without support for the option
