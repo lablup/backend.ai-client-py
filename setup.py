@@ -23,7 +23,7 @@ install_requires = [
     'tabulate>=0.8.9',
     'tqdm>=4.61',
     'yarl>=1.6.3',
-    'backend.ai-cli~=0.5.0.post1',
+    'backend.ai-cli @ git+https://github.com/lablup/backend.ai-cli@feature/add-validate-user-input',
 ]
 build_requires = [
     'wheel>=0.36.2',

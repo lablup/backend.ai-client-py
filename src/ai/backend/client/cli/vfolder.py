@@ -7,10 +7,10 @@ import click
 import humanize
 from tabulate import tabulate
 
+from ai.backend.cli.interaction import ask_yn
 from ai.backend.client.config import DEFAULT_CHUNK_SIZE
 from ai.backend.client.session import Session
 from .main import main
-from .interaction import ask_yn
 from .pretty import print_done, print_error, print_fail, print_info, print_wait
 from .params import ByteSizeParamType, ByteSizeParamCheckType
 

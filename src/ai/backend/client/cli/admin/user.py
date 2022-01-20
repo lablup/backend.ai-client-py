@@ -4,9 +4,9 @@ import sys
 
 import click
 
+from ai.backend.cli.interaction import ask_yn
 from ai.backend.client.session import Session
 from ai.backend.client.output.fields import user_fields
-from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
 from ..types import CLIContext
 from . import admin
