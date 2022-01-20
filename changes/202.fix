@@ -1,0 +1,1 @@
+Append backup file extension in sed command not to make error when tests on macOS.
