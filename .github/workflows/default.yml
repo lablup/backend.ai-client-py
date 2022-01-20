@@ -131,7 +131,7 @@ jobs:
         set +e
         git ls-remote --heads 'https://github.com/lablup/backend.ai-cli' | grep -q "refs/heads/${GHBRANCH}"
         if [ $? -eq 0 ]; then
-          sed -i "s%\(backend.ai-cli\)@main%\1@${GHBRANCH}%" requirements/${REQUIREMENTS_FILE}.txt
+          sed -i.bak "s%\(backend.ai-cli\)@main%\1@${GHBRANCH}%" requirements/${REQUIREMENTS_FILE}.txt
         fi
         set -e
         python -m pip install -U -r requirements/${REQUIREMENTS_FILE}.txt
