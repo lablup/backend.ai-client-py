@@ -1,1 +1,1 @@
-Append backup file extension in sed command not to make error when tests on macOS.
+Append a backup file extension to the `-i` option of `sed` command to prevent branch substitution errors when tested on macOS
