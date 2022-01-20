@@ -24,9 +24,23 @@ jobs:
           lint-flake8-${{ runner.os }}-pip-${{ matrix.python-version }}
           lint-flake8-${{ runner.os }}-pip-
     - name: Install dependencies
+      env:
+        REQUIREMENTS_FILE: lint
       run: |
         python -m pip install -U pip setuptools
-        python -m pip install -U -r requirements/lint.txt
+        if [ -n "$GITHUB_HEAD_REF" ]; then
+          export GHBRANCH="${GITHUB_HEAD_REF#refs/heads/}"
+        else
+          export GHBRANCH="${GITHUB_REF#refs/heads/}"
+        fi
+        # Use the same branch (if exists) for the backend.ai-cli installation
+        set +e
+        git ls-remote --heads 'https://github.com/lablup/backend.ai-cli' | grep -q "refs/heads/${GHBRANCH}"
+        if [ $? -eq 0 ]; then
+          sed -i "s%\(backend.ai-cli\)@main%\1@${GHBRANCH}%" requirements/${REQUIREMENTS_FILE}.txt
+        fi
+        set -e
+        python -m pip install -U -r requirements/${REQUIREMENTS_FILE}.txt
     - name: Lint with flake8
       run: |
         if [ "$GITHUB_EVENT_NAME" == "pull_request" -a -n "$GITHUB_HEAD_REF" ]; then
@@ -56,9 +70,23 @@ jobs:
           typecheck-mypy-${{ runner.os }}-pip-${{ matrix.python-version }}
           typecheck-mypy-${{ runner.os }}-pip-
     - name: Install dependencies
+      env:
+        REQUIREMENTS_FILE: typecheck
       run: |
         python -m pip install -U pip setuptools
-        python -m pip install -U -r requirements/typecheck.txt
+        if [ -n "$GITHUB_HEAD_REF" ]; then
+          export GHBRANCH="${GITHUB_HEAD_REF#refs/heads/}"
+        else
+          export GHBRANCH="${GITHUB_REF#refs/heads/}"
+        fi
+        # Use the same branch (if exists) for the backend.ai-cli installation
+        set +e
+        git ls-remote --heads 'https://github.com/lablup/backend.ai-cli' | grep -q "refs/heads/${GHBRANCH}"
+        if [ $? -eq 0 ]; then
+          sed -i "s%\(backend.ai-cli\)@main%\1@${GHBRANCH}%" requirements/${REQUIREMENTS_FILE}.txt
+        fi
+        set -e
+        python -m pip install -U -r requirements/${REQUIREMENTS_FILE}.txt
     - name: Type check with mypy
       run: |
         if [ "$GITHUB_EVENT_NAME" == "pull_request" -a -n "$GITHUB_HEAD_REF" ]; then
@@ -89,9 +117,24 @@ jobs:
           test-pytest-${{ runner.os }}-pip-${{ matrix.python-version }}
           test-pytest-${{ runner.os }}-pip-
     - name: Install dependencies
+      env:
+        REQUIREMENTS_FILE: test
       run: |
         python -m pip install -U pip setuptools
-        python -m pip install -U -r requirements/test.txt
+        if [ -n "$GITHUB_HEAD_REF" ]; then
+          export GHBRANCH="${GITHUB_HEAD_REF#refs/heads/}"
+        else
+          export GHBRANCH="${GITHUB_REF#refs/heads/}"
+        fi
+        echo "HEAD: ${GHBRANCH} (${GITHUB_REF}, ${GITHUB_HEAD_REF})"
+        # Use the same branch (if exists) for the backend.ai-cli installation
+        set +e
+        git ls-remote --heads 'https://github.com/lablup/backend.ai-cli' | grep -q "refs/heads/${GHBRANCH}"
+        if [ $? -eq 0 ]; then
+          sed -i "s%\(backend.ai-cli\)@main%\1@${GHBRANCH}%" requirements/${REQUIREMENTS_FILE}.txt
+        fi
+        set -e
+        python -m pip install -U -r requirements/${REQUIREMENTS_FILE}.txt
         python <<EOF
         # temporary patch until pnuckowski/aioresponses#174 is released or aiohttp is patched.
         from pathlib import Path

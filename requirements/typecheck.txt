@@ -1,1 +1,2 @@
+-e git+https://github.com/lablup/backend.ai-cli@main#egg=backend.ai-cli
 -e .[typecheck]
