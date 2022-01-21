@@ -15,6 +15,8 @@ class FileBrowser(BaseFunction):
 
         async with rqst.fetch() as resp:
             result = await resp.json()
-
-            webbrowser.open_new_tab(result["addr"])
-            return await resp.json()
+            if result['status'] == "ok":
+                print(f"File Browser started with url: {result['addr']}")
+                webbrowser.open_new_tab(result["addr"])
+            else:
+                raise Exception
