@@ -8,6 +8,7 @@ def admin():
     """
 
 
+from . import manager  # noqa
 from . import (
     agent,
     domain,
@@ -17,7 +18,6 @@ from . import (
     image,
     keypair,
     license,
-    manager,  # noqa
     resource,
     resource_policy,
     scaling_group,
