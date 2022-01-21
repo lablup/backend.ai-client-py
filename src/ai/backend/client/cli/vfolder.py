@@ -22,7 +22,7 @@ def vfolder():
 
 @vfolder.command()
 def list_hosts():
-
+    '''List the hosts of virtual folders that is accessible to the current user.'''
     with Session() as session:
         try:
             resp = session.VFolder.list_hosts()

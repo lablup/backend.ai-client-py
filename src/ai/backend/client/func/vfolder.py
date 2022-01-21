@@ -121,7 +121,6 @@ class VFolder(BaseFunction):
         rqst = Request('GET', '/folders/_/hosts')
         async with rqst.fetch() as resp:
             res = await resp.json()
-            print(res)
             return res
 
     @api_function
