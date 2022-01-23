@@ -23,17 +23,25 @@ def filebrowser():
     multiple=True,
 )
 def create(vfolder):
-    """Create or update filebrowser session
-
-    \b
-    create: create or update FileBrowser session.
-    destroy: destroy FileBrowser session.
-    """
+    """Create or update filebrowser session"""
     vfolder = list(vfolder)
 
     with Session() as session:
         try:
             session.FileBrowser.create_or_update_browser(vfolder)
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
+@filebrowser.command()
+def destroy(vfolder):
+    """Destroy filebrowser session"""
+    vfolder = list(vfolder)
+
+    with Session() as session:
+        try:
+            session.FileBrowser.destroy_browser(vfolder)
         except Exception as e:
             print_error(e)
             sys.exit(1)

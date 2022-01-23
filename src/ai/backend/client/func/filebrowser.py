@@ -20,3 +20,15 @@ class FileBrowser(BaseFunction):
                 webbrowser.open_new_tab(result["addr"])
             else:
                 raise Exception
+
+    @api_function
+    @classmethod
+    async def destroy_browser(self, vfolders: list[str]):
+        rqst = Request("POST", "/browser/destroy")
+
+        async with rqst.fetch() as resp:
+            result = await resp.json()
+            if result['status'] == "ok":
+                print("File Browser destroyed.")
+            else:
+                raise Exception
