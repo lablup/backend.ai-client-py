@@ -67,7 +67,9 @@ def _create_cmd(docs: str = None):
                   metavar='NAME[=PATH]', type=str, multiple=True,
                   help='User-owned virtual folder names to mount. '
                        'If path is not provided, virtual folder will be mounted under /home/work. '
-                       'All virtual folders can only be mounted under /home/work. ')
+                       'Relative paths are under /home/work. '
+                       'If you want different paths, names should be absolute paths. '
+                       'Please use different path from the linux system folders.')
     @click.option('--scaling-group', '--sgroup', type=str, default=None,
                   help='The scaling group to execute session. If not specified, '
                        'all available scaling groups are included in the scheduling.')
@@ -257,7 +259,7 @@ def _create_from_template_cmd(docs: str = None):
     @click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
                   help='User-owned virtual folder names to mount. '
                        'If path is not provided, virtual folder will be mounted under /home/work. '
-                       'All virtual folders can only be mounted under /home/work. ')
+                       'Please use different path from the linux system folders. ')
     @click.option('--scaling-group', '--sgroup', type=str, default=undefined,
                   help='The scaling group to execute session. If not specified, '
                        'all available scaling groups are included in the scheduling.')

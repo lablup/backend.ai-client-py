@@ -218,7 +218,9 @@ class ComputeSession(BaseFunction):
             access key.
         :param mount_map: Mapping which contains custom path to mount vfolder.
             Key and value of this map should be vfolder name and custom path.
-            All custom mounts should be under /home/work.
+            Defalut mounts or relative paths are under /home/work.
+            If you want different paths, names should be absolute paths.
+            vFolders should have different name from linux system folders.
             vFolders which has a dot(.) prefix in its name are not affected.
         :param envs: The environment variables which always bypasses the jail policy.
         :param resources: The resource specification. (TODO: details)
@@ -387,7 +389,9 @@ class ComputeSession(BaseFunction):
             access key.
         :param mount_map: Mapping which contains custom path to mount vfolder.
             Key and value of this map should be vfolder name and custom path.
-            All custom mounts should be under /home/work.
+            Defalut mounts or relative paths are under /home/work.
+            If you want different paths, names should be absolute paths.
+            vFolders should have different name from linux system folders.
             vFolders which has a dot(.) prefix in its name are not affected.
         :param envs: The environment variables which always bypasses the jail policy.
         :param resources: The resource specification. (TODO: details)
