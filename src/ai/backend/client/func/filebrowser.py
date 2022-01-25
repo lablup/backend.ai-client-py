@@ -15,20 +15,28 @@ class FileBrowser(BaseFunction):
 
         async with rqst.fetch() as resp:
             result = await resp.json()
-            if result['status'] == "ok":
-                print(f"File Browser started with url: {result['addr']}")
+            if result["status"] == "ok":
+                print(
+                    f"""
+                    File Browser started.
+                    Container ID:
+                    {result['container_id']}
+                    URL: {result['addr']}
+                    """,
+                )
                 webbrowser.open_new_tab(result["addr"])
             else:
                 raise Exception
 
     @api_function
     @classmethod
-    async def destroy_browser(self, vfolders: list[str]):
-        rqst = Request("POST", "/browser/destroy")
+    async def destroy_browser(self, container_id):
+        rqst = Request("DELETE", "/browser/destroy")
+        rqst.set_json({"container_id": container_id})
 
         async with rqst.fetch() as resp:
             result = await resp.json()
-            if result['status'] == "ok":
+            if result["status"] == "ok":
                 print("File Browser destroyed.")
             else:
                 raise Exception

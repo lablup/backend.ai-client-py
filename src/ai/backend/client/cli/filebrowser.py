@@ -35,13 +35,19 @@ def create(vfolder):
 
 
 @filebrowser.command()
-def destroy(vfolder):
-    """Destroy filebrowser session"""
-    vfolder = list(vfolder)
+@click.option(
+    "-cid",
+    "--container_id",
+    help="Container ID of user FileBrowser session.",
+    type=str,
+    metavar="CID",
+)
+def destroy(container_id):
+    """Destroy filebrowser session using Cntainer ID."""
 
     with Session() as session:
         try:
-            session.FileBrowser.destroy_browser(vfolder)
+            session.FileBrowser.destroy_browser(container_id)
         except Exception as e:
             print_error(e)
             sys.exit(1)
