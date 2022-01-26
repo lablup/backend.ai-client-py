@@ -220,7 +220,7 @@ class ComputeSession(BaseFunction):
             Key and value of this map should be vfolder name and custom path.
             Defalut mounts or relative paths are under /home/work.
             If you want different paths, names should be absolute paths.
-            vFolders should have different name from linux system folders.
+            The target mount path of vFolders should not overlap with the linux system folders.
             vFolders which has a dot(.) prefix in its name are not affected.
         :param envs: The environment variables which always bypasses the jail policy.
         :param resources: The resource specification. (TODO: details)
@@ -391,7 +391,7 @@ class ComputeSession(BaseFunction):
             Key and value of this map should be vfolder name and custom path.
             Defalut mounts or relative paths are under /home/work.
             If you want different paths, names should be absolute paths.
-            vFolders should have different name from linux system folders.
+            The target mount path of vFolders should not overlap with the linux system folders.
             vFolders which has a dot(.) prefix in its name are not affected.
         :param envs: The environment variables which always bypasses the jail policy.
         :param resources: The resource specification. (TODO: details)
