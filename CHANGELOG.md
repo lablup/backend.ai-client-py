@@ -16,6 +16,12 @@ Changes
 
 .. towncrier release notes start
 
+## 21.09.3 (2022-01-26)
+
+### Fixes
+* Fix a `KeyError` for `agent_list` when the user don't use the `--assign-agent` option against the managers without support for the option ([#196](https://github.com/lablup/backend.ai-client-py/issues/196))
+
+
 ## 21.09.2 (2022-01-10)
 
 ### Features
