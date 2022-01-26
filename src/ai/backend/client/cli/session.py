@@ -260,9 +260,9 @@ def _create_from_template_cmd(docs: str = None):
     @click.option('-m', '--mount', metavar='NAME[=PATH]', type=str, multiple=True,
                   help='User-owned virtual folder names to mount. '
                        'When the target path is relative, it is placed under /home/work '
-	                   'with auto-created parent directories if any. '
-	                   'Absolute paths are mounted as-is, but it is prohibited to '
-	                   'override the predefined Linux system directories.')
+                       'with auto-created parent directories if any. '
+                       'Absolute paths are mounted as-is, but it is prohibited to '
+                       'override the predefined Linux system directories.')
     @click.option('--scaling-group', '--sgroup', type=str, default=undefined,
                   help='The scaling group to execute session. If not specified, '
                        'all available scaling groups are included in the scheduling.')
