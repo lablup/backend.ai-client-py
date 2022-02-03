@@ -10,7 +10,7 @@ from ai.backend.client.func.keypair_resource_policy import (
 # from ai.backend.client.output.fields import keypair_resource_policy_fields
 from . import admin
 from ..interaction import ask_yn
-from ..pretty import print_error, print_fail, print_info
+from ..pretty import print_info
 
 from ..types import CLIContext
 
@@ -101,11 +101,18 @@ def add(ctx: CLIContext, name, default_for_unspecified, total_resource_slots, ma
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='resource_policy',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair Resource Policy creation has failed: {0}'
-                       .format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='resource_policy',
+                action_name='add',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -155,11 +162,18 @@ def update(ctx: CLIContext, name, default_for_unspecified, total_resource_slots,
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='resource_policy',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair Resource Policy creation has failed: {0}'
-                       .format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='resource_policy',
+                action_name='update',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -185,11 +199,18 @@ def delete(ctx: CLIContext, name):
         try:
             data = session.KeypairResourcePolicy.delete(name)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='resource_policy',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair Resource Policy deletion has failed: {0}'
-                       .format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='resource_policy',
+                action_name='deletion',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,

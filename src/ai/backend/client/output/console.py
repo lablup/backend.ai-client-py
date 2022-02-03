@@ -163,18 +163,42 @@ class ConsoleOutputHandler(BaseOutputHandler):
         self,
         item: Mapping[str, Any],
         item_name: Optional[str] = None,
-        add_info: Mapping = {},
+        action_name: Optional[str] = None,
+        extra_info: Mapping = {},
     ) -> None:
         t = [
             ['ok', item['ok']],
             ['msg', item['msg']],
-            *[(k, v) for k, v in add_info.items()],
+            *[(k, v) for k, v in extra_info.items()],
         ]
+        if action_name is not None:
+            t += [['Action', action_name]]
         if item_name is not None:
             t += [(k, v) for k, v in item[item_name].items()]
         print(tabulate(
             t, headers=('Field', 'Value'),
         ))
+
+    def print_mutation_error(
+        self,
+        error: Optional[Exception] = None,
+        msg: str = 'Failed',
+        item_name: Optional[str] = None,
+        action_name: Optional[str] = None,
+        extra_info: Mapping = {},
+    ) -> None:
+        t = [
+            ['Message', msg],
+        ]
+        if item_name is not None:
+            t += [['Item', item_name]]
+        if action_name is not None:
+            t += [['Action', action_name]]
+        print(tabulate(
+            t, headers=('Field', 'Value'),
+        ))
+        if error is not None:
+            print_error(error)
 
     def print_error(
         self,

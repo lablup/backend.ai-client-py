@@ -11,7 +11,7 @@ from ai.backend.client.func.group import (
 # from ai.backend.client.output.fields import group_fields
 from . import admin
 from ..interaction import ask_yn
-from ..pretty import print_error, print_info, print_fail
+from ..pretty import print_info
 
 from ..types import CLIContext
 
@@ -110,10 +110,18 @@ def add(ctx: CLIContext, domain_name, name, description, inactive, total_resourc
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='add',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -148,10 +156,18 @@ def update(ctx: CLIContext, gid, name, description, is_active, total_resource_sl
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='update',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -174,10 +190,18 @@ def delete(ctx: CLIContext, gid):
         try:
             data = session.Group.delete(gid)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group inactivation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='deletion',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -203,10 +227,18 @@ def purge(ctx: CLIContext, gid):
                 sys.exit(1)
             data = session.Group.purge(gid)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='purge',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='purge',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -232,10 +264,18 @@ def add_users(ctx: CLIContext, gid, user_uuids):
         try:
             data = session.Group.add_users(gid, user_uuids)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='add_users',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Error on adding users to group: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='add_users',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -261,10 +301,18 @@ def remove_users(ctx: CLIContext, gid, user_uuids):
         try:
             data = session.Group.remove_users(gid, user_uuids)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='users_remove',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Error on removing users to group: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='users_remove',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,

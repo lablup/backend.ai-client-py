@@ -7,7 +7,7 @@ import click
 from ai.backend.client.session import Session
 from ai.backend.client.output.fields import user_fields
 from ..interaction import ask_yn
-from ..pretty import print_error, print_info, print_fail
+from ..pretty import print_info
 from ..types import CLIContext
 from . import admin
 
@@ -137,10 +137,18 @@ def add(ctx: CLIContext, domain_name, email, password, username, full_name, role
                 description=description,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='user',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('User creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='user',
+                action_name='add',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -180,10 +188,18 @@ def update(ctx: CLIContext, email, password, username, full_name, domain_name, r
                 description=description,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='user',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('User update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='user',
+                action_name='update',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -206,10 +222,18 @@ def delete(ctx: CLIContext, email):
         try:
             data = session.User.delete(email)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='user',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('User inactivation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='user',
+                action_name='deletion',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -239,10 +263,18 @@ def purge(ctx: CLIContext, email, purge_shared_vfolders):
                 sys.exit(1)
             data = session.User.purge(email, purge_shared_vfolders)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='user',
+                action_name='purge',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('User deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='user',
+                action_name='purge',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,

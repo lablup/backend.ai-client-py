@@ -10,7 +10,7 @@ from ai.backend.client.func.domain import (
 # from ai.backend.client.output.fields import domain_fields
 from . import admin
 from ..interaction import ask_yn
-from ..pretty import print_error, print_info, print_fail
+from ..pretty import print_info
 
 from ..types import CLIContext
 
@@ -86,10 +86,18 @@ def add(ctx: CLIContext, name, description, inactive, total_resource_slots,
                 allowed_docker_registries=allowed_docker_registries,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='add',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -128,10 +136,18 @@ def update(ctx: CLIContext, name, new_name, description, is_active, total_resour
                 allowed_docker_registries=allowed_docker_registries,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='update',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -154,10 +170,18 @@ def delete(ctx: CLIContext, name):
         try:
             data = session.Domain.delete(name)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain inactivation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='deletion',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -183,10 +207,18 @@ def purge(ctx: CLIContext, name):
                 sys.exit(1)
             data = session.Domain.purge(name)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='purge',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='purge',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,

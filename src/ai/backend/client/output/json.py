@@ -127,6 +127,7 @@ class JsonOutputHandler(BaseOutputHandler):
         self,
         item: Mapping[str, Any],
         item_name: Optional[str] = None,
+        action_name: Optional[str] = None,
         extra_info: Mapping = {},
     ) -> None:
         t = {
@@ -141,6 +142,28 @@ class JsonOutputHandler(BaseOutputHandler):
                     k: v for k, v in item[item_name].items()
                 },
             }
+        print(json.dumps(
+            t,
+            **_json_opts,
+        ))
+
+    def print_mutation_error(
+        self,
+        error: Optional[Exception] = None,
+        msg: str = 'Failed',
+        item_name: Optional[str] = None,
+        action_name: Optional[str] = None,
+        extra_info: Mapping = {},
+    ) -> None:
+        t = {
+            'ok': False,
+            'msg': msg,
+            'item_name': item_name,
+            'action_name': action_name,
+            **extra_info,
+        }
+        if error is not None:
+            t['error'] = str(error)
         print(json.dumps(
             t,
             **_json_opts,

@@ -5,7 +5,6 @@ import click
 from ai.backend.client.session import Session
 from ai.backend.client.output.fields import keypair_fields
 from . import admin
-from ..pretty import print_error, print_fail
 from ..types import CLIContext
 
 
@@ -128,10 +127,18 @@ def add(ctx: CLIContext, user_id, resource_policy, admin, inactive,  rate_limit)
                 resource_policy=resource_policy,
                 rate_limit=rate_limit)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='add',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -165,10 +172,18 @@ def update(ctx: CLIContext, access_key, resource_policy, is_admin, is_active,  r
                 resource_policy=resource_policy,
                 rate_limit=rate_limit)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='update',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -191,10 +206,18 @@ def delete(ctx: CLIContext, access_key):
         try:
             data = session.KeyPair.delete(access_key)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='deletion',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -217,10 +240,18 @@ def activate(ctx: CLIContext, access_key):
         try:
             data = session.KeyPair.activate(access_key)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='activation',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair activation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='activation',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
@@ -243,10 +274,18 @@ def deactivate(ctx: CLIContext, access_key):
         try:
             data = session.KeyPair.deactivate(access_key)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='deactivation',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair deactivation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='deactivation',
+            )
             sys.exit(1)
         ctx.output.print_mutation_result(
             data,
