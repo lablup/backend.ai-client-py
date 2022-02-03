@@ -7,7 +7,7 @@ import click
 import humanize
 from tabulate import tabulate
 
-from ai.backend.client.config import DEFAULT_CHUNK_SIZE, get_config
+from ai.backend.client.config import DEFAULT_CHUNK_SIZE, APIConfig
 from ai.backend.client.session import Session
 from .main import main
 from .interaction import ask_yn
@@ -198,7 +198,7 @@ def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
-                address_map=override_storage_proxy or get_config().address_map,
+                address_map=override_storage_proxy or APIConfig.DEFAULTS['storage_proxy_address_map'],
             )
             print_done('Done.')
         except Exception as e:
@@ -239,7 +239,7 @@ def download(name, filenames, base_dir, chunk_size, override_storage_proxy):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
-                address_map=override_storage_proxy or get_config().address_map,
+                address_map=override_storage_proxy or APIConfig.DEFAULTS['storage_proxy_address_map'],
             )
             print_done('Done.')
         except Exception as e:

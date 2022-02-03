@@ -58,7 +58,7 @@ class ByteSizeParamCheckType(ByteSizeParamType):
 
 
 class CommaSeparatedKVListParamType(click.ParamType):
-    name = "storage-proxy-address-check"
+    name = "comma-seperated-KVList-check"
 
     def convert(self, value: Union[str, Mapping[str, str]], param, ctx) -> Mapping[str, str]:
         if isinstance(value, dict):
@@ -73,7 +73,7 @@ class CommaSeparatedKVListParamType(click.ParamType):
             try:
                 k, _, v = assignment.partition("=")
                 if k == '' or v == '':
-                    raise ValueError
+                    raise ValueError(f"key or value is empty. key = {k}, value = {v}")
             except ValueError:
                 self.fail(
                     f"{value!r} is not a valid mapping expression", param, ctx,
