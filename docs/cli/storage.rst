@@ -93,7 +93,8 @@ the "mydata1" virtual folder.
 
 In your code, you may access the virtual folder via ``/home/work/mydata1``
 (where the default current working directory is ``/home/work``) just like
-a normal directory.
+a normal directory.  If you want to mount vfolders in other path, add '/'
+as prefix at the forefont of the vfolder path.
 
 By reusing the same vfolder in subsequent sessions, you do not have to
 donwload the result and upload it as the input for next sessions, just

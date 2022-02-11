@@ -319,7 +319,10 @@ def prepare_mount_arg(
               metavar='NAME[=PATH]', type=str, multiple=True,
               help='User-owned virtual folder names to mount. '
                    'If path is not provided, virtual folder will be mounted under /home/work. '
-                   'All virtual folders can only be mounted under /home/work. ')
+                   'When the target path is relative, it is placed under /home/work '
+                   'with auto-created parent directories if any. '
+                   'Absolute paths are mounted as-is, but it is prohibited to '
+                   'override the predefined Linux system directories.')
 @click.option('--scaling-group', '--sgroup', type=str, default=None,
               help='The scaling group to execute session. If not specified, '
                    'all available scaling groups are included in the scheduling.')
