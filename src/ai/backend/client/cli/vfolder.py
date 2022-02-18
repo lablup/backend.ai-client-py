@@ -2,6 +2,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 import sys
+from tqdm import tqdm
 
 import click
 import humanize
@@ -9,10 +10,12 @@ from tabulate import tabulate
 
 from ai.backend.client.config import DEFAULT_CHUNK_SIZE
 from ai.backend.client.session import Session
+from ..session import AsyncSession
 from .main import main
 from .interaction import ask_yn
-from .pretty import print_done, print_error, print_fail, print_info, print_wait
+from .pretty import print_done, print_error, print_fail, print_info, print_wait, print_warn
 from .params import ByteSizeParamType, ByteSizeParamCheckType
+from ..compat import asyncio_run
 
 
 @main.group()
@@ -556,19 +559,44 @@ def clone(name, target_name, target_host, usage_mode, permission):
             vfolder_info = session.VFolder(name).info()
             if not vfolder_info['cloneable']:
                 print("Clone is not allowed for this virtual folder. "
-                      "Please update the 'cloneable' option.")
+                    "Please update the 'cloneable' option.")
                 return
-            session.VFolder(name).clone(
+            result = session.VFolder(name).clone(
                 target_name,
                 target_host=target_host,
                 usage_mode=usage_mode,
                 permission=permission,
             )
-            print_done("Cloned.")
+            bgtask_id = result['bgtask_id']
+            bgtask = session.BackgroundTask(bgtask_id)
         except Exception as e:
             print_error(e)
             sys.exit(1)
 
+    async def clone_vfolder_tracker():
+        async with AsyncSession() as session:
+            try:
+                completion_msg_func = lambda: print_done("Vfolder cloned.")
+                with tqdm(unit='bytes') as pbar:
+                    async with bgtask.listen_events() as response:
+                        async for ev in response:
+                            data = json.loads(ev.data)
+                            if ev.event == 'bgtask_updated':
+                                pbar.total = data['total_progress']
+                                pbar.write(data['message'])
+                                pbar.update(data['current_progress'] - pbar.n)
+                            elif ev.event == 'bgtask_failed':
+                                error_msg = data['message']
+                                completion_msg_func = \
+                                    lambda: print_fail(f"Error occurred: {error_msg}")
+                            elif ev.event == 'bgtask_cancelled':
+                                completion_msg_func = \
+                                    lambda: print_warn("Vfolder cloning has been "
+                                                    "cancelled in the middle.")
+            finally:
+                completion_msg_func()
+    
+    asyncio_run(clone_vfolder_tracker())
 
 @vfolder.command()
 @click.argument('name', type=str)
