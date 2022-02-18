@@ -596,8 +596,8 @@ def clone(name, target_name, target_host, usage_mode, permission):
             finally:
                 completion_msg_func()
 
-
     asyncio_run(clone_vfolder_tracker(bgtask_id))
+
 
 @vfolder.command()
 @click.argument('name', type=str)
