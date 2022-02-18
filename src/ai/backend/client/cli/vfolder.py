@@ -568,14 +568,14 @@ def clone(name, target_name, target_host, usage_mode, permission):
                 permission=permission,
             )
             bgtask_id = result['bgtask_id']
-            bgtask = session.BackgroundTask(bgtask_id)
         except Exception as e:
             print_error(e)
             sys.exit(1)
 
-    async def clone_vfolder_tracker():
+    async def clone_vfolder_tracker(bgtask_id):
         async with AsyncSession() as session:
             try:
+                bgtask = session.BackgroundTask(bgtask_id)
                 completion_msg_func = lambda: print_done("Vfolder cloned.")
                 with tqdm(unit='bytes') as pbar:
                     async with bgtask.listen_events() as response:
@@ -595,8 +595,9 @@ def clone(name, target_name, target_host, usage_mode, permission):
                                                     "cancelled in the middle.")
             finally:
                 completion_msg_func()
-    
-    asyncio_run(clone_vfolder_tracker())
+
+
+    asyncio_run(clone_vfolder_tracker(bgtask_id))
 
 @vfolder.command()
 @click.argument('name', type=str)
