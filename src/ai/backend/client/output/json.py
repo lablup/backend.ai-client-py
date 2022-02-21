@@ -130,20 +130,20 @@ class JsonOutputHandler(BaseOutputHandler):
         action_name: Optional[str] = None,
         extra_info: Mapping = {},
     ) -> None:
-        t = {
+        data = {
             'ok': item.get('ok', False),
             'msg': item.get('msg', 'Failed'),
             **extra_info,
         }
         if item_name is not None and item_name in item:
-            t = {
-                **t,
+            data = {
+                **data,
                 item_name: {
                     k: v for k, v in item[item_name].items()
                 },
             }
         print(json.dumps(
-            t,
+            data,
             **_json_opts,
         ))
 
@@ -155,7 +155,7 @@ class JsonOutputHandler(BaseOutputHandler):
         action_name: Optional[str] = None,
         extra_info: Mapping = {},
     ) -> None:
-        t = {
+        data = {
             'ok': False,
             'msg': msg,
             'item_name': item_name,
@@ -163,9 +163,9 @@ class JsonOutputHandler(BaseOutputHandler):
             **extra_info,
         }
         if error is not None:
-            t['error'] = str(error)
+            data['error'] = str(error)
         print(json.dumps(
-            t,
+            data,
             **_json_opts,
         ))
 
