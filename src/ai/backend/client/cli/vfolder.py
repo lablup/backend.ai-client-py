@@ -2,11 +2,11 @@ from datetime import datetime
 import json
 from pathlib import Path
 import sys
-from tqdm import tqdm
 
 import click
 import humanize
 from tabulate import tabulate
+from tqdm import tqdm
 
 from ai.backend.client.config import DEFAULT_CHUNK_SIZE
 from ai.backend.client.session import Session
@@ -559,7 +559,7 @@ def clone(name, target_name, target_host, usage_mode, permission):
             vfolder_info = session.VFolder(name).info()
             if not vfolder_info['cloneable']:
                 print("Clone is not allowed for this virtual folder. "
-                    "Please update the 'cloneable' option.")
+                      "Please update the 'cloneable' option.")
                 return
             result = session.VFolder(name).clone(
                 target_name,
@@ -576,7 +576,7 @@ def clone(name, target_name, target_host, usage_mode, permission):
         async with AsyncSession() as session:
             try:
                 bgtask = session.BackgroundTask(bgtask_id)
-                completion_msg_func = lambda: print_done("Vfolder cloned.")
+                completion_msg_func = lambda: print_done("VFolder cloned.")
                 with tqdm(unit='bytes') as pbar:
                     async with bgtask.listen_events() as response:
                         async for ev in response:
@@ -592,7 +592,7 @@ def clone(name, target_name, target_host, usage_mode, permission):
                             elif ev.event == 'bgtask_cancelled':
                                 completion_msg_func = \
                                     lambda: print_warn("Vfolder cloning has been "
-                                                    "cancelled in the middle.")
+                                                       "cancelled in the middle.")
             finally:
                 completion_msg_func()
 
