@@ -1,0 +1,10 @@
+include CHANGELOG.md
+include LICENSE
+include README.rst
+graft src/ai/backend/client/cli
+graft src/ai/backend/client/output
+include src/ai/backend/client/compat.py
+include src/ai/backend/client/config.py
+include src/ai/backend/client/exceptions.py
+include src/ai/backend/client/session.py
+include src/ai/backend/client/types.py

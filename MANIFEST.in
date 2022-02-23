@@ -1,0 +1,4 @@
+include CHANGELOG.md
+include LICENSE
+include README.rst
+graft src/ai/backend/client
