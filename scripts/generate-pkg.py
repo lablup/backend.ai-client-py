@@ -17,7 +17,7 @@ def copy_mnfst(pkg_name):
                     dpath = Path(src).parts
                     shutil.copytree(src, Path(f'src-{pkg_name}', *dpath[1:]))
     os.rename('src', 'src-orig')
-    os.rename(f'src-{pkg_name}')
+    os.rename(f'src-{pkg_name}', 'src')
     
     os.rename('MANIFEST.in', 'MANIFEST.tmp.in')
     os.rename(fname, 'MANIFEST.in')
