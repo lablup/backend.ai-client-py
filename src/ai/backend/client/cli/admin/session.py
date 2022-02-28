@@ -11,13 +11,13 @@ import uuid
 import click
 
 from ai.backend.client.session import Session
-from ai.backend.client.output.fields import session_fields, session_fields_v5
-from ai.backend.client.output.types import FieldSpec
 from . import admin
 from ..main import main
 from ..pretty import print_fail
 from ..session import session as user_session
 from ..types import CLIContext
+from ..fields import session_fields, session_fields_v5
+from ...output.types import CliFieldSpec
 
 
 SessionItem = Dict[str, Any]
@@ -78,7 +78,7 @@ def _list_cmd(name: str = "list", docs: str = None):
         """
         List and manage compute sessions.
         """
-        fields: List[FieldSpec] = []
+        fields: List[CliFieldSpec] = []
         with Session() as session:
             is_admin = session.KeyPair(session.config.access_key).info()['is_admin']
             try:

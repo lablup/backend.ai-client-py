@@ -11,7 +11,7 @@ from typing import (
 
 import humanize
 
-from .types import AbstractOutputFormatter, FieldSpec
+from .types import AbstractOutputFormatter, CliFieldSpec
 
 
 def format_stats(raw_stats: Optional[str], indent='') -> str:
@@ -69,7 +69,7 @@ class OutputFormatter(AbstractOutputFormatter):
     The base implementation of output formats.
     """
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         if value is None:
             return "(null)"
         if isinstance(value, (dict, list, set)) and not value:
@@ -84,7 +84,7 @@ class OutputFormatter(AbstractOutputFormatter):
                 + "]"
         return str(value)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         if value is None:
             return None
         if isinstance(value, decimal.Decimal):
@@ -98,13 +98,13 @@ class OutputFormatter(AbstractOutputFormatter):
 
 class NestedDictOutputFormatter(OutputFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         if value is None:
             return "(null)"
         value = json.loads(value)
         return format_nested_dicts(value)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         if value is None:
             return None
         return json.loads(value)
@@ -112,22 +112,22 @@ class NestedDictOutputFormatter(OutputFormatter):
 
 class MiBytesOutputFormatter(OutputFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         value = round(value / 2 ** 20, 1)
         return super().format_console(value, field)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         value = round(value / 2 ** 20, 1)
         return super().format_json(value, field)
 
 
 class SizeBytesOutputFormatter(OutputFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         value = humanize.naturalsize(value, binary=True)
         return super().format_console(value, field)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         value = humanize.naturalsize(value, binary=True)
         return super().format_json(value, field)
 
@@ -137,16 +137,16 @@ class SubFieldOutputFormatter(OutputFormatter):
     def __init__(self, subfield_name: str) -> None:
         self._subfield_name = subfield_name
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         return super().format_console(value[self._subfield_name], field)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         return super().format_json(value[self._subfield_name], field)
 
 
 class ResourceSlotFormatter(OutputFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         value = json.loads(value)
         if mem := value.get('mem'):
             value['mem'] = humanize.naturalsize(mem, binary=True, gnu=True)
@@ -154,7 +154,7 @@ class ResourceSlotFormatter(OutputFormatter):
             f"{k}:{v}" for k, v in value.items()
         )
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         return json.loads(value)
 
 
@@ -167,7 +167,7 @@ sizebytes_output_formatter = SizeBytesOutputFormatter()
 
 class AgentStatFormatter(OutputFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         raw_stats = json.loads(value)
 
         value_formatters = {
@@ -224,32 +224,32 @@ class AgentStatFormatter(OutputFormatter):
         bufs.append("\n".join(dev_metric_bufs))
         return '\n'.join(bufs)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         # TODO: improve
         return self.format_console(value, field)
 
 
 class GroupListFormatter(OutputFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         return ", ".join(g['name'] for g in value)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         return value
 
 
 class KernelStatFormatter(OutputFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec) -> str:
+    def format_console(self, value: Any, field: CliFieldSpec) -> str:
         return format_stats(value)
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         return value
 
 
 class NestedObjectFormatter(OutputFormatter):
 
-    def format_json(self, value: Any, field: FieldSpec) -> Any:
+    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
         assert isinstance(value, list)
         return [
             {
@@ -269,7 +269,7 @@ def _fit_multiline_in_cell(text: str, indent: str) -> str:
 
 class ContainerListFormatter(NestedObjectFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec, indent='') -> str:
+    def format_console(self, value: Any, field: CliFieldSpec, indent='') -> str:
         assert isinstance(value, list)
         if len(value) == 0:
             text = "(no sub-containers belonging to the session)"
@@ -288,7 +288,7 @@ class ContainerListFormatter(NestedObjectFormatter):
 
 class DependencyListFormatter(NestedObjectFormatter):
 
-    def format_console(self, value: Any, field: FieldSpec, indent='') -> str:
+    def format_console(self, value: Any, field: CliFieldSpec, indent='') -> str:
         assert isinstance(value, list)
         if len(value) == 0:
             text = "(no dependency tasks)"

@@ -12,8 +12,10 @@ from tqdm import tqdm
 from yarl import URL
 from aiotusclient import client
 
-from ai.backend.client.output.fields import vfolder_fields
-from ai.backend.client.output.types import FieldSpec, PaginatedResult
+from .fields import vfolder_fields
+from .types import FieldSpec, PaginatedResult
+# from ai.backend.client.output.fields import vfolder_fields
+# from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS

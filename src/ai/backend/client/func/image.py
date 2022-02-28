@@ -1,7 +1,9 @@
 from typing import Sequence
 
-from ai.backend.client.output.fields import image_fields
-from ai.backend.client.output.types import FieldSpec
+from .fields import image_fields
+from .types import FieldSpec
+# from ai.backend.client.output.fields import image_fields
+# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session

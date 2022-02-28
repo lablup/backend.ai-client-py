@@ -25,8 +25,10 @@ import aiohttp
 from aiohttp import hdrs
 from tqdm import tqdm
 
-from ai.backend.client.output.fields import session_fields
-from ai.backend.client.output.types import FieldSpec, PaginatedResult
+from .fields import session_fields
+from .types import FieldSpec, PaginatedResult
+# from ai.backend.client.output.fields import session_fields
+# from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE

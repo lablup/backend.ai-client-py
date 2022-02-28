@@ -1,8 +1,10 @@
 import textwrap
 from typing import Iterable, Sequence
 
-from ai.backend.client.output.fields import domain_fields
-from ai.backend.client.output.types import FieldSpec
+from .fields import domain_fields
+from .types import FieldSpec
+# from ai.backend.client.output.fields import domain_fields
+# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..session import api_session
 

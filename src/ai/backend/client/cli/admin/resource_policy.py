@@ -3,17 +3,41 @@ import sys
 import click
 
 from ai.backend.client.session import Session
-from ai.backend.client.func.keypair_resource_policy import (
-    _default_list_fields,
-    _default_detail_fields,
-)
+# from ai.backend.client.func.keypair_resource_policy import (
+#     _default_list_fields,
+#     _default_detail_fields,
+# )
 # from ai.backend.client.output.fields import keypair_resource_policy_fields
 from . import admin
 from ..interaction import ask_yn
 from ..pretty import print_done, print_error, print_fail, print_info
 
 from ..types import CLIContext
+from ..fields import keypair_resource_policy_fields
 
+_default_list_fields = (
+    keypair_resource_policy_fields['name'],
+    keypair_resource_policy_fields['created_at'],
+    keypair_resource_policy_fields['total_resource_slots'],
+    keypair_resource_policy_fields['max_concurrent_sessions'],
+    keypair_resource_policy_fields['max_vfolder_count'],
+    keypair_resource_policy_fields['max_vfolder_size'],
+    keypair_resource_policy_fields['idle_timeout'],
+    keypair_resource_policy_fields['max_containers_per_session'],
+    keypair_resource_policy_fields['allowed_vfolder_hosts'],
+)
+
+_default_detail_fields = (
+    keypair_resource_policy_fields['name'],
+    keypair_resource_policy_fields['created_at'],
+    keypair_resource_policy_fields['total_resource_slots'],
+    keypair_resource_policy_fields['max_concurrent_sessions'],
+    keypair_resource_policy_fields['max_vfolder_count'],
+    keypair_resource_policy_fields['max_vfolder_size'],
+    keypair_resource_policy_fields['idle_timeout'],
+    keypair_resource_policy_fields['max_containers_per_session'],
+    keypair_resource_policy_fields['allowed_vfolder_hosts'],
+)
 
 @admin.group()
 def keypair_resource_policy() -> None:

@@ -18,7 +18,6 @@ install_requires = [
     'PyYAML~=5.4.1',
     'tqdm>=4.61',
     'yarl>=1.6.3',
-    'backend.ai-cli~=0.5.0.post1',
 ]
 build_requires = [
     'wheel>=0.36.2',

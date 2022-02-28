@@ -84,7 +84,7 @@ class JsonOutputHandler(BaseOutputHandler):
             field_map = {f.field_name: f for f in fields}
             item_list = [
                 {
-                    field_map[k].alt_name: field_map[k].formatter.format_json(v, field_map[k])
+                    field_map[k].alt_name: fields[0].formatter.format_json(v, field_map[k])
                     for k, v in item.items()
                 }
                 for item in items

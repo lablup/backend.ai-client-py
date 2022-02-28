@@ -5,15 +5,18 @@ from typing import (
     Sequence,
 )
 
-from ai.backend.client.output.types import (
-    FieldSpec,
-    PaginatedResult,
-)
-from ai.backend.client.output.fields import agent_fields
+# from ai.backend.client.output.types import (
+#     FieldSpec,
+#     PaginatedResult,
+# )
+# from ai.backend.client.output.fields import agent_fields
 from ai.backend.client.request import Request
 from ai.backend.client.session import api_session
 from ai.backend.client.pagination import generate_paginated_results
 from .base import api_function, BaseFunction
+
+from .types import FieldSpec, PaginatedResult
+from .fields import agent_fields
 
 __all__ = (
     'Agent',

@@ -4,17 +4,36 @@ import uuid
 import click
 
 from ai.backend.client.session import Session
-from ai.backend.client.func.group import (
-    _default_list_fields,
-    _default_detail_fields,
-)
+# from ai.backend.client.func.group import (
+#     _default_list_fields,
+#     _default_detail_fields,
+# )
 # from ai.backend.client.output.fields import group_fields
 from . import admin
 from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
 
 from ..types import CLIContext
+from ..fields import group_fields
 
+_default_list_fields = (
+    group_fields['id'],
+    group_fields['name'],
+    group_fields['is_active'],
+    group_fields['created_at'],
+    group_fields['integration_id'],
+)
+_default_detail_fields = (
+    group_fields['id'],
+    group_fields['name'],
+    group_fields['description'],
+    group_fields['is_active'],
+    group_fields['created_at'],
+    group_fields['domain_name'],
+    group_fields['total_resource_slots'],
+    group_fields['allowed_vfolder_hosts'],
+    group_fields['integration_id'],
+)
 
 @admin.group()
 def group() -> None:

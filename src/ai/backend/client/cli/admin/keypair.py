@@ -3,10 +3,10 @@ import sys
 import click
 
 from ai.backend.client.session import Session
-from ai.backend.client.output.fields import keypair_fields
 from . import admin
 from ..pretty import print_done, print_error, print_fail
 from ..types import CLIContext
+from ..fields import keypair_fields
 
 
 @admin.group()

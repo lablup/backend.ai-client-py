@@ -5,10 +5,12 @@ from typing import (
     Union,
 )
 
+from .fields import keypair_fields
+from .types import FieldSpec, PaginatedResult
 from ai.backend.client.pagination import generate_paginated_results
 from ai.backend.client.session import api_session
-from ai.backend.client.output.fields import keypair_fields
-from ai.backend.client.output.types import FieldSpec, PaginatedResult
+# from ai.backend.client.output.fields import keypair_fields
+# from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 
 __all__ = (

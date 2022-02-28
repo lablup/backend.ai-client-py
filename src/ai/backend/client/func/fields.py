@@ -1,17 +1,5 @@
 from __future__ import annotations
 
-from .formatters import (
-    AgentStatFormatter,
-    GroupListFormatter,
-    ContainerListFormatter,
-    DependencyListFormatter,
-    SubFieldOutputFormatter,
-    KernelStatFormatter,
-    nested_dict_formatter,
-    mibytes_output_formatter,
-    resource_slot_formatter,
-    sizebytes_output_formatter,
-)
 from .types import (
     FieldSet,
     FieldSpec,
@@ -28,14 +16,14 @@ container_fields = FieldSet([
     FieldSpec('registry'),
     FieldSpec('status'),
     FieldSpec('status_info'),
-    FieldSpec('status_data', formatter=nested_dict_formatter),
+    FieldSpec('status_data'),
     FieldSpec('status_changed'),
     FieldSpec('agent'),
     FieldSpec('container_id'),
-    FieldSpec('resource_opts', formatter=nested_dict_formatter),
-    FieldSpec('occupied_slots', formatter=resource_slot_formatter),
-    FieldSpec('live_stat', formatter=KernelStatFormatter()),
-    FieldSpec('last_stat', formatter=KernelStatFormatter()),
+    FieldSpec('resource_opts'),
+    FieldSpec('occupied_slots'),
+    FieldSpec('live_stat'),
+    FieldSpec('last_stat'),
 ])
 
 
@@ -46,20 +34,19 @@ agent_fields = FieldSet([
     FieldSpec('region'),
     FieldSpec('scaling_group'),
     FieldSpec('schedulable'),
-    FieldSpec('available_slots', formatter=resource_slot_formatter),
-    FieldSpec('occupied_slots', formatter=resource_slot_formatter),
+    FieldSpec('available_slots'),
+    FieldSpec('occupied_slots'),
     FieldSpec('addr'),
     FieldSpec('first_contact'),
     FieldSpec('lost_at'),
-    FieldSpec('live_stat', formatter=AgentStatFormatter()),
+    FieldSpec('live_stat'),
     FieldSpec('version'),
     FieldSpec('compute_plugins'),
-    FieldSpec('hardware_metadata', formatter=nested_dict_formatter),
-    FieldSpec('compute_containers', subfields=container_fields,
-              formatter=ContainerListFormatter()),
+    FieldSpec('hardware_metadata'),
+    FieldSpec('compute_containers', subfields=container_fields),
     # legacy fields
     FieldSpec('cpu_cur_pct', 'CPU Usage (%)'),
-    FieldSpec('mem_cur_bytes', 'Used Memory (MiB)', formatter=mibytes_output_formatter),
+    FieldSpec('mem_cur_bytes', 'Used Memory (MiB)'),
 ])
 
 domain_fields = FieldSet([
@@ -67,7 +54,7 @@ domain_fields = FieldSet([
     FieldSpec('description'),
     FieldSpec('is_active'),
     FieldSpec('created_at'),
-    FieldSpec('total_resource_slots', formatter=resource_slot_formatter),
+    FieldSpec('total_resource_slots'),
     FieldSpec('allowed_vfolder_hosts'),
     FieldSpec('allowed_docker_registries'),
     FieldSpec('integration_id'),
@@ -80,7 +67,7 @@ group_fields = FieldSet([
     FieldSpec('is_active'),
     FieldSpec('created_at'),
     FieldSpec('domain_name'),
-    FieldSpec('total_resource_slots', formatter=resource_slot_formatter),
+    FieldSpec('total_resource_slots'),
     FieldSpec('allowed_vfolder_hosts'),
     FieldSpec('integration_id'),
 ])
@@ -91,15 +78,14 @@ image_fields = FieldSet([
     FieldSpec('registry'),
     FieldSpec('tag'),
     FieldSpec('digest'),
-    FieldSpec('size_bytes', formatter=sizebytes_output_formatter),
+    FieldSpec('size_bytes'),
     FieldSpec('aliases'),
 ])
 
 
 keypair_fields = FieldSet([
     FieldSpec('user_id', "Email"),
-    FieldSpec('user_info { full_name }', "Full Name", alt_name='full_name',
-              formatter=SubFieldOutputFormatter("full_name")),
+    FieldSpec('user_info { full_name }', "Full Name", alt_name='full_name'),
     FieldSpec('access_key'),
     FieldSpec('secret_key'),
     FieldSpec('is_active'),
@@ -124,7 +110,7 @@ keypair_resource_policy_fields = FieldSet([
     FieldSpec('total_resource_slots'),
     FieldSpec('max_concurrent_sessions'),
     FieldSpec('max_vfolder_count'),
-    FieldSpec('max_vfolder_size', formatter=sizebytes_output_formatter),
+    FieldSpec('max_vfolder_size'),
     FieldSpec('idle_timeout'),
     FieldSpec('max_containers_per_session'),
     FieldSpec('allowed_vfolder_hosts'),
@@ -137,9 +123,9 @@ scaling_group_fields = FieldSet([
     FieldSpec('is_active'),
     FieldSpec('created_at'),
     FieldSpec('driver'),
-    FieldSpec('driver_opts', formatter=nested_dict_formatter),
+    FieldSpec('driver_opts'),
     FieldSpec('scheduler'),
-    FieldSpec('scheduler_opts', formatter=nested_dict_formatter),
+    FieldSpec('scheduler_opts'),
 ])
 
 
@@ -164,27 +150,23 @@ session_fields = FieldSet([
     FieldSpec('created_user_id'),
     FieldSpec('status'),
     FieldSpec('status_info'),
-    FieldSpec('status_data', formatter=nested_dict_formatter),
+    FieldSpec('status_data'),
     FieldSpec('status_changed', "Last Updated"),
     FieldSpec('created_at'),
     FieldSpec('terminated_at'),
     FieldSpec('starts_at'),
     FieldSpec('startup_command'),
     FieldSpec('result'),
-    FieldSpec('resoucre_opts', formatter=nested_dict_formatter),
+    FieldSpec('resoucre_opts'),
     FieldSpec('scaling_group'),
-    FieldSpec('service_ports', formatter=nested_dict_formatter),
+    FieldSpec('service_ports'),
     FieldSpec('mounts'),
-    FieldSpec('occupied_slots', formatter=resource_slot_formatter),
+    FieldSpec('occupied_slots'),
     FieldSpec(
         'containers',
         subfields=container_fields,
-        formatter=ContainerListFormatter(),
     ),
-    FieldSpec(
-        'dependencies { name id }',
-        formatter=DependencyListFormatter(),
-    ),
+    FieldSpec('dependencies { name id }'),
 ])
 
 session_fields_v5 = FieldSet([
@@ -198,13 +180,12 @@ session_fields_v5 = FieldSet([
             FieldSpec('image'),
             FieldSpec('status'),
             FieldSpec('status_info'),
-            FieldSpec('status_data', formatter=nested_dict_formatter),
+            FieldSpec('status_data'),
             FieldSpec('status_changed'),
-            FieldSpec('occupied_slots', formatter=resource_slot_formatter),
-            FieldSpec('live_stat', formatter=KernelStatFormatter()),
-            FieldSpec('last_stat', formatter=KernelStatFormatter()),
+            FieldSpec('occupied_slots'),
+            FieldSpec('live_stat'),
+            FieldSpec('last_stat'),
         ]),
-        formatter=ContainerListFormatter(),
     ),
 ])
 
@@ -215,9 +196,9 @@ storage_fields = FieldSet([
     FieldSpec('fsprefix'),
     FieldSpec('path'),
     FieldSpec('capabilities'),
-    FieldSpec('hardware_metadata', formatter=nested_dict_formatter),
-    FieldSpec('performance_metric', formatter=nested_dict_formatter),
-    FieldSpec('usage', formatter=nested_dict_formatter),
+    FieldSpec('hardware_metadata'),
+    FieldSpec('performance_metric'),
+    FieldSpec('usage'),
 ])
 
 
@@ -236,7 +217,7 @@ user_fields = FieldSet([
     FieldSpec('modified_at'),
     FieldSpec('domain_name'),
     FieldSpec('role'),
-    FieldSpec('groups { id name }', formatter=GroupListFormatter()),
+    FieldSpec('groups { id name }'),
 ])
 
 

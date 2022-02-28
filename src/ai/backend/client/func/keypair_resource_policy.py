@@ -1,7 +1,9 @@
 from typing import Iterable, Sequence
 
-from ai.backend.client.output.fields import keypair_resource_policy_fields
-from ai.backend.client.output.types import FieldSpec
+from .fields import keypair_resource_policy_fields
+from .types import FieldSpec
+# from ai.backend.client.output.fields import keypair_resource_policy_fields
+# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..session import api_session
 

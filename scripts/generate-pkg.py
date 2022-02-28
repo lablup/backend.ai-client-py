@@ -33,8 +33,8 @@ def generate():
     except IndexError:
         pkg_name = ''
 
-    if pkg_name not in ('', 'client', 'cli', 'dev'):
-        print("The argument string must be one of ('', 'client', 'cli', 'dev')")
+    if pkg_name not in ('', 'client', 'client-cli'):
+        print("The argument string must be one of ('', 'client', 'client-cli')")
         exit(1)
 
     if pkg_name != '':

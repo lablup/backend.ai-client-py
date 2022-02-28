@@ -13,8 +13,8 @@ from typing import (
 import click
 from tabulate import tabulate
 
-from ai.backend.client.output.types import FieldSpec
 from ..pagination import MAX_PAGE_SIZE
+from ..output.types import CliFieldSpec
 
 
 def get_preferred_page_size() -> int:
@@ -26,7 +26,7 @@ _Item = MutableMapping[str, Any]
 
 def tabulate_items(
     items: Iterator[_Item],
-    fields: Sequence[FieldSpec],
+    fields: Sequence[CliFieldSpec],
     *,
     page_size: int = None,
     item_formatter: Callable[[_Item], None] = None,
@@ -46,7 +46,8 @@ def tabulate_items(
         table = tabulate(
             [
                 [
-                    f.formatter.format_console(v, f) for f, v in zip(fields, item.values())
+                    f.formatter.format_console(v, f) \
+                        for f, v in zip(fields, item.values())
                 ] for item in buffered_items
             ],
             headers=(

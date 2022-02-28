@@ -5,10 +5,9 @@ import sys
 import click
 
 from ai.backend.client.session import Session
-from ai.backend.client.output.fields import agent_fields
 from ..types import CLIContext
 from . import admin
-
+from ..fields import agent_fields
 
 @admin.group()
 def agent():
