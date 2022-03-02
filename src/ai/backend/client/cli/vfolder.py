@@ -573,10 +573,14 @@ def clone(name, target_name, target_host, usage_mode, permission):
             sys.exit(1)
 
     async def clone_vfolder_tracker(bgtask_id):
+        print_wait(
+            "Cloning the vfolder... "
+            "(This may take a while depending on its size and number of files!)",
+        )
         async with AsyncSession() as session:
             try:
                 bgtask = session.BackgroundTask(bgtask_id)
-                completion_msg_func = lambda: print_done("VFolder cloned.")
+                completion_msg_func = lambda: print_done("Cloning the vfolder is complete.")
                 async with bgtask.listen_events() as response:
                     # TODO: get the unit of progress from response
                     with tqdm(unit='bytes', disable=True) as pbar:
@@ -589,16 +593,20 @@ def clone(name, target_name, target_host, usage_mode, permission):
                             elif ev.event == 'bgtask_failed':
                                 error_msg = data['message']
                                 completion_msg_func = \
-                                    lambda: print_fail(f"Error occurred: {error_msg}")
+                                    lambda: print_fail(
+                                        f"Error during the operation: {error_msg}",
+                                    )
                             elif ev.event == 'bgtask_cancelled':
                                 completion_msg_func = \
-                                    lambda: print_warn("Vfolder cloning has been "
-                                                       "cancelled in the middle.")
+                                    lambda: print_warn(
+                                        "The operation has been cancelled in the middle. "
+                                        "(This may be due to server shutdown.)",
+                                    )
             finally:
                 completion_msg_func()
 
     if bgtask_id is None:
-        print_done("VFolder cloned.")
+        print_done("Cloning the vfolder is complete.")
     else:
         asyncio_run(clone_vfolder_tracker(bgtask_id))
 
