@@ -10,12 +10,12 @@ from ai.backend.client.session import Session
 from ..pretty import print_error
 from ..types import CLIContext
 from ..vfolder import vfolder as user_vfolder
-from ..fields import vfolder_fields
+from ..fields import set_default_fields, vfolder_fields
 from . import admin
-from ...func.fields import set_default_fields
 from ...func.vfolder import _default_list_fields_names
 
 _default_list_fields = set_default_fields(vfolder_fields, _default_list_fields_names)
+
 
 @admin.group()
 def vfolder() -> None:

@@ -9,8 +9,7 @@ from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
 
 from ..types import CLIContext
-from ..fields import domain_fields
-from ...func.fields import set_default_fields
+from ..fields import set_default_fields, domain_fields
 from ...func.domain import (
     _default_detail_fields_names,
     _default_list_fields_names,
@@ -18,6 +17,7 @@ from ...func.domain import (
 
 _default_list_fields = set_default_fields(domain_fields, _default_list_fields_names)
 _default_detail_fields = set_default_fields(domain_fields, _default_detail_fields_names)
+
 
 @admin.group()
 def domain():

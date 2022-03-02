@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from typing import (
+    cast,
     Any,
     Callable,
     Mapping,
@@ -16,7 +17,7 @@ from ai.backend.client.cli.pagination import (
     get_preferred_page_size,
     tabulate_items,
 )
-from .types import FieldSpec, PaginatedResult, BaseOutputHandler
+from .types import CliFieldSpec, PaginatedResult, BaseOutputHandler
 
 
 class NoItems(Exception):
@@ -28,7 +29,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
     def print_item(
         self,
         item: Mapping[str, Any] | None,
-        fields: Sequence[FieldSpec],
+        fields: Sequence[CliFieldSpec],
     ) -> None:
         if item is None:
             print_fail("No matching entry found.")
@@ -48,7 +49,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
     def print_items(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[FieldSpec],
+        fields: Sequence[CliFieldSpec],
     ) -> None:
         field_map = {f.field_name: f for f in fields}
         for idx, item in enumerate(items):
@@ -68,7 +69,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
     def print_list(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[FieldSpec],
+        fields: Sequence[CliFieldSpec],
         *,
         is_scalar: bool = False,
     ) -> None:
@@ -124,7 +125,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
     ) -> None:
         if sys.stdout.isatty() and page_size is None:
             page_size = get_preferred_page_size()
-            fields: Sequence[FieldSpec] = []
+            fields: Sequence[CliFieldSpec] = []
 
             def infinite_fetch():
                 nonlocal fields
@@ -154,7 +155,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
             result = fetch_func(initial_page_offset, page_size)
             for line in tabulate_items(
                 result.items,  # type: ignore
-                result.fields,
+                cast(Sequence[CliFieldSpec], result.fields),
             ):
                 print(line, end="")
 

@@ -7,8 +7,7 @@ from . import admin
 from ..pretty import print_done, print_error, print_fail
 from ..params import JSONParamType
 from ..types import CLIContext
-from ..fields import scaling_group_fields
-from ...func.fields import set_default_fields
+from ..fields import set_default_fields, scaling_group_fields
 from ...func.scaling_group import (
     _default_list_fields_names,
     _default_detail_fields_names,

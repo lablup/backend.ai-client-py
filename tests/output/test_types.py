@@ -1,4 +1,4 @@
-from ai.backend.client.output.types import FieldSet, FieldSpec
+from ai.backend.client.func.types import FieldSet, FieldSpec
 
 
 def test_fieldspec_init():

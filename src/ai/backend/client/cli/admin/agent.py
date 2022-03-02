@@ -9,6 +9,7 @@ from ..types import CLIContext
 from . import admin
 from ..fields import agent_fields
 
+
 @admin.group()
 def agent():
     """

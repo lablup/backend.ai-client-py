@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 from ..func.types import FieldSet
 from ..output.formatters import (
     AgentStatFormatter,
@@ -14,6 +16,10 @@ from ..output.formatters import (
     sizebytes_output_formatter,
 )
 from ..output.types import CliFieldSpec
+
+
+def set_default_fields(fields: FieldSet, names: Sequence[str]) -> Sequence[CliFieldSpec]:
+    return tuple(fields[name] for name in names)
 
 
 container_fields = FieldSet([

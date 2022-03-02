@@ -63,7 +63,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     def print_item(
         self,
         item: Mapping[str, Any] | None,
-        fields: Sequence[FieldSpec],
+        fields: Sequence[CliFieldSpec],
     ) -> None:
         raise NotImplementedError
 
@@ -71,7 +71,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     def print_items(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[FieldSpec],
+        fields: Sequence[CliFieldSpec],
     ) -> None:
         raise NotImplementedError
 
@@ -79,7 +79,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     def print_list(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[FieldSpec],
+        fields: Sequence[CliFieldSpec],
         *,
         is_scalar: bool = False,
     ) -> None:

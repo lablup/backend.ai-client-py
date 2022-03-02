@@ -63,7 +63,7 @@ class Group(BaseFunction):
         :param fields: Per-group query fields to fetch.
         """
         if fields is None:
-            fields = _default_detail_fields
+            fields = tuple(str(f) for f in _default_detail_fields)
         query = textwrap.dedent("""\
             query($name: String!, $domain_name: String) {
                 groups_by_name(name: $name, domain_name: $domain_name) {$fields}

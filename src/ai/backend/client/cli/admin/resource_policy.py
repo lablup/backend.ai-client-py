@@ -8,8 +8,7 @@ from ..interaction import ask_yn
 from ..pretty import print_done, print_error, print_fail, print_info
 
 from ..types import CLIContext
-from ..fields import keypair_resource_policy_fields
-from ...func.fields import set_default_fields
+from ..fields import set_default_fields, keypair_resource_policy_fields
 from ...func.keypair_resource_policy import (
     _default_list_fields_names,
     _default_detail_fields_names,
@@ -17,6 +16,7 @@ from ...func.keypair_resource_policy import (
 
 _default_list_fields = set_default_fields(keypair_resource_policy_fields, _default_list_fields_names)
 _default_detail_fields = set_default_fields(keypair_resource_policy_fields, _default_detail_fields_names)
+
 
 @admin.group()
 def keypair_resource_policy() -> None:

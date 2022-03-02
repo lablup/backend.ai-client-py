@@ -98,4 +98,3 @@ class PaginatedResult(Generic[T]):
     total_count: int
     items: Sequence[T]
     fields: Sequence[FieldSpec]
-
