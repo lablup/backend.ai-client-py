@@ -1,10 +1,8 @@
 import textwrap
 from typing import Iterable, Sequence
 
-from .fields import domain_fields
+from .fields import set_default_fields, domain_fields
 from .types import FieldSpec
-# from ai.backend.client.output.fields import domain_fields
-# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..session import api_session
 
@@ -12,27 +10,30 @@ __all__ = (
     'Domain',
 )
 
-_default_list_fields = (
-    domain_fields['name'],
-    domain_fields['description'],
-    domain_fields['is_active'],
-    domain_fields['created_at'],
-    domain_fields['total_resource_slots'],
-    domain_fields['allowed_vfolder_hosts'],
-    domain_fields['allowed_docker_registries'],
-    domain_fields['integration_id'],
+_default_list_fields_names = (
+    'name',
+    'description',
+    'is_active',
+    'created_at',
+    'total_resource_slots',
+    'allowed_vfolder_hosts',
+    'allowed_docker_registries',
+    'integration_id',
 )
 
-_default_detail_fields = (
-    domain_fields['name'],
-    domain_fields['description'],
-    domain_fields['is_active'],
-    domain_fields['created_at'],
-    domain_fields['total_resource_slots'],
-    domain_fields['allowed_vfolder_hosts'],
-    domain_fields['allowed_docker_registries'],
-    domain_fields['integration_id'],
+_default_detail_fields_names = (
+    'name',
+    'description',
+    'is_active',
+    'created_at',
+    'total_resource_slots',
+    'allowed_vfolder_hosts',
+    'allowed_docker_registries',
+    'integration_id',
 )
+
+_default_list_fields = set_default_fields(domain_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(domain_fields, _default_detail_fields_names)
 
 
 class Domain(BaseFunction):

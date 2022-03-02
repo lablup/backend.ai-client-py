@@ -1,9 +1,7 @@
 from typing import Sequence
 
-from .fields import image_fields
+from .fields import set_default_fields, image_fields
 from .types import FieldSpec
-# from ai.backend.client.output.fields import image_fields
-# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session
@@ -12,14 +10,15 @@ __all__ = (
     'Image',
 )
 
-_default_list_fields_admin = (
-    image_fields['name'],
-    image_fields['registry'],
-    image_fields['tag'],
-    image_fields['digest'],
-    image_fields['size_bytes'],
-    image_fields['aliases'],
+_default_list_fields_admin_names = (
+    'name',
+    'registry',
+    'tag',
+    'digest',
+    'size_bytes',
+    'aliases',
 )
+_default_list_fields_admin = set_default_fields(image_fields, _default_list_fields_admin_names)
 
 
 class Image(BaseFunction):

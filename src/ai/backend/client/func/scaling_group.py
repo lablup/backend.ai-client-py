@@ -2,10 +2,8 @@ import json
 import textwrap
 from typing import Iterable, Mapping, Sequence
 
-from .fields import scaling_group_fields
+from .fields import set_default_fields, scaling_group_fields
 from .types import FieldSpec
-# from ai.backend.client.output.fields import scaling_group_fields
-# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..request import Request
 from ..session import api_session
@@ -14,25 +12,27 @@ __all__ = (
     'ScalingGroup',
 )
 
-_default_list_fields = (
-    scaling_group_fields['name'],
-    scaling_group_fields['description'],
-    scaling_group_fields['is_active'],
-    scaling_group_fields['created_at'],
-    scaling_group_fields['driver'],
-    scaling_group_fields['scheduler'],
+_default_list_fields_names = (
+    'name',
+    'description',
+    'is_active',
+    'created_at',
+    'driver',
+    'scheduler',
+)
+_default_detail_fields_names = (
+    'name',
+    'description',
+    'is_active',
+    'created_at',
+    'driver',
+    'driver_opts',
+    'scheduler',
+    'scheduler_opts',
 )
 
-_default_detail_fields = (
-    scaling_group_fields['name'],
-    scaling_group_fields['description'],
-    scaling_group_fields['is_active'],
-    scaling_group_fields['created_at'],
-    scaling_group_fields['driver'],
-    scaling_group_fields['driver_opts'],
-    scaling_group_fields['scheduler'],
-    scaling_group_fields['scheduler_opts'],
-)
+_default_list_fields = set_default_fields(scaling_group_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(scaling_group_fields, _default_detail_fields_names)
 
 
 class ScalingGroup(BaseFunction):

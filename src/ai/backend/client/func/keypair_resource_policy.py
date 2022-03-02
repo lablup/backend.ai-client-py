@@ -1,9 +1,7 @@
 from typing import Iterable, Sequence
 
-from .fields import keypair_resource_policy_fields
+from .fields import set_default_fields, keypair_resource_policy_fields
 from .types import FieldSpec
-# from ai.backend.client.output.fields import keypair_resource_policy_fields
-# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..session import api_session
 
@@ -11,29 +9,31 @@ __all__ = (
     'KeypairResourcePolicy'
 )
 
-_default_list_fields = (
-    keypair_resource_policy_fields['name'],
-    keypair_resource_policy_fields['created_at'],
-    keypair_resource_policy_fields['total_resource_slots'],
-    keypair_resource_policy_fields['max_concurrent_sessions'],
-    keypair_resource_policy_fields['max_vfolder_count'],
-    keypair_resource_policy_fields['max_vfolder_size'],
-    keypair_resource_policy_fields['idle_timeout'],
-    keypair_resource_policy_fields['max_containers_per_session'],
-    keypair_resource_policy_fields['allowed_vfolder_hosts'],
+_default_list_fields_names = (
+    'name',
+    'created_at',
+    'total_resource_slots',
+    'max_concurrent_sessions',
+    'max_vfolder_count',
+    'max_vfolder_size',
+    'idle_timeout',
+    'max_containers_per_session',
+    'allowed_vfolder_hosts',
+)
+_default_detail_fields_names = (
+    'name',
+    'created_at',
+    'total_resource_slots',
+    'max_concurrent_sessions',
+    'max_vfolder_count',
+    'max_vfolder_size',
+    'idle_timeout',
+    'max_containers_per_session',
+    'allowed_vfolder_hosts',
 )
 
-_default_detail_fields = (
-    keypair_resource_policy_fields['name'],
-    keypair_resource_policy_fields['created_at'],
-    keypair_resource_policy_fields['total_resource_slots'],
-    keypair_resource_policy_fields['max_concurrent_sessions'],
-    keypair_resource_policy_fields['max_vfolder_count'],
-    keypair_resource_policy_fields['max_vfolder_size'],
-    keypair_resource_policy_fields['idle_timeout'],
-    keypair_resource_policy_fields['max_containers_per_session'],
-    keypair_resource_policy_fields['allowed_vfolder_hosts'],
-)
+_default_list_fields = set_default_fields(keypair_resource_policy_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(keypair_resource_policy_fields, _default_detail_fields_names)
 
 
 class KeypairResourcePolicy(BaseFunction):

@@ -5,44 +5,42 @@ from typing import (
     Sequence,
 )
 
-# from ai.backend.client.output.types import (
-#     FieldSpec,
-#     PaginatedResult,
-# )
-# from ai.backend.client.output.fields import agent_fields
 from ai.backend.client.request import Request
 from ai.backend.client.session import api_session
 from ai.backend.client.pagination import generate_paginated_results
 from .base import api_function, BaseFunction
 
 from .types import FieldSpec, PaginatedResult
-from .fields import agent_fields
+from .fields import set_default_fields, agent_fields
 
 __all__ = (
     'Agent',
     'AgentWatcher',
 )
 
-_default_list_fields = (
-    agent_fields['id'],
-    agent_fields['status'],
-    agent_fields['scaling_group'],
-    agent_fields['available_slots'],
-    agent_fields['occupied_slots'],
+_default_list_fields_names = (
+    'id',
+    'status',
+    'scaling_group',
+    'available_slots',
+    'occupied_slots',
 )
 
-_default_detail_fields = (
-    agent_fields['id'],
-    agent_fields['status'],
-    agent_fields['scaling_group'],
-    agent_fields['addr'],
-    agent_fields['region'],
-    agent_fields['first_contact'],
-    agent_fields['cpu_cur_pct'],
-    agent_fields['mem_cur_bytes'],
-    agent_fields['available_slots'],
-    agent_fields['occupied_slots'],
+_default_detail_fields_names = (
+    'id',
+    'status',
+    'scaling_group',
+    'addr',
+    'region',
+    'first_contact',
+    'cpu_cur_pct',
+    'mem_cur_bytes',
+    'available_slots',
+    'occupied_slots',
 )
+
+_default_list_fields = set_default_fields(agent_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(agent_fields, _default_detail_fields_names)
 
 
 class Agent(BaseFunction):

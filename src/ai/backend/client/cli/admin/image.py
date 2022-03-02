@@ -5,10 +5,6 @@ import click
 from tqdm import tqdm
 
 from ai.backend.client.session import Session
-# from ai.backend.client.func.image import (
-#     _default_list_fields_admin,
-# )
-# from ai.backend.client.output.fields import image_fields
 from . import admin
 from ...compat import asyncio_run
 from ...session import AsyncSession
@@ -16,15 +12,10 @@ from ..pretty import print_done, print_warn, print_fail, print_error
 
 from ..types import CLIContext
 from ..fields import image_fields
+from ...func.fields import set_default_fields
+from ...func.image import _default_list_fields_admin_names
 
-_default_list_fields_admin = (
-    image_fields['name'],
-    image_fields['registry'],
-    image_fields['tag'],
-    image_fields['digest'],
-    image_fields['size_bytes'],
-    image_fields['aliases'],
-)
+_default_list_fields_admin = set_default_fields(image_fields, _default_list_fields_admin_names)
 
 @admin.group()
 def image() -> None:

@@ -7,22 +7,15 @@ import humanize
 from tabulate import tabulate
 
 from ai.backend.client.session import Session
-# from ai.backend.client.func.vfolder import _default_list_fields
 from ..pretty import print_error
 from ..types import CLIContext
 from ..vfolder import vfolder as user_vfolder
 from ..fields import vfolder_fields
 from . import admin
+from ...func.fields import set_default_fields
+from ...func.vfolder import _default_list_fields_names
 
-_default_list_fields = (
-    vfolder_fields['host'],
-    vfolder_fields['name'],
-    vfolder_fields['created_at'],
-    vfolder_fields['creator'],
-    vfolder_fields['group_id'],
-    vfolder_fields['permission'],
-    vfolder_fields['ownership_type'],
-)
+_default_list_fields = set_default_fields(vfolder_fields, _default_list_fields_names)
 
 @admin.group()
 def vfolder() -> None:

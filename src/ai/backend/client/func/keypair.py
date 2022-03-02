@@ -5,39 +5,40 @@ from typing import (
     Union,
 )
 
-from .fields import keypair_fields
-from .types import FieldSpec, PaginatedResult
 from ai.backend.client.pagination import generate_paginated_results
 from ai.backend.client.session import api_session
-# from ai.backend.client.output.fields import keypair_fields
-# from ai.backend.client.output.types import FieldSpec, PaginatedResult
+
+from .fields import set_default_fields, keypair_fields
+from .types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 
 __all__ = (
     'KeyPair',
 )
 
-_default_list_fields = (
-    keypair_fields['user_id'],
-    keypair_fields['access_key'],
-    keypair_fields['secret_key'],
-    keypair_fields['is_active'],
-    keypair_fields['is_admin'],
-    keypair_fields['created_at'],
+_default_list_fields_names = (
+    'user_id',
+    'access_key',
+    'secret_key',
+    'is_active',
+    'is_admin',
+    'created_at',
+)
+_default_detail_fields_names = (
+    'user_id',
+    'access_key',
+    'secret_key',
+    'is_active',
+    'is_admin',
+)
+_default_result_fields_names = (
+    'access_key',
+    'secret_key',
 )
 
-_default_detail_fields = (
-    keypair_fields['user_id'],
-    keypair_fields['access_key'],
-    keypair_fields['secret_key'],
-    keypair_fields['is_active'],
-    keypair_fields['is_admin'],
-)
-
-_default_result_fields = (
-    keypair_fields['access_key'],
-    keypair_fields['secret_key'],
-)
+_default_list_fields = set_default_fields(keypair_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(keypair_fields, _default_detail_fields_names)
+_default_result_fields = set_default_fields(keypair_fields, _default_result_fields_names)
 
 
 class KeyPair(BaseFunction):

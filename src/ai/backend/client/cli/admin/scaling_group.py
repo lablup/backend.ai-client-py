@@ -3,35 +3,19 @@ import sys
 import click
 
 from ai.backend.client.session import Session
-# from ai.backend.client.func.scaling_group import (
-#     _default_list_fields,
-#     _default_detail_fields,
-# )
 from . import admin
 from ..pretty import print_done, print_error, print_fail
 from ..params import JSONParamType
 from ..types import CLIContext
 from ..fields import scaling_group_fields
-
-_default_list_fields = (
-    scaling_group_fields['name'],
-    scaling_group_fields['description'],
-    scaling_group_fields['is_active'],
-    scaling_group_fields['created_at'],
-    scaling_group_fields['driver'],
-    scaling_group_fields['scheduler'],
+from ...func.fields import set_default_fields
+from ...func.scaling_group import (
+    _default_list_fields_names,
+    _default_detail_fields_names,
 )
 
-_default_detail_fields = (
-    scaling_group_fields['name'],
-    scaling_group_fields['description'],
-    scaling_group_fields['is_active'],
-    scaling_group_fields['created_at'],
-    scaling_group_fields['driver'],
-    scaling_group_fields['driver_opts'],
-    scaling_group_fields['scheduler'],
-    scaling_group_fields['scheduler_opts'],
-)
+_default_list_fields = set_default_fields(scaling_group_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(scaling_group_fields, _default_detail_fields_names)
 
 
 @admin.group()

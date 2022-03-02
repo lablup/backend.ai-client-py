@@ -1,10 +1,8 @@
 import textwrap
 from typing import Iterable, Sequence
 
-from .fields import group_fields
+from .fields import set_default_fields, group_fields
 from .types import FieldSpec
-# from ai.backend.client.output.fields import group_fields
-# from ai.backend.client.output.types import FieldSpec
 from .base import api_function, BaseFunction
 from ..session import api_session
 
@@ -12,24 +10,27 @@ __all__ = (
     'Group',
 )
 
-_default_list_fields = (
-    group_fields['id'],
-    group_fields['name'],
-    group_fields['is_active'],
-    group_fields['created_at'],
-    group_fields['integration_id'],
+_default_list_fields_names = (
+    'id',
+    'name',
+    'is_active',
+    'created_at',
+    'integration_id',
 )
-_default_detail_fields = (
-    group_fields['id'],
-    group_fields['name'],
-    group_fields['description'],
-    group_fields['is_active'],
-    group_fields['created_at'],
-    group_fields['domain_name'],
-    group_fields['total_resource_slots'],
-    group_fields['allowed_vfolder_hosts'],
-    group_fields['integration_id'],
+_default_detail_fields_names = (
+    'id',
+    'name',
+    'description',
+    'is_active',
+    'created_at',
+    'domain_name',
+    'total_resource_slots',
+    'allowed_vfolder_hosts',
+    'integration_id',
 )
+
+_default_list_fields = set_default_fields(group_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(group_fields, _default_detail_fields_names)
 
 
 class Group(BaseFunction):

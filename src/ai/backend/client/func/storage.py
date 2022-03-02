@@ -3,11 +3,9 @@ from typing import (
     Sequence,
 )
 
-from .fields import storage_fields
+from .fields import set_default_fields, storage_fields
 from .types import FieldSpec, PaginatedResult
 from ai.backend.client.session import api_session
-# from ai.backend.client.output.fields import storage_fields
-# from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from ai.backend.client.pagination import generate_paginated_results
 from .base import api_function, BaseFunction
 
@@ -15,20 +13,22 @@ __all__ = (
     'Storage',
 )
 
-_default_list_fields = (
-    storage_fields['id'],
-    storage_fields['backend'],
-    storage_fields['capabilities'],
+_default_list_fields_names = (
+    'id',
+    'backend',
+    'capabilities',
+)
+_default_detail_fields_names = (
+    'id',
+    'backend',
+    'path',
+    'fsprefix',
+    'capabilities',
+    'hardware_metadata',
 )
 
-_default_detail_fields = (
-    storage_fields['id'],
-    storage_fields['backend'],
-    storage_fields['path'],
-    storage_fields['fsprefix'],
-    storage_fields['capabilities'],
-    storage_fields['hardware_metadata'],
-)
+_default_list_fields = set_default_fields(storage_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(storage_fields, _default_detail_fields_names)
 
 
 class Storage(BaseFunction):

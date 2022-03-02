@@ -3,39 +3,21 @@ import sys
 import click
 
 from ai.backend.client.session import Session
-# from ai.backend.client.func.domain import (
-#     _default_list_fields,
-#     _default_detail_fields,
-# )
-# from ai.backend.client.output.fields import domain_fields
+
 from . import admin
 from ..interaction import ask_yn
 from ..pretty import print_error, print_info, print_fail
 
 from ..types import CLIContext
 from ..fields import domain_fields
-
-_default_list_fields = (
-    domain_fields['name'],
-    domain_fields['description'],
-    domain_fields['is_active'],
-    domain_fields['created_at'],
-    domain_fields['total_resource_slots'],
-    domain_fields['allowed_vfolder_hosts'],
-    domain_fields['allowed_docker_registries'],
-    domain_fields['integration_id'],
+from ...func.fields import set_default_fields
+from ...func.domain import (
+    _default_detail_fields_names,
+    _default_list_fields_names,
 )
 
-_default_detail_fields = (
-    domain_fields['name'],
-    domain_fields['description'],
-    domain_fields['is_active'],
-    domain_fields['created_at'],
-    domain_fields['total_resource_slots'],
-    domain_fields['allowed_vfolder_hosts'],
-    domain_fields['allowed_docker_registries'],
-    domain_fields['integration_id'],
-)
+_default_list_fields = set_default_fields(domain_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(domain_fields, _default_detail_fields_names)
 
 @admin.group()
 def domain():

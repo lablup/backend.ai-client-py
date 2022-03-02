@@ -25,10 +25,8 @@ import aiohttp
 from aiohttp import hdrs
 from tqdm import tqdm
 
-from .fields import session_fields
+from .fields import set_default_fields, session_fields
 from .types import FieldSpec, PaginatedResult
-# from ai.backend.client.output.fields import session_fields
-# from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE
@@ -49,15 +47,17 @@ __all__ = (
     'ComputeSession',
 )
 
-_default_list_fields = (
-    session_fields['session_id'],
-    session_fields['image'],
-    session_fields['type'],
-    session_fields['status'],
-    session_fields['status_info'],
-    session_fields['status_changed'],
-    session_fields['result'],
+_default_list_fields_names = (
+    'session_id',
+    'image',
+    'type',
+    'status',
+    'status_info',
+    'status_changed',
+    'result',
 )
+
+_default_list_fields = set_default_fields(session_fields, _default_list_fields_names)
 
 
 def drop(d: Mapping[str, Any], value_to_drop: Any) -> Mapping[str, Any]:

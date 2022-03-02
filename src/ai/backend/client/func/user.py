@@ -9,13 +9,11 @@ from typing import (
 )
 import uuid
 
-from .fields import user_fields
+from .fields import set_default_fields, user_fields
 from .types import FieldSpec, PaginatedResult
 from ai.backend.client.auth import AuthToken, AuthTokenTypes
 from ai.backend.client.request import Request
 from ai.backend.client.session import api_session
-# from ai.backend.client.output.fields import user_fields
-# from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from ai.backend.client.pagination import generate_paginated_results
 from .base import api_function, BaseFunction
 
@@ -26,29 +24,31 @@ __all__ = (
 )
 
 
-_default_list_fields = (
-    user_fields['uuid'],
-    user_fields['role'],
-    user_fields['username'],
-    user_fields['email'],
-    user_fields['is_active'],
-    user_fields['created_at'],
-    user_fields['domain_name'],
-    user_fields['groups'],
+_default_list_fields_names = (
+    'uuid',
+    'role',
+    'username',
+    'email',
+    'is_active',
+    'created_at',
+    'domain_name',
+    'groups',
+)
+_default_detail_fields_names = (
+    'uuid',
+    'username',
+    'email',
+    'need_password_change',
+    'status',
+    'status_info',
+    'created_at',
+    'domain_name',
+    'role',
+    'groups',
 )
 
-_default_detail_fields = (
-    user_fields['uuid'],
-    user_fields['username'],
-    user_fields['email'],
-    user_fields['need_password_change'],
-    user_fields['status'],
-    user_fields['status_info'],
-    user_fields['created_at'],
-    user_fields['domain_name'],
-    user_fields['role'],
-    user_fields['groups'],
-)
+_default_list_fields = set_default_fields(user_fields, _default_list_fields_names)
+_default_detail_fields = set_default_fields(user_fields, _default_detail_fields_names)
 
 
 class UserRole(str, enum.Enum):

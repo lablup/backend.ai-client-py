@@ -12,10 +12,8 @@ from tqdm import tqdm
 from yarl import URL
 from aiotusclient import client
 
-from .fields import vfolder_fields
+from .fields import set_default_fields, vfolder_fields
 from .types import FieldSpec, PaginatedResult
-# from ai.backend.client.output.fields import vfolder_fields
-# from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
@@ -26,15 +24,16 @@ __all__ = (
     'VFolder',
 )
 
-_default_list_fields = (
-    vfolder_fields['host'],
-    vfolder_fields['name'],
-    vfolder_fields['created_at'],
-    vfolder_fields['creator'],
-    vfolder_fields['group_id'],
-    vfolder_fields['permission'],
-    vfolder_fields['ownership_type'],
+_default_list_fields_names = (
+    'host',
+    'name',
+    'created_at',
+    'creator',
+    'group_id',
+    'permission',
+    'ownership_type',
 )
+_default_list_fields = set_default_fields(vfolder_fields, _default_list_fields_names)
 
 
 class VFolder(BaseFunction):

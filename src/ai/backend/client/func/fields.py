@@ -1,10 +1,13 @@
 from __future__ import annotations
+from typing import Sequence
 
 from .types import (
     FieldSet,
     FieldSpec,
 )
 
+def set_default_fields(fields: FieldSet, names: Sequence[str]) -> Sequence[FieldSpec]:
+    return tuple(fields[name] for name in names)
 
 container_fields = FieldSet([
     FieldSpec('id', "Kernel ID", alt_name='kernel_id'),
