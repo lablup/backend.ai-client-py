@@ -10,12 +10,13 @@ from tqdm import tqdm
 
 from ai.backend.client.config import DEFAULT_CHUNK_SIZE
 from ai.backend.client.session import Session
+
+from ..compat import asyncio_run
 from ..session import AsyncSession
 from .main import main
 from .interaction import ask_yn
 from .pretty import print_done, print_error, print_fail, print_info, print_wait, print_warn
 from .params import ByteSizeParamType, ByteSizeParamCheckType
-from ..compat import asyncio_run
 
 
 @main.group()
