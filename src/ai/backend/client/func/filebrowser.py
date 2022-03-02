@@ -1,3 +1,4 @@
+import asyncio
 import webbrowser
 
 from ..request import Request
@@ -14,6 +15,9 @@ class FileBrowser(BaseFunction):
         rqst.set_json({"vfolders": vfolders})
 
         async with rqst.fetch() as resp:
+            # give a grace period for filebrowser server to initialize and start
+            await asyncio.sleep(2)
+
             result = await resp.json()
             if result["status"] == "ok":
                 if result['addr'] == "0":
@@ -27,6 +31,7 @@ class FileBrowser(BaseFunction):
                     URL: {result['addr']}
                     """,
                 )
+
                 webbrowser.open_new_tab(result["addr"])
             else:
                 raise Exception
