@@ -579,7 +579,7 @@ def clone(name, target_name, target_host, usage_mode, permission):
                 completion_msg_func = lambda: print_done("VFolder cloned.")
                 async with bgtask.listen_events() as response:
                     # TODO: get the unit of progress from response
-                    with tqdm(unit='bytes', disabled=True) as pbar:
+                    with tqdm(unit='bytes', disable=True) as pbar:
                         async for ev in response:
                             data = json.loads(ev.data)
                             if ev.event == 'bgtask_updated':
