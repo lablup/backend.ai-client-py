@@ -567,7 +567,7 @@ def clone(name, target_name, target_host, usage_mode, permission):
                 usage_mode=usage_mode,
                 permission=permission,
             )
-            bgtask_id = result['bgtask_id']
+            bgtask_id = result.get('bgtask_id')
         except Exception as e:
             print_error(e)
             sys.exit(1)
@@ -597,7 +597,10 @@ def clone(name, target_name, target_host, usage_mode, permission):
             finally:
                 completion_msg_func()
 
-    asyncio_run(clone_vfolder_tracker(bgtask_id))
+    if bgtask_id is None:
+        print_done("VFolder cloned.")
+    else:
+        asyncio_run(clone_vfolder_tracker(bgtask_id))
 
 
 @vfolder.command()
