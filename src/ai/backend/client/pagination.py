@@ -10,7 +10,7 @@ from typing import (
     TypeVar,
 )
 
-from .output.types import FieldSpec, PaginatedResult
+from .func.types import FieldSpec, PaginatedResult
 from .exceptions import BackendAPIVersionError
 from .session import api_session
 
