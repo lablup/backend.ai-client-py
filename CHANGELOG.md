@@ -14,7 +14,7 @@ Changes
     WARNING: Don't drop the last line!
 -->
 
-.. towncrier release notes start
+<!-- towncrier release notes start -->
 
 21.03.10 (2022-01-10)
 ---------------------
