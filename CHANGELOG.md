@@ -16,6 +16,14 @@ Changes
 
 <!-- towncrier release notes start -->
 
+21.03.11 (2022-03-07)
+---------------------
+
+### Fixes
+* Use the bgtask APIs to track progress of vfolder clone operation if available. ([#205](https://github.com/lablup/backend.ai-client-py/issues/205))
+* Relax the minimum required version of `attrs` from 21.2 to 20.3 to better support co-installation with other Python packages ([#206](https://github.com/lablup/backend.ai-client-py/issues/206))
+
+
 21.03.10 (2022-01-10)
 ---------------------
 
