@@ -106,7 +106,7 @@ def test_vfolder_delete_files():
         vfolder_name = 'fake-vfolder-name'
         files = ['fake-file1', 'fake-file2']
         m.delete(build_url(session.config,
-                           '/folders/{}/delete_files'.format(vfolder_name)),
+                           '/folders/{}/delete-files'.format(vfolder_name)),
                  status=200, payload={})
         resp = session.VFolder(vfolder_name).delete_files(files)
         assert resp == '{}'
