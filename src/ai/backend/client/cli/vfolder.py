@@ -316,7 +316,7 @@ def rename_file(name, target_path, new_name):
 @click.argument('name', type=str)
 @click.argument('src', type=str)
 @click.argument('dst', type=str)
-def move_file(name, src, dst):
+def mv(name, src, dst):
     '''
     Move a file or a directory within a virtual folder.
     If the destination is a file and already exists, it will be overwritten.
