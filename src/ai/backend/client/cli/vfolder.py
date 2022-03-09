@@ -312,6 +312,31 @@ def rename_file(name, target_path, new_name):
             sys.exit(1)
 
 
+@vfolder.command()
+@click.argument('name', type=str)
+@click.argument('src', type=str)
+@click.argument('dst', type=str)
+def mv(name, src, dst):
+    '''
+    Move a file or a directory within a virtual folder.
+    If the destination is a file and already exists, it will be overwritten.
+    If the destination is a directory, the source file or directory
+    is moved inside it.
+
+    \b
+    NAME: Name of a virtual folder.
+    SRC: The relative path of the source file or directory inside a virtual folder
+    DST: The relative path of the destination file or directory inside a virtual folder.
+    '''
+    with Session() as session:
+        try:
+            session.VFolder(name).move_file(src, dst)
+            print_done('Moved.')
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
 @vfolder.command(aliases=['delete-file'])
 @click.argument('name', type=str)
 @click.argument('filenames', nargs=-1)

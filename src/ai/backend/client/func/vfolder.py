@@ -278,10 +278,21 @@ class VFolder(BaseFunction):
     @api_function
     async def rename_file(self, target_path: str, new_name: str):
         rqst = Request('POST',
-                       '/folders/{}/rename_file'.format(self.name))
+                       '/folders/{}/rename-file'.format(self.name))
         rqst.set_json({
             'target_path': target_path,
             'new_name': new_name,
+        })
+        async with rqst.fetch() as resp:
+            return await resp.json()
+
+    @api_function
+    async def move_file(self, src_path: str, dst_path: str):
+        rqst = Request('POST',
+                       '/folders/{}/move-file'.format(self.name))
+        rqst.set_json({
+            'src': src_path,
+            'dst': dst_path,
         })
         async with rqst.fetch() as resp:
             return await resp.json()
@@ -291,7 +302,7 @@ class VFolder(BaseFunction):
                            files: Sequence[Union[str, Path]],
                            recursive: bool = False):
         rqst = Request('DELETE',
-                       '/folders/{}/delete_files'.format(self.name))
+                       '/folders/{}/delete-files'.format(self.name))
         rqst.set_json({
             'files': files,
             'recursive': recursive,
