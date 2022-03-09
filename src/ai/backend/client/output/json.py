@@ -9,7 +9,7 @@ from typing import (
     TypeVar,
 )
 
-from .types import BaseOutputHandler, PaginatedResult, FieldSpec
+from .types import BaseOutputHandler, CliPaginatedResult, FieldSpec
 
 _json_opts: Mapping[str, Any] = {"indent": 2}
 
@@ -100,7 +100,7 @@ class JsonOutputHandler(BaseOutputHandler):
 
     def print_paginated_list(
         self,
-        fetch_func: Callable[[int, int], PaginatedResult],
+        fetch_func: Callable[[int, int], CliPaginatedResult],
         initial_page_offset: int,
         page_size: int = None,
     ) -> None:

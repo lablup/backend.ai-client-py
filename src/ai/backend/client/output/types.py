@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 from typing import (
     Any,
     Callable,
+    Generic,
     Mapping,
     Sequence,
     TypeVar,
@@ -54,6 +55,11 @@ class CliFieldSpec(FieldSpec):
 T = TypeVar('T')
 
 
+@attr.define(slots=True)
+class CliPaginatedResult(PaginatedResult, Generic[T]):
+    fields: Sequence[CliFieldSpec]
+
+
 class BaseOutputHandler(metaclass=ABCMeta):
 
     def __init__(self, cli_context: CLIContext) -> None:
@@ -88,7 +94,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     @abstractmethod
     def print_paginated_list(
         self,
-        fetch_func: Callable[[int, int], PaginatedResult[T]],
+        fetch_func: Callable[[int, int], CliPaginatedResult[T]],
         initial_page_offset: int,
         page_size: int = None,
     ) -> None:

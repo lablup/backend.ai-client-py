@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import sys
 from typing import (
-    cast,
     Any,
     Callable,
     Mapping,
@@ -17,7 +16,7 @@ from ai.backend.client.cli.pagination import (
     get_preferred_page_size,
     tabulate_items,
 )
-from .types import CliFieldSpec, PaginatedResult, BaseOutputHandler
+from .types import CliFieldSpec, CliPaginatedResult, BaseOutputHandler
 
 
 class NoItems(Exception):
@@ -119,7 +118,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
 
     def print_paginated_list(
         self,
-        fetch_func: Callable[[int, int], PaginatedResult],
+        fetch_func: Callable[[int, int], CliPaginatedResult],
         initial_page_offset: int,
         page_size: int = None,
     ) -> None:
@@ -155,7 +154,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
             result = fetch_func(initial_page_offset, page_size)
             for line in tabulate_items(
                 result.items,  # type: ignore
-                cast(Sequence[CliFieldSpec], result.fields),
+                result.fields,
             ):
                 print(line, end="")
 
