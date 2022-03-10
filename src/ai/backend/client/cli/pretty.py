@@ -127,17 +127,17 @@ def format_error(exc: Exception):
                 yield f"\n- {per_field_errors}"
         else:
             if exc.data['type'].endswith('/graphql-error'):
-                yield "\n\u279c Error details:\n"
+                yield "\n\u279c Message:\n"
                 yield from (f"{err_item['message']}\n"
                             for err_item in exc.data.get('data', []))
             else:
                 other_details = exc.data.get('msg', None)
                 if other_details:
-                    yield '\n\u279c Error details: '
+                    yield '\n\u279c Message: '
                     yield str(other_details)
                 other_data = exc.data.get('data', None)
                 if other_data:
-                    yield '\n\u279c Error details: '
+                    yield '\n\u279c Data: '
                     yield repr(other_data)
         agent_details = exc.data.get('agent-details', None)
         if agent_details is not None:
