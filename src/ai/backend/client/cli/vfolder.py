@@ -17,6 +17,7 @@ from .main import main
 from .interaction import ask_yn
 from .pretty import print_done, print_error, print_fail, print_info, print_wait, print_warn
 from .params import ByteSizeParamType, ByteSizeParamCheckType
+from ..output.progress import TqdmProgressReporter
 
 
 @main.group()
@@ -180,7 +181,9 @@ def info(name):
               help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
-def upload(name, filenames, base_dir, chunk_size):
+@click.option('--show-progress', type=bool, is_flag=True,
+              help='Print an upload progress through stdout.')
+def upload(name, filenames, base_dir, chunk_size, show_progress):
     '''
     TUS Upload a file to the virtual folder from the current working directory.
     The files with the same names will be overwirtten.
@@ -195,7 +198,7 @@ def upload(name, filenames, base_dir, chunk_size):
                 filenames,
                 basedir=base_dir,
                 chunk_size=chunk_size,
-                show_progress=True,
+                show_progress=show_progress,
             )
             print_done('Done.')
         except Exception as e:
@@ -214,7 +217,9 @@ def upload(name, filenames, base_dir, chunk_size):
               help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
-def download(name, filenames, base_dir, chunk_size):
+@click.option('--show-progress', type=bool, is_flag=True,
+              help='Print a download progress through stdout.')
+def download(name, filenames, base_dir, chunk_size, show_progress):
     '''
     Download a file from the virtual folder to the current working directory.
     The files with the same names will be overwirtten.
@@ -225,11 +230,19 @@ def download(name, filenames, base_dir, chunk_size):
     '''
     with Session() as session:
         try:
+            tqdm_inst = None
+            if show_progress:
+                tqdm_inst = tqdm(
+                    unit='bytes',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                )
+            prgs_reporter = TqdmProgressReporter(tqdm_inst)
             session.VFolder(name).download(
                 filenames,
                 basedir=base_dir,
                 chunk_size=chunk_size,
-                show_progress=True,
+                pgrss_reporter=prgs_reporter,
             )
             print_done('Done.')
         except Exception as e:

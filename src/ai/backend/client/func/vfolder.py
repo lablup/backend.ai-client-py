@@ -7,13 +7,12 @@ from typing import (
 
 import aiohttp
 import janus
-from tqdm import tqdm
 
 from yarl import URL
 from aiotusclient import client
 
 from ai.backend.client.output.fields import vfolder_fields
-from ai.backend.client.output.types import FieldSpec, PaginatedResult
+from ai.backend.client.output.types import FieldSpec, PaginatedResult, BaseProgressReporter
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
@@ -165,7 +164,7 @@ class VFolder(BaseFunction):
         *,
         basedir: Union[str, Path] = None,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
-        show_progress: bool = False,
+        pgrss_reporter: BaseProgressReporter,
     ) -> None:
         base_path = (Path.cwd() if basedir is None else Path(basedir).resolve())
         for relpath in relative_paths:
@@ -190,8 +189,6 @@ class VFolder(BaseFunction):
                         f.write(chunk)
                         q.task_done()
 
-            if show_progress:
-                print(f"Downloading to {file_path} ...")
             async with aiohttp.ClientSession() as client:
                 # TODO: ranged requests to continue interrupted downloads with automatic retries
                 async with client.get(download_url, ssl=False) as raw_resp:
@@ -200,19 +197,17 @@ class VFolder(BaseFunction):
                         raise RuntimeError('The target file already exists', file_path.name)
                     q: janus.Queue[bytes] = janus.Queue(MAX_INFLIGHT_CHUNKS)
                     try:
-                        with tqdm(
-                            total=size,
-                            unit='bytes',
-                            unit_scale=True,
-                            unit_divisor=1024,
-                            disable=not show_progress,
-                        ) as pbar:
+                        with pgrss_reporter as pbar:
+                            pbar.update(
+                                total=size,
+                                desc=f'Download to {str(file_path)}',
+                            )
                             loop = current_loop()
                             writer_fut = loop.run_in_executor(None, _write_file, file_path, q.sync_q)
                             await asyncio.sleep(0)
                             while True:
                                 chunk = await raw_resp.content.read(chunk_size)
-                                pbar.update(len(chunk))
+                                pbar.update(progress=len(chunk))
                                 if not chunk:
                                     break
                                 await q.async_q.put(chunk)
