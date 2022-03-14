@@ -19,6 +19,7 @@ from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
+from ..exception import BackendClientError
 from ..pagination import generate_paginated_results
 from ..request import Request
 
@@ -185,9 +186,10 @@ class VFolder(BaseFunction):
                     if download_info['url'] in address_map:
                         overriden_url = address_map[download_info['url']]
                     else:
-                        msg = 'Overriding storage proxy addresses are given, ' \
-                            'but no url matches with any of them.\n'
-                        print(msg)
+                        raise BackendClientError(
+                            'Overriding storage proxy addresses are given, '
+                            'but no url matches with any of them.\n',
+                        )
 
                 download_url = URL(overriden_url).with_query({
                     'token': download_info['token'],
@@ -264,9 +266,10 @@ class VFolder(BaseFunction):
                     if upload_info['url'] in address_map:
                         overriden_url = address_map[upload_info['url']]
                     else:
-                        msg = 'Overriding storage proxy addresses are given, ' \
-                            'but no url matches with any of them.\n'
-                        print(msg)
+                        raise BackendClientError(
+                            'Overriding storage proxy addresses are given, '
+                            'but no url matches with any of them.\n',
+                        )
                 upload_url = URL(overriden_url).with_query({
                     'token': upload_info['token'],
                 })
