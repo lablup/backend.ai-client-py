@@ -23,7 +23,7 @@ install_requires = [
     'tabulate>=0.8.9',
     'tqdm>=4.61',
     'yarl>=1.6.3',
-    'backend.ai-cli~=0.5.0.post1',
+    'backend.ai-cli~=0.6.0',
 ]
 build_requires = [
     'wheel>=0.36.2',
