@@ -11,7 +11,7 @@ install_requires = [
     'aiotusclient~=0.1.4',
     'appdirs~=1.4.4',
     'async_timeout>=4.0',
-    'attrs>=21.2',
+    'attrs>=20.3',
     'click>=8.0.1',
     'colorama>=0.4.4',
     'humanize>=3.1.0',
@@ -23,19 +23,19 @@ install_requires = [
     'tabulate>=0.8.9',
     'tqdm>=4.61',
     'yarl>=1.6.3',
-    'backend.ai-cli~=0.5.0.post1',
+    'backend.ai-cli~=0.6.0',
 ]
 build_requires = [
     'wheel>=0.36.2',
     'twine>=3.4.2',
-    'towncrier>=21.3.0',
+    'towncrier~=21.9.0',
 ]
 test_requires = [
-    'pytest~=6.2.5',
+    'pytest~=7.0.1',
     'pytest-cov',
     'pytest-mock',
-    'pytest-asyncio>=0.15.1',
-    'aioresponses>=0.7.2',
+    'pytest-asyncio>=0.18.2',
+    'aioresponses>=0.7.3',
     'codecov',
 ]
 lint_requires = [
