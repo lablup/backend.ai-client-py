@@ -181,7 +181,7 @@ class VFolder(BaseFunction):
             async with rqst.fetch() as resp:
                 download_info = await resp.json()
                 overriden_url = download_info['url']
-                if address_map is not None and address_map != {}:
+                if address_map:
                     if download_info['url'] in address_map:
                         overriden_url = address_map[download_info['url']]
                     else:
@@ -260,7 +260,7 @@ class VFolder(BaseFunction):
             async with rqst.fetch() as resp:
                 upload_info = await resp.json()
                 overriden_url = upload_info['url']
-                if address_map is not None and address_map != {}:
+                if address_map:
                     if upload_info['url'] in address_map:
                         overriden_url = address_map[upload_info['url']]
                     else:
