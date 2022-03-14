@@ -10,7 +10,7 @@ from ai.backend.client.func.domain import (
 )
 # from ai.backend.client.output.fields import domain_fields
 from . import admin
-from ..pretty import print_error, print_info, print_fail
+from ..pretty import print_info
 
 from ..types import CLIContext
 
@@ -56,6 +56,7 @@ def list(ctx: CLIContext) -> None:
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new domain')
@@ -67,7 +68,7 @@ def list(ctx: CLIContext) -> None:
               help='Allowed virtual folder hosts.')
 @click.option('--allowed-docker-registries', type=str, multiple=True,
               help='Allowed docker registries.')
-def add(name, description, inactive, total_resource_slots,
+def add(ctx: CLIContext, name, description, inactive, total_resource_slots,
         allowed_vfolder_hosts, allowed_docker_registries):
     """
     Add a new domain.
@@ -85,16 +86,27 @@ def add(name, description, inactive, total_resource_slots,
                 allowed_docker_registries=allowed_docker_registries,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='add',
+            )
             sys.exit(1)
-        item = data['domain']
-        print('Domain name {0} is created.'.format(item['name']))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='domain',
+        )
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
 @click.option('--new-name', type=str, help='New name of the domain')
 @click.option('--description', type=str, help='Description of the domain')
@@ -105,7 +117,7 @@ def add(name, description, inactive, total_resource_slots,
               help='Allowed virtual folder hosts.')
 @click.option('--allowed-docker-registries', type=str, multiple=True,
               help='Allowed docker registries.')
-def update(name, new_name, description, is_active, total_resource_slots,
+def update(ctx: CLIContext, name, new_name, description, is_active, total_resource_slots,
            allowed_vfolder_hosts, allowed_docker_registries):
     """
     Update an existing domain.
@@ -124,17 +136,31 @@ def update(name, new_name, description, is_active, total_resource_slots,
                 allowed_docker_registries=allowed_docker_registries,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='update',
+            )
             sys.exit(1)
-        print('Domain {0} is updated.'.format(name))
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'name': name,
+            },
+        )
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
-def delete(name):
+def delete(ctx: CLIContext, name):
     """
     Inactive an existing domain.
 
@@ -144,17 +170,31 @@ def delete(name):
         try:
             data = session.Domain.delete(name)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain inactivation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='deletion',
+            )
             sys.exit(1)
-        print('Domain is inactivated: ' + name + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'name': name,
+            },
+        )
 
 
 @domain.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
-def purge(name):
+def purge(ctx: CLIContext, name):
     """
     Delete an existing domain.
 
@@ -167,9 +207,22 @@ def purge(name):
                 sys.exit(1)
             data = session.Domain.purge(name)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='domain',
+                action_name='purge',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Domain deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='domain',
+                action_name='purge',
+            )
             sys.exit(1)
-        print('Domain is deleted: ' + name + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'name': name,
+            },
+        )

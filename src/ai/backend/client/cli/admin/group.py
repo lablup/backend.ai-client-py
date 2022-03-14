@@ -11,7 +11,7 @@ from ai.backend.client.func.group import (
 )
 # from ai.backend.client.output.fields import group_fields
 from . import admin
-from ..pretty import print_error, print_info, print_fail
+from ..pretty import print_info
 
 from ..types import CLIContext
 
@@ -80,6 +80,7 @@ def list(ctx: CLIContext, domain_name) -> None:
 
 
 @group.command()
+@click.pass_obj
 @click.argument('domain_name', type=str, metavar='DOMAIN_NAME')
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
@@ -90,7 +91,7 @@ def list(ctx: CLIContext, domain_name) -> None:
               help='Set total resource slots.')
 @click.option('--allowed-vfolder-hosts', type=str, multiple=True,
               help='Allowed virtual folder hosts.')
-def add(domain_name, name, description, inactive, total_resource_slots,
+def add(ctx: CLIContext, domain_name, name, description, inactive, total_resource_slots,
         allowed_vfolder_hosts):
     """
     Add new group. A group must belong to a domain, so DOMAIN_NAME should be provided.
@@ -109,16 +110,27 @@ def add(domain_name, name, description, inactive, total_resource_slots,
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='add',
+            )
             sys.exit(1)
-        item = data['group']
-        print('Group name {0} is created in domain {1}.'.format(item['name'], item['domain_name']))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='group',
+        )
 
 
 @group.command()
+@click.pass_obj
 @click.argument('gid', type=str, metavar='GROUP_ID')
 @click.option('-n', '--name', type=str, help='New name of the group')
 @click.option('-d', '--description', type=str, help='Description of the group')
@@ -126,7 +138,7 @@ def add(domain_name, name, description, inactive, total_resource_slots,
 @click.option('--total-resource-slots', type=str, help='Update total resource slots.')
 @click.option('--allowed-vfolder-hosts', type=str, multiple=True,
               help='Allowed virtual folder hosts.')
-def update(gid, name, description, is_active, total_resource_slots,
+def update(ctx: CLIContext, gid, name, description, is_active, total_resource_slots,
            allowed_vfolder_hosts):
     """
     Update an existing group. Domain name is not necessary since group ID is unique.
@@ -144,17 +156,31 @@ def update(gid, name, description, is_active, total_resource_slots,
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='update',
+            )
             sys.exit(1)
-        print('Group {0} is updated.'.format(gid))
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'gid': gid,
+            },
+        )
 
 
 @group.command()
+@click.pass_obj
 @click.argument('gid', type=str, metavar='GROUP_ID')
-def delete(gid):
+def delete(ctx: CLIContext, gid):
     """
     Inactivates the existing group. Does not actually delete it for safety.
 
@@ -164,17 +190,31 @@ def delete(gid):
         try:
             data = session.Group.delete(gid)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group inactivation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='deletion',
+            )
             sys.exit(1)
-        print('Group is inactivated: ' + gid + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'gid': gid,
+            },
+        )
 
 
 @group.command()
+@click.pass_obj
 @click.argument('gid', type=str, metavar='GROUP_ID')
-def purge(gid):
+def purge(ctx: CLIContext, gid):
     """
     Delete the existing group. This action cannot be undone.
 
@@ -187,18 +227,32 @@ def purge(gid):
                 sys.exit(1)
             data = session.Group.purge(gid)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='purge',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Group deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='purge',
+            )
             sys.exit(1)
-        print('Group is deleted: ' + gid + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'gid': gid,
+            },
+        )
 
 
 @group.command()
+@click.pass_obj
 @click.argument('gid', type=str, metavar='GROUP_ID')
 @click.argument('user_uuids', type=str, metavar='USER_UUIDS', nargs=-1)
-def add_users(gid, user_uuids):
+def add_users(ctx: CLIContext, gid, user_uuids):
     """
     Add users to a group.
 
@@ -210,18 +264,32 @@ def add_users(gid, user_uuids):
         try:
             data = session.Group.add_users(gid, user_uuids)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='add_users',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Error on adding users to group: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='add_users',
+            )
             sys.exit(1)
-        print('Users are added to the group')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'gid': gid,
+            },
+        )
 
 
 @group.command()
+@click.pass_obj
 @click.argument('gid', type=str, metavar='GROUP_ID')
 @click.argument('user_uuids', type=str, metavar='USER_UUIDS', nargs=-1)
-def remove_users(gid, user_uuids):
+def remove_users(ctx: CLIContext, gid, user_uuids):
     """
     Remove users from a group.
 
@@ -233,9 +301,22 @@ def remove_users(gid, user_uuids):
         try:
             data = session.Group.remove_users(gid, user_uuids)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='group',
+                action_name='users_remove',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Error on removing users to group: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='group',
+                action_name='users_remove',
+            )
             sys.exit(1)
-        print('Users are removed from the group')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'gid': gid,
+            },
+        )

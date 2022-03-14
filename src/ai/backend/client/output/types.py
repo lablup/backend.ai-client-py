@@ -7,6 +7,7 @@ from typing import (
     Callable,
     Generic,
     Mapping,
+    Optional,
     Sequence,
     TypeVar,
     TYPE_CHECKING,
@@ -165,6 +166,27 @@ class BaseOutputHandler(metaclass=ABCMeta):
         fetch_func: Callable[[int, int], PaginatedResult[T]],
         initial_page_offset: int,
         page_size: int = None,
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def print_mutation_result(
+        self,
+        item: Mapping[str, Any],
+        item_name: Optional[str] = None,
+        action_name: Optional[str] = None,
+        extra_info: Mapping = {},
+    ) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def print_mutation_error(
+        self,
+        error: Optional[Exception] = None,
+        msg: str = 'Failed',
+        item_name: Optional[str] = None,
+        action_name: Optional[str] = None,
+        extra_info: Mapping = {},
     ) -> None:
         raise NotImplementedError
 
