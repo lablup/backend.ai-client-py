@@ -19,7 +19,7 @@ from ai.backend.client.output.types import FieldSpec, PaginatedResult
 from .base import api_function, BaseFunction
 from ..compat import current_loop
 from ..config import DEFAULT_CHUNK_SIZE, MAX_INFLIGHT_CHUNKS
-from ..exception import BackendClientError
+from ..exceptions import BackendClientError
 from ..pagination import generate_paginated_results
 from ..request import Request
 
