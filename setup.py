@@ -31,11 +31,11 @@ build_requires = [
     'towncrier~=21.9.0',
 ]
 test_requires = [
-    'pytest~=6.2.5',
+    'pytest~=7.0.1',
     'pytest-cov',
     'pytest-mock',
-    'pytest-asyncio>=0.15.1',
-    'aioresponses>=0.7.2',
+    'pytest-asyncio>=0.18.2',
+    'aioresponses>=0.7.3',
     'codecov',
 ]
 lint_requires = [
