@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install -U pip setuptools wheel
-        python -m pip install -U requirements/timeline-check.txt
+        python -m pip install -U -r requirements/timeline-check.txt
     - name: Check existence of news fragment
       run: |
         git fetch --no-tags origin +refs/heads/${BASE_BRANCH}:refs/remotes/origin/${BASE_BRANCH}
