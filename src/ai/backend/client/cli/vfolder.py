@@ -6,12 +6,16 @@ import sys
 import click
 import humanize
 from tabulate import tabulate
+from tqdm import tqdm
 
+from ai.backend.cli.interaction import ask_yn
 from ai.backend.client.config import DEFAULT_CHUNK_SIZE, APIConfig
 from ai.backend.client.session import Session
+
+from ..compat import asyncio_run
+from ..session import AsyncSession
 from .main import main
-from .interaction import ask_yn
-from .pretty import print_done, print_error, print_fail, print_info, print_wait
+from .pretty import print_done, print_error, print_fail, print_info, print_wait, print_warn
 from .params import ByteSizeParamType, ByteSizeParamCheckType, CommaSeparatedKVListParamType
 
 
@@ -322,6 +326,31 @@ def rename_file(name, target_path, new_name):
             sys.exit(1)
 
 
+@vfolder.command()
+@click.argument('name', type=str)
+@click.argument('src', type=str)
+@click.argument('dst', type=str)
+def mv(name, src, dst):
+    '''
+    Move a file or a directory within a virtual folder.
+    If the destination is a file and already exists, it will be overwritten.
+    If the destination is a directory, the source file or directory
+    is moved inside it.
+
+    \b
+    NAME: Name of a virtual folder.
+    SRC: The relative path of the source file or directory inside a virtual folder
+    DST: The relative path of the destination file or directory inside a virtual folder.
+    '''
+    with Session() as session:
+        try:
+            session.VFolder(name).move_file(src, dst)
+            print_done('Moved.')
+        except Exception as e:
+            print_error(e)
+            sys.exit(1)
+
+
 @vfolder.command(aliases=['delete-file'])
 @click.argument('name', type=str)
 @click.argument('filenames', nargs=-1)
@@ -572,16 +601,54 @@ def clone(name, target_name, target_host, usage_mode, permission):
                 print("Clone is not allowed for this virtual folder. "
                       "Please update the 'cloneable' option.")
                 return
-            session.VFolder(name).clone(
+            result = session.VFolder(name).clone(
                 target_name,
                 target_host=target_host,
                 usage_mode=usage_mode,
                 permission=permission,
             )
-            print_done("Cloned.")
+            bgtask_id = result.get('bgtask_id')
         except Exception as e:
             print_error(e)
             sys.exit(1)
+
+    async def clone_vfolder_tracker(bgtask_id):
+        print_wait(
+            "Cloning the vfolder... "
+            "(This may take a while depending on its size and number of files!)",
+        )
+        async with AsyncSession() as session:
+            try:
+                bgtask = session.BackgroundTask(bgtask_id)
+                completion_msg_func = lambda: print_done("Cloning the vfolder is complete.")
+                async with bgtask.listen_events() as response:
+                    # TODO: get the unit of progress from response
+                    with tqdm(unit='bytes', disable=True) as pbar:
+                        async for ev in response:
+                            data = json.loads(ev.data)
+                            if ev.event == 'bgtask_updated':
+                                pbar.total = data['total_progress']
+                                pbar.write(data['message'])
+                                pbar.update(data['current_progress'] - pbar.n)
+                            elif ev.event == 'bgtask_failed':
+                                error_msg = data['message']
+                                completion_msg_func = \
+                                    lambda: print_fail(
+                                        f"Error during the operation: {error_msg}",
+                                    )
+                            elif ev.event == 'bgtask_cancelled':
+                                completion_msg_func = \
+                                    lambda: print_warn(
+                                        "The operation has been cancelled in the middle. "
+                                        "(This may be due to server shutdown.)",
+                                    )
+            finally:
+                completion_msg_func()
+
+    if bgtask_id is None:
+        print_done("Cloning the vfolder is complete.")
+    else:
+        asyncio_run(clone_vfolder_tracker(bgtask_id))
 
 
 @vfolder.command()

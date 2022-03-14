@@ -14,7 +14,7 @@ Changes
     WARNING: Don't drop the last line!
 -->
 
-.. towncrier release notes start
+<!-- towncrier release notes start -->
 
 ## 22.03.0.dev0 (2022-01-05)
 

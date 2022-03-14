@@ -2,6 +2,7 @@ import sys
 
 import click
 
+from ai.backend.cli.interaction import ask_yn
 from ai.backend.client.session import Session
 from ai.backend.client.func.keypair_resource_policy import (
     _default_list_fields,
@@ -9,7 +10,6 @@ from ai.backend.client.func.keypair_resource_policy import (
 )
 # from ai.backend.client.output.fields import keypair_resource_policy_fields
 from . import admin
-from ..interaction import ask_yn
 from ..pretty import print_done, print_error, print_fail, print_info
 
 from ..types import CLIContext
