@@ -9,14 +9,14 @@ from tabulate import tabulate
 from tqdm import tqdm
 
 from ai.backend.cli.interaction import ask_yn
-from ai.backend.client.config import DEFAULT_CHUNK_SIZE
+from ai.backend.client.config import DEFAULT_CHUNK_SIZE, APIConfig
 from ai.backend.client.session import Session
 
 from ..compat import asyncio_run
 from ..session import AsyncSession
 from .main import main
 from .pretty import print_done, print_error, print_fail, print_info, print_wait, print_warn
-from .params import ByteSizeParamType, ByteSizeParamCheckType
+from .params import ByteSizeParamType, ByteSizeParamCheckType, CommaSeparatedKVListParamType
 
 
 @main.group()
@@ -180,7 +180,13 @@ def info(name):
               help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
-def upload(name, filenames, base_dir, chunk_size):
+@click.option('--override-storage-proxy',
+              type=CommaSeparatedKVListParamType(), default=None,
+              help='Overrides storage proxy address. '
+                   'The value must shape like "X1=Y1,X2=Y2...". '
+                   'Each Yn address must at least include the IP address '
+                   'or the hostname and may include the protocol part and the port number to replace.')
+def upload(name, filenames, base_dir, chunk_size, override_storage_proxy):
     '''
     TUS Upload a file to the virtual folder from the current working directory.
     The files with the same names will be overwirtten.
@@ -196,6 +202,7 @@ def upload(name, filenames, base_dir, chunk_size):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
+                address_map=override_storage_proxy or APIConfig.DEFAULTS['storage_proxy_address_map'],
             )
             print_done('Done.')
         except Exception as e:
@@ -214,7 +221,13 @@ def upload(name, filenames, base_dir, chunk_size):
               help='Transfer the file with the given chunk size with binary suffixes (e.g., "16m"). '
                    'Set this between 8 to 64 megabytes for high-speed disks (e.g., SSD RAID) '
                    'and networks (e.g., 40 GbE) for the maximum throughput.')
-def download(name, filenames, base_dir, chunk_size):
+@click.option('--override-storage-proxy',
+              type=CommaSeparatedKVListParamType(), default=None,
+              help='Overrides storage proxy address. '
+                   'The value must shape like "X1=Y1,X2=Y2...". '
+                   'Each Yn address must at least include the IP address '
+                   'or the hostname and may include the protocol part and the port number to replace.')
+def download(name, filenames, base_dir, chunk_size, override_storage_proxy):
     '''
     Download a file from the virtual folder to the current working directory.
     The files with the same names will be overwirtten.
@@ -230,6 +243,7 @@ def download(name, filenames, base_dir, chunk_size):
                 basedir=base_dir,
                 chunk_size=chunk_size,
                 show_progress=True,
+                address_map=override_storage_proxy or APIConfig.DEFAULTS['storage_proxy_address_map'],
             )
             print_done('Done.')
         except Exception as e:
