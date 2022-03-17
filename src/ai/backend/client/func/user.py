@@ -248,7 +248,7 @@ class User(BaseFunction):
         You need an admin privilege for this operation.
         """
         if fields is None:
-            fields = ('domain_name', 'email', 'username')
+            fields = ('domain_name', 'email', 'username', 'uuid')
         query = textwrap.dedent("""\
             mutation($email: String!, $input: UserInput!) {
                 create_user(email: $email, props: $input) {

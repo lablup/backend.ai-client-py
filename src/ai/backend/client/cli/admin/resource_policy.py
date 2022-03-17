@@ -2,10 +2,10 @@ import sys
 
 import click
 
+from ai.backend.cli.interaction import ask_yn
 from ai.backend.client.session import Session
 from . import admin
-from ..interaction import ask_yn
-from ..pretty import print_done, print_error, print_fail, print_info
+from ..pretty import print_info
 
 from ..types import CLIContext
 from ..fields import set_default_fields, keypair_resource_policy_fields
@@ -60,6 +60,7 @@ def list(ctx):
 
 
 @keypair_resource_policy.command()
+@click.pass_obj
 @click.argument('name', type=str, default=None, metavar='NAME')
 @click.option('--default-for-unspecified', type=str, default='UNLIMITED',
               help='Default behavior for unspecified resources: '
@@ -81,7 +82,7 @@ def list(ctx):
 #               help='Locations to create virtual folders.')
 @click.option('--allowed-vfolder-hosts', default=['local'],
               help='Locations to create virtual folders.')
-def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sessions,
+def add(ctx: CLIContext, name, default_for_unspecified, total_resource_slots, max_concurrent_sessions,
         max_containers_per_session, max_vfolder_count, max_vfolder_size,
         idle_timeout, allowed_vfolder_hosts):
     """
@@ -103,17 +104,27 @@ def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sess
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='resource_policy',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair Resource Policy creation has failed: {0}'
-                       .format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='resource_policy',
+                action_name='add',
+            )
             sys.exit(1)
-        item = data['resource_policy']
-        print_done('Keypair resource policy ' + item['name'] + ' is created.')
+        ctx.output.print_mutation_result(
+            data,
+            item_name='resource_policy',
+        )
 
 
 @keypair_resource_policy.command()
+@click.pass_obj
 @click.argument('name', type=str, default=None, metavar='NAME')
 @click.option('--default-for-unspecified', type=str,
               help='Default behavior for unspecified resources: '
@@ -132,7 +143,7 @@ def add(name, default_for_unspecified, total_resource_slots, max_concurrent_sess
               help='The maximum period of time allowed for kernels to wait '
                    'further requests.')
 @click.option('--allowed-vfolder-hosts', help='Locations to create virtual folders.')
-def update(name, default_for_unspecified, total_resource_slots,
+def update(ctx: CLIContext, name, default_for_unspecified, total_resource_slots,
            max_concurrent_sessions, max_containers_per_session, max_vfolder_count,
            max_vfolder_size, idle_timeout, allowed_vfolder_hosts):
     """
@@ -154,18 +165,31 @@ def update(name, default_for_unspecified, total_resource_slots,
                 allowed_vfolder_hosts=allowed_vfolder_hosts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='resource_policy',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair Resource Policy creation has failed: {0}'
-                       .format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='resource_policy',
+                action_name='update',
+            )
             sys.exit(1)
-        print_done('Update succeeded.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'name': name,
+            },
+        )
 
 
 @keypair_resource_policy.command()
+@click.pass_obj
 @click.argument('name', type=str, default=None, metavar='NAME')
-def delete(name):
+def delete(ctx: CLIContext, name):
     """
     Delete a keypair resource policy.
 
@@ -178,10 +202,22 @@ def delete(name):
         try:
             data = session.KeypairResourcePolicy.delete(name)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='resource_policy',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair Resource Policy deletion has failed: {0}'
-                       .format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='resource_policy',
+                action_name='deletion',
+            )
             sys.exit(1)
-        print_done('Resource policy ' + name + ' is deleted.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'name': name,
+            },
+        )

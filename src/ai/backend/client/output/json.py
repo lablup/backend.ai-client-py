@@ -5,6 +5,7 @@ from typing import (
     Any,
     Callable,
     Mapping,
+    Optional,
     Sequence,
     TypeVar,
 )
@@ -119,6 +120,52 @@ class JsonOutputHandler(BaseOutputHandler):
                     for item in result.items
                 ],
             },
+            **_json_opts,
+        ))
+
+    def print_mutation_result(
+        self,
+        item: Mapping[str, Any],
+        item_name: Optional[str] = None,
+        action_name: Optional[str] = None,
+        extra_info: Mapping = {},
+    ) -> None:
+        data = {
+            'ok': item.get('ok', False),
+            'msg': item.get('msg', 'Failed'),
+            **extra_info,
+        }
+        if item_name is not None and item_name in item:
+            data = {
+                **data,
+                item_name: {
+                    k: v for k, v in item[item_name].items()
+                },
+            }
+        print(json.dumps(
+            data,
+            **_json_opts,
+        ))
+
+    def print_mutation_error(
+        self,
+        error: Optional[Exception] = None,
+        msg: str = 'Failed',
+        item_name: Optional[str] = None,
+        action_name: Optional[str] = None,
+        extra_info: Mapping = {},
+    ) -> None:
+        data = {
+            'ok': False,
+            'msg': msg,
+            'item_name': item_name,
+            'action_name': action_name,
+            **extra_info,
+        }
+        if error is not None:
+            data['error'] = str(error)
+        print(json.dumps(
+            data,
             **_json_opts,
         ))
 

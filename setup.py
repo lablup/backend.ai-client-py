@@ -23,7 +23,7 @@ install_requires = [
     'tabulate>=0.8.9',
     'tqdm>=4.61',
     'yarl>=1.6.3',
-    'backend.ai-cli~=0.5.0.post1',
+    'backend.ai-cli~=0.6.0',
 ]
 build_requires = [
     'wheel>=0.36.2',
@@ -31,11 +31,11 @@ build_requires = [
     'towncrier~=21.9.0',
 ]
 test_requires = [
-    'pytest~=6.2.5',
+    'pytest~=7.0.1',
     'pytest-cov',
     'pytest-mock',
-    'pytest-asyncio>=0.15.1',
-    'aioresponses>=0.7.2',
+    'pytest-asyncio>=0.18.2',
+    'aioresponses>=0.7.3',
     'codecov',
 ]
 lint_requires = [

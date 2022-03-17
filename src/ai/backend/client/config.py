@@ -4,6 +4,7 @@ from pathlib import Path
 import random
 import re
 from typing import (
+    Any,
     Callable,
     Iterable,
     List,
@@ -57,15 +58,15 @@ def parse_api_version(value: str) -> Tuple[int, str]:
 T = TypeVar('T')
 
 
-def default_clean(v: str) -> T:
+def default_clean(v: Union[str, Mapping]) -> T:
     return cast(T, v)
 
 
 def get_env(
     key: str,
-    default: Union[str, Undefined] = _undefined,
+    default: Union[str, Mapping, Undefined] = _undefined,
     *,
-    clean: Callable[[str], T] = default_clean,
+    clean: Callable[[Any], T] = default_clean,
 ) -> T:
     """
     Retrieves a configuration value from the environment variables.
@@ -88,8 +89,10 @@ def get_env(
     if raw is None:
         if default is _undefined:
             raise KeyError(key)
-        raw = default
-    return clean(raw)
+        result = default
+    else:
+        result = raw
+    return clean(result)
 
 
 def bool_env(v: str) -> bool:
@@ -118,6 +121,26 @@ def _clean_tokens(v: str) -> Tuple[str, ...]:
     if not v:
         return tuple()
     return tuple(v.split(','))
+
+
+def _clean_address_map(v: Union[str, Mapping]) -> Mapping:
+    if isinstance(v, dict):
+        return v
+    if not isinstance(v, str):
+        raise ValueError(
+            f'Storage proxy address map has invalid type "{type(v)}", expected str or dict.',
+        )
+    override_map = {}
+    for assignment in v.split(","):
+        try:
+            k, _, v = assignment.partition("=")
+            if k == '' or v == '':
+                raise ValueError
+        except ValueError:
+            raise ValueError(f"{v} is not a valid mapping expression")
+        else:
+            override_map[k] = v
+    return override_map
 
 
 class APIConfig:
@@ -157,13 +180,14 @@ class APIConfig:
         <ai.backend.client.kernel.Kernel.get_or_create>` calls.
     """
 
-    DEFAULTS: Mapping[str, str] = {
+    DEFAULTS: Mapping[str, Union[str, Mapping]] = {
         'endpoint': 'https://api.backend.ai',
         'endpoint_type': 'api',
         'version': f'v{API_VERSION[0]}.{API_VERSION[1]}',
         'hash_type': 'sha256',
         'domain': 'default',
         'group': 'default',
+        'storage_proxy_address_map': {},
         'connection_timeout': '10.0',
         'read_timeout': '0',
     }
@@ -183,6 +207,7 @@ class APIConfig:
         endpoint_type: str = None,
         domain: str = None,
         group: str = None,
+        storage_proxy_address_map: Mapping[str, str] = None,
         version: str = None,
         user_agent: str = None,
         access_key: str = None,
@@ -206,8 +231,16 @@ class APIConfig:
             get_env('DOMAIN', self.DEFAULTS['domain'], clean=str)
         self._group = group if group is not None else \
             get_env('GROUP', self.DEFAULTS['group'], clean=str)
+        self._storage_proxy_address_map = storage_proxy_address_map \
+            if storage_proxy_address_map is not None else \
+            get_env(
+                'OVERRIDE_STORAGE_PROXY',
+                self.DEFAULTS['storage_proxy_address_map'],
+                # The shape of this env var must be like "X1=Y1,X2=Y2"
+                clean=_clean_address_map,
+            )
         self._version = version if version is not None else \
-            self.DEFAULTS['version']
+            default_clean(self.DEFAULTS['version'])
         self._user_agent = user_agent if user_agent is not None else get_user_agent()
         if self._endpoint_type == 'api':
             self._access_key = access_key if access_key is not None else \
@@ -277,6 +310,11 @@ class APIConfig:
     def group(self) -> str:
         """The configured group."""
         return self._group
+
+    @property
+    def storage_proxy_address_map(self) -> Mapping[str, str]:
+        """The storage proxy address map for overriding."""
+        return self.storage_proxy_address_map
 
     @property
     def user_agent(self) -> str:
