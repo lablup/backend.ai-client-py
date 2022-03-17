@@ -90,6 +90,7 @@ image_fields = FieldSet([
     FieldSpec('name'),
     FieldSpec('registry'),
     FieldSpec('tag'),
+    FieldSpec('architecture'),
     FieldSpec('digest'),
     FieldSpec('size_bytes', formatter=sizebytes_output_formatter),
     FieldSpec('aliases'),

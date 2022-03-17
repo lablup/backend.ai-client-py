@@ -14,6 +14,7 @@ _default_list_fields_admin = (
     image_fields['name'],
     image_fields['registry'],
     image_fields['tag'],
+    image_fields['architecture'],
     image_fields['digest'],
     image_fields['size_bytes'],
     image_fields['aliases'],
@@ -65,7 +66,7 @@ class Image(BaseFunction):
 
     @api_function
     @classmethod
-    async def alias_image(cls, alias: str, target: str) -> dict:
+    async def alias_image(cls, alias: str, target: str, architecture: str) -> dict:
         q = 'mutation($alias: String!, $target: String!) {' \
             '  alias_image(alias: $alias, target: $target) {' \
             '   ok msg' \
@@ -74,6 +75,7 @@ class Image(BaseFunction):
         variables = {
             'alias': alias,
             'target': target,
+            'architecture': architecture,
         }
         data = await api_session.get().Admin._query(q, variables)
         return data['alias_image']
