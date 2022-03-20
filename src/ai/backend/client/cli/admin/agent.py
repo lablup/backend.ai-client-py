@@ -28,6 +28,7 @@ def info(ctx: CLIContext, agent_id: str) -> None:
         agent_fields['id'],
         agent_fields['status'],
         agent_fields['region'],
+        agent_fields['architecture'],
         agent_fields['first_contact'],
         agent_fields['cpu_cur_pct'],
         agent_fields['available_slots'],
@@ -74,6 +75,7 @@ def list(
     fields = [
         agent_fields['id'],
         agent_fields['status'],
+        agent_fields['architecture'],
         agent_fields['scaling_group'],
         agent_fields['region'],
         agent_fields['first_contact'],

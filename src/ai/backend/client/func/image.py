@@ -13,6 +13,7 @@ __all__ = (
 _default_list_fields_admin = (
     image_fields['name'],
     image_fields['registry'],
+    image_fields['architecture'],
     image_fields['tag'],
     image_fields['architecture'],
     image_fields['digest'],

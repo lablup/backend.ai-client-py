@@ -44,6 +44,7 @@ agent_fields = FieldSet([
     FieldSpec('status'),
     FieldSpec('status_changed'),
     FieldSpec('region'),
+    FieldSpec('architecture'),
     FieldSpec('scaling_group'),
     FieldSpec('schedulable'),
     FieldSpec('available_slots', formatter=resource_slot_formatter),
@@ -89,6 +90,7 @@ group_fields = FieldSet([
 image_fields = FieldSet([
     FieldSpec('name'),
     FieldSpec('registry'),
+    FieldSpec('architecture'),
     FieldSpec('tag'),
     FieldSpec('architecture'),
     FieldSpec('digest'),
