@@ -158,6 +158,7 @@ class ComputeSession(BaseFunction):
         starts_at: str = None,
         enqueue_only: bool = False,
         max_wait: int = 0,
+        dependencies: Sequence[str] = None,
         no_reuse: bool = False,
         mounts: List[str] = None,
         mount_map: Mapping[str, str] = None,
@@ -272,6 +273,8 @@ class ComputeSession(BaseFunction):
                 'scalingGroup': scaling_group,
             },
         }
+        if api_session.get().api_version >= (6, '20220315'):
+            params['dependencies'] = dependencies
         if api_session.get().api_version >= (6, '20200815'):
             params['clusterSize'] = cluster_size
             params['clusterMode'] = cluster_mode
@@ -327,6 +330,7 @@ class ComputeSession(BaseFunction):
         starts_at: str = None,
         enqueue_only: Union[bool, Undefined] = undefined,
         max_wait: Union[int, Undefined] = undefined,
+        dependencies: Sequence[str] = None,  # cannot be stored in templates
         no_reuse: Union[bool, Undefined] = undefined,
         image: Union[str, Undefined] = undefined,
         mounts: Union[List[str], Undefined] = undefined,
