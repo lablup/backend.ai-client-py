@@ -15,7 +15,6 @@ _default_list_fields_admin = (
     image_fields['registry'],
     image_fields['architecture'],
     image_fields['tag'],
-    image_fields['architecture'],
     image_fields['digest'],
     image_fields['size_bytes'],
     image_fields['aliases'],
