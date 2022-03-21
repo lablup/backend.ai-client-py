@@ -6,8 +6,7 @@ import click
 
 from ai.backend.cli.interaction import ask_yn
 from ai.backend.client.session import Session
-from ..interaction import ask_yn
-from ..pretty import print_error, print_info
+from ..pretty import print_info
 from ..types import CLIContext
 from ..fields import user_fields
 from . import admin
