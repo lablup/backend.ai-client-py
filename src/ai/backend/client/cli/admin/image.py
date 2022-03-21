@@ -89,7 +89,6 @@ def rescan(registry: str) -> None:
 @image.command()
 @click.argument('alias', type=str)
 @click.argument('target', type=str)
-@click.argument('architecture', type=str, default='x86_64')
 @click.option('--arch', type=str, default=None, help='Set an explicit architecture.')
 def alias(alias, target, arch):
     """Add an image alias."""
