@@ -13,6 +13,7 @@ __all__ = (
 _default_list_fields_admin_names = (
     'name',
     'registry',
+    'architecture',
     'tag',
     'digest',
     'size_bytes',

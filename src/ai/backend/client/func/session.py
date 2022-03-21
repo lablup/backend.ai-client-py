@@ -280,6 +280,8 @@ class ComputeSession(BaseFunction):
         else:
             params['config']['clusterSize'] = cluster_size
         if api_session.get().api_version >= (5, '20191215'):
+            params['starts_at'] = starts_at
+            params['bootstrap_script'] = bootstrap_script
             if assign_agent is not None:
                 params['config'].update({
                     'mount_map': mount_map,
