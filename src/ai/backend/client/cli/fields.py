@@ -48,6 +48,7 @@ agent_fields = FieldSet([
     CliFieldSpec('status'),
     CliFieldSpec('status_changed'),
     CliFieldSpec('region'),
+    CliFieldSpec('architecture'),
     CliFieldSpec('scaling_group'),
     CliFieldSpec('schedulable'),
     CliFieldSpec('available_slots', formatter=resource_slot_formatter),
@@ -93,6 +94,7 @@ group_fields = FieldSet([
 image_fields = FieldSet([
     CliFieldSpec('name'),
     CliFieldSpec('registry'),
+    CliFieldSpec('architecture'),
     CliFieldSpec('tag'),
     CliFieldSpec('digest'),
     CliFieldSpec('size_bytes', formatter=sizebytes_output_formatter),
