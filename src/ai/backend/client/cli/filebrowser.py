@@ -17,7 +17,7 @@ def filebrowser():
 @click.option(
     "-v",
     "--vfolder",
-    help="Vfolder to be attached for a FileBrowser session",
+    help="Vfolder to be attached for a filebrowser session",
     type=str,
     metavar="VFOLDER",
     multiple=True,
@@ -38,12 +38,12 @@ def create(vfolder):
 @click.option(
     "-cid",
     "--container_id",
-    help="Container ID of user FileBrowser session.",
+    help="Container ID of user filebrowser session.",
     type=str,
     metavar="CID",
 )
 def destroy(container_id):
-    """Destroy filebrowser session using Cntainer ID."""
+    """Destroy filebrowser session using Container ID."""
 
     with Session() as session:
         try:
