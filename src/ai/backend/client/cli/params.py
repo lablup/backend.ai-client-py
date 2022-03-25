@@ -3,6 +3,8 @@ import re
 from decimal import Decimal
 from typing import (
     Any,
+    Mapping,
+    Union,
     Optional,
 )
 
@@ -53,6 +55,32 @@ class ByteSizeParamCheckType(ByteSizeParamType):
         if m is None:
             self.fail(f"{value!r} is not a valid byte-size expression", param, ctx)
         return value
+
+
+class CommaSeparatedKVListParamType(click.ParamType):
+    name = "comma-seperated-KVList-check"
+
+    def convert(self, value: Union[str, Mapping[str, str]], param, ctx) -> Mapping[str, str]:
+        if isinstance(value, dict):
+            return value
+        if not isinstance(value, str):
+            self.fail(
+                f"expected string, got {value!r} of type {type(value).__name__}",
+                param, ctx,
+            )
+        override_map = {}
+        for assignment in value.split(","):
+            try:
+                k, _, v = assignment.partition("=")
+                if k == '' or v == '':
+                    raise ValueError(f"key or value is empty. key = {k}, value = {v}")
+            except ValueError:
+                self.fail(
+                    f"{value!r} is not a valid mapping expression", param, ctx,
+                )
+            else:
+                override_map[k] = v
+        return override_map
 
 
 class JSONParamType(click.ParamType):

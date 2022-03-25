@@ -159,6 +159,7 @@ class ComputeSession(BaseFunction):
         enqueue_only: bool = False,
         max_wait: int = 0,
         no_reuse: bool = False,
+        dependencies: Sequence[str] = None,
         mounts: List[str] = None,
         mount_map: Mapping[str, str] = None,
         envs: Mapping[str, str] = None,
@@ -218,7 +219,9 @@ class ComputeSession(BaseFunction):
             access key.
         :param mount_map: Mapping which contains custom path to mount vfolder.
             Key and value of this map should be vfolder name and custom path.
-            All custom mounts should be under /home/work.
+            Defalut mounts or relative paths are under /home/work.
+            If you want different paths, names should be absolute paths.
+            The target mount path of vFolders should not overlap with the linux system folders.
             vFolders which has a dot(.) prefix in its name are not affected.
         :param envs: The environment variables which always bypasses the jail policy.
         :param resources: The resource specification. (TODO: details)
@@ -270,12 +273,16 @@ class ComputeSession(BaseFunction):
                 'scalingGroup': scaling_group,
             },
         }
+        if api_session.get().api_version >= (6, '20220315'):
+            params['dependencies'] = dependencies
         if api_session.get().api_version >= (6, '20200815'):
             params['clusterSize'] = cluster_size
             params['clusterMode'] = cluster_mode
         else:
             params['config']['clusterSize'] = cluster_size
         if api_session.get().api_version >= (5, '20191215'):
+            params['starts_at'] = starts_at
+            params['bootstrap_script'] = bootstrap_script
             if assign_agent is not None:
                 params['config'].update({
                     'mount_map': mount_map,
@@ -325,6 +332,7 @@ class ComputeSession(BaseFunction):
         starts_at: str = None,
         enqueue_only: Union[bool, Undefined] = undefined,
         max_wait: Union[int, Undefined] = undefined,
+        dependencies: Sequence[str] = None,  # cannot be stored in templates
         no_reuse: Union[bool, Undefined] = undefined,
         image: Union[str, Undefined] = undefined,
         mounts: Union[List[str], Undefined] = undefined,
@@ -387,7 +395,9 @@ class ComputeSession(BaseFunction):
             access key.
         :param mount_map: Mapping which contains custom path to mount vfolder.
             Key and value of this map should be vfolder name and custom path.
-            All custom mounts should be under /home/work.
+            Defalut mounts or relative paths are under /home/work.
+            If you want different paths, names should be absolute paths.
+            The target mount path of vFolders should not overlap with the linux system folders.
             vFolders which has a dot(.) prefix in its name are not affected.
         :param envs: The environment variables which always bypasses the jail policy.
         :param resources: The resource specification. (TODO: details)

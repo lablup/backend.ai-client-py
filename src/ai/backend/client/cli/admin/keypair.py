@@ -5,7 +5,6 @@ import click
 from ai.backend.client.session import Session
 from ai.backend.client.output.fields import keypair_fields
 from . import admin
-from ..pretty import print_done, print_error, print_fail
 from ..types import CLIContext
 
 
@@ -103,6 +102,7 @@ def list(ctx: CLIContext, user_id, is_active, filter_, order, offset, limit) -> 
 
 
 @keypair.command()
+@click.pass_obj
 @click.argument('user-id', type=str, default=None, metavar='USERID')
 @click.argument('resource-policy', type=str, default=None, metavar='RESOURCE_POLICY')
 @click.option('-a', '--admin', is_flag=True,
@@ -111,7 +111,7 @@ def list(ctx: CLIContext, user_id, is_active, filter_, order, offset, limit) -> 
               help='Create the new keypair in inactive state.')
 @click.option('-r', '--rate-limit', type=int, default=5000,
               help='Set the API query rate limit.')
-def add(user_id, resource_policy, admin, inactive,  rate_limit):
+def add(ctx: CLIContext, user_id, resource_policy, admin, inactive,  rate_limit):
     """
     Add a new keypair.
 
@@ -127,23 +127,37 @@ def add(user_id, resource_policy, admin, inactive,  rate_limit):
                 resource_policy=resource_policy,
                 rate_limit=rate_limit)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='add',
+            )
             sys.exit(1)
-        item = data['keypair']
-        print('Access Key: {0}'.format(item['access_key']))
-        print('Secret Key: {0}'.format(item['secret_key']))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='keypair',
+            extra_info={
+                'access_key': data['keypair']['access_key'],
+                'secret_key': data['keypair']['secret_key'],
+            },
+        )
 
 
 @keypair.command()
+@click.pass_obj
 @click.argument('access_key', type=str, default=None, metavar='ACCESSKEY')
 @click.option('--resource-policy', type=str, help='Resource policy for the keypair.')
 @click.option('--is-admin', type=bool, help='Set admin privilege.')
 @click.option('--is-active', type=bool, help='Set key pair active or not.')
 @click.option('-r', '--rate-limit', type=int, help='Set the API query rate limit.')
-def update(access_key, resource_policy, is_admin, is_active,  rate_limit):
+def update(ctx: CLIContext, access_key, resource_policy, is_admin, is_active,  rate_limit):
     """
     Update an existing keypair.
 
@@ -158,17 +172,31 @@ def update(access_key, resource_policy, is_admin, is_active,  rate_limit):
                 resource_policy=resource_policy,
                 rate_limit=rate_limit)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='update',
+            )
             sys.exit(1)
-        print_done('Key pair is updated: ' + access_key + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'access_key': access_key,
+            },
+        )
 
 
 @keypair.command()
+@click.pass_obj
 @click.argument('access-key', type=str, metavar='ACCESSKEY')
-def delete(access_key):
+def delete(ctx: CLIContext, access_key):
     """
     Delete an existing keypair.
 
@@ -178,17 +206,31 @@ def delete(access_key):
         try:
             data = session.KeyPair.delete(access_key)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='deletion',
+            )
             sys.exit(1)
-        print_done('Key pair is deleted: ' + access_key + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'access_key': access_key,
+            },
+        )
 
 
 @keypair.command()
+@click.pass_obj
 @click.argument('access-key', type=str, metavar='ACCESSKEY')
-def activate(access_key):
+def activate(ctx: CLIContext, access_key):
     """
     Activate an inactivated keypair.
 
@@ -198,17 +240,31 @@ def activate(access_key):
         try:
             data = session.KeyPair.activate(access_key)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='activation',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair activation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='activation',
+            )
             sys.exit(1)
-        print_done('Key pair is activated: ' + access_key + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'access_key': access_key,
+            },
+        )
 
 
 @keypair.command()
+@click.pass_obj
 @click.argument('access-key', type=str, metavar='ACCESSKEY')
-def deactivate(access_key):
+def deactivate(ctx: CLIContext, access_key):
     """
     Deactivate an active keypair.
 
@@ -218,9 +274,22 @@ def deactivate(access_key):
         try:
             data = session.KeyPair.deactivate(access_key)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='keypair',
+                action_name='deactivation',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('KeyPair deactivation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='keypair',
+                action_name='deactivation',
+            )
             sys.exit(1)
-        print_done('Key pair is deactivated: ' + access_key + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'access_key': access_key,
+            },
+        )

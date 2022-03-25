@@ -1,1 +1,0 @@
-Append a backup file extension to the `-i` option of `sed` command to prevent branch substitution errors when tested on macOS

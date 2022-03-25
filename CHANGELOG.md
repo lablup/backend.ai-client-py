@@ -14,7 +14,28 @@ Changes
     WARNING: Don't drop the last line!
 -->
 
-.. towncrier release notes start
+<!-- towncrier release notes start -->
+
+## 22.03.0a1 (2022-03-14)
+
+### Features
+* Add storage proxy address overriding option ([#194](https://github.com/lablup/backend.ai-client-py/issues/194))
+* Print a jsonified result of mutation. ([#198](https://github.com/lablup/backend.ai-client-py/issues/198))
+* Refactor and move `ask_yn()` and other CLI user input validation functions to the backend.ai-cli package ([#199](https://github.com/lablup/backend.ai-client-py/issues/199))
+* Add a new functional API `vfolder.move_file()` and CLI command `vfolder mv` to move files and folders within a vfolder ([#208](https://github.com/lablup/backend.ai-client-py/issues/208))
+* Improve CLI error formatting to use more sensible "message" and "data" fields ([#209](https://github.com/lablup/backend.ai-client-py/issues/209))
+
+### Fixes
+* Fix a `KeyError` for `agent_list` when the user don't use the `--assign-agent` option against the managers without support for the option ([#196](https://github.com/lablup/backend.ai-client-py/issues/196))
+* Append a backup file extension to the `-i` option of `sed` command to prevent branch substitution errors when tested on macOS ([#202](https://github.com/lablup/backend.ai-client-py/issues/202))
+* Update the docs and help texts of vfolder mount options to reflect allowance of arbitrary paths. ([#204](https://github.com/lablup/backend.ai-client-py/issues/204))
+* Use the bgtask APIs to track progress of vfolder clone operation if available. ([#205](https://github.com/lablup/backend.ai-client-py/issues/205))
+* Relax the minimum required version of `attrs` from 21.2 to 20.3 to better support co-installation with other Python packages ([#206](https://github.com/lablup/backend.ai-client-py/issues/206))
+
+### Miscellaneous
+* Update CI workflows to install the matching version of PR and release branches of `backend.ai-cli` ([#200](https://github.com/lablup/backend.ai-client-py/issues/200))
+* Include Python 3.10 in the CI and make it officially supported ([#210](https://github.com/lablup/backend.ai-client-py/issues/210))
+
 
 ## 22.03.0.dev0 (2022-01-05)
 

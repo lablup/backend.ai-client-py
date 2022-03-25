@@ -9,7 +9,6 @@ from ai.backend.client.func.scaling_group import (
 )
 from ai.backend.client.output.fields import scaling_group_fields
 from . import admin
-from ..pretty import print_done, print_error, print_fail
 from ..params import JSONParamType
 from ..types import CLIContext
 
@@ -68,6 +67,7 @@ def list(ctx: CLIContext) -> None:
 
 
 @scaling_group.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new scaling group')
@@ -81,7 +81,7 @@ def list(ctx: CLIContext) -> None:
               help='Set scheduler.')
 @click.option('--scheduler-opts', type=JSONParamType(), default='{}',
               help='Set scheduler options as a JSON string.')
-def add(name, description, inactive,
+def add(ctx: CLIContext, name, description, inactive,
         driver, driver_opts, scheduler, scheduler_opts):
     """
     Add a new scaling group.
@@ -100,16 +100,27 @@ def add(name, description, inactive,
                 scheduler_opts=scheduler_opts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='scaling_group',
+                action_name='add',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Scaling group creation has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='scaling_group',
+                action_name='add',
+            )
             sys.exit(1)
-        item = data['scaling_group']
-        print_done('Scaling group name {0} is created.'.format(item['name']))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='scaling_group',
+        )
 
 
 @scaling_group.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
 @click.option('-d', '--description', type=str, default='',
               help='Description of new scaling group')
@@ -123,7 +134,7 @@ def add(name, description, inactive,
               help='Set scheduler.')
 @click.option('--scheduler-opts', type=JSONParamType(), default=None,
               help='Set scheduler options as a JSON string.')
-def update(name, description, inactive,
+def update(ctx: CLIContext, name, description, inactive,
            driver, driver_opts, scheduler, scheduler_opts):
     """
     Update existing scaling group.
@@ -142,17 +153,31 @@ def update(name, description, inactive,
                 scheduler_opts=scheduler_opts,
             )
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='scaling_group',
+                action_name='update',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Scaling group update has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='scaling_group',
+                action_name='update',
+            )
             sys.exit(1)
-        print_done('Scaling group {0} is updated.'.format(name))
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'name': name,
+            },
+        )
 
 
 @scaling_group.command()
+@click.pass_obj
 @click.argument('name', type=str, metavar='NAME')
-def delete(name):
+def delete(ctx: CLIContext, name):
     """
     Delete an existing scaling group.
 
@@ -162,18 +187,32 @@ def delete(name):
         try:
             data = session.ScalingGroup.delete(name)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='scaling_group',
+                action_name='deletion',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Scaling group deletion has failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='scaling_group',
+                action_name='deletion',
+            )
             sys.exit(1)
-        print_done('Scaling group is deleted: ' + name + '.')
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'name': name,
+            },
+        )
 
 
 @scaling_group.command()
+@click.pass_obj
 @click.argument('scaling_group', type=str, metavar='SCALING_GROUP')
 @click.argument('domain', type=str, metavar='DOMAIN')
-def associate_scaling_group(scaling_group, domain):
+def associate_scaling_group(ctx: CLIContext, scaling_group, domain):
     """
     Associate a domain with a scaling_group.
 
@@ -185,18 +224,33 @@ def associate_scaling_group(scaling_group, domain):
         try:
             data = session.ScalingGroup.associate_domain(scaling_group, domain)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='scaling_group',
+                action_name='scaling_group_association',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Associating scaling group with domain failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='scaling_group',
+                action_name='scaling_group_association',
+            )
             sys.exit(1)
-        print_done('Scaling group {} is assocatiated with domain {}.'.format(scaling_group, domain))
+        ctx.output.print_mutation_result(
+            data,
+            extra_info={
+                'detail_msg': 'Scaling group {} is assocatiated with domain {}.'
+                .format(scaling_group, domain),
+            },
+        )
 
 
 @scaling_group.command()
+@click.pass_obj
 @click.argument('scaling_group', type=str, metavar='SCALING_GROUP')
 @click.argument('domain', type=str, metavar='DOMAIN')
-def dissociate_scaling_group(scaling_group, domain):
+def dissociate_scaling_group(ctx: CLIContext, scaling_group, domain):
     """
     Dissociate a domain from a scaling_group.
 
@@ -208,9 +262,24 @@ def dissociate_scaling_group(scaling_group, domain):
         try:
             data = session.ScalingGroup.dissociate_domain(scaling_group, domain)
         except Exception as e:
-            print_error(e)
+            ctx.output.print_mutation_error(
+                e,
+                item_name='scaling_group',
+                action_name='scaling_group_dissociation',
+            )
             sys.exit(1)
         if not data['ok']:
-            print_fail('Dissociating scaling group from domain failed: {0}'.format(data['msg']))
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='scaling_group',
+                action_name='scaling_group_dissociation',
+            )
             sys.exit(1)
-        print_done('Scaling group {} is dissociated from domain {}.'.format(scaling_group, domain))
+        ctx.output.print_mutation_result(
+            data,
+            item_name='scaling_group',
+            extra_info={
+                'detail_msg': 'Scaling group {} is dissociated from domain {}.'
+                .format(scaling_group, domain),
+            },
+        )
