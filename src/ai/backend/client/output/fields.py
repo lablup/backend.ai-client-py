@@ -111,7 +111,6 @@ keypair_fields = FieldSet([
     FieldSpec('last_used'),
     FieldSpec('resource_policy'),
     FieldSpec('rate_limit'),
-    FieldSpec('concurrency_limit'),
     FieldSpec('concurrency_used'),
     FieldSpec('ssh_public_key'),
     FieldSpec('ssh_private_key'),
@@ -124,7 +123,7 @@ keypair_resource_policy_fields = FieldSet([
     FieldSpec('name'),
     FieldSpec('created_at'),
     FieldSpec('total_resource_slots'),
-    FieldSpec('max_concurrent_sessions'),
+    FieldSpec('max_concurrent_sessions'),  # formerly concurrency_limit
     FieldSpec('max_vfolder_count'),
     FieldSpec('max_vfolder_size', formatter=sizebytes_output_formatter),
     FieldSpec('idle_timeout'),

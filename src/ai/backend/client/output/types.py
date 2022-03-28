@@ -25,7 +25,6 @@ _predefined_humanized_field_names = {
     "group_id": "Group ID",
     "user_id": "User ID",
     "resource_policy": "Res.Policy",
-    "concurrency_limit": "Concur.Limit",
     "concurrency_used": "Concur.Used",
     "fsprefix": "FS Prefix",
     "hardware_metadata": "HW Metadata",
