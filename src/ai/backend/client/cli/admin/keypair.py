@@ -32,7 +32,6 @@ def info(ctx: CLIContext) -> None:
         keypair_fields['last_used'],
         keypair_fields['resource_policy'],
         keypair_fields['rate_limit'],
-        keypair_fields['concurrency_limit'],
         keypair_fields['concurrency_used'],
     ]
     with Session() as session:
@@ -77,7 +76,6 @@ def list(ctx: CLIContext, user_id, is_active, filter_, order, offset, limit) -> 
         keypair_fields['last_used'],
         keypair_fields['resource_policy'],
         keypair_fields['rate_limit'],
-        keypair_fields['concurrency_limit'],
         keypair_fields['concurrency_used'],
     ]
     try:

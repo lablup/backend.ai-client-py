@@ -20,6 +20,25 @@ if TYPE_CHECKING:
     from ai.backend.client.cli.types import CLIContext
 
 
+_predefined_humanized_field_names = {
+    "id": "ID",
+    "uuid": "UUID",
+    "group_id": "Group ID",
+    "user_id": "User ID",
+    "resource_policy": "Res.Policy",
+    "concurrency_used": "Concur.Used",
+    "fsprefix": "FS Prefix",
+    "hardware_metadata": "HW Metadata",
+    "performance_metric": "Perf.Metric",
+}
+
+
+def _make_camel_case(name: str) -> str:
+    return " ".join(
+        map(lambda s: s[0].upper() + s[1:], name.split("_")),
+    )
+
+
 class AbstractOutputFormatter(metaclass=ABCMeta):
     """
     The base implementation of output formats.
