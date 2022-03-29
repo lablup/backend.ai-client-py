@@ -16,6 +16,12 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 21.09.5 (2022-03-29)
+
+### Fixes
+* Fix missing propagation of `starts_at` and `bootstrap_script` arguments to the session creation API, which have been supported since v20.03 ([#213](https://github.com/lablup/backend.ai-client-py/issues/213))
+
+
 ## 21.09.4 (2022-03-07)
 
 ### Fixes
