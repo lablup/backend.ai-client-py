@@ -115,7 +115,6 @@ keypair_fields = FieldSet([
     CliFieldSpec('last_used'),
     CliFieldSpec('resource_policy'),
     CliFieldSpec('rate_limit'),
-    CliFieldSpec('concurrency_limit'),
     CliFieldSpec('concurrency_used'),
     CliFieldSpec('ssh_public_key'),
     CliFieldSpec('ssh_private_key'),
@@ -128,7 +127,7 @@ keypair_resource_policy_fields = FieldSet([
     CliFieldSpec('name'),
     CliFieldSpec('created_at'),
     CliFieldSpec('total_resource_slots'),
-    CliFieldSpec('max_concurrent_sessions'),
+    CliFieldSpec('max_concurrent_sessions'),  # formerly concurrency_limit
     CliFieldSpec('max_vfolder_count'),
     CliFieldSpec('max_vfolder_size', formatter=sizebytes_output_formatter),
     CliFieldSpec('idle_timeout'),
