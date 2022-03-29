@@ -16,6 +16,17 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 22.03.0a2 (2022-03-29)
+
+### Features
+* Display the architecture field in agent and image lists ([#212](https://github.com/lablup/backend.ai-client-py/issues/212))
+* Add `--depends` CLI option to the `start` &amp; `session create` commands and the corresponding functional API arguments ([#214](https://github.com/lablup/backend.ai-client-py/issues/214))
+
+### Fixes
+* Fix missing propagation of `starts_at` and `bootstrap_script` arguments to the session creation API, which have been supported since v20.03 ([#213](https://github.com/lablup/backend.ai-client-py/issues/213))
+* Remove remaining traces of `keypair.concurrency_limit` which has been replaced with `keypair_resource_policy.max_concurrenct_sessions` ([#215](https://github.com/lablup/backend.ai-client-py/issues/215))
+
+
 ## 22.03.0a1 (2022-03-14)
 
 ### Features
