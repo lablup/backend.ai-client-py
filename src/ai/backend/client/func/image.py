@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Optional, Sequence
 
 from .fields import set_default_fields, image_fields
 from .types import FieldSpec
@@ -67,7 +67,12 @@ class Image(BaseFunction):
 
     @api_function
     @classmethod
-    async def alias_image(cls, alias: str, target: str) -> dict:
+    async def alias_image(
+        cls,
+        alias: str,
+        target: str,
+        arch: Optional[str] = None,
+    ) -> dict:
         q = 'mutation($alias: String!, $target: String!) {' \
             '  alias_image(alias: $alias, target: $target) {' \
             '   ok msg' \
@@ -77,6 +82,8 @@ class Image(BaseFunction):
             'alias': alias,
             'target': target,
         }
+        if arch:
+            variables = {'architecture': arch, **variables}
         data = await api_session.get().Admin._query(q, variables)
         return data['alias_image']
 
