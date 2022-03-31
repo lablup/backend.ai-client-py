@@ -69,12 +69,6 @@ def read_src_version():
     assert m is not None, 'Could not read the version information!'
     return m.group(1)
 
-def parse_rqrs_to_list(req) -> List:
-    if isinstance(req, list):
-        return req
-    elif isinstance(req, dict):
-        return [f'{r.strip()}{ver.strip()}' for r, ver in req.items()]
-
 setup_args = dict(
     name='backend.ai-client',
     # Versions should comply with PEP440.  For a discussion on single-sourcing
@@ -106,7 +100,7 @@ setup_args = dict(
     packages=find_namespace_packages(where='src', include='ai.backend.*'),
     python_requires='>=3.8',
     setup_requires=setup_requires,
-    install_requires=parse_rqrs_to_list(install_requires),
+    install_requires=[f'{r}{ver}' for r, ver in install_requires.items()],
     extras_require={
         'dev': dev_requires,
         'build': build_requires,

@@ -21,7 +21,8 @@ if __name__ == '__main__':
         **get_filtered_args(
             setup_args,
             dict(
+                name = 'backend.ai-client-sdk',
                 install_requires = \
-                    [f'{r}{ver}' for r, ver in install_requires.items() if r not in pruned_req]
+                    [f'{r}{ver}' for r, ver in install_requires.items() if r not in pruned_req],
             ),
     ))

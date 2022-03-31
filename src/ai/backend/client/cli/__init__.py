@@ -7,3 +7,5 @@ from . import dotfile  # noqa
 from . import server_log  # noqa
 from . import admin  # noqa
 from . import app, logs, proxy, run # noqa
+
+__version__ = '22.03.0a2'
