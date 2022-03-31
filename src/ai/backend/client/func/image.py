@@ -66,7 +66,12 @@ class Image(BaseFunction):
 
     @api_function
     @classmethod
-    async def alias_image(cls, alias: str, target: str, arch: Optional[str]) -> dict:
+    async def alias_image(
+        cls,
+        alias: str,
+        target: str,
+        arch: Optional[str] = None,
+    ) -> dict:
         q = 'mutation($alias: String!, $target: String!) {' \
             '  alias_image(alias: $alias, target: $target) {' \
             '   ok msg' \
