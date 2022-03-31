@@ -14,7 +14,7 @@ import click
 from tabulate import tabulate
 
 from ..pagination import MAX_PAGE_SIZE
-from ..output.types import CliFieldSpec
+from ..output.types import FieldSpec
 
 
 def get_preferred_page_size() -> int:
@@ -26,7 +26,7 @@ _Item = MutableMapping[str, Any]
 
 def tabulate_items(
     items: Iterator[_Item],
-    fields: Sequence[CliFieldSpec],
+    fields: Sequence[FieldSpec],
     *,
     page_size: int = None,
     item_formatter: Callable[[_Item], None] = None,

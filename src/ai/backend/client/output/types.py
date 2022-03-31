@@ -14,7 +14,7 @@ from typing import (
 
 import attr
 
-from ..func.types import FieldSpec, PaginatedResult
+from ..func.types import FieldSpec as BaseFieldSpec, PaginatedResult as BasePaginatedResult
 
 if TYPE_CHECKING:
     from ai.backend.client.cli.types import CLIContext
@@ -26,16 +26,16 @@ class AbstractOutputFormatter(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def format_console(self, value: Any, field: CliFieldSpec) -> str:
+    def format_console(self, value: Any, field: FieldSpec) -> str:
         raise NotImplementedError
 
     @abstractmethod
-    def format_json(self, value: Any, field: CliFieldSpec) -> Any:
+    def format_json(self, value: Any, field: FieldSpec) -> Any:
         raise NotImplementedError
 
 
 @attr.define(slots=True, frozen=True)
-class CliFieldSpec(FieldSpec):
+class FieldSpec(BaseFieldSpec):
     """
     The specification on how to represent a GraphQL object field
     in the functional CLI output handlers.
@@ -57,8 +57,8 @@ T = TypeVar('T')
 
 
 @attr.define(slots=True)
-class CliPaginatedResult(PaginatedResult, Generic[T]):
-    fields: Sequence[CliFieldSpec]
+class PaginatedResult(BasePaginatedResult, Generic[T]):
+    fields: Sequence[FieldSpec]
 
 
 class BaseOutputHandler(metaclass=ABCMeta):
@@ -70,7 +70,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     def print_item(
         self,
         item: Mapping[str, Any] | None,
-        fields: Sequence[CliFieldSpec],
+        fields: Sequence[FieldSpec],
     ) -> None:
         raise NotImplementedError
 
@@ -78,7 +78,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     def print_items(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[CliFieldSpec],
+        fields: Sequence[FieldSpec],
     ) -> None:
         raise NotImplementedError
 
@@ -86,7 +86,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     def print_list(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[CliFieldSpec],
+        fields: Sequence[FieldSpec],
         *,
         is_scalar: bool = False,
     ) -> None:
@@ -95,7 +95,7 @@ class BaseOutputHandler(metaclass=ABCMeta):
     @abstractmethod
     def print_paginated_list(
         self,
-        fetch_func: Callable[[int, int], CliPaginatedResult[T]],
+        fetch_func: Callable[[int, int], PaginatedResult[T]],
         initial_page_offset: int,
         page_size: int = None,
     ) -> None:

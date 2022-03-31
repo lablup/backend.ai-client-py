@@ -17,7 +17,7 @@ from ..pretty import print_fail
 from ..session import session as user_session
 from ..types import CLIContext
 from ..fields import session_fields, session_fields_v5
-from ...output.types import CliFieldSpec
+from ...output.types import FieldSpec
 
 
 SessionItem = Dict[str, Any]
@@ -78,7 +78,7 @@ def _list_cmd(name: str = "list", docs: str = None):
         """
         List and manage compute sessions.
         """
-        fields: List[CliFieldSpec] = []
+        fields: List[FieldSpec] = []
         with Session() as session:
             is_admin = session.KeyPair(session.config.access_key).info()['is_admin']
             try:

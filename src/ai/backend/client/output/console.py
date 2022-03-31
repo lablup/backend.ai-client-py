@@ -17,7 +17,7 @@ from ai.backend.client.cli.pagination import (
     get_preferred_page_size,
     tabulate_items,
 )
-from .types import CliFieldSpec, CliPaginatedResult, BaseOutputHandler
+from .types import FieldSpec, PaginatedResult, BaseOutputHandler
 
 
 class NoItems(Exception):
@@ -29,7 +29,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
     def print_item(
         self,
         item: Mapping[str, Any] | None,
-        fields: Sequence[CliFieldSpec],
+        fields: Sequence[FieldSpec],
     ) -> None:
         if item is None:
             print_fail("No matching entry found.")
@@ -49,7 +49,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
     def print_items(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[CliFieldSpec],
+        fields: Sequence[FieldSpec],
     ) -> None:
         field_map = {f.field_name: f for f in fields}
         for idx, item in enumerate(items):
@@ -69,7 +69,7 @@ class ConsoleOutputHandler(BaseOutputHandler):
     def print_list(
         self,
         items: Sequence[Mapping[str, Any]],
-        fields: Sequence[CliFieldSpec],
+        fields: Sequence[FieldSpec],
         *,
         is_scalar: bool = False,
     ) -> None:
@@ -119,13 +119,13 @@ class ConsoleOutputHandler(BaseOutputHandler):
 
     def print_paginated_list(
         self,
-        fetch_func: Callable[[int, int], CliPaginatedResult],
+        fetch_func: Callable[[int, int], PaginatedResult],
         initial_page_offset: int,
         page_size: int = None,
     ) -> None:
         if sys.stdout.isatty() and page_size is None:
             page_size = get_preferred_page_size()
-            fields: Sequence[CliFieldSpec] = []
+            fields: Sequence[FieldSpec] = []
 
             def infinite_fetch():
                 nonlocal fields
