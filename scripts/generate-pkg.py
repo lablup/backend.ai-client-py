@@ -35,7 +35,9 @@ def set_manifest(pkg_name):
                     shutil.copyfile(src, dst)
                 elif cmd == 'graft':
                     shutil.copytree(src, dst, dirs_exist_ok=True)
-                elif cmd in ('exclude', 'prune'):
+                elif cmd == 'exclude':
+                    os.unlink(dst)
+                elif cmd == 'prune':
                     shutil.rmtree(dst)
 
     def copy_mnfst():
