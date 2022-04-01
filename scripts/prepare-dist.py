@@ -1,15 +1,16 @@
+import argparse
 import os
-import sys
 
 
-def copy_mnfst(pkg_name):
-    mnfst = 'MANIFEST.in'
-    copied = f'MANIFEST.{pkg_name}.in'
-    with open(mnfst, 'a') as f:
-        with open(copied, 'r') as copied_f:
-            lines = copied_f.readlines()
-            for line in lines:
-                f.write(line)
+def copy_manifest(pkg_name):
+    dst = 'MANIFEST.in'
+    src = f'MANIFEST.{pkg_name}.in'
+    with (
+        open(dst, 'a') as dst_file,
+        open(src, 'r') as src_file,
+    ):
+        for line in src_file:
+            dst_file.write(line)
 
 
 def rename_setup(pkg_name):
@@ -19,19 +20,18 @@ def rename_setup(pkg_name):
     os.rename(fname, 'setup.py')
 
 
-def prepare():
-    try:
-        pkg_name = sys.argv[1]
-    except IndexError:
-        pkg_name = 'orig'
-
-    if pkg_name not in ('orig', 'client', 'client-cli'):
-        print("The argument string must be one of ('', 'client', 'client-cli')")
-        exit(1)
-
-    copy_mnfst(pkg_name)
-    rename_setup(pkg_name)
+def main():
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument(
+        'pkg_name',
+        choices=['orig', 'client', 'client-cli'],
+        default='orig',
+        help="The target package to build",
+    )
+    args = argparser.parse_args()
+    copy_manifest(args.pkg_name)
+    rename_setup(args.pkg_name)
 
 
 if __name__ == '__main__':
-    prepare()
+    main()
