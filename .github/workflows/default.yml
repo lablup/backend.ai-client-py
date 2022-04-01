@@ -183,5 +183,11 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
+      if [ ${github.ref} == 'client-cli' ] || [ ${github.ref} == 'client' ]; then
+        export REF_NAME="${github.ref}"
+        python tmp/${REF_NAME}/setup.py sdist bdist_wheel
+        twine upload tmp/${REF_NAME}/dist/*
+      else
         python setup.py sdist bdist_wheel
         twine upload dist/*
+      fi
