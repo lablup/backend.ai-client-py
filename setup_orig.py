@@ -75,6 +75,7 @@ def read_src_version(path: Optional[Path] = None):
     assert m is not None, 'Could not read the version information!'
     return m.group(1)
 
+
 setup_args = dict(
     name='backend.ai-client',
     # Versions should comply with PEP440.  For a discussion on single-sourcing

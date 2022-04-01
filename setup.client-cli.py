@@ -13,6 +13,7 @@ install_requires = {
     'backend.ai-client-sdk': '>=22.03.0a2',
 }
 
+
 def get_filtered_args(setup_args, reqs_map):
     filtered_setup_args = {**setup_args}
     for req, req_list in reqs_map.items():
@@ -25,12 +26,12 @@ if __name__ == '__main__':
         **get_filtered_args(
             setup_args,
             dict(
-                name = 'backend.ai-client-cli',
-                version = read_src_version(
-                    path = (Path(__file__).parent / 'src' / 'ai' /
+                name='backend.ai-client-cli',
+                version=read_src_version(
+                    path=(Path(__file__).parent / 'src' / 'ai' /
                     'backend' / 'client' / 'cli' / '__init__.py'),
                 ),
-                install_requires = [
+                install_requires=[
                     f'{r}{ver}' for r, ver in install_requires.items()
                 ],
             ),
