@@ -1,18 +1,27 @@
+import argparse
 import os
 import sys
 import shutil
 from pathlib import Path
 
-def set_mnfst(pkg_name):
+def set_manifest(pkg_name):
+    """
+    Append the package-specific manifest to the integrated manifest.
+    Package-specific manifests have files/directories to exclude from their final packages.
+    
+    Copy or remove files and directories to tmp/<package_name>/ as manifest.
+    This step let type checker or linter check any dangling import.
+    """
     mnfst = 'MANIFEST.orig.in'
     copied = f'MANIFEST.{pkg_name}.in'
 
-    def append_mnfst():
-        with open(mnfst, 'a') as f:
-            with open(copied, 'r') as copied_f:
-                lines = copied_f.readlines()
-                for l in lines:
-                    f.write(l)
+    def append_manifest():
+        with (
+            open(mnfst, 'a') as dst_file,
+            open(copied, 'r') as pkg_specific_file,
+        ):
+            for line in pkg_specific_file:
+                dst_file.write(line)
 
     def copy_to_tmp_workspace():
         os.makedirs(f'./tmp/{pkg_name}', exist_ok=True)
@@ -35,7 +44,7 @@ def set_mnfst(pkg_name):
         dst = Path('tmp', pkg_name, 'MANIFEST.in')
         shutil.copyfile(mnfst, dst)
 
-    append_mnfst()
+    append_manifest()
     copy_to_tmp_workspace()
     copy_mnfst()
 
@@ -45,17 +54,16 @@ def copy_setup(pkg_name):
     shutil.copyfile(setup_name, dst)
 
 def generate():
-    try:
-        pkg_name = sys.argv[1]
-    except IndexError:
-        pkg_name = None
-
-    if pkg_name not in ('client', 'client-cli'):
-        print("The argument string must be one of ('client', 'client-cli')")
-        exit(1)
-
-    set_mnfst(pkg_name)
-    copy_setup(pkg_name)
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument(
+        'pkg_name',
+        choices=['orig', 'client', 'client-cli'],
+        default='orig',
+        help="The target package to build",
+    )
+    args = argparser.parse_args()
+    set_manifest(args.pkg_name)
+    copy_setup(args.pkg_name)
 
 if __name__ == '__main__':
     generate()
