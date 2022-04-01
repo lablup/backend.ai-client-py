@@ -48,7 +48,7 @@ def set_manifest(pkg_name):
 
 
 def copy_setup(pkg_name):
-    setup_name = f'setup.{pkg_name}.py'
+    setup_name = f'setup_{pkg_name}.py'
     dst = Path('tmp', pkg_name, 'setup.py')
     shutil.copyfile(setup_name, dst)
 
