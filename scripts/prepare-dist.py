@@ -3,13 +3,15 @@ import os
 
 
 def copy_manifest(pkg_name):
-    dst = 'MANIFEST.in'
-    src = f'MANIFEST.{pkg_name}.in'
+    """
+    Append the package-specific manifest to the integrated manifest.
+    Package-specific manifests have files/directories to exclude from their final packages.
+    """
     with (
-        open(dst, 'a') as dst_file,
-        open(src, 'r') as src_file,
+        open('MANIFEST.in', 'a') as dst_file,
+        open(f'MANIFEST.{pkg_name}.in', 'r') as pkg_specific_file,
     ):
-        for line in src_file:
+        for line in pkg_specific_file:
             dst_file.write(line)
 
 
