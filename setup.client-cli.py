@@ -1,5 +1,5 @@
 from pathlib import Path
-from setuptools import setup, find_namespace_packages
+from setuptools import setup
 
 from setup_orig import setup_args, install_requires as base_requires, read_src_version
 
@@ -19,6 +19,7 @@ def get_filtered_args(setup_args, reqs_map):
         filtered_setup_args[req] = req_list
     return filtered_setup_args
 
+
 if __name__ == '__main__':
     setup(
         **get_filtered_args(
@@ -29,7 +30,9 @@ if __name__ == '__main__':
                     path = (Path(__file__).parent / 'src' / 'ai' /
                     'backend' / 'client' / 'cli' / '__init__.py'),
                 ),
-                install_requires = \
-                    [f'{r}{ver}' for r, ver in install_requires.items()],
+                install_requires = [
+                    f'{r}{ver}' for r, ver in install_requires.items()
+                ],
             ),
-    ))
+        ),
+    )
