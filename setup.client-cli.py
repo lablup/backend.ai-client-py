@@ -1,8 +1,7 @@
 from setuptools import setup
 from pathlib import Path
-import re
 
-from setup_orig import setup_args, install_requires as base_requires
+from setup_orig import setup_args, install_requires as base_requires, read_src_version
 
 install_requires = {
     'click': base_requires['click'],
@@ -13,14 +12,6 @@ install_requires = {
     'tqdm': base_requires['tqdm'],
     'backend.ai-client-sdk': '>=22.03.0a2',
 }
-
-def read_src_version():
-    path = (Path(__file__).parent / 'src' /
-            'ai' / 'backend' / 'client' / 'cli' / '__init__.py')
-    src = path.read_text(encoding='utf-8')
-    m = re.search(r"^__version__ = '([^']+)'$", src, re.MULTILINE)
-    assert m is not None, 'Could not read the version information!'
-    return m.group(1)
 
 def get_filtered_args(setup_args, reqs_map):
     filtered_setup_args = {**setup_args}
@@ -34,7 +25,10 @@ if __name__ == '__main__':
             setup_args,
             dict(
                 name = 'backend.ai-client-cli',
-                version = read_src_version(),
+                version = read_src_version(
+                    path = (Path(__file__).parent / 'tmp' / 'ai' /
+                    'backend' / 'client' / 'cli' / '__init__.py'),
+                ),
                 install_requires = \
                     [f'{r}{ver}' for r, ver in install_requires.items()],
             ),
