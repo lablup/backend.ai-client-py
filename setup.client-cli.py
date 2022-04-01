@@ -1,5 +1,5 @@
-from setuptools import setup
 from pathlib import Path
+from setuptools import setup, find_namespace_packages
 
 from setup_orig import setup_args, install_requires as base_requires, read_src_version
 
@@ -26,7 +26,7 @@ if __name__ == '__main__':
             dict(
                 name = 'backend.ai-client-cli',
                 version = read_src_version(
-                    path = (Path(__file__).parent / 'tmp' / 'ai' /
+                    path = (Path(__file__).parent / 'src' / 'ai' /
                     'backend' / 'client' / 'cli' / '__init__.py'),
                 ),
                 install_requires = \

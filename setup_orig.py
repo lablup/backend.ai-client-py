@@ -63,9 +63,14 @@ docs_requires = [
 
 def read_src_version(path: Optional[Path] = None):
     if path is None:
-        path = (Path(__file__).parent / 'tmp' /
+        path = (Path(__file__).parent / 'src' /
                 'ai' / 'backend' / 'client' / '__init__.py')
-    src = path.read_text(encoding='utf-8')
+        try:
+            src = path.read_text(encoding='utf-8')
+        except FileNotFoundError:
+            return None
+    else:
+        src = path.read_text(encoding='utf-8')
     m = re.search(r"^__version__ = '([^']+)'$", src, re.MULTILINE)
     assert m is not None, 'Could not read the version information!'
     return m.group(1)
@@ -97,8 +102,8 @@ setup_args = dict(
         'Topic :: Scientific/Engineering',
         'Topic :: Software Development',
     ],
-    package_dir={'': 'tmp'},
-    packages=find_namespace_packages(where='tmp', include='ai.backend.*'),
+    package_dir={'': 'src'},
+    packages=find_namespace_packages(where='src', include='ai.backend.*'),
     python_requires='>=3.8',
     setup_requires=setup_requires,
     install_requires=[f'{r}{ver}' for r, ver in install_requires.items()],
