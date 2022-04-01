@@ -185,35 +185,3 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
-
-  tmp-deploy-splited-pkg-to-pypi:
-    needs: [lint, typecheck, test]
-    if: >
-      github.event_name == 'push'
-      && contains(github.ref, 'refs/tags/')
-      && (github.ref_name == 'cli' || github.ref_name == 'client')
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v3
-    with:
-        python-version: "3.10"
-        cache: "pip"
-        cache-dependency-path: |
-          setup.py
-          requirements/build.txt
-    - name: Install dependencies
-      env:
-        REQUIREMENTS_FILE: build
-      run: |
-        python -m pip install -U pip setuptools wheel
-        python -m pip install -U -r requirements/build.txt
-    - name: Build and publish
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        export REF_NAME="${github.ref_name}"
-        python tmp/${REF_NAME}/setup.py sdist bdist_wheel
-        twine upload dist/*
