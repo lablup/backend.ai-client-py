@@ -158,6 +158,34 @@ jobs:
     - name: Send code coverage report
       uses: codecov/codecov-action@v1
 
+  deploy-to-pypi:
+    needs: [lint, typecheck, test]
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+        cache: "pip"
+        cache-dependency-path: |
+          setup.py
+          requirements/build.txt
+    - name: Install dependencies
+      env:
+        REQUIREMENTS_FILE: build
+      run: |
+        python -m pip install -U pip setuptools wheel
+        python -m pip install -U -r requirements/build.txt
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python setup.py sdist bdist_wheel
+        twine upload dist/*
+  
   deploy-splited-pkg-to-pypi:
     needs: [lint, typecheck, test]
     on:
