@@ -186,7 +186,7 @@ jobs:
         python setup.py sdist bdist_wheel
         twine upload dist/*
 
-  deploy-splited-pkg-to-pypi:
+  tmp-deploy-splited-pkg-to-pypi:
     needs: [lint, typecheck, test]
     if: >
       github.event_name == 'push'
