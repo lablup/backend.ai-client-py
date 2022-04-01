@@ -23,13 +23,12 @@ def set_manifest(pkg_name):
                 dst_file.write(line)
 
     def copy_to_tmp_workspace():
-        os.makedirs(f'./tmp/{pkg_name}', exist_ok=True)
+        workspace_dir = Path('tmp', pkg_name)
+        os.makedirs(workspace_dir, exist_ok=True)
         with open(mnfst, 'r') as manifest_file:
             for line in manifest_file:
                 cmd, _, src = line.rstrip('\n').partition(' ')
                 subtree_path = Path(src).parts
-                if src.startswith('src'):
-                    subtree_path = ['src', *subtree_path[1:]]
                 dst = Path('tmp', pkg_name, *subtree_path)
                 if cmd == 'include':
                     shutil.copyfile(src, dst)
@@ -55,17 +54,31 @@ def copy_setup(pkg_name):
     shutil.copyfile(setup_name, dst)
 
 
+def remove_duplicate_files():
+    """
+    Since type-checker raise 'Duplicate module name' error,
+    unused duplicated named files should be unlinked
+    """
+
+    for dup_file_name in ('setup.py', 'setup_orig.py'):
+        if os.path.exists(dup_file_name):
+            os.unlink(dup_file_name)
+
+
 def generate():
     argparser = argparse.ArgumentParser()
     argparser.add_argument(
-        'pkg_name',
+        'pkg_names',
+        nargs='*',
         choices=['orig', 'client', 'client-cli'],
         default='orig',
         help="The target package to build",
     )
     args = argparser.parse_args()
-    set_manifest(args.pkg_name)
-    copy_setup(args.pkg_name)
+    for pkg_name in args.pkg_names:
+        set_manifest(pkg_name)
+        copy_setup(pkg_name)
+    remove_duplicate_files()
 
 
 if __name__ == '__main__':

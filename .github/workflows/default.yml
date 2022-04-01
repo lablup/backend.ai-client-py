@@ -45,8 +45,7 @@ jobs:
           echo "::add-matcher::.github/workflows/flake8-matcher.json"
         fi
         # Split packages into two different directories before lint
-        python scripts/generate-pkg.py client-cli
-        python scripts/generate-pkg.py client
+        python scripts/generate-pkg.py client client-cli
         python -m flake8 src/ai/backend tests scripts setup*.py tmp/client tmp/client-cli
 
   typecheck:
@@ -89,10 +88,11 @@ jobs:
         else
           echo "::add-matcher::.github/workflows/mypy-matcher.json"
         fi
-        # Split packages into two different directories before type-check
-        python scripts/generate-pkg.py client-cli
-        python scripts/generate-pkg.py client
-        python -m mypy --no-color-output src/ai/backend scripts setup*.py tmp/client tmp/client-cli
+        python -m mypy --no-color-output src/ai/backend scripts setup*.py
+        # Split packages into two different directories and do type-check each package
+        python scripts/generate-pkg.py client client-cli
+        MYPYPATH='tmp/client/src' python -m mypy --namespace-packages --explicit-package-bases --no-color-output --exclude /docs/ tmp/client
+        MYPYPATH='tmp/client-cli/src' python -m mypy --namespace-packages --explicit-package-bases --no-color-output --exclude /docs/ tmp/client-cli
 
   test:
     runs-on: ${{ matrix.os }}
