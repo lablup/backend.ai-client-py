@@ -4,24 +4,7 @@ on: [push, pull_request]
 
 jobs:
 
-  split-pkg:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10"]
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Split sources
-      run: |
-        python scripts/generate-pkg.py client-cli
-        python scripts/generate-pkg.py client
-
   lint:
-    needs: [split-pkg]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -61,10 +44,12 @@ jobs:
         else
           echo "::add-matcher::.github/workflows/flake8-matcher.json"
         fi
-        python -m flake8 src/ai/backend tests scripts setup*.py tmp/client tmp/cli
+        # Split packages into two different directories before lint
+        python scripts/generate-pkg.py client-cli
+        python scripts/generate-pkg.py client
+        python -m flake8 src/ai/backend tests scripts setup*.py tmp/client tmp/client-cli
 
   typecheck:
-    needs: [split-pkg]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -104,7 +89,10 @@ jobs:
         else
           echo "::add-matcher::.github/workflows/mypy-matcher.json"
         fi
-        python -m mypy --no-color-output src/ai/backend scripts setup*.py tmp/client tmp/cli
+        # Split packages into two different directories before type-check
+        python scripts/generate-pkg.py client-cli
+        python scripts/generate-pkg.py client
+        python -m mypy --no-color-output src/ai/backend scripts setup*.py tmp/client tmp/client-cli
 
   test:
     runs-on: ${{ matrix.os }}
@@ -190,6 +178,8 @@ jobs:
         fi
         echo "HEAD: ${GHBRANCH} (${GITHUB_REF}, ${GITHUB_HEAD_REF})"
         if [ "$GHBRANCH" == 'client-cli' ] || [ "$GHBRANCH" == 'client' ]; then
+          # Split packages into the specific directories before distribution
+          python scripts/generate-pkg.py ${GHBRANCH}
           python tmp/${GHBRANCH}/setup.py sdist bdist_wheel
           twine upload tmp/${GHBRANCH}/dist/*
         else
