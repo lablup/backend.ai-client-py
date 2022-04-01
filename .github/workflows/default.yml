@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
 
-  generate-pkg:
+  split-pkg:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -188,10 +188,6 @@ jobs:
   
   deploy-splited-pkg-to-pypi:
     needs: [lint, typecheck, test]
-    on:
-      push:
-        branches:
-          - cli
     if: >
       github.event_name == 'push'
       && contains(github.ref, 'refs/tags/')
