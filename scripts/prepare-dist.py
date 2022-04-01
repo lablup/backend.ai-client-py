@@ -1,7 +1,6 @@
 import os
 import sys
-import shutil
-from pathlib import Path
+
 
 def copy_mnfst(pkg_name):
     mnfst = 'MANIFEST.in'
@@ -9,14 +8,16 @@ def copy_mnfst(pkg_name):
     with open(mnfst, 'a') as f:
         with open(copied, 'r') as copied_f:
             lines = copied_f.readlines()
-            for l in lines:
-                f.write(l)
+            for line in lines:
+                f.write(line)
+
 
 def rename_setup(pkg_name):
     fname = f'setup.{pkg_name}.py'
     if os.path.exists('setup.py'):
         os.rename('setup.py', 'setup.tmp.py')
     os.rename(fname, 'setup.py')
+
 
 def prepare():
     try:
@@ -30,6 +31,7 @@ def prepare():
 
     copy_mnfst(pkg_name)
     rename_setup(pkg_name)
+
 
 if __name__ == '__main__':
     prepare()
