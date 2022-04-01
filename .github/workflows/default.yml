@@ -21,7 +21,7 @@ jobs:
         python scripts/generate-pkg.py client
 
   lint:
-    needs: [generate-pkg]
+    needs: [split-pkg]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -64,7 +64,7 @@ jobs:
         python -m flake8 src/ai/backend tests scripts setup*.py tmp/client tmp/cli
 
   typecheck:
-    needs: [generate-pkg]
+    needs: [split-pkg]
     runs-on: ubuntu-latest
     strategy:
       matrix:
