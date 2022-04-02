@@ -89,10 +89,10 @@ jobs:
           echo "::add-matcher::.github/workflows/mypy-matcher.json"
         fi
         python -m mypy --no-color-output src/ai/backend scripts setup*.py
-        # Split packages into two different directories and do type-check each package
+        # Split packages into two different directories and perform type-check each package
         python scripts/generate-pkg.py client client-cli
-        MYPYPATH='tmp/client/src' python -m mypy --namespace-packages --explicit-package-bases --no-color-output --exclude /docs/ tmp/client
-        MYPYPATH='tmp/client-cli/src' python -m mypy --namespace-packages --explicit-package-bases --no-color-output --exclude /docs/ tmp/client-cli
+        MYPYPATH='tmp/client/src' python -m mypy --namespace-packages --explicit-package-bases --no-color-output tmp/client/src/ai/backend
+        MYPYPATH='tmp/client-cli/src' python -m mypy --namespace-packages --explicit-package-bases --no-color-output tmp/client-cli/src/ai/backend
 
   test:
     runs-on: ${{ matrix.os }}
