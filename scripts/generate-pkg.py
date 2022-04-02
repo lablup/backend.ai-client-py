@@ -54,17 +54,6 @@ def copy_setup(pkg_name):
     shutil.copyfile(setup_name, dst)
 
 
-def remove_duplicate_files():
-    """
-    Since type-checker raise 'Duplicate module name' error,
-    unused duplicated named files should be unlinked
-    """
-
-    for dup_file_name in ('setup.py', 'setup_orig.py'):
-        if os.path.exists(dup_file_name):
-            os.unlink(dup_file_name)
-
-
 def generate():
     argparser = argparse.ArgumentParser()
     argparser.add_argument(
@@ -78,7 +67,6 @@ def generate():
     for pkg_name in args.pkg_names:
         set_manifest(pkg_name)
         copy_setup(pkg_name)
-    remove_duplicate_files()
 
 
 if __name__ == '__main__':
