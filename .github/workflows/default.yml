@@ -146,8 +146,33 @@ jobs:
     - name: Send code coverage report
       uses: codecov/codecov-action@v1
 
+  test-package-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+        cache: "pip"
+        cache-dependency-path: |
+          setup.py
+          requirements/build.txt
+    - name: Install dependencies
+      env:
+        REQUIREMENTS_FILE: build
+      run: |
+        python -m pip install -U pip setuptools wheel
+        python -m pip install -U -r requirements/build.txt
+    - name: Build and publish
+      run: |
+        python setup.py sdist bdist_wheel
+        python scripts/generate-pkg.py client client-cli
+        python tmp/client/setup.py sdist bdist_wheel
+        python tmp/client-cli/setup.py sdist bdist_wheel
+
   deploy-to-pypi:
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, test-package-build]
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
