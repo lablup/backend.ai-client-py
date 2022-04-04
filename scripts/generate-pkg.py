@@ -30,8 +30,6 @@ def set_manifest(pkg_name):
                 dst_file.write(line)
 
     def copy_to_tmp_workspace():
-        workspace_dir = Path('tmp', pkg_name)
-        os.makedirs(workspace_dir, exist_ok=True)
         with open(mnfst, 'r') as manifest_file:
             for line in manifest_file:
                 cmd, _, src = line.rstrip('\n').partition(' ')
@@ -70,6 +68,8 @@ def generate():
     )
     args = argparser.parse_args()
     for pkg_name in args.pkg_names:
+        workspace_dir = Path('tmp', pkg_name)
+        os.makedirs(workspace_dir, exist_ok=True)
         set_manifest(pkg_name)
         copy_setup(pkg_name)
 
