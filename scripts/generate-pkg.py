@@ -12,12 +12,19 @@ def set_manifest(pkg_name):
     This step let type checker or linter check any dangling import.
     """
     mnfst = 'MANIFEST.orig.in'
-    copied = f'MANIFEST.{pkg_name}.in'
+    appended = f'MANIFEST.{pkg_name}.in'
+
+    copied_mnfst = Path('tmp', pkg_name, mnfst)
+    copied_appended = Path('tmp', pkg_name, appended)
+
+    def copy_mnfst():
+        shutil.copyfile(mnfst, copied_mnfst)
+        shutil.copyfile(appended, copied_appended)
 
     def append_manifest():
         with (
-            open(mnfst, 'a') as dst_file,
-            open(copied, 'r') as pkg_specific_file,
+            open(copied_mnfst, 'a') as dst_file,
+            open(copied_appended, 'r') as pkg_specific_file,
         ):
             for line in pkg_specific_file:
                 dst_file.write(line)
@@ -39,13 +46,11 @@ def set_manifest(pkg_name):
                 elif cmd == 'prune':
                     shutil.rmtree(dst)
 
-    def copy_mnfst():
-        dst = Path('tmp', pkg_name, 'MANIFEST.in')
-        shutil.copyfile(mnfst, dst)
-
-    append_manifest()
-    copy_to_tmp_workspace()
     copy_mnfst()
+    if pkg_name != 'orig':
+        append_manifest()
+    copy_to_tmp_workspace()
+    os.rename(copied_mnfst, Path('tmp', pkg_name, 'MANIFEST.in'))
 
 
 def copy_setup(pkg_name):
