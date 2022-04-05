@@ -30,7 +30,7 @@ def set_manifest(pkg_name):
                 dst_file.write(line)
 
     def copy_to_tmp_workspace():
-        with open(mnfst, 'r') as manifest_file:
+        with open(copied_mnfst, 'r') as manifest_file:
             for line in manifest_file:
                 cmd, _, src = line.rstrip('\n').partition(' ')
                 subtree_path = Path(src).parts
