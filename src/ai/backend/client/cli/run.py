@@ -274,9 +274,6 @@ def prepare_mount_arg(
               help='The maximum duration to wait until the session starts.')
 @click.option('--no-reuse', is_flag=True,
               help='Do not reuse existing sessions but return an error.')
-@click.option('--depends', metavar='SESSION_ID', type=str, multiple=True,
-              help="Set the list of session ID or names that the newly created session depends on. "
-                   "The session will get scheduled after all of them successfully finish.")
 @click.option('--callback-url', metavar='CALLBACK_URL', type=str, default=None,
               help="Callback URL which will be called upon sesison lifecycle events.")
 # query-mode options
@@ -357,7 +354,7 @@ def prepare_mount_arg(
                    '(e.g., --assign-agent agent_id_1,agent_id_2,...)')
 def run(image, files, name,                                 # base args
         type, starts_at, enqueue_only, max_wait, no_reuse,  # job scheduling options
-        depends, callback_url,
+        callback_url,
         code, terminal,                                     # query-mode options
         clean, build, exec, basedir,                        # batch-mode options
         env,                                                # execution environment
@@ -562,7 +559,6 @@ def run(image, files, name,                                 # base args
                 enqueue_only=enqueue_only,
                 max_wait=max_wait,
                 no_reuse=no_reuse,
-                dependencies=depends,
                 callback_url=callback_url,
                 cluster_size=cluster_size,
                 cluster_mode=cluster_mode,
