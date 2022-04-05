@@ -160,6 +160,7 @@ class ComputeSession(BaseFunction):
         max_wait: int = 0,
         no_reuse: bool = False,
         dependencies: Sequence[str] = None,
+        callback_url: Optional[str] = None,
         mounts: List[str] = None,
         mount_map: Mapping[str, str] = None,
         envs: Mapping[str, str] = None,
@@ -275,6 +276,7 @@ class ComputeSession(BaseFunction):
         }
         if api_session.get().api_version >= (6, '20220315'):
             params['dependencies'] = dependencies
+            params['callback_url'] = callback_url
         if api_session.get().api_version >= (6, '20200815'):
             params['clusterSize'] = cluster_size
             params['clusterMode'] = cluster_mode
