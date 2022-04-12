@@ -10,19 +10,16 @@ __all__ = ("FileBrowser",)
 class FileBrowser(BaseFunction):
     @api_function
     @classmethod
-    async def create_or_update_browser(self, vfolders: list[str]):
+    async def create_or_update_browser(self, host: str, vfolders: list[str]):
         rqst = Request("POST", "/storage/filebrowser/create")
-        rqst.set_json({"vfolders": vfolders})
-
+        rqst.set_json({"host": host, "vfolders": vfolders})
         async with rqst.fetch() as resp:
             # give a grace period for filebrowser server to initialize and start
             await asyncio.sleep(2)
-
             result = await resp.json()
             if result["status"] == "ok":
-                if result['addr'] == "0":
+                if result["addr"] == "0":
                     print("the number of container exceeds the maximum limit.")
-
                 print(
                     f"""
                     File Browser started.
@@ -31,7 +28,6 @@ class FileBrowser(BaseFunction):
                     URL: {result['addr']}
                     """,
                 )
-
                 webbrowser.open_new_tab(result["addr"])
             else:
                 raise Exception

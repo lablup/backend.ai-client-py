@@ -15,20 +15,27 @@ def filebrowser():
 
 @filebrowser.command()
 @click.option(
-    "-v",
+    "-host",
+    "--Host",
+    help="Host:Volume reference for a filebrowser session.",
+    type=str,
+    metavar="HOST",
+    multiple=False,
+)
+@click.option(
+    "-vf",
     "--vfolder",
-    help="Vfolder to be attached for a filebrowser session",
+    help="Vfolder to be attached for a filebrowser session.",
     type=str,
     metavar="VFOLDER",
     multiple=True,
 )
-def create(vfolder):
+def create(host, vfolder):
     """Create or update filebrowser session"""
     vfolder = list(vfolder)
-
     with Session() as session:
         try:
-            session.FileBrowser.create_or_update_browser(vfolder)
+            session.FileBrowser.create_or_update_browser(host, vfolder)
         except Exception as e:
             print_error(e)
             sys.exit(1)
