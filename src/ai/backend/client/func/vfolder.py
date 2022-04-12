@@ -91,7 +91,6 @@ class VFolder(BaseFunction):
     async def paginated_list(
         cls,
         group: str = None,
-        access_key: str = None,
         *,
         fields: Sequence[FieldSpec] = _default_list_fields,
         page_offset: int = 0,
@@ -109,7 +108,6 @@ class VFolder(BaseFunction):
             'vfolder_list',
             {
                 'group_id': (group, 'UUID'),
-                'access_key': (access_key, 'String'),
                 'filter': (filter, 'String'),
                 'order': (order, 'String'),
             },
