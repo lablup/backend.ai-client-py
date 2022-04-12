@@ -16,6 +16,17 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 22.03.0b1 (2022-04-12)
+
+### Features
+* Allow specifying the architecture when setting image aliases ([#211](https://github.com/lablup/backend.ai-client-py/issues/211))
+* Add `callback_url` parameter in session creation API/CLI to support session event webhook. ([#217](https://github.com/lablup/backend.ai-client-py/issues/217))
+
+### Fixes
+* Remove invalid "uuid" field from `groups` model. ([#216](https://github.com/lablup/backend.ai-client-py/issues/216))
+* Remove access key option in vfolder list command since manager does not support the field. ([#218](https://github.com/lablup/backend.ai-client-py/issues/218))
+
+
 ## 22.03.0a2 (2022-03-29)
 
 ### Features
