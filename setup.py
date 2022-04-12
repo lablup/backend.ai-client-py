@@ -19,15 +19,15 @@ install_requires = [
     'multidict>=5.1.0',
     'python-dateutil>=2.8.2',
     'PyYAML~=5.4.1',
-    'rich~=10.14',
+    'rich~=12.2',
     'tabulate>=0.8.9',
     'tqdm>=4.61',
     'yarl>=1.6.3',
     'backend.ai-cli~=0.6.0',
 ]
 build_requires = [
-    'wheel>=0.36.2',
-    'twine>=3.4.2',
+    'wheel>=0.37.1',
+    'twine>=4.0.0',
     'towncrier~=21.9.0',
 ]
 test_requires = [
@@ -43,7 +43,7 @@ lint_requires = [
     'flake8-commas>=2.1',
 ]
 typecheck_requires = [
-    'mypy>=0.910',
+    'mypy>=0.942',
     'types-click',
     'types-python-dateutil',
     'types-tabulate',
