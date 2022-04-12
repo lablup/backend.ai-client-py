@@ -136,7 +136,7 @@ class Group(BaseFunction):
         You need an admin privilege for this operation.
         """
         if fields is None:
-            fields = ('id', 'domain_name', 'name', 'uuid')
+            fields = ('id', 'domain_name', 'name')
         query = textwrap.dedent("""\
             mutation($name: String!, $input: GroupInput!) {
                 create_group(name: $name, props: $input) {

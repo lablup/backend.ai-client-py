@@ -89,11 +89,12 @@ def rescan(registry: str) -> None:
 @image.command()
 @click.argument('alias', type=str)
 @click.argument('target', type=str)
-def alias(alias, target):
+@click.option('--arch', type=str, default=None, help='Set an explicit architecture.')
+def alias(alias, target, arch):
     """Add an image alias."""
     with Session() as session:
         try:
-            result = session.Image.alias_image(alias, target)
+            result = session.Image.alias_image(alias, target, arch)
         except Exception as e:
             print_error(e)
             sys.exit(1)
