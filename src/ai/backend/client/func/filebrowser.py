@@ -31,6 +31,7 @@ class FileBrowser(BaseFunction):
                 webbrowser.open_new_tab(result["addr"])
             else:
                 raise Exception
+            return result
 
     @api_function
     @classmethod
@@ -44,3 +45,4 @@ class FileBrowser(BaseFunction):
                 print("File Browser destroyed.")
             else:
                 raise Exception
+            return result
