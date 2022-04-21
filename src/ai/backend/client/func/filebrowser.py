@@ -10,7 +10,7 @@ __all__ = ("FileBrowser",)
 class FileBrowser(BaseFunction):
     @api_function
     @classmethod
-    async def create_or_update_browser(self, host: str, vfolders: list[str]):
+    async def create_or_update_browser(self, host: str, vfolders: list[str]) -> str:
         rqst = Request("POST", "/storage/filebrowser/create")
         rqst.set_json({"host": host, "vfolders": vfolders})
         async with rqst.fetch() as resp:
@@ -35,7 +35,7 @@ class FileBrowser(BaseFunction):
 
     @api_function
     @classmethod
-    async def destroy_browser(self, container_id):
+    async def destroy_browser(self, container_id: str) -> str:
         rqst = Request("DELETE", "/storage/filebrowser/destroy")
         rqst.set_json({"container_id": container_id})
 

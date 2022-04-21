@@ -1,4 +1,5 @@
 import sys
+from typing import List
 
 import click
 
@@ -30,9 +31,9 @@ def filebrowser():
     metavar="VFOLDER",
     multiple=True,
 )
-def create(host, vfolder):
+def create(host: str, vfolders: List[str]) -> None:
     """Create or update filebrowser session"""
-    vfolder = list(vfolder)
+    vfolder = list(vfolders)
     with Session() as session:
         try:
             session.FileBrowser.create_or_update_browser(host, vfolder)
@@ -49,9 +50,8 @@ def create(host, vfolder):
     type=str,
     metavar="CID",
 )
-def destroy(container_id):
+def destroy(container_id: str) -> None:
     """Destroy filebrowser session using Container ID."""
-
     with Session() as session:
         try:
             session.FileBrowser.destroy_browser(container_id)
