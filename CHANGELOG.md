@@ -16,6 +16,12 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 22.03.0 (2022-04-25)
+
+### Fixes
+* Fix broken wheel build workflow due to cached build packages by updating them ([#219](https://github.com/lablup/backend.ai-client-py/issues/219))
+
+
 ## 22.03.0b1 (2022-04-12)
 
 ### Features
