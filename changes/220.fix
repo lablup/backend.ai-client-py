@@ -1,1 +1,1 @@
-remove the deprecated argument loop at asyncio.gather.
+Remove the deprecated loop argument from a call to `asyncio.gather()`
