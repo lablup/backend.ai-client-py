@@ -31,7 +31,7 @@ def _cancel_all_tasks(loop):
     for task in to_cancel:
         task.cancel()
     loop.run_until_complete(
-        asyncio.gather(*to_cancel, loop=loop, return_exceptions=True))
+        asyncio.gather(*to_cancel, return_exceptions=True))
     for task in to_cancel:
         if task.cancelled():
             continue
