@@ -149,7 +149,7 @@ def add(ctx: CLIContext, user_id, resource_policy, admin, inactive,  rate_limit)
                 'is_admin': admin,
                 'is_active': not inactive,
                 'rate_limit': rate_limit,
-                'resource_policy': resource_policy
+                'resource_policy': resource_policy,
             }
 
             audit_log = session.AuditLog.create(
@@ -159,7 +159,7 @@ def add(ctx: CLIContext, user_id, resource_policy, admin, inactive,  rate_limit)
                 json.dumps(data_before),
                 json.dumps(data_after),
                 access_key,
-                'CREATE'
+                'CREATE',
             )
         except Exception as e:
             ctx.output.print_mutation_error(
@@ -228,7 +228,7 @@ def update(ctx: CLIContext, access_key, resource_policy, is_admin, is_active,  r
                 'is_admin': is_admin,
                 'is_active': is_active,
                 'rate_limit': rate_limit,
-                'resource_policy': resource_policy
+                'resource_policy': resource_policy,
             }
             audit_log = session.AuditLog.create(
                 user_info['uuid'],
@@ -237,7 +237,7 @@ def update(ctx: CLIContext, access_key, resource_policy, is_admin, is_active,  r
                 json.dumps(data_before),
                 json.dumps(data_after),
                 access_key,
-                'CHANGE'
+                'CHANGE',
             )
         except Exception as e:
             ctx.output.print_mutation_error(
@@ -299,7 +299,7 @@ def delete(ctx: CLIContext, access_key):
                 json.dumps(data_before),
                 json.dumps(data_after),
                 access_key,
-                'DELETE'
+                'DELETE',
             )
         except Exception as e:
             ctx.output.print_mutation_error(

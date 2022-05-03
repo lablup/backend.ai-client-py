@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import enum
 import textwrap
 from typing import (
     Iterable,
@@ -8,9 +7,6 @@ from typing import (
     Union,
     Dict,
 )
-import uuid
-
-from ai.backend.client.auth import AuthToken, AuthTokenTypes
 from ai.backend.client.request import Request
 from ai.backend.client.session import api_session
 from ai.backend.client.output.fields import auditlog_fields
@@ -111,8 +107,8 @@ class AuditLog(BaseFunction):
                 'data_before': data_before,
                 'data_after': data_after,
                 'target': target,
-                'action': action
-            }
+                'action': action,
+            },
 
 
         }

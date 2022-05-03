@@ -173,7 +173,7 @@ def add(ctx: CLIContext, domain_name, email, password, username, full_name, role
                 json.dumps(data_before),
                 data_after,
                 session.User.detail(email)['uuid'],
-                'CREATE'
+                'CREATE',
             )
         except Exception as e:
             ctx.output.print_mutation_error(
@@ -264,7 +264,7 @@ def update(ctx: CLIContext, email, password, username, full_name, domain_name, r
                 data_before,
                 data_after,
                 session.User.detail(email)['uuid'],
-                'CHANGE'
+                'CHANGE',
             )
         except Exception as e:
             ctx.output.print_mutation_error(
@@ -323,7 +323,7 @@ def delete(ctx: CLIContext, email):
                 json.dumps({'status': 'active'}),
                 json.dumps({'status': 'deleted'}),
                 session.User.detail(email)['uuid'],
-                'DELETE'
+                'DELETE',
             )
         except Exception as e:
             ctx.output.print_mutation_error(

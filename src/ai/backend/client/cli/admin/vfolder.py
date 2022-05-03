@@ -188,7 +188,7 @@ def mount_host(fs_location, name, options, edit_fstab):
                 'fs_location': fs_location,
                 'name': name,
                 'options': options,
-                'edit_fstab': edit_fstab
+                'edit_fstab': edit_fstab,
             }
 
             session.AuditLog.create(
@@ -198,7 +198,7 @@ def mount_host(fs_location, name, options, edit_fstab):
                 json.dumps(data_before),
                 json.dumps(data_after),
                 name,
-                'CREATE'
+                'CREATE',
             )
         except Exception as e:
             print_error(e)
@@ -246,7 +246,7 @@ def umount_host(name, edit_fstab):
                 json.dumps(data_before),
                 json.dumps(data_after),
                 name,
-                'DELETE'
+                'DELETE',
             )
         except Exception as e:
             print_error(e)

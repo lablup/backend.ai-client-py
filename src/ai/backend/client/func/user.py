@@ -297,7 +297,6 @@ class User(BaseFunction):
                     ok msg user {$fields}
                 }
             }
-            
         """)
         query = query.replace('$fields', ' '.join(fields))
         variables = {
