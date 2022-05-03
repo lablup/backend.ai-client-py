@@ -10,6 +10,7 @@ from ai.backend.client.output.fields import user_fields
 from ..pretty import print_info
 from ..types import CLIContext
 from . import admin
+import json
 
 
 @admin.group()
@@ -150,6 +151,42 @@ def add(ctx: CLIContext, domain_name, email, password, username, full_name, role
                 action_name='add',
             )
             sys.exit(1)
+        try:
+            access_key = session.config.access_key
+            user_info = session.User.detail()
+            data_before = {}
+
+            post_data_after = {
+                'username': username,
+                'full_name': full_name,
+                'domain_name': domain_name,
+                'role': role,
+                'status': status,
+                'email': email,
+                'description': description}
+
+            data_after = json.dumps(post_data_after)
+            audit_log = session.AuditLog.create(
+                user_info['uuid'],
+                access_key,
+                user_info['email'],
+                json.dumps(data_before),
+                data_after,
+                session.User.detail(email)['uuid'],
+                'CREATE'
+            )
+        except Exception as e:
+            ctx.output.print_mutation_error(
+                e,
+                item_name='audit_log',
+                action_name='add user event',
+            )
+        if not audit_log['ok']:
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='audit_log create user',
+                action_name='add',
+            )
         ctx.output.print_mutation_result(
             data,
             item_name='user',
@@ -180,6 +217,7 @@ def update(ctx: CLIContext, email, password, username, full_name, domain_name, r
     """
     with Session() as session:
         try:
+            prep_user_info = session.User.detail_by_email(email)
             data = session.User.update(
                 email,
                 password=password, username=username, full_name=full_name,
@@ -201,6 +239,46 @@ def update(ctx: CLIContext, email, password, username, full_name, domain_name, r
                 action_name='update',
             )
             sys.exit(1)
+        try:
+            access_key = session.config.access_key
+            user_info = session.User.detail()
+            post_data_after = {
+                'username': username,
+                'full_name': full_name,
+                'domain_name': domain_name,
+                'role': role,
+                'status': status,
+                'description': description}
+
+            if password is not None:
+                data_after = json.dumps(post_data_after).update(
+                    {'password': 'password updated'})  # do not show password
+            else:
+                data_after = json.dumps(post_data_after)
+            data_before = json.dumps(prep_user_info)
+            print("datacheck", data_before)
+            audit_log = session.AuditLog.create(
+                user_info['uuid'],
+                access_key,
+                user_info['email'],
+                data_before,
+                data_after,
+                session.User.detail(email)['uuid'],
+                'CHANGE'
+            )
+        except Exception as e:
+            ctx.output.print_mutation_error(
+                e,
+                item_name='audit_log',
+                action_name='update user event',
+            )
+
+        if not audit_log['ok']:
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='audit_log update user',
+                action_name='update',
+            )
         ctx.output.print_mutation_result(
             data,
             extra_info={
@@ -235,6 +313,31 @@ def delete(ctx: CLIContext, email):
                 action_name='deletion',
             )
             sys.exit(1)
+        try:
+            access_key = session.config.access_key
+            user_info = session.User.detail()
+            audit_log = session.AuditLog.create(
+                user_info['uuid'],
+                access_key,
+                user_info['email'],
+                json.dumps({'status': 'active'}),
+                json.dumps({'status': 'deleted'}),
+                session.User.detail(email)['uuid'],
+                'DELETE'
+            )
+        except Exception as e:
+            ctx.output.print_mutation_error(
+                e,
+                item_name='audit_log',
+                action_name='update user event',
+            )
+
+        if not audit_log['ok']:
+            ctx.output.print_mutation_error(
+                msg=data['msg'],
+                item_name='audit_log update user',
+                action_name='update',
+            )
         ctx.output.print_mutation_result(
             data,
             extra_info={
