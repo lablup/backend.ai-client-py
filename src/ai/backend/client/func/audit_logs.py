@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import textwrap
 from typing import (
-    Iterable,
     Sequence,
     Union,
     Dict,
@@ -85,7 +84,7 @@ class AuditLog(BaseFunction):
         data_before: Dict[str, str] = None,
         data_after: Dict[str, str] = None,
         target: str = None,
-        action: str = None
+        action: str = None,
     ) -> dict:
         """
         Creates a new audit log entry.
@@ -94,7 +93,7 @@ class AuditLog(BaseFunction):
         query = textwrap.dedent("""\
             mutation($input: AuditLogInput!) {
                 create_audit_logs(props: $input) {
-                    ok msg  
+                    ok msg
                 }
             }
         """)
