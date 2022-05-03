@@ -16,6 +16,12 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 22.03.1 (2022-05-03)
+
+### Fixes
+* Remove the deprecated loop argument from a call to `asyncio.gather()` ([#220](https://github.com/lablup/backend.ai-client-py/issues/220))
+
+
 ## 22.03.0 (2022-04-25)
 
 ### Fixes
