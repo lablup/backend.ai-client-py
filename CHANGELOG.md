@@ -16,6 +16,40 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 22.03.1 (2022-05-03)
+
+### Fixes
+* Remove the deprecated loop argument from a call to `asyncio.gather()` ([#220](https://github.com/lablup/backend.ai-client-py/issues/220))
+
+
+## 22.03.0 (2022-04-25)
+
+### Fixes
+* Fix broken wheel build workflow due to cached build packages by updating them ([#219](https://github.com/lablup/backend.ai-client-py/issues/219))
+
+
+## 22.03.0b1 (2022-04-12)
+
+### Features
+* Allow specifying the architecture when setting image aliases ([#211](https://github.com/lablup/backend.ai-client-py/issues/211))
+* Add `callback_url` parameter in session creation API/CLI to support session event webhook. ([#217](https://github.com/lablup/backend.ai-client-py/issues/217))
+
+### Fixes
+* Remove invalid "uuid" field from `groups` model. ([#216](https://github.com/lablup/backend.ai-client-py/issues/216))
+* Remove access key option in vfolder list command since manager does not support the field. ([#218](https://github.com/lablup/backend.ai-client-py/issues/218))
+
+
+## 22.03.0a2 (2022-03-29)
+
+### Features
+* Display the architecture field in agent and image lists ([#212](https://github.com/lablup/backend.ai-client-py/issues/212))
+* Add `--depends` CLI option to the `start` &amp; `session create` commands and the corresponding functional API arguments ([#214](https://github.com/lablup/backend.ai-client-py/issues/214))
+
+### Fixes
+* Fix missing propagation of `starts_at` and `bootstrap_script` arguments to the session creation API, which have been supported since v20.03 ([#213](https://github.com/lablup/backend.ai-client-py/issues/213))
+* Remove remaining traces of `keypair.concurrency_limit` which has been replaced with `keypair_resource_policy.max_concurrenct_sessions` ([#215](https://github.com/lablup/backend.ai-client-py/issues/215))
+
+
 ## 22.03.0a1 (2022-03-14)
 
 ### Features

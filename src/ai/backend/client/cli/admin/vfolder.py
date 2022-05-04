@@ -25,9 +25,6 @@ def vfolder() -> None:
 def _list_cmd(docs: str = None):
 
     @click.pass_obj
-    @click.option('--access-key', type=str, default=None,
-                help='Get vfolders for the given access key '
-                    '(only works if you are a super-admin)')
     @click.option('-g', '--group', type=str, default=None,
                 help='Filter by group ID.')
     @click.option('--filter', 'filter_', default=None,
@@ -38,14 +35,14 @@ def _list_cmd(docs: str = None):
                 help='The index of the current page start for pagination.')
     @click.option('--limit', default=None,
                 help='The page size for pagination.')
-    def list(ctx: CLIContext, access_key, group, filter_, order, offset, limit) -> None:
+    def list(ctx: CLIContext, group, filter_, order, offset, limit) -> None:
         """
         List virtual folders.
         """
         try:
             with Session() as session:
                 fetch_func = lambda pg_offset, pg_size: session.VFolder.paginated_list(
-                    group, access_key,
+                    group,
                     fields=_default_list_fields,
                     page_offset=pg_offset,
                     page_size=pg_size,

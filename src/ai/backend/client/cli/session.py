@@ -57,6 +57,8 @@ def _create_cmd(docs: str = None):
     @click.option('--depends', metavar='SESSION_ID', type=str, multiple=True,
                   help="Set the list of session ID or names that the newly created session depends on. "
                        "The session will get scheduled after all of them successfully finish.")
+    @click.option('--callback-url', metavar='CALLBACK_URL', type=str, default=None,
+                  help="Callback URL which will be called upon sesison lifecycle events.")
     # execution environment
     @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
                   help='Environment variable (may appear multiple times)')
@@ -116,6 +118,7 @@ def _create_cmd(docs: str = None):
         max_wait: bool,
         no_reuse: bool,
         depends: Sequence[str],
+        callback_url: str,
         # execution environment
         env: Sequence[str],
         # extra options
@@ -169,6 +172,7 @@ def _create_cmd(docs: str = None):
                     max_wait=max_wait,
                     no_reuse=no_reuse,
                     dependencies=depends,
+                    callback_url=callback_url,
                     cluster_size=cluster_size,
                     cluster_mode=cluster_mode,
                     mounts=mount,
@@ -258,6 +262,8 @@ def _create_from_template_cmd(docs: str = None):
     @click.option('--depends', metavar='SESSION_ID', type=str, multiple=True,
                   help="Set the list of session ID or names that the newly created session depends on. "
                        "The session will get scheduled after all of them successfully finish.")
+    @click.option('--callback-url', metavar='CALLBACK_URL', type=str, default=None,
+                  help="Callback URL which will be called upon sesison lifecycle events.")
     # execution environment
     @click.option('-e', '--env', metavar='KEY=VAL', type=str, multiple=True,
                   help='Environment variable (may appear multiple times)')
@@ -315,6 +321,7 @@ def _create_from_template_cmd(docs: str = None):
         max_wait: int | Undefined,
         no_reuse: bool,
         depends: Sequence[str],
+        callback_url: str,
         # execution environment
         env: Sequence[str],
         # extra options
@@ -370,6 +377,7 @@ def _create_from_template_cmd(docs: str = None):
                     max_wait=max_wait,
                     no_reuse=no_reuse,
                     dependencies=depends,
+                    callback_url=callback_url,
                     cluster_size=cluster_size,
                     mounts=prepared_mount,
                     mount_map=prepared_mount_map,
