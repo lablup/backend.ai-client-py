@@ -154,7 +154,7 @@ def add(ctx: CLIContext, domain_name, email, password, username, full_name, role
         try:
             access_key = session.config.access_key
             user_info = session.User.detail()
-            data_before = {}
+            data_before: dict[str, str] = {}
 
             post_data_after = {
                 'username': username,
@@ -251,7 +251,7 @@ def update(ctx: CLIContext, email, password, username, full_name, domain_name, r
                 'description': description}
 
             if password is not None:
-                data_after = json.dumps(post_data_after).update(
+                data_after = post_data_after.update(
                     {'password': 'password updated'})  # do not show password
             else:
                 data_after = json.dumps(post_data_after)

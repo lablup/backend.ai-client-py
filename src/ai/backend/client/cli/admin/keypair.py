@@ -142,7 +142,7 @@ def add(ctx: CLIContext, user_id, resource_policy, admin, inactive,  rate_limit)
         try:
             access_key = session.config.access_key
             user_info = session.User.detail()
-            data_before = {}
+            data_before: dict[str, str] = {}
 
             data_after = {
                 'user_id': user_id,
@@ -291,7 +291,7 @@ def delete(ctx: CLIContext, access_key):
             user_info = session.User.detail()
 
             print(f"data before{data_before}")
-            data_after = {}
+            data_after: dict[str, str] = {}
             audit_log = session.AuditLog.create(
                 user_info['uuid'],
                 access_key,
