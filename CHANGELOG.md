@@ -16,6 +16,12 @@ Changes
 
 <!-- towncrier release notes start -->
 
+## 22.03.2 (2022-05-09)
+
+### Fixes
+* Upgrade mypy to 0.950 and workaround a potential mypy bug newly introduced ([#222](https://github.com/lablup/backend.ai-client-py/issues/222))
+
+
 ## 22.03.1 (2022-05-03)
 
 ### Fixes
