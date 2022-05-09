@@ -139,40 +139,6 @@ def add(ctx: CLIContext, user_id, resource_policy, admin, inactive,  rate_limit)
                 action_name='add',
             )
             sys.exit(1)
-        try:
-            access_key = session.config.access_key
-            user_info = session.User.detail()
-            data_before: dict[str, str] = {}
-
-            data_after = {
-                'user_id': user_id,
-                'is_admin': admin,
-                'is_active': not inactive,
-                'rate_limit': rate_limit,
-                'resource_policy': resource_policy,
-            }
-
-            audit_log = session.AuditLog.create(
-                user_info['uuid'],
-                access_key,
-                user_info['email'],
-                json.dumps(data_before),
-                json.dumps(data_after),
-                access_key,
-                'CREATE',
-            )
-        except Exception as e:
-            ctx.output.print_mutation_error(
-                e,
-                item_name='audit_log',
-                action_name='add keypair event',
-            )
-        if not audit_log['ok']:
-            ctx.output.print_mutation_error(
-                msg=data['msg'],
-                item_name='audit_log create keypair',
-                action_name='add',
-            )
         ctx.output.print_mutation_result(
             data,
             item_name='keypair',
@@ -198,7 +164,6 @@ def update(ctx: CLIContext, access_key, resource_policy, is_admin, is_active,  r
     """
     with Session() as session:
         try:
-            data_before = session.KeyPair.info(access_key)
             data = session.KeyPair.update(
                 access_key,
                 is_active=is_active,
@@ -219,38 +184,6 @@ def update(ctx: CLIContext, access_key, resource_policy, is_admin, is_active,  r
                 action_name='update',
             )
             sys.exit(1)
-        try:
-            access_key = session.config.access_key
-            user_info = session.User.detail()
-
-            data_after = {
-                'access_key': access_key,
-                'is_admin': is_admin,
-                'is_active': is_active,
-                'rate_limit': rate_limit,
-                'resource_policy': resource_policy,
-            }
-            audit_log = session.AuditLog.create(
-                user_info['uuid'],
-                access_key,
-                user_info['email'],
-                json.dumps(data_before),
-                json.dumps(data_after),
-                access_key,
-                'CHANGE',
-            )
-        except Exception as e:
-            ctx.output.print_mutation_error(
-                e,
-                item_name='audit_log',
-                action_name='add keypair event',
-            )
-        if not audit_log['ok']:
-            ctx.output.print_mutation_error(
-                msg=data['msg'],
-                item_name='audit_log create keypair',
-                action_name='add',
-            )
         ctx.output.print_mutation_result(
             data,
             extra_info={
@@ -270,7 +203,6 @@ def delete(ctx: CLIContext, access_key):
     """
     with Session() as session:
         try:
-            data_before = session.KeyPair.info(access_key)
             data = session.KeyPair.delete(access_key)
         except Exception as e:
             ctx.output.print_mutation_error(
@@ -286,33 +218,6 @@ def delete(ctx: CLIContext, access_key):
                 action_name='deletion',
             )
             sys.exit(1)
-        try:
-            access_key = session.config.access_key
-            user_info = session.User.detail()
-
-            print(f"data before{data_before}")
-            data_after: dict[str, str] = {}
-            audit_log = session.AuditLog.create(
-                user_info['uuid'],
-                access_key,
-                user_info['email'],
-                json.dumps(data_before),
-                json.dumps(data_after),
-                access_key,
-                'DELETE',
-            )
-        except Exception as e:
-            ctx.output.print_mutation_error(
-                e,
-                item_name='audit_log',
-                action_name='add keypair event',
-            )
-        if not audit_log['ok']:
-            ctx.output.print_mutation_error(
-                msg=data['msg'],
-                item_name='audit_log create keypair',
-                action_name='add',
-            )
         ctx.output.print_mutation_result(
             data,
             extra_info={
