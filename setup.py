@@ -43,7 +43,7 @@ lint_requires = [
     'flake8-commas>=2.1',
 ]
 typecheck_requires = [
-    'mypy>=0.910',
+    'mypy>=0.950',
     'types-click',
     'types-python-dateutil',
     'types-tabulate',
