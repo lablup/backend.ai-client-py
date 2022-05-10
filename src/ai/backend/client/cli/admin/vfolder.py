@@ -176,29 +176,6 @@ def mount_host(fs_location, name, options, edit_fstab):
             print(' ', aid)
             for k, v in data.items():
                 print('   ', k, ':', v)
-        try:
-            access_key = session.config.access_key
-            user_info = session.User.detail()
-            data_before = {}
-
-            data_after = {
-                'fs_location': fs_location,
-                'name': name,
-                'options': options,
-                'edit_fstab': edit_fstab,
-            }
-
-            session.AuditLog.create(
-                user_info['uuid'],
-                access_key,
-                user_info['email'],
-                json.dumps(data_before),
-                json.dumps(data_after),
-                name,
-                'CREATE',
-            )
-        except Exception as e:
-            print_error(e)
 
 
 @vfolder.command()

@@ -6,7 +6,6 @@ from ai.backend.client.session import Session
 from ai.backend.client.output.fields import keypair_fields
 from . import admin
 from ..types import CLIContext
-import json
 
 
 @admin.group()

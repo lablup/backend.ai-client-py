@@ -10,7 +10,6 @@ from ai.backend.client.output.fields import user_fields
 from ..pretty import print_info
 from ..types import CLIContext
 from . import admin
-import json
 
 
 @admin.group()
