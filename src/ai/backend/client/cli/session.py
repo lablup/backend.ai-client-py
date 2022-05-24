@@ -6,7 +6,6 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
-import time
 from typing import IO, List, Literal, Optional, Sequence
 import uuid
 
@@ -21,11 +20,11 @@ from .ssh import container_ssh_ctx
 from .run import format_stats, prepare_env_arg, prepare_resource_arg, prepare_mount_arg
 from ..compat import asyncio_run
 from ..exceptions import BackendAPIError
+from ..output.fields import session_fields
+from ..output.types import FieldSpec
 from ..session import Session, AsyncSession
 from ..types import Undefined, undefined
 from .params import CommaSeparatedListType
-from ai.backend.client.output.fields import session_fields
-from ai.backend.client.output.types import FieldSpec
 
 list_expr = CommaSeparatedListType()
 
@@ -871,11 +870,25 @@ def _watch_cmd(docs: Optional[str] = None):
 
     @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
                   help='Specify the owner of the target session explicitly.')
-    def watch(owner_access_key):
+    @click.option('--scope', type=click.Choice(['*', 'session', 'kernel']), default='*',
+                  help='Filter the events by kernel-specific ones or session-specific ones.')
+    def watch(owner_access_key, scope):
         """
         ...
         """
         # TODO: Session list
+        status = ",".join([
+            "PENDING",
+            "SCHEDULED",
+            "PREPARING",
+            "PULLING",
+            "RUNNING",
+            "RESTARTING",
+            "TERMINATING",
+            "RESIZING",
+            "SUSPENDED",
+            "ERROR",
+        ])
         fields: List[FieldSpec] = [
             session_fields['name'],
             session_fields['session_id'],
@@ -890,33 +903,71 @@ def _watch_cmd(docs: Optional[str] = None):
         ]
         with Session() as session:
             sessions = session.ComputeSession.paginated_list(
-                status=None, access_key=None,
+                status=status, access_key=None,
                 fields=fields,
                 page_offset=0,
                 page_size=10,
                 filter=None,
                 order=None,
             )
-            for sess in sessions.items:
-                click.echo(f'{sess.get("name")} {sess.get("session_id")}')
-            click.echo(sessions.items[0])
+            if sessions.total_count == 0:   # not sessions.items
+                click.echo('No matching items.')
+                return
 
-        session_names = tuple(map(lambda x: f'{x.get("name")} ({x.get("session_id")})', sessions.items))
+        session_names = tuple(map(lambda x: x.get('session_id'), sessions.items))
         questions = [inquirer.List(
             'session',
             message="Select session to watch.",
             choices=session_names,
         )]
-        answers = inquirer.prompt(questions)
-        click.echo('backend.ai session watch')
+        click.clear()
+        session_name_or_id = inquirer.prompt(questions).get('session')
+
+        states = [
+            'kernel_started',
+            'session_started',
+            'kernel_terminating',
+            'kernel_terminated',
+            'session_terminated'
+        ]
+        current_state_idx = -1
+
+        def print_state(session_name_or_id: str, current_state_idx: int):
+            click.clear()
+            click.echo(click.style(f'session name: {session_name_or_id}', fg='cyan'))
+            for i, state in enumerate(states):
+                if i < current_state_idx:
+                    click.echo(click.style(f'\u2714 {state}', fg='green'))
+                elif i == current_state_idx:
+                    click.echo(click.style(f'\u2219 {state}', bold=True))
+                else:
+                    click.echo(f'\u22EF {state}')
+
+        async def _run_events():
+            async with AsyncSession() as session:
+                try:
+                    session_id = uuid.UUID(session_name_or_id)
+                    compute_session = session.ComputeSession.from_session_id(session_id)
+                except ValueError:
+                    compute_session = session.ComputeSession(session_name_or_id, owner_access_key)
+                async with compute_session.listen_events(scope=scope) as response:
+                    async for ev in response:
+                        nonlocal current_state_idx
+                        current_state_idx = states.index(ev.event)
+                        print_state(session_name_or_id, current_state_idx)
+
+                        if ev.event == states[-1]:
+                            break
+
+                current_state_idx = len(states)
+                print_state(session_name_or_id, current_state_idx)
 
         try:
-            for _ in range(10):
-                click.clear()
-                click.echo(datetime.now().isoformat() + ' ' + click.style(answers.get('session'), fg='green'))
-                time.sleep(2)
-        except KeyboardInterrupt:
-            pass
+            asyncio_run(_run_events())
+        except Exception as e:
+            print_error(e)
+
+        return 0
 
     if docs is not None:
         watch.__doc__ = docs
@@ -924,7 +975,6 @@ def _watch_cmd(docs: Optional[str] = None):
 
 
 # Make it available as:
-# - backend.ai watch
 # - backend.ai session watch
 main.command()(_watch_cmd(docs="Alias of \"session watch\""))
 session.command()(_watch_cmd())
