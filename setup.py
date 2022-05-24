@@ -15,6 +15,7 @@ install_requires = [
     'click>=8.0.1',
     'colorama>=0.4.4',
     'humanize>=3.1.0',
+    'inquirer~=2.9.2',
     'janus>=0.6.1',
     'multidict>=5.1.0',
     'python-dateutil>=2.8.2',

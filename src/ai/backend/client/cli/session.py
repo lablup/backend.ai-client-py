@@ -6,10 +6,12 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
-from typing import IO, Literal, Sequence
+import time
+from typing import IO, List, Literal, Optional, Sequence
 import uuid
 
 import click
+import inquirer
 from humanize import naturalsize
 from tabulate import tabulate
 
@@ -22,6 +24,8 @@ from ..exceptions import BackendAPIError
 from ..session import Session, AsyncSession
 from ..types import Undefined, undefined
 from .params import CommaSeparatedListType
+from ai.backend.client.output.fields import session_fields
+from ai.backend.client.output.types import FieldSpec
 
 list_expr = CommaSeparatedListType()
 
@@ -861,3 +865,66 @@ def _events_cmd(docs: str = None):
 # - backend.ai session events
 main.command()(_events_cmd(docs="Alias of \"session events\""))
 session.command()(_events_cmd())
+
+
+def _watch_cmd(docs: Optional[str] = None):
+
+    @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
+                  help='Specify the owner of the target session explicitly.')
+    def watch(owner_access_key):
+        """
+        ...
+        """
+        # TODO: Session list
+        fields: List[FieldSpec] = [
+            session_fields['name'],
+            session_fields['session_id'],
+            session_fields['group_name'],
+            session_fields['kernel_id'],
+            session_fields['image'],
+            session_fields['type'],
+            session_fields['status'],
+            session_fields['status_info'],
+            session_fields['status_changed'],
+            session_fields['result'],
+        ]
+        with Session() as session:
+            sessions = session.ComputeSession.paginated_list(
+                status=None, access_key=None,
+                fields=fields,
+                page_offset=0,
+                page_size=10,
+                filter=None,
+                order=None,
+            )
+            for sess in sessions.items:
+                click.echo(f'{sess.get("name")} {sess.get("session_id")}')
+            click.echo(sessions.items[0])
+
+        session_names = tuple(map(lambda x: f'{x.get("name")} ({x.get("session_id")})', sessions.items))
+        questions = [inquirer.List(
+            'session',
+            message="Select session to watch.",
+            choices=session_names,
+        )]
+        answers = inquirer.prompt(questions)
+        click.echo('backend.ai session watch')
+
+        try:
+            for _ in range(10):
+                click.clear()
+                click.echo(datetime.now().isoformat() + ' ' + click.style(answers.get('session'), fg='green'))
+                time.sleep(2)
+        except KeyboardInterrupt:
+            pass
+
+    if docs is not None:
+        watch.__doc__ = docs
+    return watch
+
+
+# Make it available as:
+# - backend.ai watch
+# - backend.ai session watch
+main.command()(_watch_cmd(docs="Alias of \"session watch\""))
+session.command()(_watch_cmd())
