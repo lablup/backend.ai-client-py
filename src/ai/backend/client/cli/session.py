@@ -954,14 +954,20 @@ def _watch_cmd(docs: Optional[str] = None):
                 async with compute_session.listen_events(scope=scope) as response:  # AsyncSession
                     async for ev in response:
                         nonlocal current_state_idx
-                        current_state_idx = states.index(ev.event)
+
+                        if ev.event != 'kernel_cancelled':
+                            current_state_idx = states.index(ev.event)
+
                         print_state(session_name_or_id, current_state_idx)
 
-                        if ev.event == states[-1]:
+                        if ev.event == 'kernel_cancelled':
+                            click.echo(click.style('\u2718 ', fg='red') + 'kernel_cancelled')
                             break
 
-                current_state_idx = len(states)
-                print_state(session_name_or_id, current_state_idx)
+                        if ev.event == states[-1]:
+                            current_state_idx = len(states)
+                            print_state(session_name_or_id, current_state_idx)
+                            break
 
         try:
             asyncio_run(_run_events())
