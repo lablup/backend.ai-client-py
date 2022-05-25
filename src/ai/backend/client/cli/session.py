@@ -929,7 +929,7 @@ def _watch_cmd(docs: Optional[str] = None):
             'session_started',
             'kernel_terminating',
             'kernel_terminated',
-            'session_terminated'
+            'session_terminated',
         ]
         current_state_idx = -1
 
