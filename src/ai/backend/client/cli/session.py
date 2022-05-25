@@ -731,8 +731,10 @@ _ssh_cmd_context_settings = {
 
 # Make it available as:
 # - backend.ai ssh
+# - backend.ai exec
 # - backend.ai session ssh
 main.command(
+    aliases=['exec'],
     context_settings=_ssh_cmd_context_settings,
 )(_ssh_cmd(docs="Alias of \"session ssh\""))
 session.command(
