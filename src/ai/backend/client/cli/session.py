@@ -924,6 +924,7 @@ def _watch_cmd(docs: Optional[str] = None):
         session_name_or_id = inquirer.prompt(questions).get('session')
 
         states = [
+            'kernel_creating',
             'kernel_started',
             'session_started',
             'kernel_terminating',
@@ -937,11 +938,11 @@ def _watch_cmd(docs: Optional[str] = None):
             click.echo(click.style(f'session name: {session_name_or_id}', fg='cyan'))
             for i, state in enumerate(states):
                 if i < current_state_idx:
-                    click.echo(click.style(f'\u2714 {state}', fg='green'))
+                    click.echo(click.style('\u2714 ', fg='green') + state)
                 elif i == current_state_idx:
-                    click.echo(click.style(f'\u2219 {state}', bold=True))
+                    click.echo(click.style(f'\u22EF {state}', bold=True))
                 else:
-                    click.echo(f'\u22EF {state}')
+                    click.echo(click.style('\u2219 ', fg='yellow') + state)
 
         async def _run_events():
             async with AsyncSession() as session:
@@ -950,7 +951,7 @@ def _watch_cmd(docs: Optional[str] = None):
                     compute_session = session.ComputeSession.from_session_id(session_id)
                 except ValueError:
                     compute_session = session.ComputeSession(session_name_or_id, owner_access_key)
-                async with compute_session.listen_events(scope=scope) as response:
+                async with compute_session.listen_events(scope=scope) as response:  # AsyncSession
                     async for ev in response:
                         nonlocal current_state_idx
                         current_state_idx = states.index(ev.event)
