@@ -978,11 +978,10 @@ def _watch_cmd(docs: Optional[str] = None):
 
         async def _run_events_with_timeout(timeout: int):
             assert timeout > 0
-            # FIXME: DeprecationWarning: The explicit passing of coroutine objects to asyncio.wait() is deprecated since Python 3.8, and scheduled for removal in Python 3.11.
-            done, pending = await asyncio.wait([
-                _run_events(),
-                asyncio.sleep(timeout),
-            ], return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait({
+                asyncio.create_task(_run_events()),
+                asyncio.create_task(asyncio.sleep(timeout)),
+            }, return_when=asyncio.FIRST_COMPLETED)
             for task in pending:
                 task.cancel()
                 with suppress(asyncio.CancelledError):
