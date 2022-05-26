@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+from contextlib import suppress
 from datetime import datetime
 import json
 from pathlib import Path
@@ -872,7 +874,9 @@ def _watch_cmd(docs: Optional[str] = None):
                   help='Specify the owner of the target session explicitly.')
     @click.option('--scope', type=click.Choice(['*', 'session', 'kernel']), default='*',
                   help='Filter the events by kernel-specific ones or session-specific ones.')
-    def watch(owner_access_key, scope):
+    @click.option('--max-wait', metavar='SECONDS', type=int, default=0,
+                  help='The maximum duration to wait until the session starts.')
+    def watch(owner_access_key: str, scope: str, max_wait: int):
         """
         ...
         """
@@ -972,8 +976,23 @@ def _watch_cmd(docs: Optional[str] = None):
                             print_state(session_name_or_id, current_state_idx)
                             break
 
+        async def _run_events_with_timeout(timeout: int):
+            assert timeout > 0
+            # FIXME: DeprecationWarning: The explicit passing of coroutine objects to asyncio.wait() is deprecated since Python 3.8, and scheduled for removal in Python 3.11.
+            done, pending = await asyncio.wait([
+                _run_events(),
+                asyncio.sleep(timeout),
+            ], return_when=asyncio.FIRST_COMPLETED)
+            for task in pending:
+                task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await task
+
         try:
-            asyncio_run(_run_events())
+            if max_wait > 0:
+                asyncio_run(_run_events_with_timeout(max_wait))
+            else:
+                asyncio_run(_run_events())
         except Exception as e:
             print_error(e)
             return 1
