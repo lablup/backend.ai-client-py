@@ -956,7 +956,10 @@ def _watch_cmd(docs: Optional[str] = None):
                         nonlocal current_state_idx
 
                         if ev.event != 'kernel_cancelled':
-                            current_state_idx = states.index(ev.event)
+                            try:
+                                current_state_idx = states.index(ev.event)
+                            except ValueError:
+                                pass
 
                         print_state(session_name_or_id, current_state_idx)
 
@@ -973,6 +976,7 @@ def _watch_cmd(docs: Optional[str] = None):
             asyncio_run(_run_events())
         except Exception as e:
             print_error(e)
+            return 1
 
         return 0
 
