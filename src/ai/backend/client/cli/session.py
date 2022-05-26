@@ -118,7 +118,7 @@ def _create_cmd(docs: str = None):
         starts_at: str | None,
         startup_command: str | None,
         enqueue_only: bool,
-        max_wait: bool,
+        max_wait: int,
         no_reuse: bool,
         depends: Sequence[str],
         callback_url: str,
