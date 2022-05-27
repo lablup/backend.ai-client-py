@@ -8,7 +8,7 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
-from typing import IO, List, Literal, Optional, Sequence
+from typing import IO, List, Literal, Optional, Sequence, Tuple
 import uuid
 
 import click
@@ -868,73 +868,88 @@ main.command()(_events_cmd(docs="Alias of \"session events\""))
 session.command()(_events_cmd())
 
 
+def _fetch_session_names():
+    status = ",".join([
+        "PENDING",
+        "SCHEDULED",
+        "PREPARING",
+        "PULLING",
+        "RUNNING",
+        "RESTARTING",
+        "TERMINATING",
+        "RESIZING",
+        "SUSPENDED",
+        "ERROR",
+    ])
+    fields: List[FieldSpec] = [
+        session_fields['name'],
+        session_fields['session_id'],
+        session_fields['group_name'],
+        session_fields['kernel_id'],
+        session_fields['image'],
+        session_fields['type'],
+        session_fields['status'],
+        session_fields['status_info'],
+        session_fields['status_changed'],
+        session_fields['result'],
+    ]
+    with Session() as session:
+        sessions = session.ComputeSession.paginated_list(
+            status=status, access_key=None,
+            fields=fields,
+            page_offset=0,
+            page_size=10,
+            filter=None,
+            order=None,
+        )
+
+    return tuple(map(lambda x: x.get('session_id'), sessions.items))
+
+
 def _watch_cmd(docs: Optional[str] = None):
 
+    @click.argument('session_name_or_id', metavar='SESSION_ID_OR_NAME', nargs=-1)
     @click.option('-o', '--owner', '--owner-access-key', 'owner_access_key', metavar='ACCESS_KEY',
                   help='Specify the owner of the target session explicitly.')
     @click.option('--scope', type=click.Choice(['*', 'session', 'kernel']), default='*',
                   help='Filter the events by kernel-specific ones or session-specific ones.')
     @click.option('--max-wait', metavar='SECONDS', type=int, default=0,
                   help='The maximum duration to wait until the session starts.')
-    def watch(owner_access_key: str, scope: str, max_wait: int):
+    def watch(session_name_or_id: Tuple[str], owner_access_key: str, scope: str, max_wait: int):
         """
         Monitor the lifecycle events of a compute session
         and display in human-friendly interface.
         """
-        status = ",".join([
-            "PENDING",
-            "SCHEDULED",
-            "PREPARING",
-            "PULLING",
-            "RUNNING",
-            "RESTARTING",
-            "TERMINATING",
-            "RESIZING",
-            "SUSPENDED",
-            "ERROR",
-        ])
-        fields: List[FieldSpec] = [
-            session_fields['name'],
-            session_fields['session_id'],
-            session_fields['group_name'],
-            session_fields['kernel_id'],
-            session_fields['image'],
-            session_fields['type'],
-            session_fields['status'],
-            session_fields['status_info'],
-            session_fields['status_changed'],
-            session_fields['result'],
-        ]
-        with Session() as session:
-            sessions = session.ComputeSession.paginated_list(
-                status=status, access_key=None,
-                fields=fields,
-                page_offset=0,
-                page_size=10,
-                filter=None,
-                order=None,
-            )
-            if sessions.total_count == 0:   # not sessions.items
-                click.echo('No matching items.')
-                return
+        session_names = _fetch_session_names()
+        if not session_names:
+            click.echo('No matching items.')
+            return
 
-        session_names = tuple(map(lambda x: x.get('session_id'), sessions.items))
-        questions = [inquirer.List(
-            'session',
-            message="Select session to watch.",
-            choices=session_names,
-        )]
-        click.clear()
-        session_name_or_id = inquirer.prompt(questions).get('session')
-
-        states = [
+        states = (
             'kernel_creating',
             'kernel_started',
             'session_started',
             'kernel_terminating',
             'kernel_terminated',
             'session_terminated',
-        ]
+        )
+
+        if not session_name_or_id:
+            click.clear()
+            questions = [inquirer.List(
+                'session',
+                message="Select session to watch.",
+                choices=session_names,
+            )]
+            session_name_or_id = inquirer.prompt(questions).get('session')
+        else:
+            for session_name in session_names:
+                if session_name.startswith(session_name_or_id[0]):
+                    session_name_or_id = session_name
+                    break
+            else:
+                click.echo('No matching items.')
+                return
 
         def print_state(session_name_or_id: str, current_state_idx: int):
             click.clear()
@@ -998,6 +1013,7 @@ def _watch_cmd(docs: Optional[str] = None):
 
 
 # Make it available as:
+# - backend.ai watch
 # - backend.ai session watch
 main.command()(_watch_cmd(docs="Alias of \"session watch\""))
 session.command()(_watch_cmd())
