@@ -878,9 +878,9 @@ def _watch_cmd(docs: Optional[str] = None):
                   help='The maximum duration to wait until the session starts.')
     def watch(owner_access_key: str, scope: str, max_wait: int):
         """
-        ...
+        Monitor the lifecycle events of a compute session
+        and display in human-friendly interface.
         """
-        # TODO: Session list
         status = ",".join([
             "PENDING",
             "SCHEDULED",
@@ -935,7 +935,6 @@ def _watch_cmd(docs: Optional[str] = None):
             'kernel_terminated',
             'session_terminated',
         ]
-        current_state_idx = -1
 
         def print_state(session_name_or_id: str, current_state_idx: int):
             click.clear()
@@ -955,25 +954,20 @@ def _watch_cmd(docs: Optional[str] = None):
                     compute_session = session.ComputeSession.from_session_id(session_id)
                 except ValueError:
                     compute_session = session.ComputeSession(session_name_or_id, owner_access_key)
+                print_state(session_name_or_id, current_state_idx=-1)
                 async with compute_session.listen_events(scope=scope) as response:  # AsyncSession
                     async for ev in response:
-                        nonlocal current_state_idx
-
-                        if ev.event != 'kernel_cancelled':
-                            try:
-                                current_state_idx = states.index(ev.event)
-                            except ValueError:
-                                pass
-
-                        print_state(session_name_or_id, current_state_idx)
-
                         if ev.event == 'kernel_cancelled':
                             click.echo(click.style('\u2718 ', fg='red') + 'kernel_cancelled')
                             break
 
+                        try:
+                            print_state(session_name_or_id, current_state_idx=states.index(ev.event))
+                        except ValueError:
+                            pass
+
                         if ev.event == states[-1]:
-                            current_state_idx = len(states)
-                            print_state(session_name_or_id, current_state_idx)
+                            print_state(session_name_or_id, current_state_idx=len(states))
                             break
 
         async def _run_events_with_timeout(timeout: int):
