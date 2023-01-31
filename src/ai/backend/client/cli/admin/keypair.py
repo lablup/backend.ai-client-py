@@ -56,7 +56,7 @@ def info(ctx: CLIContext) -> None:
               help='Set the query ordering expression.')
 @click.option('--offset', default=0,
               help='The index of the current page start for pagination.')
-@click.option('--limit', default=None,
+@click.option('--limit', default=None, type=int,
               help='The page size for pagination.')
 def list(ctx: CLIContext, user_id, is_active, filter_, order, offset, limit) -> None:
     """
