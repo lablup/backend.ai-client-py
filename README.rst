@@ -1,10 +1,9 @@
 Backend.AI Client
 =================
 
-.. admonition:: Deprecation notice
-   :class: attention
+.. attention:: Deprecation Notice
 
-   This repository is deprecated and no longer maintained. The code has been migrated to our semi-mono repository at https://github.com/lablup/backend.ai.
+   This repository is deprecated and no longer maintained. The code has been migrated to our semi-mono repository at `backend.ai <https://github.com/lablup/backend.ai>`_. Please use the new repository for any future development or issue tracking.
 
 
 .. image:: https://badge.fury.io/py/backend.ai-client.svg
