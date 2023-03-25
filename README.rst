@@ -1,8 +1,7 @@
 Backend.AI Client
 =================
 
-.. notice:: Deprecation Notice
-
+.. warning:: Deprecation Notice
    This repository is deprecated and no longer maintained. The code has been migrated to our semi-mono repository at `backend.ai <https://github.com/lablup/backend.ai>`_. Please use the new repository for any future development or issue tracking.
 
 ----
