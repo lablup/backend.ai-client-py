@@ -708,14 +708,18 @@ class WebSocketContextManager:
                     msg = 'Request to the API endpoint has failed.\n' \
                           'Check your network connection and/or the server status.\n' \
                           'Error detail: {!r}'.format(e)
-                    raise BackendClientError(msg) from e
+                    raise BackendClientError(msg)
                 else:
                     self.session.config.rotate_endpoints()
                     continue
             except aiohttp.ClientResponseError as e:
-                msg = 'API endpoint response error.\n' \
-                      '\u279c {!r}'.format(e)
-                raise BackendClientError(msg) from e
+                # msg = await e.read()
+                # FIXME: update after upstream patch
+                msg = '''{
+                    "type": "https://api.backend.ai/probs/generic-error",
+                    "title": "aiohttp patch required to get the original response body"
+                }'''
+                raise BackendAPIError(e.status, e.message, msg)
             else:
                 break
             finally:
