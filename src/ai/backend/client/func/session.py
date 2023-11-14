@@ -322,6 +322,9 @@ class ComputeSession(BaseFunction):
             o.service_ports = data.get('servicePorts', [])
             o.domain = domain_name
             o.group = group_name
+            if 'background_task' in data:
+                task_id = data['background_task']
+                o.backgroundtask = resp.session.BackgroundTask(task_id)
             return o
 
     @api_function
